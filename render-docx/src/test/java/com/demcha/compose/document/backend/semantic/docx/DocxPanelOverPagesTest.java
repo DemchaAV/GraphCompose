@@ -508,8 +508,8 @@ class DocxPanelOverPagesTest {
 
     @Test
     void aPageReferenceSettledAsItsNumberLetsItsPageBeCutWhereTheMarginsDoNotVary() throws Exception {
-        // Its anchor marks a block of drawing only, which gets no bookmark: once the document is written
-        // the field is taken back to its number, and the cut, decided then, sees no field in the rows.
+        // Its anchor is a drawn shape's, which gets no bookmark: once the document is written the field
+        // is taken back to its number, and the cut, decided then, sees no field in the rows.
         Exported exported = export(PAGE_HEIGHT, List.of(), cardReferringToADrawing());
 
         assertThat(exported.pages()).as("the premise: three pages").hasSize(3);
@@ -574,13 +574,13 @@ class DocxPanelOverPagesTest {
     }
 
     /**
-     * A card whose table's row 15 holds a page reference to the anchor of a block of drawing only,
-     * which the export writes no bookmark for.
+     * A card whose table's row 15 holds a page reference to a drawn shape's own anchor, which the
+     * export writes no bookmark for.
      */
     private static Consumer<PageFlowBuilder> cardReferringToADrawing() {
         return page -> page
-                .addSection(drawn -> drawn.anchor("drawn").add(new com.demcha.compose.document.dsl.ShapeBuilder()
-                        .size(120, 20).fillColor(DocumentColor.LIGHT_GRAY).build()))
+                .add(new com.demcha.compose.document.dsl.ShapeBuilder()
+                        .size(120, 20).fillColor(DocumentColor.LIGHT_GRAY).anchor("drawn").build())
                 .addSection(card -> card.fillColor(SURFACE).stroke(DocumentStroke.of(INK, 1))
                         .padding(DocumentInsets.of(6))
                         .addTable(table -> {

@@ -169,8 +169,9 @@ class DocxValueFieldLedgerTest {
                 "options:WRITTEN:as an external link from the part the text is in, a header's or footer's included");
         value(com.demcha.compose.document.node.InternalLinkTarget.class,
                 "anchor:REPORTED:written as a link to its bookmark; where the node declaring the anchor writes "
-                + "none, drawn, in a page zone or a block writing no paragraph, named on that "
-                + "node; an anchor several nodes declare or a repeated header row holds, named");
+                + "none, drawn, in a page zone or a block writing no paragraph whose first drawing no "
+                + "paragraph carries as its own, named on that node; an anchor several nodes declare or a "
+                + "repeated header row holds, named");
         value(com.demcha.compose.document.node.ListItem.class,
                 "children:WRITTEN:each a depth further in, as the next level of a Word list or two spaces more; "
                 + "where an item stands against the page's column is the list's note",

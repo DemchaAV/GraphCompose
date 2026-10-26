@@ -918,7 +918,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The id of each bookmark written for an anchor, in the order written: an anchor two nodes
     // declare keeps the last one's (keepTheLastBookmarkOfEachAnchor).
     private final java.util.Map<String, List<Integer>> bookmarksOfAnchors = new java.util.LinkedHashMap<>();
-    // The blocks that wrote no paragraph for their anchor's bookmark, in the order they were written
+    // The blocks that wrote no paragraph for their anchor's bookmark, in the order they were written:
+    // marked where their first drawing is anchored (markTheBlocksOfDrawingsAlone), or named
     // (nameTheBlocksNoBookmarkMarks).
     private final List<UnmarkedBlock> blocksUnmarked = new ArrayList<>();
     // How many nodes declare each anchor, a bookmark written or not (DocxAnchorDeclarations), and
@@ -1339,6 +1340,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 reportDrawingsLeftOver(document,
                         dropTheSpaceAtTheEnd(document, roomBelowTheFlow(margins.lastPageBottom()),
                                 index == sections.size() - 1));
+                // Its drawings anchored, a block of drawings alone is marked where its first one is —
+                // before a table is split for its pages' margins, which takes the rows it moves out
+                // of the table the paragraph holding a drawing was read from.
+                markTheBlocksOfDrawingsAlone();
                 DocxPageMarginSections.apply(document, margins);
             }
             // Every bookmark is written now, those a reference on an earlier page reads included.
@@ -3772,19 +3777,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         boolean inTheBody = currentCell == null;
         int notesBefore = report.size();
+        int drawnBefore = anchors.drawnSoFar();
         List<IBodyElement> written = writtenBy(document, () -> writeNodeContent(document, node));
         if (keepTogether || keepWithNext) {
             keepOnOnePage(written, keepWithNext, inTheBody);
         }
         // A section or a container that writes no paragraph — drawings alone, standing in the
-        // paragraph beside them — has nothing for a bookmark to go round, and a link to its anchor is
-        // written to a bookmark the file lacks: Word's and LibreOffice's PDFs carry no link there.
-        // Whether another node marks the anchor is known once all are written
-        // (nameTheBlocksNoBookmarkMarks).
+        // paragraph beside them — has nothing for a bookmark to go round. Its drawings find their
+        // paragraphs when the section ends, and its bookmark goes in the first one's
+        // (markTheBlocksOfDrawingsAlone).
         if (panelBreak != null) {
             reportAKeepThePanelBreaks(node, panelBreak, written);
         }
-        markOrName(node, anchor, written, notesBefore);
+        markOrName(node, anchor, written, notesBefore, drawnBefore);
     }
 
     /**
@@ -3977,19 +3982,34 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         // Named only where it marks something: a name is kept once given, and one given here for
         // nothing would push another anchor that cleans to it onto a suffix.
-        String name = first == null || last == null ? null : bookmarkNames.nameFor(anchor);
-        if (name == null) {
+        if (first == null || last == null || anchor == null || anchor.isBlank()) {
             return false;
         }
+        CTBookmark start = startBookmark(first, anchor);
+        // Read before it moves: the object moved from is left behind.
+        BigInteger id = start.getId();
+        moveToParagraphStart(first.getCTP(), start);
+        last.getCTP().addNewBookmarkEnd().setId(id);
+        return true;
+    }
+
+    /**
+     * Opens an anchor's bookmark at the end of a paragraph, under the name Word is given for the
+     * anchor, and records it: which anchors the file marks, and under what name, a page reference
+     * reads ({@link #settleThePageReferences}), and which bookmarks of one anchor there are, the
+     * last of which is kept ({@link #keepTheLastBookmarkOfEachAnchor}).
+     *
+     * @param anchor a non-blank anchor
+     */
+    private CTBookmark startBookmark(XWPFParagraph paragraph, String anchor) {
+        String name = bookmarkNames.nameFor(anchor);
         int id = bookmarkNames.nextId();
-        CTBookmark start = first.getCTP().addNewBookmarkStart();
+        CTBookmark start = paragraph.getCTP().addNewBookmarkStart();
         start.setId(BigInteger.valueOf(id));
         start.setName(name);
         bookmarksWritten.putIfAbsent(anchor, name);
         bookmarksOfAnchors.computeIfAbsent(anchor, key -> new ArrayList<>()).add(id);
-        moveToParagraphStart(first.getCTP(), start);
-        last.getCTP().addNewBookmarkEnd().setId(BigInteger.valueOf(id));
-        return true;
+        return start;
     }
 
     /**
@@ -11378,8 +11398,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param notesTo   how many it held once the block was written: its own note, where it has one,
      *                  is between the two. A path is its section's own, and a later section's node, or
      *                  a later place the same node is written, may have the same
+     * @param drawnFrom how many shapes the document had drawn before the block was written: those it
+     *                  drew are numbered from here ({@link DocxDrawingAnchors#drawnSoFar})
+     * @param drawnTo   how many it had drawn once the block was written
      */
-    private record UnmarkedBlock(int notesFrom, int notesTo, String subject, String path, String anchor) {
+    private record UnmarkedBlock(int notesFrom, int notesTo, String subject, String path, String anchor,
+                                 int drawnFrom, int drawnTo) {
     }
 
     /**
@@ -11393,15 +11417,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Marks with the anchor's bookmark what a block wrote, or, where that holds no paragraph or
-     * table for one to go round, keeps the block to be named once all are written
-     * ({@link #nameTheBlocksNoBookmarkMarks}).
+     * table for one to go round, keeps the block to be marked where its first drawing is anchored,
+     * once its section's drawings are anchored ({@link #markTheBlocksOfDrawingsAlone}), or to be
+     * named once all are written ({@link #nameTheBlocksNoBookmarkMarks}).
      *
      * @param notesBefore how many notes the report held before the block was written
+     * @param drawnBefore how many shapes the document had drawn before the block was written
      */
-    private void markOrName(DocumentNode node, String anchor, List<IBodyElement> written, int notesBefore) {
+    private void markOrName(DocumentNode node, String anchor, List<IBodyElement> written, int notesBefore,
+                            int drawnBefore) {
         if (anchor != null && !bookmarkAround(written, anchor)) {
             blocksUnmarked.add(new UnmarkedBlock(notesBefore, report.size(), node.nodeKind(), layout.pathOf(node),
-                    anchor));
+                    anchor, drawnBefore, anchors.drawnSoFar()));
         }
     }
 
@@ -11432,11 +11459,48 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Names each block that wrote no paragraph for its anchor's bookmark, where no other node marks
-     * that anchor either: a link to it points at none, and a page reference to it is settled as its
-     * number ({@link #settleThePageReferences}). Where another node's bookmark holds the name, a link
-     * goes there, and the anchor two nodes declare is named as such
-     * ({@link #keepTheLastBookmarkOfEachAnchor}).
+     * Bookmarks each block that wrote no paragraph at the start of the paragraph its first drawing
+     * is anchored in, once its section's drawings are anchored.
+     *
+     * <p>A section, a container or a layer stack's column of drawings alone writes no paragraph for
+     * its bookmark to go round: its drawings are anchored in the paragraphs beside them, or in one
+     * written on their page ({@link DocxDrawingAnchors}), when the section ends. Word keeps a
+     * drawing on the page of the paragraph it is anchored in, and moves it with that paragraph
+     * wherever an edit takes it. So the bookmark goes at the start of the paragraph holding its
+     * first drawing — the one on the earliest page, highest on it — a place rather than a range, the
+     * paragraph's text not being the block's: a page reference reads the page the block starts on,
+     * and goes on reading it once the text above is edited, and a link lands beside the drawing.
+     * Measured in Word 16, its fields updated, and LibreOffice 24.2, on such a block on page 2 and on
+     * the same file with a page put in before it: the reference read 2, then 3, and the link went to
+     * the block's page, where the file had held no bookmark and the reference a fixed 2.</p>
+     *
+     * <p>Marked before the section's pages are given their margins: a table split there leaves the
+     * rows it moves to its second part out of the first, the paragraph a drawing was anchored in with
+     * them. A block marked is kept no more; one whose first drawing no paragraph carries is kept to be
+     * named once all are marked ({@link #nameTheBlocksNoBookmarkMarks}).</p>
+     */
+    private void markTheBlocksOfDrawingsAlone() {
+        for (java.util.Iterator<UnmarkedBlock> blocks = blocksUnmarked.iterator(); blocks.hasNext(); ) {
+            UnmarkedBlock block = blocks.next();
+            XWPFParagraph holder = anchors.carrierOfTheFirst(block.drawnFrom(), block.drawnTo());
+            if (holder != null) {
+                bookmarkAtTheStartOf(holder, block.anchor());
+                blocks.remove();
+            }
+        }
+    }
+
+    /**
+     * Names each block that wrote no paragraph and has no paragraph holding its first drawing
+     * either ({@link #markTheBlocksOfDrawingsAlone}), where no other node marks its anchor: a link
+     * to it points at none, and a page reference to it is settled as its number
+     * ({@link #settleThePageReferences}).
+     *
+     * <p>No paragraph carries such a block's first drawing as its own: it draws nothing at all, its
+     * first drawing stands on a page no paragraph is written on, or its drawings are composed in a
+     * table's cell, which its table draws. Where another node's bookmark holds the name, a link goes there, and the anchor two nodes
+     * declare is named as such ({@link #keepTheLastBookmarkOfEachAnchor}): it is named once every
+     * block of drawings alone, in every section, is marked.</p>
      *
      * <p>The loss goes into the block's own note where it has one, or a note of its own after the
      * others: a page reference's note is put in where it was counted, after this, and a note put in
@@ -11450,10 +11514,26 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             String lost = "its anchor \"" + block.anchor() + "\" has no bookmark in the Word file: a link to it "
                           + "points at none, and a page reference to it is a fixed number rather than a field";
+            String why = "writes no paragraph, and no paragraph carries the first drawing of its own, so " + lost;
             report.addTo(block.notesFrom(), block.notesTo(), DocxExportReport.Severity.APPROXIMATED, block.subject(),
-                    block.path(), "it writes no paragraph, so " + lost, "writes no paragraph, so " + lost);
+                    block.path(), "it " + why, why);
         }
         blocksUnmarked.clear();
+    }
+
+    /**
+     * Marks the start of a paragraph with an anchor's bookmark, opened and closed there: a place
+     * rather than a range, for a block whose drawing the paragraph carries
+     * ({@link #markTheBlocksOfDrawingsAlone}).
+     */
+    private void bookmarkAtTheStartOf(XWPFParagraph holder, String anchor) {
+        CTBookmark start = startBookmark(holder, anchor);
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTMarkupRange end = holder.getCTP().addNewBookmarkEnd();
+        end.setId(start.getId());
+        // The end first, so the start goes in before it. Each is moved once: the object moved
+        // from is left behind.
+        moveToParagraphStart(holder.getCTP(), end);
+        moveToParagraphStart(holder.getCTP(), start);
     }
 
     /**
@@ -11536,8 +11616,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * takes the one whose anchor has none back to the number it reads, saying so in its note.
      *
      * <p>Whether an anchor gets a bookmark is known only from what the body wrote: an anchor that
-     * names nothing, a drawn shape's, or a block that writes no paragraph — a section holding only
-     * shapes the export draws — has none to put round it. Read off the tree instead, a table's
+     * names nothing, a drawn shape's, or a block that writes no paragraph and whose first drawing no
+     * paragraph carries as its own — a section that draws nothing, or one of drawings composed in a
+     * table's cell — has none to put round it. Read off the tree instead, a table's
      * composed cells were missed, and a stack holding only drawing in one would read as an
      * overlay the writer does not write it as. A field on a bookmark the
      * file lacks reads "Error! Bookmark not defined." once Word updates it. The field's marks and
@@ -14767,17 +14848,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * a link goes, and inventing a heading from it would restyle the document.</p>
      */
     private int openAnchor(XWPFParagraph para, String anchor) {
-        String name = bookmarkNames.nameFor(anchor);
-        if (name == null) {
+        if (anchor == null || anchor.isBlank()) {
             return -1;
         }
-        int id = bookmarkNames.nextId();
-        CTBookmark start = para.getCTP().addNewBookmarkStart();
-        start.setId(BigInteger.valueOf(id));
-        start.setName(name);
-        bookmarksWritten.putIfAbsent(anchor, name);
-        bookmarksOfAnchors.computeIfAbsent(anchor, key -> new ArrayList<>()).add(id);
-        return id;
+        return startBookmark(para, anchor).getId().intValue();
     }
 
     /**
@@ -18353,6 +18427,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                             }
                             reportWrittenWithout(node, "written as a column of its layer stack", columnLost);
                             reportWrittenUnderTheLayersBefore(node, plan.over(node), "column");
+                            int drawnBefore = anchors.drawnSoFar();
                             List<IBodyElement> written = writtenBy(document,
                                     () -> writeChildren(document, node.children(), spacingOf(node)));
                             // A column layer is written as what it holds, never dispatched itself: its
@@ -18363,7 +18438,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                             if (anchor != null) {
                                 List<IBodyElement> marked = writtenInAnEarlierLayer(node, movedBefore);
                                 marked.addAll(written);
-                                markOrName(node, anchor, marked, notesBefore);
+                                markOrName(node, anchor, marked, notesBefore, drawnBefore);
                             }
                             if (layer > 0 && blocksWritten == blocksBefore && !holdsMovedContent(node)) {
                                 // A later layer that wrote nothing leaves the line above it raised:

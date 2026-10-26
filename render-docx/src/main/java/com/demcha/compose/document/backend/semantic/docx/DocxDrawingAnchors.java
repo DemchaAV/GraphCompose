@@ -63,6 +63,10 @@ import java.util.function.Supplier;
  * is drawn from ({@link #ordered}), not when it is drawn or when it finds its paragraph: Word
  * stacks drawings by those places, a later one over an earlier one, and the export draws a
  * stack's layers, a band's and a table's cells in the order it writes them.</p>
+ *
+ * <p>The paragraph each shape is anchored in is kept for the whole document
+ * ({@link #carrierOfTheFirst}): a block of drawings alone writes no paragraph of its own, and its
+ * anchor's bookmark goes in the one holding its first drawing.</p>
  */
 final class DocxDrawingAnchors {
 
@@ -92,6 +96,9 @@ final class DocxDrawingAnchors {
     private int latest = -1;
     // How many shapes have been drawn in the document, which numbers their names.
     private int drawn;
+    // The paragraph each shape anchored in the document is anchored in, by its number
+    // (Ordered#drawn), with where the page puts it.
+    private final Map<Integer, Carried> carried = new HashMap<>();
 
     /**
      * How many places in the paint order a fragment's shapes take, at most: one drawn as more
@@ -126,6 +133,59 @@ final class DocxDrawingAnchors {
         placesTaken.clear();
         latest = -1;
         drawn = 0;
+        carried.clear();
+    }
+
+    /**
+     * How many shapes the document has given a place in the paint order so far: those given
+     * one from here on are numbered from it ({@link Ordered#drawn}).
+     */
+    int drawnSoFar() {
+        return drawn;
+    }
+
+    /**
+     * The paragraph a shape is anchored in, and where the page puts the shape.
+     *
+     * @param paragraph the paragraph whose run holds the shape's anchor, or {@code null} for a shape
+     *                  the section's end found nothing to carry
+     * @param page      the shape's page, counted within its section
+     * @param top       the shape's top, from the page's top edge
+     */
+    private record Carried(XWPFParagraph paragraph, int page, double top) {
+    }
+
+    /**
+     * The paragraph that carries the first of the shapes numbered {@code from} up to
+     * {@code to}: the one on the earliest page and highest on it. {@code null} where none of them
+     * has been anchored, or where the first is on a page nothing carries ({@link Leftovers}): one
+     * carried on a later page is not where they start.
+     *
+     * <p>Word anchors a shape in a paragraph on its page and keeps it there, whatever an edit
+     * does to the text above: the paragraph's page is the shape's.</p>
+     *
+     * <p>The paragraph is the one the shape was anchored in, as its section's end found it: asked
+     * then, before the section's pages are given their margins, it is in the file. A table split
+     * for those margins later takes the rows it moves out of the part it read them from.</p>
+     *
+     * @param from the number of the first shape, as {@link #drawnSoFar} read before they were drawn
+     * @param to   the number after the last
+     */
+    XWPFParagraph carrierOfTheFirst(int from, int to) {
+        Carried first = null;
+        for (int number = from; number < to; number++) {
+            Carried shape = carried.get(number);
+            if (shape != null && (first == null || shape.page() < first.page()
+                                  || shape.page() == first.page() && shape.top() < first.top())) {
+                first = shape;
+            }
+        }
+        return first == null ? null : first.paragraph();
+    }
+
+    /** Records the paragraph a shape is anchored in: {@code null} where nothing carries it. */
+    private void carry(XWPFParagraph paragraph, Ordered shape) {
+        carried.put(shape.drawn(), new Carried(paragraph, shape.shape().page(), shape.shape().top()));
     }
 
     /**
@@ -342,6 +402,7 @@ final class DocxDrawingAnchors {
             } else {
                 int unowned = 0;
                 for (Ordered shape : shapes) {
+                    carry(null, shape);
                     Owner owner = owners.get(shape);
                     if (owner == null) {
                         unowned++;
@@ -395,6 +456,7 @@ final class DocxDrawingAnchors {
         for (Ordered shape : shapes) {
             run.getCTR().addNewDrawing().set(
                     DocxDrawings.drawingInCell(shape.shape(), ids.getAsLong(), shape.order(), shape.drawn(), origin));
+            carry(carrier, shape);
         }
     }
 
@@ -445,6 +507,7 @@ final class DocxDrawingAnchors {
                     ? DocxDrawings.drawingInParagraph(ordered.shape(), ids.getAsLong(), ordered.order(), ordered.drawn(), top)
                     : DocxDrawings.drawingInCell(ordered.shape(), ids.getAsLong(), ordered.order(), ordered.drawn(),
                             new DocxDrawings.CellOrigin(column, top)));
+            carry(paragraph, ordered);
         }
     }
 
@@ -751,6 +814,7 @@ final class DocxDrawingAnchors {
         XWPFRun run = carrier.insertNewRun(0);
         for (Ordered shape : shapes) {
             run.getCTR().addNewDrawing().set(DocxDrawings.drawing(shape.shape(), ids.getAsLong(), shape.order(), shape.drawn()));
+            carry(carrier, shape);
         }
     }
 }

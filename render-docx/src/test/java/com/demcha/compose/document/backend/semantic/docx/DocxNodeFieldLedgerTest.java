@@ -327,8 +327,11 @@ class DocxNodeFieldLedgerTest {
                 "fillColor:REPORTED:" + RIGHT_END + "; " + LEFT_EDGE + "; " + PANEL_TRANSLUCENCY,
                 "stroke:REPORTED:" + RIGHT_BORDER + "; " + RIGHT_END + "; " + LEFT_EDGE + "; " + PANEL_BORDERS,
                 "cornerRadius:REPORTED", "borders:REPORTED:" + RIGHT_BORDER + "; " + RIGHT_END + "; " + LEFT_EDGE + "; " + PANEL_BORDERS,
-                "anchor:REPORTED:where it writes no paragraph, as of drawings alone, which has no bookmark; "
-                + "otherwise, in the flow or as a layer stack's column, it is bookmarked",
+                "anchor:REPORTED:where it writes no paragraph and no paragraph carries the first drawing of its "
+                + "own — it draws nothing, its first drawing stands on a page nothing is written on, or it is "
+                + "composed in a table's cell — which has no bookmark; otherwise, in the flow or as a layer "
+                + "stack's column, it is bookmarked round what it writes, or, of drawings alone, where its first "
+                + "drawing is anchored",
                 "bookmarkOptions:REPORTED", "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");
         node(EllipseNode.class, "name:INERT", "width:REPORTED:" + DRAWING_DROPPED, "height:REPORTED:" + DRAWING_DROPPED,
                 "fillColor:REPORTED:" + DRAWING_DROPPED, "stroke:REPORTED:" + DRAWING_DROPPED, "linkTarget:REPORTED",
@@ -476,8 +479,11 @@ class DocxNodeFieldLedgerTest {
                 "stroke:REPORTED:" + RIGHT_BORDER + "; " + RIGHT_END + "; " + LEFT_EDGE + "; " + PANEL_BORDERS,
                 "cornerRadius:REPORTED", "borders:REPORTED:" + RIGHT_BORDER + "; " + RIGHT_END + "; " + LEFT_EDGE + "; " + PANEL_BORDERS,
                 "keepTogether:REPORTED:" + KEEP,
-                "anchor:REPORTED:where it writes no paragraph, as of drawings alone, which has no bookmark; "
-                + "otherwise, in the flow or as a layer stack's column, it is bookmarked",
+                "anchor:REPORTED:where it writes no paragraph and no paragraph carries the first drawing of its "
+                + "own — it draws nothing, its first drawing stands on a page nothing is written on, or it is "
+                + "composed in a table's cell — which has no bookmark; otherwise, in the flow or as a layer "
+                + "stack's column, it is bookmarked round what it writes, or, of drawings alone, where its first "
+                + "drawing is anchored",
                 "bleed:REPORTED:of a panel the page bleeds, in the flow it pages",
                 "bookmarkOptions:REPORTED", "keepWithNext:REPORTED:" + KEEP,
                 "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");

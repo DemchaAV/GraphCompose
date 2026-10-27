@@ -358,9 +358,9 @@ Choose the smallest tests that match the change:
   which documents moved. A new preset joins the corpus in its family's `*DocxCorpus` class,
   and so does a preset on a longer fixture; a shape no preset has — a page break inside a
   panel, a break in a row's column, a shape container narrower than the block it stands in
-  or clipped short of its text — goes in `SyntheticDocxCorpus`. Its baseline holds it as
-  the editors set it, a defect of the export included, and the change fixing that rewrites
-  its rows nearer the page.
+  or clipped short of its text, an icon a layer stack lays over a card's corner — goes in
+  `SyntheticDocxCorpus`. Its baseline holds it as the editors set it, a defect of the export
+  included, and the change fixing that rewrites its rows nearer the page.
   CI runs it on Linux (the `DOCX Fidelity` job) against `libreoffice-linux.tsv`, and uploads
   what it measured: LibreOffice sets text a little differently per platform, so a change that
   moves documents nearer the page takes that artifact's files as the Linux baseline, and its own

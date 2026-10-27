@@ -4,6 +4,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.api.PageMarginRule;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
@@ -11,6 +12,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.font.FontName;
@@ -26,9 +28,9 @@ import java.util.function.Consumer;
  * children and inside a panel nested in it, page breaks the page sets as boxes of no height in a
  * row's column and in a stack's layer, and a card whose table the layout runs over three pages,
  * with other margins from the second. Three others set a shape container holding text in the
- * body: a box narrower than the page, a box clipped to its outline, and a card. Their text is
- * set in a face the export embeds, so both editors break at the page's words the lines they
- * set at the page's width.</p>
+ * body: a box narrower than the page, a box clipped to its outline, and a card. One more lays an
+ * icon over a card's top right corner, in a layer stack. Their text is set in a face the export
+ * embeds, so both editors break at the page's words the lines they set at the page's width.</p>
  *
  * <p>The export writes the three boxes as panels, their text inside the outline: Word sets the
  * narrow box's note and the card's text at the page's words, and the paragraph under each box
@@ -36,6 +38,9 @@ import java.util.function.Consumer;
  * both editors show the lines the page shows. The gate reads lines of text only: whether the
  * text stays inside the outline, and whether the card grows when text is added to it in an
  * editor, it does not see.</p>
+ *
+ * <p>The card under the icon is held as the editors set it today, off the page: see
+ * {@link #iconOverCard}.</p>
  */
 final class SyntheticDocxCorpus {
 
@@ -47,6 +52,8 @@ final class SyntheticDocxCorpus {
     private static final DocumentColor INNER = DocumentColor.rgb(224, 233, 244);
     private static final DocumentColor INK = DocumentColor.rgb(26, 86, 148);
     private static final DocumentInsets MARGIN = DocumentInsets.of(36);
+    private static final SvgIcon ICON = SvgIcon.parse("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'>"
+                                                      + "<circle cx='5' cy='5' r='5' fill='#1a5694'/></svg>");
 
     private SyntheticDocxCorpus() {
     }
@@ -59,7 +66,36 @@ final class SyntheticDocxCorpus {
                 synthetic("card_over_pages", SyntheticDocxCorpus::cardOverPages),
                 synthetic("narrow_container", SyntheticDocxCorpus::narrowContainer),
                 synthetic("clipped_container", SyntheticDocxCorpus::clippedContainer),
-                synthetic("rounded_card", SyntheticDocxCorpus::roundedCard));
+                synthetic("rounded_card", SyntheticDocxCorpus::roundedCard),
+                synthetic("icon_over_card", SyntheticDocxCorpus::iconOverCard));
+    }
+
+    /**
+     * A layer stack laying an icon over the top right corner of a card, between a paragraph above
+     * it and one under it. The paragraph above is the document's longest, so an edit that
+     * lengthens the longest paragraph moves the card, and the icon has to move with it.
+     *
+     * <p>Its baseline holds the export as Word and LibreOffice set it today, off the page: the
+     * stack writes the card's padding as space above and below the card as well as inside it, so
+     * both editors set the card's text about 14pt lower than the page, and the paragraph under it
+     * about 28pt lower. The icon is placed from the page's edges, so it stands
+     * where the page draws it, above the card the editors moved down, and stays there when text
+     * above the card is edited. The gate reads lines of text only: where the icon stands, it
+     * does not see.</p>
+     */
+    private static void iconOverCard(DocumentSession session) {
+        session.pageSize(400, 500).margin(MARGIN);
+        session.pageFlow(page -> page.spacing(8)
+                .addParagraph(p -> text(p, "Before the card: this paragraph is the longest in the document, so "
+                                           + "an edit that lengthens the longest paragraph lengthens it and moves "
+                                           + "the card and the icon over its corner down the page together."))
+                .addLayerStack(stack -> stack
+                        .layer(new SectionBuilder().softPanel(SURFACE, 0, 14)
+                                .addParagraph(p -> text(p, "A card under an icon laid over its top right "
+                                                           + "corner, its text held in by its padding."))
+                                .build())
+                        .layer(ICON.node(18), LayerAlign.TOP_RIGHT))
+                .addParagraph(p -> text(p, "After the card: this paragraph stands under it on the page.")));
     }
 
     /**

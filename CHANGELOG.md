@@ -4313,6 +4313,31 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The DOCX fidelity corpus holds an icon laid over a card's corner, as the export writes it
+  today.**
+  - `SyntheticDocxCorpus` takes `icon_over_card`: a layer stack laying an 18pt icon over the top
+    right corner of a card, a section painted as a panel with 14pt padding, between the
+    document's longest paragraph above it and a paragraph under it.
+  - Measured in Word 16 and in LibreOffice 24.2 and 26.8, which set it alike down the page;
+    LibreOffice 24.2 also sets the card's text 14pt right of the page, as it sets a card with the
+    same padding and no icon over it.
+  - The stack is written as a band, and a band measures the space above and below it to its
+    first and last block written, through the card's padding, which the card writes again inside
+    its cell: the card's text stands 14.0pt lower than the page sets it, and the paragraph under
+    the card 28.0pt lower.
+  - The icon is drawn from the page's edges, where the page draws it, as the paragraph nearest
+    it, the card's, starts 14pt below its top, further than a shape may rise above a paragraph in
+    a table cell. It stands 14pt above the card's top as the editors set it, and stays there when
+    text above the card is edited: Word's editing protocol (`edit-protocol-corpus.ps1`),
+    lengthening the paragraph above the card, finds the card moved 36pt and the icon not
+    (`drawings-follow-text` fails).
+  - The baselines record the document as it stands: its rows hold the card's lines and the
+    paragraph under it that far from the page. A change that writes the band's space from the
+    card's edges moves them nearer and rewrites the rows; a change that moves them further fails
+    the gate. The gate measures lines of text: where the icon stands, it does not see.
+  - Each baseline takes the document's rows alone, from the run of its editor — Linux's from
+    CI's.
+
 - **A body card whose text fills its outline is held to grow with that text.** The fidelity gates
   measure where lines stand. Were such a card's row written exactly as tall as its outline, every
   line of it in Word would stand where it stood, the paragraph under it in LibreOffice 24.2 would

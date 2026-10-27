@@ -1,6 +1,7 @@
 # word 16.0 (16.0.20430) on windows — document, line, drift below the page (pt), drift right of the page (pt), letters
 # rows of invoice-metered_long, invoice-obsidian_long, synthetic-break_in_column, synthetic-break_in_panel, synthetic-card_over_pages: word 16.0 (16.0.20527) on windows
 # rows of synthetic-clipped_container, synthetic-narrow_container, synthetic-rounded_card: word 16.0 (16.0.20527) on windows
+# rows of synthetic-icon_over_card: word 16.0 (16.0.20527) on windows
 cv-blue_banner	0:8f1010120ed6	-0.02	-0.08	jordanrivera
 cv-blue_banner	0:8d7a2cca3060	0.00	-0.07	+442055551000|jordan.rivera@exam
 cv-blue_banner	0:b944906ed84c	-0.21	-1.21	professionalsummary
@@ -5147,6 +5148,12 @@ synthetic-clipped_container	0:7365672653fc	0.99	0.02	andtheboxstaysastallasitwas
 synthetic-clipped_container	0:f0da0f0af799	1.02	0.02	whateveritisgiventohold.
 synthetic-clipped_container	0:2633ce73dc24	-0.02	0.02	aftertheclippedbox:thisparagraph
 synthetic-clipped_container	0:667f8b3b3eff	-0.02	0.02	noneofitslinesrunsoverthebox.
+synthetic-icon_over_card	0:22d08874d8c4	-0.01	0.02	beforethecard:thisparagraphisthe
+synthetic-icon_over_card	0:ea7f305a7f76	-0.01	0.02	thatlengthensthelongestparagraph
+synthetic-icon_over_card	0:e3ac6d2ba79c	-0.01	0.02	theiconoveritscornerdownthepaget
+synthetic-icon_over_card	0:887d93e46549	13.99	0.06	acardunderaniconlaidoveritstopri
+synthetic-icon_over_card	0:abfed2fbe03e	13.99	0.06	itspadding.
+synthetic-icon_over_card	0:573902639706	28.02	0.02	afterthecard:thisparagraphstands
 synthetic-narrow_container	0:fa13cab3fe73	-0.01	0.02	beforethebox,onalineofitsown.
 synthetic-narrow_container	0:ed60c8a4c178	0.03	0.03	anotecentredinaboxnarrowerthanth
 synthetic-narrow_container	0:d7899490a8cd	0.03	0.03	thepagewrapsitoverthreelinesinsi

@@ -2,6 +2,7 @@
 document	engine_pages	editor_pages	lines	matched	median	p90	over2
 # rows of invoice-metered_long, invoice-obsidian_long, synthetic-break_in_column, synthetic-break_in_panel, synthetic-card_over_pages: word 16.0 (16.0.20527) on windows
 # rows of synthetic-clipped_container, synthetic-narrow_container, synthetic-rounded_card: word 16.0 (16.0.20527) on windows
+# rows of synthetic-icon_over_card: word 16.0 (16.0.20527) on windows
 cv-blue_banner	2	2	54	52	0.10	0.23	0
 cv-boxed_sections	2	2	58	58	0.12	0.21	0
 cv-centered_headline	2	2	58	56	0.12	0.25	0
@@ -70,5 +71,6 @@ synthetic-break_in_column	1	1	7	7	0.03	0.03	0
 synthetic-break_in_panel	3	3	8	8	0.95	0.99	0
 synthetic-card_over_pages	3	3	114	114	1.03	1.15	0
 synthetic-clipped_container	1	1	10	10	0.99	0.99	0
+synthetic-icon_over_card	1	1	6	6	13.99	28.02	3
 synthetic-narrow_container	1	1	6	6	0.03	0.03	0
 synthetic-rounded_card	1	1	7	7	0.01	0.02	0

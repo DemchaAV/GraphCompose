@@ -233,7 +233,9 @@ class DocxCellDrawingTest {
     }
 
     @Test
-    void aLineAloneInACellOfARowInTheFlowStaysOnThePage() throws Exception {
+    void aLineAloneInACellOfARowInTheFlowIsNotHeldToItsHeightButGoesToItsRow() throws Exception {
+        // A line may be a rule, so its cell's paragraph is not set to its height as a drawing
+        // alone in a cell is; drawn, it is its row's, and its own cell of that row carries it.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Above"))
                 .addRow("Ruled", row -> row.weights(150, 150)
@@ -242,10 +244,15 @@ class DocxCellDrawingTest {
                                         .stroke(DocumentStroke.of(DocumentColor.rgb(200, 200, 200), 1)).build())
                                 .build())
                         .addParagraph(p -> p.text("LABEL"))))) {
-            String body = document.getDocument().xmlText();
+            XWPFParagraph carrier = document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0);
 
-            assertThat(body).as("no drawing taken into a cell").doesNotContain("layoutInCell=\"1\"");
-            assertThat(shapesOutOfTheirCells(document)).as("the line, out of the cell as before").isEqualTo(1);
+            assertThat(anchors(carrier)).as("the line, in its own cell, from the row's top").singleElement()
+                    .satisfies(line -> assertThat(line.fromV()).isEqualTo("paragraph"));
+            assertThat(carrier.getCTP().isSetPPr() && carrier.getCTP().getPPr().isSetSpacing()
+                       && carrier.getCTP().getPPr().getSpacing().isSetLine()
+                       && DocxTwips.of(carrier.getCTP().getPPr().getSpacing().getLine()) == 20)
+                    .as("its paragraph not held to the line's height").isFalse();
+            assertThat(shapesOutOfTheirCells(document)).isZero();
         }
     }
 

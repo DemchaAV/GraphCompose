@@ -25,21 +25,24 @@ import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 /**
- * Where each shape {@link DocxDrawings} draws is anchored: in the paragraph whose text it stands
- * beside, or else in a paragraph written on its page.
+ * Where each shape {@link DocxDrawings} draws is anchored: in a paragraph of the block it belongs
+ * to, or else in a paragraph written on its page.
  *
- * <p>A shape standing beside a paragraph's text — a timeline's dot by its entry, an icon by its
- * heading, a skill's bar by its label — is anchored in that paragraph and placed down from its
- * top ({@link #seat}): Word moves it with the paragraph, wherever an edit above takes it. Placed
- * from the page's edges, it stayed where the page had put it while the text moved away from it.
- * The paragraph is the one whose text is nearest, within {@link #REACH}, when the shape rises
- * above its top by the shape's own height at most, as a dot centred on its first line does — in a
- * table cell by a stroke's width at most. In a
- * table cell, the cell that holds the shape across takes it — the paragraph's own, or another of
- * its row, as a timeline's dot in a column of its own beside its entry's text — placed from that
- * cell's first paragraph (see {@link Seat#place}). When the nearest paragraph cannot place the
- * shape, it is left to the page rather than given to one further off. The shapes wait for the
- * section's end, since the paragraph a shape stands beside may be written after it.</p>
+ * <p>A shape a node draws belongs to that node and to the blocks holding it: an icon laid over a
+ * card's corner to the card's stack, a skill's bar to its row, a portrait to its sidebar. It is
+ * anchored in the first paragraph the nearest of them writes on its page that can place it, and
+ * placed from that paragraph's top ({@link #seat}), so Word moves it with that block wherever an
+ * edit above takes it; where it stands gives only its offset, however far from the paragraph's
+ * text that is. Placed from the page's edges, it stayed where the page had put it while the text
+ * moved away from it. In a table cell, the cell of the paragraph's row that holds the shape
+ * across takes it — a timeline's dot stands in a column of its own beside its entry's text —
+ * placed from that cell's first paragraph (see {@link Seat#placeHeld}). A shape no node draws —
+ * a timeline's rail — or whose holders write no paragraph on its page goes to the paragraph
+ * nearest it there. What a table's composed cell draws has no node of its own, and goes to the
+ * paragraph whose text is nearest, within {@link #REACH}, when the shape rises above its top by
+ * its own height at most — in a table cell by a stroke's width at most — or else to the page. The
+ * shapes wait for the section's end, since the paragraph carrying a shape may be written after
+ * it.</p>
  *
  * <p>A shape beside no paragraph is positioned from the page's edges, so any paragraph on its
  * page carries it to the right place — but only one on that page: an anchor takes its shape to
@@ -84,10 +87,15 @@ final class DocxDrawingAnchors {
     private final Map<Integer, List<Seat>> seats = new HashMap<>();
     // The paragraphs offered as seats in the section, in the order they were written.
     private final List<Offer> offers = new ArrayList<>();
+    // Where Word places from in each paragraph taken as a seat in the section, once asked: a
+    // drawing's holders and the paragraphs nearest it try the same paragraphs again.
+    private final Map<Seat, Double> tops = new java.util.IdentityHashMap<>();
     // Identifiers unique in the document, shared with the other drawings the export writes.
     private final LongSupplier ids;
     // How tall Word stands a written paragraph's line, and its baseline in it.
     private final Function<CTP, DocxGrownLines.Line> lines;
+    // The paths of the node at a path and of the blocks holding it, nearest first.
+    private final Function<String, List<String>> holders;
     // The places given each fragment's shapes in the section so far, by the fragment's place in
     // the page's paint order.
     private final Map<Integer, Integer> placesTaken = new HashMap<>();
@@ -107,18 +115,18 @@ final class DocxDrawingAnchors {
      */
     static final int PLACES_PER_FRAGMENT = 8;
 
-    DocxDrawingAnchors(LongSupplier ids) {
-        this(ids, DocxGrownLines.NONE::lineOf);
-    }
-
     /**
-     * @param ids   identifiers unique in the document
-     * @param lines how tall Word stands a written paragraph's line, and its baseline in it
-     *              ({@link DocxGrownLines#lineOf})
+     * @param ids     identifiers unique in the document
+     * @param lines   how tall Word stands a written paragraph's line, and its baseline in it
+     *                ({@link DocxGrownLines#lineOf})
+     * @param holders the paths of the node at a path and of the blocks holding it, nearest first,
+     *                the page's flow left out ({@link DocxLayoutMetrics#holdersOf})
      */
-    DocxDrawingAnchors(LongSupplier ids, Function<CTP, DocxGrownLines.Line> lines) {
+    DocxDrawingAnchors(LongSupplier ids, Function<CTP, DocxGrownLines.Line> lines,
+                       Function<String, List<String>> holders) {
         this.ids = ids;
         this.lines = lines;
+        this.holders = holders;
     }
 
     /** Forgets everything, for a new export. */
@@ -130,6 +138,7 @@ final class DocxDrawingAnchors {
         breakParagraph.clear();
         seats.clear();
         offers.clear();
+        tops.clear();
         placesTaken.clear();
         latest = -1;
         drawn = 0;
@@ -226,12 +235,22 @@ final class DocxDrawingAnchors {
 
     /**
      * What a drawing is drawn for: the report's note on it, which a drawing the section's end
-     * finds nothing to carry is named on instead (see {@link Leftovers}).
+     * finds nothing to carry is named on instead (see {@link Leftovers}), and the node whose
+     * holders carry it.
      *
-     * @param subject the note's subject
-     * @param path    the note's path
+     * @param subject  the note's subject
+     * @param path     the note's path: the node that draws it, whose holders look for the
+     *                 paragraph carrying it; a path no node has — a pass of the layout's own —
+     *                 leaves it to the paragraph nearest it
+     * @param composed whether a table's composed cell draws it, which has no node of its own: it
+     *                 goes to the paragraph whose text it stands nearest, within reach
      */
-    record Owner(String subject, String path) {
+    record Owner(String subject, String path, boolean composed) {
+
+        /** What a node draws, or a pass of the layout's own. */
+        Owner(String subject, String path) {
+            this(subject, path, false);
+        }
     }
 
     /**
@@ -266,16 +285,18 @@ final class DocxDrawingAnchors {
      *
      * @param page      the page, counted within the section
      * @param owner     what the text is written for: one of its paragraphs takes the place
+     * @param path      the path of the node the text is written for, which the blocks holding a
+     *                  drawing are matched against; {@code null} for text no node writes
      * @param paragraph the paragraph holding that text
      * @param left      the text's left edge, from the page's left edge
      * @param right     the text's right edge, from the page's left edge
      * @param top       the top of its first line, from the page's top edge
      * @param baseline  its first line's baseline, from the page's top edge
      */
-    void seat(int page, Object owner, XWPFParagraph paragraph, double left, double right, double top,
-              double baseline) {
+    void seat(int page, Object owner, String path, XWPFParagraph paragraph, double left, double right,
+              double top, double baseline) {
         if (page >= 0) {
-            offers.add(new Offer(page, owner, new Seat(paragraph, left, right, top, baseline)));
+            offers.add(new Offer(page, owner, new Seat(paragraph, left, right, top, baseline, path)));
         }
     }
 
@@ -374,7 +395,9 @@ final class DocxDrawingAnchors {
         pending.forEach((page, all) -> {
             List<Ordered> shapes = new ArrayList<>();
             for (Ordered shape : all) {
-                Place place = placeBeside(shape.shape());
+                Owner owner = owners.get(shape);
+                Place place = owner != null && owner.composed() ? placeBeside(shape.shape())
+                        : placeInItsHolder(shape.shape(), owner == null ? List.of() : holders.apply(owner.path()));
                 if (place != null) {
                     beside.computeIfAbsent(place.paragraph(), ignored -> new ArrayList<>()).add(new Placed(shape, place));
                 } else {
@@ -422,6 +445,7 @@ final class DocxDrawingAnchors {
         cellParagraph.clear();
         breakParagraph.clear();
         seats.clear();
+        tops.clear();
         // The next section's layout counts its fragments from its own first one.
         placesTaken.clear();
         latest = -1;
@@ -461,6 +485,63 @@ final class DocxDrawingAnchors {
     }
 
     /**
+     * Where a shape a node draws is anchored: in the first paragraph on its page of the nearest
+     * of its holders that writes one there it can be placed from, or else in the paragraph
+     * nearest it on its page; {@code null} where no paragraph on its page can carry it.
+     *
+     * <p>Its holders — the node drawing it, then each block holding that node — are what it
+     * belongs to: an icon laid over a card's corner is the card's stack's, a skill's bar its
+     * row's, a portrait its sidebar's. Anchored in the first paragraph one of them writes on its
+     * page, it moves with that block wherever an edit above takes it, however far from the
+     * paragraph's text it stands: where it stands gives only its offset. A holder that writes no
+     * paragraph there, or only ones that cannot place it, passes it on to the next one up. A shape
+     * no holder carries — a timeline's rail, which no node draws, or one whose holders' text is a
+     * list or a table — goes to the paragraph nearest it.</p>
+     *
+     * @param holders the paths of the node drawing it and of the blocks holding it, nearest first
+     */
+    private Place placeInItsHolder(DocxDrawings.Shape shape, List<String> holders) {
+        List<Seat> onItsPage = seats.getOrDefault(shape.page(), List.of());
+        for (String holder : holders) {
+            for (Seat seat : onItsPage) {
+                Place place = seat.isWithin(holder) ? placeHeld(seat, shape) : null;
+                if (place != null) {
+                    return place;
+                }
+            }
+        }
+        return placeBesideTheNearest(shape, onItsPage);
+    }
+
+    /** Where a paragraph places a shape it carries for a block holding both ({@link Seat#placeHeld}). */
+    private Place placeHeld(Seat seat, DocxDrawings.Shape shape) {
+        return seat.placeHeld(shape, tops.computeIfAbsent(seat, taken -> taken.paragraphTop(lines)));
+    }
+
+    /**
+     * The paragraph on a shape's page whose text it stands nearest that can place it, however far
+     * off; {@code null} where none can.
+     */
+    private Place placeBesideTheNearest(DocxDrawings.Shape shape, List<Seat> onItsPage) {
+        List<Seat> byDistance = new ArrayList<>(onItsPage);
+        byDistance.sort(java.util.Comparator.comparingDouble(seat -> distance(shape, seat)));
+        for (Seat seat : byDistance) {
+            Place place = placeHeld(seat, shape);
+            if (place != null) {
+                return place;
+            }
+        }
+        return null;
+    }
+
+    /** How far a shape stands from a paragraph's text: down from its first line's top, and across past its edges. */
+    private static double distance(DocxDrawings.Shape shape, Seat seat) {
+        return Math.abs(shape.top() - seat.top())
+               + Math.max(0, seat.left() - (shape.x() + shape.width()))
+               + Math.max(0, shape.x() - seat.right());
+    }
+
+    /**
      * The paragraph whose text a shape stands nearest, within reach, when it can hold the shape
      * placed down from its top; {@code null} when there is none, or it cannot.
      *
@@ -474,9 +555,7 @@ final class DocxDrawingAnchors {
         Seat nearest = null;
         double nearestBy = Double.POSITIVE_INFINITY;
         for (Seat seat : seats.getOrDefault(shape.page(), List.of())) {
-            double by = Math.abs(shape.top() - seat.top())
-                        + Math.max(0, seat.left() - (shape.x() + shape.width()))
-                        + Math.max(0, shape.x() - seat.right());
+            double by = distance(shape, seat);
             if (by <= REACH && by < nearestBy) {
                 nearest = seat;
                 nearestBy = by;
@@ -541,8 +620,16 @@ final class DocxDrawingAnchors {
      * @param right     its text's right edge, from the page's left edge
      * @param top       its first line's top, from the page's top edge
      * @param baseline  its first line's baseline, from the page's top edge
+     * @param path      the path of the node its text is written for; {@code null} for none
      */
-    record Seat(XWPFParagraph paragraph, double left, double right, double top, double baseline) {
+    record Seat(XWPFParagraph paragraph, double left, double right, double top, double baseline, String path) {
+
+        /** Whether its text is written for the node at a path, or for a node that node holds. */
+        boolean isWithin(String holder) {
+            return path != null && (path.equals(holder)
+                                    || path.length() > holder.length() && path.startsWith(holder)
+                                       && path.charAt(holder.length()) == '/');
+        }
 
         /**
          * Where the page puts the top Word places a paragraph's shapes from: its first line's,
@@ -621,9 +708,11 @@ final class DocxDrawingAnchors {
         }
 
         /**
-         * Where Word places a shape beside this paragraph's text from, or {@code null} where it
-         * cannot. The shape may rise above the paragraph's top as {@code risesNoFurther} allows:
-         * by its own height in the body, by a stroke's width in a table cell.
+         * Where Word places a shape a table's composed cell draws beside this paragraph's text
+         * from, or {@code null} where it cannot; a shape a node draws is placed by
+         * {@link #placeHeld}. The shape may rise above the paragraph's top as
+         * {@code risesNoFurther} allows: by its own height in the body, by a stroke's width in a
+         * table cell.
          *
          * <p>A paragraph of the body places it across from the page's edge. One in a table cell
          * places it from the cell's text column; a cell that does not hold the shape across hands
@@ -653,12 +742,80 @@ final class DocxDrawingAnchors {
         }
 
         /**
+         * Where Word places a shape this paragraph carries for a block holding both, however far
+         * from its text the shape stands; {@code null} where it cannot.
+         *
+         * <p>Measured in Word 16.0.20527 and LibreOffice 24.2: a shape anchored in a table cell's
+         * paragraph, placed from the cell's text column and the paragraph's top, stands where both
+         * say when it rises above its row or its table, hangs below them, stands out of its cell,
+         * is taller than its row, sits in a row of an exact height or in a nested table, in front of
+         * the text or behind it — from 36pt above its paragraph to 70pt below in probes, from 155pt
+         * above to 620pt below in the fidelity corpus. Neither editor clips it or moves a line for
+         * it, and both move it with the row when the text above it is edited. A cell set to the
+         * middle or the bottom, or held in one, carries none: LibreOffice 24.2 sets the text of a
+         * cell carrying a drawing from the cell's top, whatever drawing it is — 16pt and 32pt high
+         * in a row three lines taller than it. A paragraph of the body places a shape across from
+         * the page's edge.</p>
+         *
+         * <p>A cell holding the shape across takes it in this paragraph; one that does not hands it
+         * to the cell of its row that does, the shape's own ({@link #inTheRow}), or else keeps it,
+         * placed out of its column — unless it holds text, a text box or a badge's letters, which
+         * LibreOffice 26.8 pulls back into the column. None takes it in a repeated header row,
+         * which Word repeats on every page with what is anchored in it, nor for a line not set from
+         * the cell's left, whose text column its text does not tell.</p>
+         *
+         * @param top where Word places from in this paragraph ({@link #paragraphTop}); NaN where
+         *            something above its line hides it
+         */
+        Place placeHeld(DocxDrawings.Shape shape, double top) {
+            if (Double.isNaN(top)) {
+                return null;
+            }
+            if (!(paragraph.getBody() instanceof XWPFTableCell cell)) {
+                return new Place(paragraph, Double.POSITIVE_INFINITY, top);
+            }
+            if (cell.getTableRow().isRepeatHeader() || !leftAligned(paragraph) || !setFromTheTop(cell)) {
+                return null;
+            }
+            double width = widthOf(cell);
+            double cellLeft = textLeft() - leftMargin(cell);
+            if (Double.isNaN(width) || Double.isNaN(cellLeft)) {
+                return null;
+            }
+            if (holdsAcross(shape, cellLeft, width)) {
+                return new Place(paragraph, cellLeft + leftMargin(cell), top);
+            }
+            Place own = inTheRow(shape, cell, cellLeft, width, top);
+            // LibreOffice 26.8 pulls a shape holding text back into the column of the cell it is
+            // anchored in: a text box placed 120pt left of its column stood at the column's start.
+            // A shape holding none it draws out of the column, as Word and LibreOffice 24.2 do both.
+            return own != null || shape.text() != null ? own : new Place(paragraph, cellLeft + leftMargin(cell), top);
+        }
+
+        /** Whether a cell, and each cell holding its table, sets its content from its top. */
+        private static boolean setFromTheTop(XWPFTableCell cell) {
+            for (XWPFTableCell at = cell; at != null; ) {
+                if (!alignedToTheTop(at)) {
+                    return false;
+                }
+                at = at.getTableRow().getTable().getBody() instanceof XWPFTableCell holding ? holding : null;
+            }
+            return true;
+        }
+
+        /**
          * Whether a shape rises above a paragraph's top no further than it may: in the body, by
          * its own height, as a dot centred on the paragraph's first line does, and
          * {@link #FURTHEST_RISE} at most; in a table cell, by a stroke's width. A 20.5pt rule
          * placed 1pt above its paragraph in a cell of a contact row moved that row's text 1.8pt up
          * in the Linux LibreOffice the build checks with, though not in Word or LibreOffice on
          * Windows. NaN for a top not known is no.
+         *
+         * <p>Only what a table's composed cell draws is held to this
+         * ({@link DocxDrawingAnchors#placeBeside}). That contact row's cells are set to the middle,
+         * and LibreOffice 24.2 sets such a cell's text from its top once it carries a drawing,
+         * wherever the drawing stands; a cell set from its top moved no line for a drawing 36pt
+         * above its paragraph ({@link #placeHeld}).</p>
          */
         private static boolean risesNoFurther(DocxDrawings.Shape shape, double top, boolean inCell) {
             double rise = inCell ? SLACK : Math.max(SLACK, Math.min(shape.height(), FURTHEST_RISE));

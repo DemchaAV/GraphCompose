@@ -8,6 +8,37 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export anchors a drawing in a paragraph of the block it belongs to, so it moves with
+  that block when the text above is edited.**
+  - A shape stood in the paragraph whose text was nearest it, within 48pt, rising above that
+    paragraph's top by 24pt at most — in a table cell by a stroke's width —, and otherwise was
+    placed from the page's edges, where it stayed while the text moved away from it: an icon laid
+    over a card's corner, a sidebar's portrait, a skill's meter beside its label in a row, a
+    timeline's dots in a column of their own.
+  - A drawing a node paints is now anchored in the first paragraph able to carry it that the
+    nearest block holding it writes on its page — the node itself, a layer stack, a panel, a row,
+    but not the page's flow —, placed from that paragraph's top however far from its text it
+    stands. In a table cell, the cell of that paragraph's row holding the drawing across takes it,
+    its own where it stands in a column of its own; another cell keeps it placed out of its
+    column, unless it holds text — a text box, a badge's letters —, which LibreOffice 26.8 pulls
+    back into the column. A cell set to the middle or the bottom carries none: the block's next
+    paragraph able to place it takes the drawing, or else the next block up. A drawing no node
+    paints — a timeline's rail — and one whose blocks write no such paragraph on its page go to
+    the paragraph nearest it there. What a table's composed cell draws keeps the nearest-text
+    rule. The report's note on each drawing says how it is anchored.
+  - Measured in Word 16.0.20527 and LibreOffice 24.2: a shape anchored in a table cell's
+    paragraph stands where both say — rising 36pt above its row, hanging below its table, out of
+    its cell, taller than its row, in an exact row or a nested table, in front of the text or
+    behind it, and across the fidelity corpus from 155pt above its paragraph to 620pt below —;
+    neither clips it nor moves a line for it, and both move it with its row when the text above
+    is edited. LibreOffice 24.2 sets a cell carrying a drawing from its top whatever its vertical
+    alignment says, 16pt high in a cell set to the middle and 32pt in one set to the bottom.
+  - Of the 465 drawings the fidelity corpus placed on the page, 270 were drawn by a node, 5 were
+    timelines' rails and 190 were composed in table cells. All but 14 of the first 275 are now
+    anchored in a paragraph: the text boxes of `LumaStudio`'s sidebar and closing note, which no
+    paragraph of their column holds across, and two drawings on pages whose only text is a pair
+    of lines.
+
 - **A DOCX export writes a painted box holding text in the body as a panel, its text inside its
   outline.**
   - A shape container shaped as a rectangle or a rounded rectangle, filled or outlined, holding

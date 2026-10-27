@@ -227,6 +227,58 @@ class DocxDrawingOwnerAnchorsTest {
     }
 
     @Test
+    void aHoldersNextParagraphTakesItWhereItsFirstCannot() {
+        // The card's first paragraph stands in a cell set to the middle; its caption under the
+        // table is the card's too. Another block's note stands nearer the icon than the caption.
+        XWPFDocument document = new XWPFDocument();
+        XWPFParagraph entry = cellParagraph(document, 200, "Entry");
+        ((XWPFTableCell) entry.getBody()).getCTTc().getTcPr().addNewVAlign().setVal(STVerticalJc.CENTER);
+        XWPFParagraph caption = text(document, "Caption");
+        XWPFParagraph note = text(document, "Note");
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, caption, true);
+        anchors.seat(0, entry, "Flow[0]/Card[1]/Entry[0]", entry, 110, 290, 100, 110);
+        anchors.seat(0, caption, "Flow[0]/Card[1]/Caption[1]", caption, 40, 300, 160, 170);
+        anchors.seat(0, note, "Flow[0]/Aside[2]/Note[0]", note, 40, 300, 106, 116);
+
+        queue(anchors, "Flow[0]/Card[1]/Icon[2]", List.of(dot(120, 102)));
+        anchors.endSection(0, null, document::createParagraph);
+
+        assertThat(drawingsIn(entry)).isEmpty();
+        assertThat(drawingsIn(note)).isEmpty();
+        assertThat(offsetDown(drawingsIn(caption).get(0))).isCloseTo(-58, within(0.01));
+    }
+
+    @Test
+    void itsOwnCellMergedFromAboveLeavesItToTheParagraphsCellOutOfItsColumn() {
+        // As a timeline's dot in a column of its own, but that cell continues one from the row
+        // above: the text's cell keeps the dot, placed from its own column.
+        XWPFDocument document = new XWPFDocument();
+        XWPFTable table = document.createTable(1, 2);
+        XWPFTableCell dotCell = table.getRow(0).getCell(0);
+        XWPFTableCell textCell = table.getRow(0).getCell(1);
+        width(dotCell, 20);
+        width(textCell, 200);
+        margin(dotCell, 0);
+        margin(textCell, 0);
+        dotCell.getCTTc().getTcPr().addNewVMerge()
+                .setVal(org.openxmlformats.schemas.wordprocessingml.x2006.main.STMerge.CONTINUE);
+        XWPFParagraph entry = textCell.getParagraphs().get(0);
+        entry.createRun().setText("Entry");
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, text(document, "Body"), true);
+        anchors.seat(0, entry, "Flow[0]/Row[1]/Text[1]", entry, 120, 320, 100, 110);
+
+        queue(anchors, "Flow[0]/Row[1]/Rail[0]/Dot[0]", List.of(dot(107, 102)));
+        anchors.endSection(0, null, document::createParagraph);
+
+        assertThat(drawingsIn(dotCell.getParagraphs().get(0))).isEmpty();
+        String drawing = drawingsIn(entry).get(0);
+        assertThat(drawing).contains("layoutInCell=\"1\"");
+        assertThat(offsetAcross(drawing)).as("left of the text's column").isCloseTo(-13, within(0.01));
+    }
+
+    @Test
     void aCellHeldInACellSetToTheMiddleCarriesNoneEither() {
         XWPFDocument document = new XWPFDocument();
         XWPFParagraph heading = text(document, "Heading");

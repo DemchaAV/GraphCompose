@@ -630,6 +630,33 @@ class DocxDrawingsTest {
     }
 
     @Test
+    void aRingAloneInItsColumnBesideALeftSetParagraphIsAnchoredInItsOwnCellWithNoHairline() throws Exception {
+        // The page above, its paragraph set from the left: the ring's own cell of the columns'
+        // row carries it, placed from that paragraph's top, and nothing opens the page before
+        // the table.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addLayerStack(stack -> stack
+                        .layer(column("Side", 0, 260, side -> side.addParagraph(p -> p.text("Contact"))),
+                                com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
+                        .layer(column("Main", 100, 0, main -> main
+                                .addEllipse(e -> e.name("Ring").circle(40).fillColor(ACCENT))),
+                                com.demcha.compose.document.node.LayerAlign.TOP_LEFT))))) {
+            List<org.apache.poi.xwpf.usermodel.IBodyElement> body = document.getBodyElements();
+
+            assertThat(body.get(0)).as("the columns' row opens the page")
+                    .isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFTable.class);
+            List<org.apache.poi.xwpf.usermodel.XWPFTableCell> carriers = document.getTables().get(0).getRows().stream()
+                    .flatMap(row -> row.getTableCells().stream())
+                    .filter(cell -> cell.getCTTc().xmlText().contains("prst=\"ellipse\"")).toList();
+            assertThat(carriers).singleElement().satisfies(cell -> {
+                assertThat(cell.getText()).as("the ring's own cell, not the sidebar's").doesNotContain("Contact");
+                assertThat(anchors(cell.getCTTc().xmlText()).get(0)).contains("layoutInCell=\"1\"")
+                        .contains("<wp:positionV relativeFrom=\"paragraph\">");
+            });
+        }
+    }
+
+    @Test
     void aShapeInAPaintedPanelIsDrawnInFrontOfTheText() throws Exception {
         // Both editors paint a shaded cell over what lies behind the text.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page

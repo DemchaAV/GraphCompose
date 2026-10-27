@@ -81,11 +81,13 @@ class DocxDrawingHolderTest {
                         .add(meter)))) {
             assertThat(onThePage(document)).as("nothing left to the page").isZero();
             XWPFParagraph label = cellParagraphHolding(document, "Negotiation");
-            List<CTAnchor> inTheRow = new ArrayList<>(anchorsIn(label.getCTP()));
             XWPFTableCell barCell = ((XWPFTableCell) label.getBody()).getTableRow().getCell(1);
-            inTheRow.addAll(anchorsIn(barCell.getCTTc()));
-            assertThat(inTheRow).as("the track and its fill, in their row").hasSize(2)
-                    .allSatisfy(anchor -> assertThat(anchor.getLayoutInCell()).isTrue());
+            assertThat(anchorsIn(label.getCTP())).as("not the label's paragraph").isEmpty();
+            assertThat(anchorsIn(barCell.getCTTc())).as("the track and its fill, in their own cell of the row")
+                    .hasSize(2).allSatisfy(anchor -> {
+                        assertThat(anchor.getLayoutInCell()).isTrue();
+                        assertThat(anchor.getPositionV().getRelativeFrom()).isEqualTo(STRelFromV.PARAGRAPH);
+                    });
         }
     }
 

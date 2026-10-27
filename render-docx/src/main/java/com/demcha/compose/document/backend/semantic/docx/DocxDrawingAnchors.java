@@ -44,10 +44,11 @@ import java.util.function.Supplier;
  * shapes wait for the section's end, since the paragraph carrying a shape may be written after
  * it.</p>
  *
- * <p>A shape beside no paragraph is positioned from the page's edges, so any paragraph on its
- * page carries it to the right place — but only one on that page: an anchor takes its shape to
- * the page the anchoring paragraph lands on. And a paragraph of the body rather than of a table
- * cell: Word measures a shape anchored in a cell from the cell, not the page. The first body
+ * <p>A shape no paragraph on its page can carry is positioned from the page's edges, so any
+ * paragraph on its page carries it to the right place — but only one on that page: an anchor
+ * takes its shape to the page the anchoring paragraph lands on. And a paragraph of the body
+ * rather than of a table cell: Word measures a shape anchored in a cell from the cell, not the
+ * page. The first body
  * paragraph written on each page carries such shapes. The run is put at the front of the
  * paragraph, so a paragraph that runs on to the next page does not take the shape with it.</p>
  *
@@ -266,7 +267,7 @@ final class DocxDrawingAnchors {
 
     /** Keeps shapes given their places in the paint order for the section's end, as {@link #queue} does. */
     void queueOrdered(List<Ordered> shapes, Owner owner) {
-        // Held until the section ends: the paragraph a shape stands beside may be written after it.
+        // Held until the section ends: the paragraph carrying a shape may be written after it.
         for (Ordered shape : shapes) {
             pending.computeIfAbsent(shape.shape().page(), page -> new ArrayList<>()).add(shape);
             if (owner != null) {
@@ -317,7 +318,7 @@ final class DocxDrawingAnchors {
 
     /**
      * Records a paragraph written on a page. The page's first body paragraph carries the shapes
-     * no paragraph beside them does; a cell's is kept in case the page has no other.
+     * no other paragraph does; a cell's is kept in case the page has no other.
      *
      * @param page      the page, counted within the section
      * @param paragraph a paragraph the layout puts on that page
@@ -569,8 +570,10 @@ final class DocxDrawingAnchors {
     }
 
     /**
-     * Anchors shapes in the paragraph whose text they stand nearest, placed down from its top,
-     * in the order they are drawn: they move with the paragraph wherever an edit takes it.
+     * Anchors shapes in the paragraph each was placed from — a paragraph of a block holding it,
+     * the one nearest it, or for a composed cell's the one whose text it stands nearest — placed
+     * down from its top, in the order they are drawn: they move with the paragraph wherever an
+     * edit takes it.
      */
     private void anchorBeside(XWPFParagraph paragraph, List<Placed> shapes) {
         XWPFRun run = paragraph.insertNewRun(0);
@@ -591,9 +594,10 @@ final class DocxDrawingAnchors {
     }
 
     /**
-     * How far from a paragraph's text a shape still stands beside it, across and down added, in
-     * points: a timeline's dot beside its entry, a rail from its first entry, an icon beside its
-     * heading. A shape further from every paragraph stays where the page puts it.
+     * How far from a paragraph's text a shape a table's composed cell draws still stands beside
+     * it, across and down added, in points: an icon beside its label in another cell. One further
+     * from every paragraph stays where the page puts it. A shape a node draws goes by the blocks
+     * holding it, however far off ({@link #placeInItsHolder}).
      */
     private static final double REACH = 48;
 
@@ -601,11 +605,11 @@ final class DocxDrawingAnchors {
     private static final double SLACK = 1;
 
     /**
-     * The furthest a shape rises above its paragraph's top in the body, in points: as far as a
-     * dot or an icon's disc centred on a line of text does — NavySidebar's 22.6pt badge is the
-     * corpus's largest — where Word and LibreOffice were measured placing 6pt and 10pt dots up
-     * to 8pt above their paragraphs. A taller shape — a rail, an accent bar — rising further
-     * stands by other text.
+     * The furthest a shape a table's composed cell draws rises above its paragraph's top in the
+     * body, in points: as far as a dot or an icon's disc centred on a line of text does, as
+     * NavySidebar's 22.6pt badge did when every shape was placed by the text nearest it — Word and
+     * LibreOffice were measured placing 6pt and 10pt dots up to 8pt above their paragraphs. A
+     * taller shape — a rail, an accent bar — rising further stands by other text.
      */
     private static final double FURTHEST_RISE = 24;
 

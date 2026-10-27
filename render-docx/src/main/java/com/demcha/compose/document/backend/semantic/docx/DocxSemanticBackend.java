@@ -4455,7 +4455,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 paragraphXml(para))), layout.paintIndexOf(node),
                 new DocxDrawingAnchors.Owner(node.nodeKind(), layout.pathOf(node)));
         List<String> lost = new ArrayList<>();
-        lost.add("laid over the flow, which gives it no room: set in a text box where the page sets it");
+        lost.add("laid over the flow, which gives it no room: set in a text box where the page sets it, "
+                 + ANCHORED_IN_ITS_BLOCK);
         lost.addAll(paragraphLost(node, roomLostInItsBox(node), null));
         report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
                 String.join("; ", lost));

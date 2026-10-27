@@ -19,9 +19,10 @@ follow semantic versioning; release dates are ISO 8601.
     nearest block holding it writes on its page — the node itself, a layer stack, a panel, a row,
     but not the page's flow —, placed from that paragraph's top however far from its text it
     stands. In a table cell, the cell of that paragraph's row holding the drawing across takes it,
-    its own where it stands in a column of its own; another cell keeps it placed out of its
-    column, unless it holds text — a text box, a badge's letters —, which LibreOffice 26.8 pulls
-    back into the column. A cell set to the middle or the bottom carries none: the block's next
+    its own where it stands in a column of its own; otherwise the paragraph's own cell keeps it,
+    placed out of its column, unless it holds text — a text box, a badge's letters —, which
+    LibreOffice 26.8 pulls back into the column. A cell set to the middle or the bottom, or
+    sitting in one, carries none: the block's next
     paragraph able to place it takes the drawing, or else the next block up. A drawing no node
     paints — a timeline's rail — and one whose blocks write no such paragraph on its page go to
     the paragraph nearest it there. What a table's composed cell draws keeps the nearest-text

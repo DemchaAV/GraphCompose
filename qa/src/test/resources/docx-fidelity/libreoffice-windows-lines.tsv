@@ -1,6 +1,7 @@
 # libreoffice build bf6ef2662401 on windows — document, line, drift below the page (pt), drift right of the page (pt), letters
 # rows of invoice-metered_long, invoice-obsidian_long, synthetic-break_in_column, synthetic-break_in_panel, synthetic-card_over_pages: libreoffice build bf6ef2662401 on windows
 # rows of synthetic-clipped_container, synthetic-narrow_container, synthetic-rounded_card: libreoffice build bf6ef2662401 on windows
+# rows of synthetic-icon_over_card: libreoffice build bf6ef2662401 on windows
 cv-blue_banner	0:8f1010120ed6	0.02	1.95	jordanrivera
 cv-blue_banner	0:8d7a2cca3060	0.00	0.24	+442055551000|jordan.rivera@exam
 cv-blue_banner	0:b944906ed84c	-0.20	-0.38	professionalsummary
@@ -5025,6 +5026,12 @@ synthetic-clipped_container	0:1d37c4498256	0.98	-0.40	thatrunpastthefootofthebox
 synthetic-clipped_container	0:e7653895ac38	0.98	-0.40	seen.onlythelinestheboxholdsarer
 synthetic-clipped_container	0:2633ce73dc24	-0.02	0.10	aftertheclippedbox:thisparagraph
 synthetic-clipped_container	0:667f8b3b3eff	-0.02	0.10	noneofitslinesrunsoverthebox.
+synthetic-icon_over_card	0:22d08874d8c4	-0.02	0.10	beforethecard:thisparagraphisthe
+synthetic-icon_over_card	0:ea7f305a7f76	-0.02	0.10	thatlengthensthelongestparagraph
+synthetic-icon_over_card	0:e3ac6d2ba79c	-0.02	0.10	theiconoveritscornerdownthepaget
+synthetic-icon_over_card	0:887d93e46549	13.98	0.10	acardunderaniconlaidoveritstopri
+synthetic-icon_over_card	0:abfed2fbe03e	13.98	0.10	itspadding.
+synthetic-icon_over_card	0:573902639706	27.98	0.10	afterthecard:thisparagraphstands
 synthetic-narrow_container	0:fa13cab3fe73	-0.02	0.10	beforethebox,onalineofitsown.
 synthetic-narrow_container	0:ed60c8a4c178	-0.02	-0.41	anotecentredinaboxnarrowerthanth
 synthetic-narrow_container	0:d7899490a8cd	-0.02	-0.41	thepagewrapsitoverthreelinesinsi

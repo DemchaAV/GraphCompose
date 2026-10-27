@@ -1092,8 +1092,14 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   spacer level with another layer's content only keeps its place and is not
   written, the space above the first block written and below the last is the
   page's distance from the stack's edges, and a later layer resumes the page's
-  distance below the blocks above it, to its first block's content. What that block
-  holds above its content past that distance — a margin, a padding, a contained
+  distance below the blocks above it, to its first block's content. The space above
+  and below is measured to the band's first and last block written, through a panel
+  among the layers: a panel opening the band writes its top padding again inside its
+  cell, and one closing it its bottom padding, so the band stands that much too tall
+  there. A card with 14pt padding under an icon laid over its corner stood 14pt low in
+  Word and LibreOffice, and the paragraph under it 28pt (`icon_over_card` in the
+  fidelity corpus holds it as it stands). What a later layer's first block holds above
+  its content past the page's distance — a margin, a padding, a contained
   picture's room reaching above where the layers before it end — comes out of its own
   edge, in a band as in a column's cell, where the block is a paragraph, a picture, a
   list or a table in its layer's own flow — under plain sections and containers, and
@@ -1490,7 +1496,9 @@ from the top, and give every cell of a row the row's largest top margin, so the 
 first paragraph starts where the text's does; one with a border above it is not used; a row whose top is not known that way, a line not set
 from the left and a repeated header row carry none. When the nearest paragraph cannot carry
 the shape, it stays on the page rather than going to a paragraph further off, which is not
-the text it stands by. The paragraph's top is where Word places from:
+the text it stands by: an icon laid over a panel's top corner whose nearest paragraph is
+the panel's first, more than a stroke's width below the icon's top, stays where the page
+draws it when the text above the panel moves. The paragraph's top is where Word places from:
 the space written above its first line included, and the line where Word stands it — an
 exact line's baseline four fifths of the way down it, raised by the run's position —
 measured in Word 16.0.20430 and LibreOffice to a tenth of a point. Only the first paragraph

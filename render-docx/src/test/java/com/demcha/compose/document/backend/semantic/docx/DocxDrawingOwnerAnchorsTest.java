@@ -500,7 +500,11 @@ class DocxDrawingOwnerAnchorsTest {
         Matcher matcher = Pattern.compile("<wp:" + axis + " relativeFrom=\"\\w+\"><wp:posOffset>(-?\\d+)<")
                 .matcher(drawing);
         assertThat(matcher.find()).isTrue();
-        return Long.parseLong(matcher.group(1)) / 12700.0;
+        try {
+            return Long.parseLong(matcher.group(1)) / 12700.0;
+        } catch (NumberFormatException notAnOffset) {
+            throw new AssertionError("not an offset in EMU: " + matcher.group(1), notAnOffset);
+        }
     }
 
     private static long emu(double points) {

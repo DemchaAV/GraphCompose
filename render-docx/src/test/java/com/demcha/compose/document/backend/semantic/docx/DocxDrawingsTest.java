@@ -357,14 +357,19 @@ class DocxDrawingsTest {
     }
 
     @Test
-    void aShapeWithNoParagraphWithinReachStaysOnThePage() throws Exception {
+    void aShapeNoBlockHoldsGoesToTheParagraphNearestItHoweverFar() throws Exception {
+        // The page's flow holds the dot and nothing else does: the paragraph 80pt above takes it,
+        // further off than the 48pt a composed cell's drawing may stand from its text.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
                 .addParagraph(p -> p.text("Above"))
                 .addSpacer(s -> s.height(80))
                 .addEllipse(e -> e.name("Dot").circle(16).fillColor(ACCENT))))) {
-            assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
-                    .contains("<wp:positionH relativeFrom=\"page\">")
-                    .contains("<wp:positionV relativeFrom=\"page\">");
+            org.apache.poi.xwpf.usermodel.XWPFParagraph above = document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getText().equals("Above")).findFirst().orElseThrow();
+            String anchor = anchors(above.getCTP().xmlText()).get(0);
+            assertThat(anchor).contains("<wp:positionH relativeFrom=\"page\">")
+                    .contains("<wp:positionV relativeFrom=\"paragraph\">");
+            assertThat(offsetDown(anchor)).isGreaterThan(80);
         }
     }
 
@@ -597,11 +602,13 @@ class DocxDrawingsTest {
 
     @Test
     void aFirstPageLaidOutInATableGetsABodyParagraphBeforeItForItsShapes() throws Exception {
-        // Two columns written as one row: the page has no body paragraph, and the ring has no
-        // paragraph beside it in its own column. A hairline paragraph opens the page for it.
+        // Two columns written as one row: the page has no body paragraph, and its one paragraph,
+        // centred in its cell, does not tell where that cell's column starts to place the ring
+        // from. A hairline paragraph opens the page for it.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
                 .addLayerStack(stack -> stack
-                        .layer(column("Side", 0, 260, side -> side.addParagraph(p -> p.text("Contact"))),
+                        .layer(column("Side", 0, 260, side -> side.addParagraph(p -> p.text("Contact")
+                                        .align(com.demcha.compose.document.node.TextAlign.CENTER))),
                                 com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
                         .layer(column("Main", 100, 0, main -> main
                                 .addEllipse(e -> e.name("Ring").circle(40).fillColor(ACCENT))),
@@ -619,6 +626,33 @@ class DocxDrawingsTest {
             assertThat(DocxTwips.of(opening.getCTP().getPPr().getSpacing().getBefore())).isZero();
             assertThat(DocxTwips.of(opening.getCTP().getPPr().getSpacing().getAfter())).isZero();
             assertThat(document.getTables().get(0).getCTTbl().xmlText()).doesNotContain("wp:anchor");
+        }
+    }
+
+    @Test
+    void aRingAloneInItsColumnBesideALeftSetParagraphIsAnchoredInItsOwnCellWithNoHairline() throws Exception {
+        // The page above, its paragraph set from the left: the ring's own cell of the columns'
+        // row carries it, placed from that paragraph's top, and nothing opens the page before
+        // the table.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addLayerStack(stack -> stack
+                        .layer(column("Side", 0, 260, side -> side.addParagraph(p -> p.text("Contact"))),
+                                com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
+                        .layer(column("Main", 100, 0, main -> main
+                                .addEllipse(e -> e.name("Ring").circle(40).fillColor(ACCENT))),
+                                com.demcha.compose.document.node.LayerAlign.TOP_LEFT))))) {
+            List<org.apache.poi.xwpf.usermodel.IBodyElement> body = document.getBodyElements();
+
+            assertThat(body.get(0)).as("the columns' row opens the page")
+                    .isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFTable.class);
+            List<org.apache.poi.xwpf.usermodel.XWPFTableCell> carriers = document.getTables().get(0).getRows().stream()
+                    .flatMap(row -> row.getTableCells().stream())
+                    .filter(cell -> cell.getCTTc().xmlText().contains("prst=\"ellipse\"")).toList();
+            assertThat(carriers).singleElement().satisfies(cell -> {
+                assertThat(cell.getText()).as("the ring's own cell, not the sidebar's").doesNotContain("Contact");
+                assertThat(anchors(cell.getCTTc().xmlText()).get(0)).contains("layoutInCell=\"1\"")
+                        .contains("<wp:positionV relativeFrom=\"paragraph\">");
+            });
         }
     }
 
@@ -826,9 +860,11 @@ class DocxDrawingsTest {
         first.pageFlow(page -> page.addParagraph(p -> p.text("Cover")));
         DocumentSession second = GraphCompose.document().pageSize(400, 400).margin(DocumentInsets.of(20)).create();
         second.pageFlow(page -> page.addLayerStack(stack -> stack
-                .layer(column("Side", 0, 260, side -> side.addParagraph(p -> p.text("Contact"))),
+                .layer(column("Side", 0, 260, side -> side.addParagraph(p -> p.text("Contact")
+                                .align(com.demcha.compose.document.node.TextAlign.CENTER))),
                         com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
-                // The ring alone in its column: no paragraph stands beside it.
+                // The ring alone in its column, and the page's one paragraph centred: nothing on
+                // the page can place it.
                 .layer(column("Main", 100, 0, main -> main
                                 .addEllipse(e -> e.name("Ring").circle(40).fillColor(ACCENT))),
                         com.demcha.compose.document.node.LayerAlign.TOP_LEFT)));

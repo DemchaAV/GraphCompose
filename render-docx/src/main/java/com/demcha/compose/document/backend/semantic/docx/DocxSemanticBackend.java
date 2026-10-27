@@ -206,10 +206,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * sets lines on its 0.12pt grid, and a twip of margin moves a line a step or nothing.
      */
     private static final double LEAST_ROW_TEXT_MOVE = 0.1;
-    /** How a drawing the page paints is anchored, as the report says it (see DocxDrawingAnchors). */
+    /**
+     * How a drawing a table's composed cell paints is anchored, as the report says it: such a cell
+     * has no node of its own to be held by (see DocxDrawingAnchors).
+     */
     private static final String ANCHORED_BESIDE_ITS_TEXT = "anchored in the paragraph whose text it stands "
             + "beside, so it moves with that text when the text above is edited, or to the page where it "
             + "stands beside none";
+    /** How a drawing a node paints is anchored, as the report says it (see DocxDrawingAnchors). */
+    private static final String ANCHORED_IN_ITS_BLOCK = "anchored in the first paragraph able to carry it "
+            + "that the nearest block holding it writes on its page, so it moves with that block when the text "
+            + "above is edited; in the paragraph nearest it where no block holding it writes one there, or to "
+            + "the page where no paragraph on its page can carry it";
+    /** How a drawing no node paints — a timeline's rail — is anchored, as the report says it. */
+    private static final String ANCHORED_IN_THE_NEAREST = "anchored in the paragraph nearest it on its page, "
+            + "so it moves with that paragraph when the text above is edited, or to the page where no "
+            + "paragraph on its page can carry it";
     /**
      * The report's subject for a translucent colour Word holds only opaque — a cell's shading, a
      * border — flattened against the colour under it (see {@link DocxTranslucency}).
@@ -452,7 +464,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private final java.util.Map<PanelOverPages, PanelCuts> cutsDecided = new java.util.IdentityHashMap<>();
     // Where the shapes this export draws are anchored — see DocxDrawingAnchors.
     private final DocxDrawingAnchors anchors = new DocxDrawingAnchors(() -> nextDrawingId++,
-            paragraph -> grownLines.lineOf(paragraph));
+            paragraph -> grownLines.lineOf(paragraph), path -> this.layout.holdersOf(path));
     // The page the node being written starts on, as the layout placed it, counted within the
     // section being written.
     private int currentPage;
@@ -1314,7 +1326,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     drawingFor = new DocxDrawingAnchors.Owner("timeline rail", pass.path());
                     if (queueDrawing(pass, drawsInFront()) && railsNamed.add(pass.path())) {
                         report.add(DocxExportReport.Severity.APPROXIMATED, "timeline rail", pass.path(),
-                                "drawn as a line where the layout puts it, " + ANCHORED_BESIDE_ITS_TEXT);
+                                "drawn as a line where the layout puts it, " + ANCHORED_IN_THE_NEAREST);
                     }
                     drawingFor = null;
                 }
@@ -4443,7 +4455,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 paragraphXml(para))), layout.paintIndexOf(node),
                 new DocxDrawingAnchors.Owner(node.nodeKind(), layout.pathOf(node)));
         List<String> lost = new ArrayList<>();
-        lost.add("laid over the flow, which gives it no room: set in a text box where the page sets it");
+        lost.add("laid over the flow, which gives it no room: set in a text box where the page sets it, "
+                 + ANCHORED_IN_ITS_BLOCK);
         lost.addAll(paragraphLost(node, roomLostInItsBox(node), null));
         report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
                 String.join("; ", lost));
@@ -5073,7 +5086,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             StringBuilder message = new StringBuilder(drewInCell
                     ? "drawn as a shape anchored in the table cell it fills, where the layout puts it "
                       + "in the cell: it moves with the row"
-                    : "drawn as a shape where the layout puts it, " + ANCHORED_BESIDE_ITS_TEXT);
+                    : "drawn as a shape where the layout puts it, " + ANCHORED_IN_ITS_BLOCK);
             if (badgeText != null) {
                 message.append("; its text is held in the shape, which stands in front of the text");
             } else if (front) {
@@ -9838,8 +9851,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         // The baseline the page draws the first line on, seated as the page seats it.
         layout.firstTextBox(node).ifPresent(box ->
-                anchors.seat(box.page(), node, para, box.left(), box.right(), canvasHeight - box.top(),
-                        canvasHeight - box.baseline() - seatShift(node)));
+                anchors.seat(box.page(), node, layout.pathOf(node), para, box.left(), box.right(),
+                        canvasHeight - box.top(), canvasHeight - box.baseline() - seatShift(node)));
     }
 
     /**
@@ -15517,7 +15530,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         StringBuilder message = new StringBuilder(drewInCell
                 ? how + ", anchored in the table cell it fills, where the layout puts it in the cell: "
                   + "it moves with the row"
-                : how + ", where the layout puts it, " + ANCHORED_BESIDE_ITS_TEXT);
+                : how + ", where the layout puts it, " + ANCHORED_IN_ITS_BLOCK);
         for (String lost : carriedWithout(image, false)) {
             message.append("; ").append(lost);
         }
@@ -16018,7 +16031,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } finally {
             // What no cell took is drawn where the page puts it, in the order the table paints it.
             if (tableDrawings != outerDrawings) {
-                DocxDrawingAnchors.Owner table = new DocxDrawingAnchors.Owner("cell drawing", layout.pathOf(node));
+                DocxDrawingAnchors.Owner table = new DocxDrawingAnchors.Owner("cell drawing", layout.pathOf(node), true);
                 for (CellFragment waiting : tableDrawings) {
                     anchors.queueOrdered(waiting.shapes(), table);
                 }

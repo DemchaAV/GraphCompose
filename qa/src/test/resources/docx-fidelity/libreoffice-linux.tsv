@@ -3,6 +3,7 @@ document	engine_pages	editor_pages	lines	matched	median	p90	over2
 # rows of invoice-metered_long, invoice-obsidian_long, synthetic-break_in_column, synthetic-break_in_panel, synthetic-card_over_pages: libreoffice build 420(Build:2) on linux
 # rows of synthetic-clipped_container, synthetic-narrow_container, synthetic-rounded_card: libreoffice build 420(Build:2) on linux
 # rows of synthetic-icon_over_card: libreoffice build 420(Build:2) on linux
+# rows of cv-teal_pulse: libreoffice build 420(Build:2) on linux, from CI run 40503780286. Its email line, set in a cell set to the middle, stood +0.08pt while the contact separator was anchored in that cell, LibreOffice 24.2 then setting the cell from its top; the separator now goes elsewhere, as a cell set to the middle carries no drawing, and LibreOffice centres the cell as its neighbours: +0.93pt, Word +1.14pt. Ten other lines stand 0.1 to 0.3pt further, as the same run sets lines of documents the export does not change
 cv-blue_banner	2	2	54	52	0.16	0.25	0
 cv-boxed_sections	2	2	58	58	0.06	0.11	0
 cv-centered_headline	2	2	58	56	0.12	0.29	0
@@ -25,7 +26,7 @@ cv-professional_sidebar	1	1	68	64	0.20	0.28	0
 cv-serif_headline	1	1	103	103	0.19	0.59	0
 cv-sidebar_portrait	1	1	49	49	0.07	0.18	0
 cv-slate_orange	1	1	87	86	0.23	0.99	0
-cv-teal_pulse	1	1	57	57	0.20	0.63	0
+cv-teal_pulse	1	1	57	57	0.12	0.25	0
 cv-terracotta_rail	1	1	102	102	0.17	0.52	0
 cv-timeline_minimal	2	2	89	87	0.05	0.11	0
 cv-violet_grid	1	1	80	78	0.27	0.59	0

@@ -874,6 +874,38 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * The paths of a node and of the blocks holding it, nearest first: where a drawing it paints
+     * looks for the paragraph that carries it ({@code DocxDrawingAnchors}).
+     *
+     * <p>A container the tree starts at is taken to be the page's flow, holding every block on its
+     * pages and so none in particular, and is left out: a page flow is one, and every document of
+     * the fidelity corpus starts at one. A painted container added at the root is left out too,
+     * its drawings going to the paragraph nearest them. Any other node the tree starts at — a
+     * section or a stack added at the root — is a block and stays, as does a container further in.
+     * A path the tree does not name — a pass of the layout's own, a timeline's rail — has no
+     * holders.</p>
+     *
+     * @param path a node's path ({@link #pathOf})
+     * @return its holders' paths, itself first; empty for a path no node of the tree has
+     */
+    List<String> holdersOf(String path) {
+        if (path == null || !nodesByPath().containsKey(path)) {
+            return List.of();
+        }
+        List<String> holders = new ArrayList<>();
+        for (String holder = path; holder != null; ) {
+            int last = holder.lastIndexOf('/');
+            String above = last < 0 ? null : holder.substring(0, last);
+            if (above == null && nodesByPath().get(holder) instanceof com.demcha.compose.document.node.ContainerNode) {
+                break;
+            }
+            holders.add(holder);
+            holder = above;
+        }
+        return holders;
+    }
+
+    /**
      * The height of one line of the paragraph's text, as the engine measured it.
      *
      * <p>The height of the text on the laid-out lines — the tallest of them, since Word has

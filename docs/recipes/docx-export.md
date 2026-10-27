@@ -1098,7 +1098,8 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   cell, and one closing it its bottom padding, so the band stands that much too tall
   there. A card with 14pt padding under an icon laid over its corner stood 14pt low in
   Word and LibreOffice, and the paragraph under it 28pt (`icon_over_card` in the
-  fidelity corpus holds it as it stands). What a later layer's first block holds above
+  fidelity corpus holds its lines as they stand; where the icon stands, the gate does
+  not see). What a later layer's first block holds above
   its content past the page's distance — a margin, a padding, a contained
   picture's room reaching above where the layers before it end — comes out of its own
   edge, in a band as in a column's cell, where the block is a paragraph, a picture, a

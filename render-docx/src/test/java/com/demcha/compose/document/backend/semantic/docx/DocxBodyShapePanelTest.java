@@ -17,6 +17,7 @@ import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.style.DocumentTransform;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
@@ -361,6 +362,30 @@ class DocxBodyShapePanelTest {
     }
 
     @Test
+    void aCardItsTextFillsGrowsWithItsTextAsOneWithRoomToSpare() throws Exception {
+        // Its default clip has nothing to cut, though its text and padding fill it, so its row is held
+        // at least its outline's height and grows with text added to it. Held exactly at that height,
+        // it would set its lines where they stand in Word, and the fidelity gates, which measure
+        // lines, would not see that it no longer grows. Here it is a quarter of a point taller than
+        // its text and padding, as the page lays them out in a taller card.
+        double outline = export(page -> page.add(pageWideCard(200).build())).placed("Text").placementHeight() + 0.25;
+        assertThat(outline).as("the text laid out at its own height, not the card's").isLessThan(200);
+        Exported exported = export(page -> page
+                .addParagraph("Above")
+                .add(pageWideCard(outline).build())
+                .addParagraph("Below"));
+
+        PlacedNode box = exported.placed("Box");
+        PlacedNode text = exported.placed("Text");
+        // The page leaves less than half a point between the foot of its text's padding and the outline's.
+        assertThat(text.placementY() - box.placementY()).isBetween(0.0, 0.5);
+        XWPFTableRow row = onlyTable(exported.document()).getRow(0);
+        assertThat(ruleOf(row)).isEqualTo(STHeightRule.AT_LEAST);
+        assertThat(heightOf(row)).isEqualTo(Math.round(outline * 20) - 2 * 20);
+        assertThat(exported.report().bySubject()).doesNotContainKeys("clipped shape container", "shape container");
+    }
+
+    @Test
     void itsPaddingStandsRoundTheOutline() throws Exception {
         Exported exported = export(page -> page
                 .addParagraph("Above")
@@ -433,6 +458,18 @@ class DocxBodyShapePanelTest {
                 .topLeft(new SectionBuilder().padding(DocumentInsets.of(12)).spacing(4)
                         .addParagraph(p -> p.text("A rounded card"))
                         .addParagraph(p -> p.text("Its text is short."))
+                        .build());
+    }
+
+    /** A card as wide as the page between its margins, holding a heading and a paragraph. */
+    private static ShapeContainerBuilder pageWideCard(double height) {
+        return new ShapeContainerBuilder().name("Box").roundedRect(328, height, 12).fillColor(SURFACE).stroke(BORDER)
+                .topLeft(new SectionBuilder().name("Text").padding(DocumentInsets.of(12)).spacing(4)
+                        .addParagraph(p -> p.text("A rounded card").textStyle(DocumentTextStyle.builder().size(12).build()))
+                        .addParagraph(p -> p.text("Its text runs over three lines from the card's top left corner, "
+                                                  + "and the card is just tall enough to hold them with its padding "
+                                                  + "round them: a line more, and the card needs to be taller.")
+                                .textStyle(DocumentTextStyle.builder().size(10).build()))
                         .build());
     }
 

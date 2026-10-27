@@ -4313,6 +4313,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **A body card whose text fills its outline is held to grow with that text.** The fidelity gates
+  measure where lines stand. Were such a card's row written exactly as tall as its outline, every
+  line of it in Word would stand where it stood, the paragraph under it in LibreOffice 24.2 would
+  stand nearer the page, and the card would not grow when text is added to it in an editor.
+  `DocxBodyShapePanelTest` now holds a card whose text and padding fill it to within a quarter of a
+  point, under its default clip, which cuts nothing: its row is held at least its outline's height,
+  as is the row of a card with room to spare.
+
 - **The DOCX fidelity corpus holds its three body shape containers where the export now sets
   them.** With the boxes written as panels, Word and LibreOffice set every line of
   `narrow_container` and `rounded_card` at the page's words, and Word the paragraph under each box

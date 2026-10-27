@@ -363,12 +363,13 @@ class DocxBodyShapePanelTest {
 
     @Test
     void aCardItsTextFillsGrowsWithItsTextAsOneWithRoomToSpare() throws Exception {
-        // Its default clip has nothing to cut, though its text fills it. Were its row held exactly at
-        // its outline's height, every line in Word would stand where it stood, and in LibreOffice 24.2
-        // the paragraph under it would stand nearer the page; the card would not grow when text is
-        // added to it. The fidelity gates, which measure lines, would not see that.
-        // The card just tall enough to hold its text, as the page lays it out.
+        // Its default clip has nothing to cut, though its text and padding fill it, so its row is held
+        // at least its outline's height and grows with text added to it. Held exactly at that height,
+        // it would set its lines where they stand in Word, and the fidelity gates, which measure
+        // lines, would not see that it no longer grows. Here it is a quarter of a point taller than
+        // its text and padding, as the page lays them out in a taller card.
         double outline = export(page -> page.add(pageWideCard(200).build())).placed("Text").placementHeight() + 0.25;
+        assertThat(outline).as("the text laid out at its own height, not the card's").isLessThan(200);
         Exported exported = export(page -> page
                 .addParagraph("Above")
                 .add(pageWideCard(outline).build())

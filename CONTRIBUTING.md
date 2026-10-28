@@ -368,12 +368,15 @@ Choose the smallest tests that match the change:
   Windows with Word, `scripts/docx-visual/word-fidelity.ps1` (`-Update` to rewrite) exports the
   corpus, has a private Word instance convert it, and holds it to `word-windows.tsv` — run it
   from PowerShell (pwsh), after the install above, before a DOCX export change is opened.
-  That baseline's header records the Word build it was shot on, because a build sets lines a
-  little differently on its own: between two 16.0 builds a third of the corpus's lines moved,
-  up to 0.48pt, against the 0.5pt a line may drift before the gate calls it a regression. A
-  gate failure on a build other than the header's is re-shot in a change of its own, which
-  carries the measurements showing the move is the build's, rather than rewritten by a change
-  that touches the export and would bury its own drift in the same diff.
+  Rewrite the baseline in the change that moves the documents: the gate cannot remind you, as
+  it fails a line only once it stands more than 0.5pt further from the page than the baseline
+  holds it, so a change that moves documents nearer — or less than that further — passes with
+  the baseline left as it was. Between #899 and #974 that left 1609 of the Word baseline's 5165
+  rows stale over 75 commits, 229 of them standing a point nearer the page, until three
+  documents stood 0.48pt further and the next change to touch them would have failed the gate
+  for drift it did not cause. Each baseline's header records the build it was shot on, and a
+  differing build is rarely the cause: Word 16.0.20430 and 16.0.20527 measure this corpus
+  identically, row for row.
   Each run also writes `measured-<editor>-acceptance.md`: which documents the editor sets as the
   page does — the same pages, 95% of the lines found, a median of 1pt or less, no more than 10%
   past 2pt — and what keeps the rest short of it. CI shows LibreOffice's in the job summary.

@@ -372,11 +372,11 @@ Choose the smallest tests that match the change:
   it fails a line only once it stands more than 0.5pt further from the page than the baseline
   holds it, so a change that moves documents nearer — or less than that further — passes with
   the baseline left as it was. Between #899 and #974 that left 1609 of the Word baseline's 5165
-  rows stale over 75 commits, 229 of them standing a point nearer the page, until three
+  rows stale over 74 commits, 220 of them standing about a point nearer the page, until three
   documents stood 0.48pt further and the next change to touch them would have failed the gate
   for drift it did not cause. Each baseline's header records the build it was shot on, and a
-  differing build is rarely the cause: Word 16.0.20430 and 16.0.20527 measure this corpus
-  identically, row for row.
+  differing build is rarely the cause: Word 16.0.20430 and 16.0.20527 measure the corpus as
+  #899 exported it identically, row for row.
   Each run also writes `measured-<editor>-acceptance.md`: which documents the editor sets as the
   page does — the same pages, 95% of the lines found, a median of 1pt or less, no more than 10%
   past 2pt — and what keeps the rest short of it. CI shows LibreOffice's in the job summary.

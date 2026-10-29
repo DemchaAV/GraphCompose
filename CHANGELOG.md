@@ -25,8 +25,11 @@ follow semantic versioning; release dates are ISO 8601.
     item is anchored in that item — where the export matched the layout's items to the list's one
     by one, which the items' line gap and their own seating need as well; a list with an item split
     across a page is laid out as more pieces of text than it has items, and offers none. A band's
-    shared line is offered as the half that starts it: both halves are written in that one
-    paragraph, and that half's text begins where the line does.
+    shared line is offered as the half that starts it, reaching across to the far end of the other:
+    both halves are written in that one paragraph, and that half's text begins where the line does,
+    while how far the line reaches across is the whole line's — a drawing nothing holds is taken in
+    by the text it stands nearest, counted from that text's edges, and the half that starts a line
+    is laid out in a box of its own width.
   - A table's own cell text offers no place yet, and a drawing whose block's text is written only
     so keeps the nearest-text rule: a table's cells state no width of their own — their table's
     grid holds it — and a drawing anchored in a cell is placed from the cell's text column, which

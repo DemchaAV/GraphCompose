@@ -84,7 +84,10 @@ class DocxTextWriterAnchorTest {
             XWPFParagraph item = firstItem(document);
 
             assertThat(placedFrom(item)).containsExactly(STRelFromV.PARAGRAPH);
-            assertThat(offsetDown(item)).as("below the first item's top, where it stands").isPositive();
+            // The card holds two items of one line and 10pt of padding either side: the dot at its
+            // foot stands below the first item's top by more than a line and less than the card.
+            assertThat(offsetDown(item)).as("below the first item's top, where it stands")
+                    .isBetween(10.0, 60.0);
         }
     }
 
@@ -134,9 +137,13 @@ class DocxTextWriterAnchorTest {
     @Test
     void theSharedLineCarriesOneNoBlockHoldsThatStandsBesideIt() throws Exception {
         // A dot no block carries — nothing holding it writes text — goes to the paragraph whose
-        // text it stands nearest. The band's shared line is the only text on the page, and it is
-        // offered: without it the dot would be left to the page's edges.
+        // text it stands nearest, counted from the text's edges. This one stands level with the
+        // band at its right end, beside the dates, with a paragraph of body text just above it:
+        // the line reaches across to the dates, so it is the nearer text. Offered as the box of
+        // the half that starts the line — a title 60pt of a line 360pt wide — the line would be
+        // reckoned 250pt away and the paragraph above would take the dot.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> {
+            page.addParagraph(p -> p.text("Above the band"));
             page.addContainer(band -> band.name("EntryHead").rectangle(360, 16)
                     .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
                     .position(new ParagraphBuilder().name("Title").text("Engineer")
@@ -144,12 +151,37 @@ class DocxTextWriterAnchorTest {
                     .position(new ParagraphBuilder().name("Dates").text("2019 - 2024").align(TextAlign.RIGHT)
                             .textStyle(DocumentTextStyle.DEFAULT.withSize(9)).build(), 0, 0, LayerAlign.CENTER_RIGHT));
             page.addEllipse(dot -> dot.name("Dot").circle(12).fillColor(INK)
-                    .margin(new DocumentInsets(0, 0, 0, 290)));
+                    .margin(new DocumentInsets(-14, 0, 0, 290)));
         })) {
             XWPFParagraph shared = shared(document);
 
             assertThat(placedFrom(shared)).as("the dot, beside the dates")
                     .containsExactly(STRelFromV.PARAGRAPH);
+            assertThat(placedFrom(document.getParagraphs().get(0))).as("not the paragraph above")
+                    .isEmpty();
+            assertThat(onThePage(document)).isZero();
+        }
+    }
+
+    @Test
+    void aNestedItemCarriesThemToo() throws Exception {
+        // A nested item is written by the same writer and offered the same way; its own indent
+        // states the cell's text column, as a top-level item's does.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> {
+            page.addParagraph(p -> p.text("Above the card"));
+            page.addLayerStack(stack -> stack
+                    .layer(new SectionBuilder().softPanel(SURFACE, 0, 10)
+                            .addList(list -> list.bullet().addItem("First item",
+                                    nested -> nested.items("Under it", "And under it"))).build())
+                    .layer(dot(), LayerAlign.TOP_RIGHT));
+        })) {
+            XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
+            XWPFParagraph item = firstItem(document);
+
+            assertThat(placedFrom(item)).as("in the first item, nested items and all")
+                    .containsExactly(STRelFromV.PARAGRAPH);
+            assertThat(offsetAcross(item)).as("from the cell's text column")
+                    .isCloseTo(widthOf(card) - marginOf(card) - DOT, within(1.0));
             assertThat(onThePage(document)).isZero();
         }
     }
@@ -205,7 +237,7 @@ class DocxTextWriterAnchorTest {
     }
 
     private static DocumentNode dot() {
-        return new EllipseNode("dot", 12, 12, INK, null, null, null, null, null);
+        return new EllipseNode("dot", DOT, DOT, INK, null, null, null, null, null);
     }
 
     /** The one Word paragraph two halves of a band share, found by the tab between them. */

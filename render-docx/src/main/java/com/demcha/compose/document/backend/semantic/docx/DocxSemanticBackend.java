@@ -6389,7 +6389,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         // Each item is a piece of text of its own, offered to the shapes beside it: a shape the
-        // list or a block round it holds takes the first item written on its page.
+        // list or a block round it holds takes the first item written on its page. Only a list
+        // whose items the layout's are matched to one by one gets this far: the list keeps the
+        // layout's items for the writers only then ({@link #listItemsMatched}), and an item with
+        // none of them is seated in no way at all (the guard above).
         if (laidOut.box() != null && listPath != null) {
             offerASeat(para, laidOut, listPath, laidOut.box(), 0);
         }
@@ -9899,6 +9902,38 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Offers the one line two halves of a band share to the shapes beside it, as the text of the
+     * half that starts it, reaching to the far end of the other.
+     *
+     * <p>One place is enough for the line, since both halves are written in this one paragraph and
+     * a place stands for a paragraph. The half that starts it is the one whose text begins where
+     * the line begins, and whose raise Word reads back from the line's first run
+     * ({@link DocxDrawingAnchors.Seat#paragraphTop}); the line itself is raised by the lesser of
+     * what its two halves call for ({@link #raiseTheSharedLine}), so a shape placed from it stands
+     * as far below the page's place as the line does — 0.2 to 0.33pt, measured there.</p>
+     *
+     * <p>How far the text reaches across is the whole line's, not that half's: a shape is taken in
+     * by the text it stands nearest, counted from its edges ({@code DocxDrawingAnchors.distance}),
+     * and the half that starts the line is laid out in a box of its own width — a title at the
+     * left of a band is 120pt of a line 510pt wide. Offered as that box, the line stood 330pt from
+     * a shape beside the dates at its right end, and any other paragraph on the page took the
+     * shape instead.</p>
+     */
+    private void offerTheSharedLine(XWPFParagraph para, DocxLinePair.Pair pair) {
+        ParagraphNode starts = pair.left();
+        java.util.Optional<DocxLayoutMetrics.TextBox> box = layout.firstTextBox(starts);
+        if (box.isEmpty()) {
+            return;
+        }
+        double ends = layout.firstTextBox(pair.right()).map(DocxLayoutMetrics.TextBox::right)
+                .orElse(box.get().right());
+        offerASeat(para, starts, layout.pathOf(starts),
+                new DocxLayoutMetrics.TextBox(box.get().page(), box.get().left(),
+                        Math.max(box.get().right(), ends), box.get().top(), box.get().baseline()),
+                seatShift(starts));
+    }
+
+    /**
      * Offers a paragraph written for any piece of text to the shapes standing beside it: a
      * paragraph node's text, an item of a list whose items the layout's are matched to
      * ({@link #listItemsMatched}), the line two halves of a band share.
@@ -11203,15 +11238,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         int rightAnchor = openAnchor(para, pair.right().anchor());
         writeParagraphRuns(para, pair.right(), false, lineTopAbove(lineTop, pair.right()), false);
         closeAnchor(para, rightAnchor);
-        // The line the two halves share is offered to the shapes beside it, as the text of the
-        // half that starts it: a shape the overlay or a block round it holds takes that line. One
-        // seat is enough for it, since both halves are written in this one paragraph and a seat
-        // stands for a paragraph; the half that starts the line is the one whose text begins where
-        // the line begins, and whose raise is the one Word reads back from the line's first run
-        // (DocxDrawingAnchors.Seat#paragraphTop). The line itself is raised by the lesser of what
-        // its two halves call for (raiseTheSharedLine), so a shape placed from it stands as far
-        // below the page's place as the line does: 0.2 to 0.33pt, measured there.
-        offerASeatFor(para, pair.left());
+        offerTheSharedLine(para, pair);
         raiseTheSharedLine(para, pair, lineTop, opensItsPage);
         // A Word paragraph has one outline level, and its outline lists the whole line by it: the
         // left side's level where it has one, the right side's where not; the other's is lost.

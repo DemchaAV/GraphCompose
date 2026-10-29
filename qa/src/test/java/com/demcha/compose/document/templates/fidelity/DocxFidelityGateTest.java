@@ -92,7 +92,7 @@ class DocxFidelityGateTest {
         FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.4), line(1, "bb", -2.8))));
 
         assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1, line(1, "aa", 1.0), line(1, "bb", -2.8)))))
-                .as("a line 0.6pt further").singleElement().asString().contains("1 lines moved")
+                .as("a line 0.6pt further").singleElement().asString().contains("1 line moved")
                 .contains("+0.40 -> +1.00pt (+0.60)");
         assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.4), line(1, "bb", -3.4)))))
                 .as("a line already 2.8pt off, set 0.6pt further").singleElement().asString().contains("moved");
@@ -109,16 +109,16 @@ class DocxFidelityGateTest {
 
         assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.0, 1.10),
                 line(1, "bb", 0.60)))))
-                .as("1.10pt nearer the page").singleElement().asString().contains("1 lines moved")
+                .as("1.10pt nearer the page").singleElement().asString().contains("1 line moved")
                 .contains("+1.10 -> +0.00pt (-1.10)");
         assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1, line(1, "aa", 1.10, 0.0),
                 line(1, "bb", 0.60)))))
-                .as("1.10pt nearer across").singleElement().asString().contains("1 lines moved")
+                .as("1.10pt nearer across").singleElement().asString().contains("1 line moved")
                 .contains("+1.10 -> +0.00pt across (-1.10)");
         assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1, line(1, "aa", 1.10, 1.10),
                 line(1, "bb", 0.0)))))
                 .as("a line onto the page's own, 0.60pt nearer").singleElement().asString()
-                .contains("1 lines moved").contains("+0.60 -> +0.00pt (-0.60)");
+                .contains("1 line moved").contains("+0.60 -> +0.00pt (-0.60)");
     }
 
     @Test
@@ -131,11 +131,11 @@ class DocxFidelityGateTest {
         assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1, line(1, "aa", -3.0),
                 line(1, "bb", 0.1, 3.0)))))
                 .as("six points down, at the same distance").singleElement().asString()
-                .contains("1 lines moved").contains("+3.00 -> -3.00pt (-6.00)");
+                .contains("1 line moved").contains("+3.00 -> -3.00pt (-6.00)");
         assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1, line(1, "aa", 3.0),
                 line(1, "bb", 0.1, -3.0)))))
                 .as("six points across, at the same distance").singleElement().asString()
-                .contains("1 lines moved").contains("+3.00 -> -3.00pt across (-6.00)");
+                .contains("1 line moved").contains("+3.00 -> -3.00pt across (-6.00)");
     }
 
     @Test
@@ -160,7 +160,7 @@ class DocxFidelityGateTest {
 
         assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.1, -0.71),
                 line(1, "bb", 0.1, -3.0))))).as("0.91pt further, to the other side")
-                .singleElement().asString().contains("1 lines moved").contains("across");
+                .singleElement().asString().contains("1 line moved").contains("across");
         assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.1, 0.69),
                 line(1, "bb", 0.1, -2.55))))).as("within half a point either way").isEmpty();
     }
@@ -170,7 +170,7 @@ class DocxFidelityGateTest {
         FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.1, 0.1))));
 
         assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1, line(1, "aa", 2.0, -3.0)))))
-                .singleElement().asString().contains("1 lines moved")
+                .singleElement().asString().contains("1 line moved")
                 .contains("+0.10 -> +2.00pt (+1.90), +0.10 -> -3.00pt across (-3.10)");
     }
 
@@ -229,7 +229,7 @@ class DocxFidelityGateTest {
         FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.4), line(1, "bb", 2.8))));
 
         assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.4)))))
-                .singleElement().asString().contains("1 lines no longer found").contains("\"bb\"");
+                .singleElement().asString().contains("1 line no longer found").contains("\"bb\"");
     }
 
     @Test
@@ -277,7 +277,8 @@ class DocxFidelityGateTest {
 
         assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1,
                 Map.entry("1:aa", new FidelityMeasurement.Found(1, "aa", 0.1, Double.NaN))))))
-                .singleElement().asString().contains("1 lines moved").contains("across");
+                .singleElement().asString().contains("1 line moved")
+                .contains("+1.50pt across in the baseline, and no place across measured");
     }
 
     @Test
@@ -298,7 +299,7 @@ class DocxFidelityGateTest {
 
         assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.4), line(1, "bb", 0.1)))))
                 .singleElement().asString()
-                .contains("1 lines found that the baseline does not hold").contains("\"bb\"");
+                .contains("1 line found that the baseline does not hold").contains("\"bb\"");
     }
 
     @Test
@@ -353,6 +354,40 @@ class DocxFidelityGateTest {
         Files.delete(lines);
         assertThatThrownBy(() -> FidelityBaseline.read(file)).as("no line file")
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("no line file");
+    }
+
+    @Test
+    void aLineRowHoldingADriftThatIsNotANumberIsRefused() {
+        // Every comparison against NaN is false, so such a row would hold its line to nothing,
+        // however far it moved. These files are patched by hand, so the typo is refused.
+        assertThatThrownBy(() -> FidelityMeasurement.parseLine("cv-a\t1:aa\tNaN\t0.10\taa", new LinkedHashMap<>()))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("hold its line to nothing");
+        assertThatThrownBy(() -> FidelityMeasurement.parseLine("cv-a\t1:aa\t0.10\tNaN\taa", new LinkedHashMap<>()))
+                .as("and the same for its place across")
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("hold its line to nothing");
+        assertThatThrownBy(() -> FidelityMeasurement.parseLine("cv-a\t1:aa\tInfinity\t0.10\taa", new LinkedHashMap<>()))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("not a number");
+    }
+
+    @Test
+    void aRewrittenBaselineKeepsTheNotesTheFileItReplacesCarried() throws Exception {
+        // A row's reckoning is written in those notes, and a rewrite is the ordinary answer to a
+        // document moving, so a rewrite that dropped them would spend the record itself.
+        Path file = dir.resolve("baseline.tsv");
+        FidelityBaseline.write(file, "first", List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, 1.5))));
+        Path lines = dir.resolve("baseline-lines.tsv");
+        Files.write(file, List.of(Files.readAllLines(file).get(0), "# rows of cv-a: from run 7",
+                Files.readAllLines(file).get(1), Files.readAllLines(file).get(2)));
+        Files.write(lines, List.of(Files.readAllLines(lines).get(0), "# cv-a's heading stood 0.08pt low",
+                Files.readAllLines(lines).get(1)));
+
+        FidelityBaseline.write(file, "second", List.of(doc("cv-a", 1, 1, line(1, "aa", 0.30, 1.5))));
+
+        assertThat(Files.readAllLines(file)).containsSubsequence("# second", "# rows of cv-a: from run 7");
+        assertThat(Files.readAllLines(lines)).anyMatch(row -> row.equals("# cv-a's heading stood 0.08pt low"));
+        assertThat(Files.readAllLines(lines)).first().asString().startsWith("# second");
+        assertThat(FidelityBaseline.read(file).divergences(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.30, 1.5)))))
+                .as("and reads back past its notes").isEmpty();
     }
 
     @Test

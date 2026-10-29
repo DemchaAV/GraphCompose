@@ -4363,10 +4363,17 @@ follow semantic versioning; release dates are ISO 8601.
     away.
   - A change that moves documents, nearer the page included, now rewrites the baseline in the
     same commit (`-Dgraphcompose.docxFidelity.update=true`), and that diff is the record of what
-    moved. Held one-sidedly, the Word baseline went stale in 1609 of its 5165 rows over 74
-    commits without one red run — 227 of them standing as much as a point nearer the page across
-    after #944 and #948, an improvement nothing wrote down, which left the further value in place
-    for a later change to walk back to and spend the 0.5pt on top of.
+    moved. A rewrite now also keeps the notes the file it replaces carried, since those are where
+    a row's reckoning is written and a rewrite is the ordinary answer to a document moving.
+  - Held one-sidedly, the Word baseline went stale in 1609 of its 5165 rows over 74 commits
+    without one red run: 1388 rows moved down the page — 717 nearer it, 635 further, and 36
+    crossing it to stand the same distance on the other side — and 229 moved across, 228 of them
+    nearer by as much as 1.10pt. Of all that, 228 rows had moved more than the slack, 226 across
+    and 2 down, and no row's *distance* from the page had grown by more than 0.41pt, which is
+    exactly why a rule reading distances stayed quiet.
+  - A baseline line row whose drift or place across is not a number is now refused. Every
+    comparison against `NaN` is false, so such a row held its line to nothing however far it
+    moved — and these files are patched by hand, so one mistyped cell was enough.
   - The slack stays one number for both directions: it is rounding, and rounding is the same size
     whichever way a line rounds. A step of exactly 0.5pt is still rounding, for every drift from
     0 to 5pt and in both directions. The aggregates a row carries — its median, its p90, its
@@ -4374,14 +4381,20 @@ follow semantic versioning; release dates are ISO 8601.
   - The export does not change: the 71-document corpus exports byte for byte as before, and the
     Word baseline needs no rewrite — Word 16.0.20527 measures all 71 documents and 5165 line rows
     exactly as `word-windows.tsv` holds them, not a row differing.
-  - `libreoffice-windows.tsv` is a different matter, and is left as it stands. Neither LibreOffice
-    baseline has been shot whole since #898; both were only ever patched where the one-sided gate
-    went red, and the Windows one — which nothing in CI runs — is red already under the rule it
-    was written for: 2 documents, 8 lines no longer found, 2 page counts and 65 lines standing
-    more than half a point further. `proposal-indigo` accounts for the worst of them, 8 lines
-    10.25pt lower than it holds them, on the same LibreOffice build, so the move is the export's
-    and not the editor's. Rewriting it here would bury that in a baseline diff; it wants
-    attributing to the commit that moved it first, and is named in `CONTRIBUTING.md` until then.
+  - `libreoffice-linux.tsv` is rewritten here, from the run of this change. Not shot whole since
+    #898, it had gone stale in 1778 of its 5149 rows, of which 230 stood more than half a point
+    from where it held them — 226 across and 4 down, in 8 documents — and **every one of the 230
+    stood nearer the engine's PDF, not one further**, on the LibreOffice build the file names. So
+    the two-sided rule's first real run recorded 230 improvements the one-sided rule had swallowed,
+    which is what it is for; the file's note records the run and the reckoning.
+  - `libreoffice-windows.tsv` is left as it stands and marked stale in the file instead, because
+    it is the opposite case. Nothing in CI runs it, and it is red already under the rule it was
+    written for: 2 documents, 8 lines no longer found, 2 page counts and 65 lines standing more
+    than half a point further. `proposal-indigo` accounts for the worst, 8 lines 10.25pt lower
+    than it holds them on the build it names, so the move is the export's and not the editor's.
+    Rewriting it alongside the Linux file would bury a 10pt move in a baseline diff; a move
+    further from the page wants attributing to the commit that made it first, as the Word
+    baseline's drift was attributed before #975 rewrote it.
 
 - **The DOCX fidelity corpus holds an icon laid over a card's corner, as the export writes it
   today.**

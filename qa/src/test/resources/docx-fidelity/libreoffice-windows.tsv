@@ -1,4 +1,5 @@
 # libreoffice build bf6ef2662401 on windows
+# known stale, and not rewritten by the change that made this gate two-sided: 2 documents fail it even one-sidedly — 8 lines no longer found, 2 page counts, and 65 lines more than half a point further, 8 of them proposal-indigo's, 10.25pt lower than the rows below hold them on the build this file names. The move is the export's, not the editor's. It wants attributing to the commit that made it before the file is shot again; see CONTRIBUTING.md
 document	engine_pages	editor_pages	lines	matched	median	p90	over2
 # rows of invoice-metered_long, invoice-obsidian_long, synthetic-break_in_column, synthetic-break_in_panel, synthetic-card_over_pages: libreoffice build bf6ef2662401 on windows
 # rows of synthetic-clipped_container, synthetic-narrow_container, synthetic-rounded_card: libreoffice build bf6ef2662401 on windows

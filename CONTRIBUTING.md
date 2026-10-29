@@ -351,8 +351,8 @@ Choose the smallest tests that match the change:
   its own fixture, has LibreOffice set each one, and holds every
   line of every document to the drift its baseline records, down and across: a line that
   moved more than 0.5pt from where the baseline holds it, nearer the page or further, a line
-  set at other words, a line found that the baseline does not hold, or another number of
-  pages fails it. It needs
+  set at other words, a line found that the baseline does not hold, another number of pages
+  from the editor, or another number of pages or lines from the engine fails it. It needs
   LibreOffice and runs only when asked for — install first, as for any standalone `qa` run:
   `./mvnw -B -ntp test -f qa/pom.xml -Dtest=DocxFidelityCorpusTest -Dgraphcompose.docxFidelity=libreoffice`.
   A change that moves documents, nearer the page included, rewrites the baseline with
@@ -370,15 +370,18 @@ Choose the smallest tests that match the change:
   Windows with Word, `scripts/docx-visual/word-fidelity.ps1` (`-Update` to rewrite) exports the
   corpus, has a private Word instance convert it, and holds it to `word-windows.tsv` — run it
   from PowerShell (pwsh), after the install above, before a DOCX export change is opened.
-  Rewrite the baseline in the change that moves the documents, and the gate will remind you: it
-  fails a line that has moved more than 0.5pt from where the baseline holds it, nearer the page
-  or further, and a document the editor sets on another number of pages, or whose lines it
-  finds a different set of. Until the gate was made two-sided it only looked for lines set
-  further, which let a change move documents nearer, or less than 0.5pt further, with the
-  baseline left as it was: between #899 and #974 that left 1609 of the Word baseline's 5165
-  rows stale over 74 commits, 227 of them standing as much as a point nearer the page across,
-  until three documents stood 0.48pt further and the next change to touch them would have
-  failed the gate for drift it did not cause. A failure naming lines that moved nearer the page
+  Rewrite the baseline in the change that moves the documents, and the gate will remind you —
+  as long as you run it, which for Word means running the script above: it fails a line that has
+  moved more than 0.5pt from where the baseline holds it, nearer the page or further, a document
+  the editor sets on another number of pages, one the engine draws on another number of pages or
+  lines, and one whose lines the editor finds a different set of. Until the gate was made
+  two-sided it only looked for lines set further, which let a change move documents nearer, or
+  less than 0.5pt further, with the baseline left as it was: between #899 and #974 that left
+  1609 of the Word baseline's 5165 rows stale over 74 commits, 226 of them standing more than
+  half a point nearer the page across, until three documents stood 0.48pt further and the next
+  change to touch them would have failed the gate for drift it did not cause. The slack is read
+  afresh against each rewrite, so it bounds no total: what two-sidedness buys is that every move
+  past rounding is seen and written down, not that drift cannot accumulate over many changes. A failure naming lines that moved nearer the page
   is not a defect to fix — it is the export doing better, and the baseline is how it gets
   recorded; carry any explanatory `#` note of the rows you rewrite over into the new file, as a
   rewrite keeps only the header. Each baseline's header records the build it was shot on, and a

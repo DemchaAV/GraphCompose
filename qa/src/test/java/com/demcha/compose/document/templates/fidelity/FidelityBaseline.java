@@ -32,11 +32,14 @@ import java.util.Set;
  *
  * <p>Whichever way it moved, because a gate that only looks for lines set further from the page
  * cannot see the state it is holding drift out from under it. Held that way from #899 to #974,
- * 1609 of the Word baseline's 5165 rows went stale over 74 commits — 1388 moving down the page
- * (632 nearer it, 553 further, none past the slack) and 229 across, 227 of those nearer by as
- * much as 1.1pt, 8 rows moving both ways, and none of it recorded — until three documents stood
- * 0.48pt further and the next change to touch them would have failed for drift it did not
- * cause. A move nearer the page that goes unwritten is worse than
+ * 1609 of the Word baseline's 5165 rows went stale over 74 commits with no run ever going red:
+ * 1388 moved down the page — 717 nearer it, 635 further, and 36 crossing it to stand the same
+ * distance on the other side — and 229 moved across, 228 of them nearer by as much as 1.10pt,
+ * 8 rows moving both ways. Of all that, 228 rows moved more than the slack: 226 across and 2
+ * down, both of those crossing the page's line. No row's <em>distance</em> from the page grew
+ * by more than 0.41pt, which is the whole reason a rule reading distances stayed quiet — until
+ * three documents stood 0.48pt further and the next change to touch them would have failed for
+ * drift it did not cause. A move nearer the page that goes unwritten is worse than
  * untidy: the baseline keeps the further value, so a later change may walk the line back to it
  * and spend the slack again on top. Comparing where a line is now against where it was, rather
  * than which of the two is further from the page, also catches a line that crosses the page's:
@@ -48,6 +51,12 @@ import java.util.Set;
  * past 2pt — are not held to anything: they follow from the lines, which are held one by one,
  * and an aggregate hides the tail it is an average of. Nor is the count of lines found, which
  * is the set of them, held line by line above.</p>
+ *
+ * <p>The slack is read afresh against each rewrite, so it bounds no total: a line may be moved
+ * half a point by every change, or walked back and forth, and each step passes as rounding. What
+ * holding both ways buys is that every move past rounding is seen and written down — not that
+ * drift cannot accumulate across many changes, which is what {@link FidelityAcceptance}'s limits
+ * are for.</p>
  *
  * <p>The baseline is two files: {@code <name>.tsv}, a row per document, and
  * {@code <name>-lines.tsv}, a row per found line, named by its page and a digest of its
@@ -123,13 +132,24 @@ final class FidelityBaseline {
         return new FidelityBaseline(rows);
     }
 
-    /** Writes the measurements as a baseline, under a note of where they were taken. */
+    /**
+     * Writes the measurements as a baseline, under a note of where they were taken, keeping any
+     * further note the file it replaces carried.
+     *
+     * <p>Those notes are what a row's reckoning is written down in — why a line stands where it
+     * does, which run shot it, what was left unwritten — and a rewrite is now the ordinary answer
+     * to a document moving, so dropping them would spend the record this gate exists to keep.
+     * They are carried over as they stand, under the new header: a note the rewrite has made
+     * stale is for the author to prune, which the file in front of them shows.</p>
+     */
     static void write(Path documents, String note, Collection<FidelityMeasurement> measurements) throws IOException {
         List<FidelityMeasurement> sorted = measurements.stream()
                 .sorted(Comparator.comparing(FidelityMeasurement::stem)).toList();
         List<String> rows = new ArrayList<>(List.of("# " + note, FidelityMeasurement.HEADER));
+        rows.addAll(1, notesOf(documents));
         List<String> lines = new ArrayList<>(List.of("# " + note
                 + " — document, line, drift below the page (pt), " + ACROSS_COLUMN + ", letters"));
+        lines.addAll(notesOf(linesOf(documents)));
         for (FidelityMeasurement measured : sorted) {
             rows.add(measured.row());
             lines.addAll(measured.lineRows());
@@ -139,32 +159,42 @@ final class FidelityBaseline {
         Files.write(linesOf(documents), lines, StandardCharsets.UTF_8);
     }
 
+    /** Every note a baseline file carries but the first, which is its own header. */
+    private static List<String> notesOf(Path file) throws IOException {
+        if (!Files.exists(file)) {
+            return List.of();
+        }
+        List<String> notes = Files.readAllLines(file, StandardCharsets.UTF_8).stream()
+                .filter(row -> row.startsWith("#")).toList();
+        return notes.isEmpty() ? List.of() : notes.subList(1, notes.size());
+    }
+
     /**
      * Where each measurement stands apart from its baseline, whichever way it moved; empty when
      * none does, which is the only state the gate passes.
      */
     List<String> divergences(Collection<FidelityMeasurement> measurements) {
-        List<String> found = new ArrayList<>();
+        List<String> apart = new ArrayList<>();
         Set<String> measured = new HashSet<>();
         measurements.forEach(now -> measured.add(now.stem()));
         rows.keySet().stream().filter(stem -> !measured.contains(stem))
-                .forEach(stem -> found.add(stem + ": in the baseline, and no longer in the corpus"));
+                .forEach(stem -> apart.add(stem + ": in the baseline, and no longer in the corpus"));
         for (FidelityMeasurement now : measurements) {
             FidelityMeasurement was = rows.get(now.stem());
             if (was == null) {
-                found.add(now.stem() + ": not in the baseline; measured " + now.row());
+                apart.add(now.stem() + ": not in the baseline; measured " + now.row());
                 continue;
             }
             if (now.editorPages() != was.editorPages()) {
-                found.add(now.stem() + ": set on " + pages(now.editorPages()) + ", and the baseline holds "
-                          + was.editorPages() + " (the page's " + now.enginePages() + ")");
+                apart.add(now.stem() + ": set on " + pages(now.editorPages()) + ", and the baseline holds "
+                          + pages(was.editorPages()) + " (the page's " + now.enginePages() + ")");
             }
             if (now.enginePages() != was.enginePages()) {
-                found.add(now.stem() + ": the page is drawn on " + pages(now.enginePages())
+                apart.add(now.stem() + ": the page is drawn on " + pages(now.enginePages())
                           + ", and the baseline holds " + pages(was.enginePages()));
             }
             if (now.lines() != was.lines()) {
-                found.add(now.stem() + ": the page draws " + now.lines() + " lines, and the baseline holds "
+                apart.add(now.stem() + ": the page draws " + now.lines() + " lines, and the baseline holds "
                           + was.lines());
             }
             List<String> lost = new ArrayList<>();
@@ -197,18 +227,18 @@ final class FidelityBaseline {
                 }
             });
             if (!lost.isEmpty()) {
-                found.add(now.stem() + ": " + lost.size() + " lines no longer found, set at other words or "
+                apart.add(now.stem() + ": " + lines(lost.size()) + " no longer found, set at other words or "
                           + "on another page: " + named(lost));
             }
             if (!gained.isEmpty()) {
-                found.add(now.stem() + ": " + gained.size() + " lines found that the baseline does not hold: "
+                apart.add(now.stem() + ": " + lines(gained.size()) + " found that the baseline does not hold: "
                           + named(gained));
             }
             if (!moved.isEmpty()) {
-                found.add(now.stem() + ": " + moved.size() + " lines moved: " + named(moved));
+                apart.add(now.stem() + ": " + lines(moved.size()) + " moved: " + named(moved));
             }
         }
-        return found;
+        return apart;
     }
 
     /**
@@ -227,7 +257,15 @@ final class FidelityBaseline {
 
     /** A line's step, as the baseline holds it, as it is now, and the difference. */
     private static String step(double was, double now, String axis) {
+        if (Double.isNaN(now)) {
+            return String.format(Locale.ROOT, "%+.2fpt%s in the baseline, and no place%s measured",
+                    was, axis, axis);
+        }
         return String.format(Locale.ROOT, "%+.2f -> %+.2fpt%s (%+.2f)", was, now, axis, now - was);
+    }
+
+    private static String lines(int count) {
+        return count + (count == 1 ? " line" : " lines");
     }
 
     private static String named(List<String> lines) {

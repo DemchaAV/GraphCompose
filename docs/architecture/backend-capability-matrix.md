@@ -47,7 +47,16 @@ nodes are a different case: `ShapeNode`, `LineNode`, `EllipseNode`,
 `ShapeNode` is written as a rule; any other rectangle, rounded rectangle,
 ellipse, line, polygon or path is drawn from the fragments the layout placed
 it as, a floating DrawingML shape behind the text, anchored in the first paragraph the nearest block holding it writes on its page — the paragraph nearest it where none does, the first paragraph of the cell whose box holds it for what a composed cell draws — or else to the page (`DocxDrawings`, `DocxDrawingAnchors`,
-polygons and paths as custom geometry). Inside a filled panel a shape stands in
+polygons and paths as custom geometry). Three writers offer a paragraph to be
+anchored in: a paragraph node's own, an item of a list the layout's items are
+matched to, and the one line two halves of a band share. A table's own cell text
+offers none — its cell states no width for a shape to be placed from — so a
+shape whose block's text is written only so keeps to the text nearest it. A
+shared line is offered from its text's own start, which its indent is written
+from, and reaches across to the end of the box its other half is set in; one
+the layout starts left of its cell's text column offers none, its indent being
+held at nought there.
+Inside a filled panel a shape stands in
 front of the text unless it frames text; anchored in a paragraph of the panel's
 cell, it is placed from the cell's text column, as Word lays a shape anchored in a
 table cell out inside the cell. A filled or outlined

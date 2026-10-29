@@ -1517,10 +1517,32 @@ The paragraph's top is where Word places from: the space written above its first
 included, and the line where Word stands it — an exact line's baseline four fifths of the way
 down it, raised by the run's position — measured in Word 16.0.20430 and LibreOffice to a tenth
 of a point; a paragraph with a border above its line, contextual spacing or space reckoned in
-lines carries none. Only the first paragraph holding text that a paragraph node is written as
-offers its place, in a column's cell too; a table's own cell text, a list's items and a pair
-of lines do not yet, so a shape whose block's text is written only so goes to the paragraph
-nearest it.
+lines carries none. Three writers of text offer their paragraphs, and the first
+paragraph of each piece of text that holds text takes the place: a paragraph node's own
+paragraph, in a column's cell too; each item of a list, so that a card whose only text is a
+list's items carries the drawings laid over it, and a shape standing beside the third item takes
+that item; and the one line two halves of a band share — a title at the left, its dates at the
+right — offered as the half that starts the line, since both are written in that one paragraph.
+That line's text starts where the line's own indent puts it, at that half's inked start rather
+than at the edge of the box it is laid out in, which is as wide as the band where the half is set
+in it by its alignment: a shape anchored in a cell is placed from the cell's text column, and the
+column is read from the place's left edge less the indent written on the paragraph, so the two
+must be the one edge — stated as the box, the column comes out the band's width to the left and
+the cell carries the shape from there. How far the line reaches across is the whole line's, to the
+end of the box the other half is laid out in, so that a shape beside the dates at its right end,
+or in the gap between the two texts, stands beside the line and not beside some other paragraph.
+A line the layout starts left of its cell's text column offers no place — a band pulled out by a
+margin below zero, into the cell's padding or past it: Word draws no text past a cell's left edge,
+so the indent written for such a line is held at nought and its text does not start where the
+layout puts it, and the shapes beside it keep to the text nearest them.
+An item offers its place only where the export matched the layout's items to the list's one by
+one, which its line gap and its own seating need as well: a list with an item split across a
+page is laid out as more pieces of text than it has items, and none of its items offers a place.
+A table's own cell text offers none yet either: a table's cells state no width of their own,
+their table's grid holding it, and a shape anchored in a cell is placed from the cell's text
+column, which cannot be read without that width; a text cell is also set to the middle by
+default, and such a cell carries no drawing (above). So a shape whose block's text is written
+only as a table's cells goes to the paragraph nearest it.
 
 What a table's composed cell draws has no node of its own: a composed cell's content is laid out
 under its table, and its drawings stand among the table's own fragments. The cell whose box the

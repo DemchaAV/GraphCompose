@@ -112,9 +112,10 @@ class DocxCellDrawingTest {
     }
 
     @Test
-    void anIconNoCellTookIsNotGivenToTheNextCell() throws Exception {
-        // The first band's mark holds a line, so it stays on the page; the second band's icon,
-        // of the same kind and size, takes its own fragments, not the first band's.
+    void anIconOneRowDrawsIsNotGivenToTheNextRowsCell() throws Exception {
+        // The first band's mark holds a line, so it is not the one drawing its cell is all of,
+        // and the cell whose box holds it takes it instead; the second band's icon, of the same
+        // kind and size, takes its own fragments, not the first band's.
         DocumentNode ruledMark = new LayerStackBuilder().name("RuledMark")
                 .layer(ICON.node(12))
                 .layer(new LineBuilder().name("Underline").horizontal(12)
@@ -127,9 +128,9 @@ class DocxCellDrawingTest {
                 .rowCells(DocumentTableCell.node(band(BLUE_ICON, 12)))))) {
             XWPFTable table = document.getTables().get(0);
 
-            assertThat(xmlOfIcon(table, 0)).doesNotContain("layoutInCell=\"1\"");
+            assertThat(xmlOfIcon(table, 0)).contains("layoutInCell=\"1\"").contains("FF0000").doesNotContain("0000FF");
             assertThat(xmlOfIcon(table, 1)).contains("layoutInCell=\"1\"").contains("0000FF").doesNotContain("FF0000");
-            assertThat(shapesOutOfTheirCells(document)).as("the first mark and its line, out of the cell").isEqualTo(2);
+            assertThat(shapesOutOfTheirCells(document)).as("each mark in its own row's cell").isZero();
         }
     }
 
@@ -176,9 +177,10 @@ class DocxCellDrawingTest {
     }
 
     @Test
-    void aCellHoldingTwoDrawingsLeavesBothOnThePage() throws Exception {
-        // The first mark has a margin, so it stays on the page; the second, of the same kind and
-        // size, would otherwise take the first's fragments, the first of those waiting in the cell.
+    void aCellHoldingTwoDrawingsKeepsEachInItsOwnCell() throws Exception {
+        // The first mark has a margin, so it is not the one drawing its cell is all of and the
+        // cell whose box holds it takes it; the second, of the same kind and size, would
+        // otherwise take the first's fragments, the first of those waiting in the cell.
         DocumentNode inset = new com.demcha.compose.document.node.LayerStackNode("Inset",
                 List.of(new com.demcha.compose.document.node.LayerStackNode.Layer(ICON.node(12))),
                 DocumentInsets.zero(), DocumentInsets.of(2));
@@ -187,15 +189,24 @@ class DocxCellDrawingTest {
                 .rowCells(DocumentTableCell.node(new RowBuilder().name("Pair").verticalAlign(RowVerticalAlign.CENTER)
                         .weights(16, 12, 272).add(inset).add(ICON.node(12)).addParagraph(p -> p.text("LABEL"))
                         .build()))))) {
-            assertThat(document.getDocument().xmlText()).doesNotContain("layoutInCell=\"1\"");
-            assertThat(shapesOutOfTheirCells(document)).as("both marks, out of the cell").isEqualTo(2);
+            XWPFTableCell band = document.getTables().get(0).getRow(0).getCell(0);
+            List<XWPFTableCell> marks = band.getTables().get(0).getRow(0).getTableCells();
+
+            assertThat(anchors(marks.get(0).getParagraphs().get(0))).as("the inset mark, in its own cell")
+                    .hasSize(1);
+            assertThat(anchors(marks.get(1).getParagraphs().get(0))).as("the plain mark, in its own cell")
+                    .hasSize(1);
+            assertThat(shapesOutOfTheirCells(document)).as("neither left to the page").isZero();
         }
     }
 
     @Test
-    void aPaddedStackComposedInACellStaysOnThePage() throws Exception {
+    void aPaddedStackComposedInACellGoesToTheCellWhoseBoxHoldsIt() throws Exception {
         // Its padding sets the icon in from the box the layout keeps for it, which the icon's own
-        // box cannot stand for.
+        // box cannot stand for, so `anchorInCell` must still refuse it: the cell whose box holds
+        // it takes it instead, placed from that cell's text column, which puts the icon its
+        // padding in. Were `anchorInCell` to take it, the cell's column would be read off the
+        // icon itself and the offset would be nothing.
         DocumentNode padded = new com.demcha.compose.document.node.LayerStackNode("Padded",
                 List.of(new com.demcha.compose.document.node.LayerStackNode.Layer(ICON.node(12))),
                 DocumentInsets.of(4), DocumentInsets.zero());
@@ -203,8 +214,12 @@ class DocxCellDrawingTest {
                 .columns(DocumentTableColumn.fixed(300))
                 .rowCells(DocumentTableCell.node(new RowBuilder().name("Band").verticalAlign(RowVerticalAlign.CENTER)
                         .weights(20, 280).add(padded).addParagraph(p -> p.text("LABEL")).build()))))) {
-            assertThat(xmlOfIcon(document.getTables().get(0), 0)).doesNotContain("layoutInCell=\"1\"");
-            assertThat(shapesOutOfTheirCells(document)).isEqualTo(1);
+            XWPFParagraph carrier = iconCell(document.getTables().get(0).getRow(0).getCell(0))
+                    .getParagraphs().get(0);
+
+            assertThat(anchors(carrier)).as("the icon, its padding in from its cell's column")
+                    .singleElement().extracting(Anchor::fromH, Anchor::x).containsExactly("column", 4.0);
+            assertThat(shapesOutOfTheirCells(document)).isZero();
         }
     }
 

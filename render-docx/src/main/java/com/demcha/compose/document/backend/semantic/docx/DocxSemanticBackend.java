@@ -207,12 +207,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static final double LEAST_ROW_TEXT_MOVE = 0.1;
     /**
+     * How much room above or below its content a composed cell's box may still leave and count as
+     * filled, in points: a stroke's width, the same allowance a cell's box is held to
+     * ({@link DocxLayoutMetrics.CellBox#holds}). Measured on {@code MeteredInvoice}, whose line
+     * rows leave their cell 0.51pt above its content and 0.47pt below it — the cost of writing the
+     * cell's margins and the row's height each rounded on its own — and neither editor moved a
+     * line for the tile that cell carries. A cell the page fills has nothing to set lower, so it
+     * may carry a drawing although it is set to the middle (see
+     * {@link DocxDrawingAnchors.HoldingCell}).
+     */
+    private static final double CELL_FILL_SLACK = 1;
+    /**
      * How a drawing a table's composed cell paints is anchored, as the report says it: such a cell
      * has no node of its own to be held by (see DocxDrawingAnchors).
      */
     private static final String ANCHORED_BESIDE_ITS_TEXT = "anchored in the paragraph whose text it stands "
             + "beside, so it moves with that text when the text above is edited, or to the page where it "
             + "stands beside none";
+    /**
+     * How a drawing a table's composed cell paints is anchored, as the report says it: in the cell
+     * whose box the layout placed it in, which stands for the block holding it (see
+     * DocxDrawingAnchors).
+     */
+    private static final String ANCHORED_IN_ITS_CELL = "anchored in the first paragraph able to carry it "
+            + "of the cell whose box holds it, so it moves with that cell's row when the text above is "
+            + "edited; " + ANCHORED_BESIDE_ITS_TEXT + " where no cell's box holds it, where that cell has "
+            + "no such paragraph on its page, and where it stands in a repeated header row or in a cell "
+            + "composed of a node the document places more than once";
     /** How a drawing a node paints is anchored, as the report says it (see DocxDrawingAnchors). */
     private static final String ANCHORED_IN_ITS_BLOCK = "anchored in the first paragraph able to carry it "
             + "that the nearest block holding it writes on its page, so it moves with that block when the text "
@@ -504,6 +525,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The drawings the composed cells of the table being written paint, not yet anchored, in the
     // order the layout emitted them; null outside such a table (see anchorComposedDrawing).
     private List<CellFragment> tableDrawings;
+    // The Word cell each composed cell of the table being written was written in, by where it
+    // stands in the table: where its drawings are anchored (see cellHolding).
+    private java.util.Map<CellAt, XWPFTableCell> composedCellsWritten = java.util.Map.of();
     // The note what is drawn now is drawn for: one the section's end finds nothing to carry is
     // named there instead (endSection). Null where no note names it.
     private DocxDrawingAnchors.Owner drawingFor;
@@ -1228,6 +1252,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         clipContainer = null;
         cellDrawing = CellDrawing.NONE;
         tableDrawings = null;
+        composedCellsWritten = java.util.Map.of();
         takenByRules = java.util.Set.of();
         composedCellBoxes = List.of();
         composedCell = null;
@@ -16016,12 +16041,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         CellDrawing outerCellDrawing = cellDrawing;
         List<CellFragment> outerDrawings = tableDrawings;
+        java.util.Map<CellAt, XWPFTableCell> outerCellsWritten = composedCellsWritten;
         java.util.Set<CellFragment> outerRuleDrawings = takenByRules;
         CellDrawing drawn = drawCellDrawing(node);
         List<com.demcha.compose.document.layout.PlacedFragment> skipped = new ArrayList<>(outerCellDrawing.skipped());
         skipped.addAll(drawn.skipped());
         cellDrawing = new CellDrawing(outerCellDrawing.drew() || drawn.drew(), skipped,
                 outerCellDrawing.strayed() || drawn.strayed(), List.of());
+        composedCellsWritten = new java.util.HashMap<>();
         if (!drawn.pending().isEmpty()) {
             tableDrawings = new ArrayList<>(drawn.pending());
             takenByRules = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
@@ -16029,11 +16056,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         try {
             writeTableRows(document, node);
         } finally {
-            // What no cell took is drawn where the page puts it, in the order the table paints it.
+            // What no cell took is anchored in the cell whose box holds it, in the order the table
+            // paints it: that cell is the block such a drawing belongs to (see DocxDrawingAnchors).
             if (tableDrawings != outerDrawings) {
-                DocxDrawingAnchors.Owner table = new DocxDrawingAnchors.Owner("cell drawing", layout.pathOf(node), true);
+                List<ComposedCell> composed = composedCellsOf(node);
+                // One owner for the table, so the note on what its cells draw stays one note.
+                DocxDrawingAnchors.Owner owner =
+                        new DocxDrawingAnchors.Owner("cell drawing", layout.pathOf(node), true);
                 for (CellFragment waiting : tableDrawings) {
-                    anchors.queueOrdered(waiting.shapes(), table);
+                    anchors.queueOrdered(waiting.shapes(), owner,
+                            cellHolding(node, composed, waiting.fragment()));
                 }
             }
             // Drawn as shapes is what its rules did not take: those are written as rules.
@@ -16041,10 +16073,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (drawn.pending().stream().anyMatch(waiting -> !waiting.shapes().isEmpty() && !rules.contains(waiting))) {
                 report.add(DocxExportReport.Severity.APPROXIMATED, "cell drawing", layout.pathOf(node),
                         "what its cells draw is drawn as shapes where the layout puts it — anchored in the "
-                        + "cell a drawing is all of, and otherwise " + ANCHORED_BESIDE_ITS_TEXT
+                        + "cell a drawing is all of, and otherwise " + ANCHORED_IN_ITS_CELL
                         + "; a transform, a gradient or a dash on it is not carried");
             }
             tableDrawings = outerDrawings;
+            composedCellsWritten = outerCellsWritten;
             takenByRules = outerRuleDrawings;
             cellDrawing = outerCellDrawing;
         }
@@ -16269,6 +16302,116 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private record CellFragment(com.demcha.compose.document.layout.PlacedFragment fragment,
                                 List<DocxDrawingAnchors.Ordered> shapes) {
+    }
+
+    /**
+     * A cell of a table composed of a node, as the layout placed it and as it was written.
+     *
+     * @param written the cell as written
+     * @param boxes   the boxes, one a page for a header repeated on every page
+     */
+    private record ComposedCell(XWPFTableCell written, List<DocxLayoutMetrics.CellBox> boxes) {
+    }
+
+    /**
+     * Where a cell of a table stands in it: its logical row and its first column, which is how a
+     * cell written for a composed node is found again once the table's rows are written. What it
+     * is composed of is not the key: one node standing in two cells is one node, and the layout
+     * gives it one path for both.
+     *
+     * @param row    the cell's logical row
+     * @param column the cell's first column
+     */
+    private record CellAt(int row, int column) {
+    }
+
+    /**
+     * Each cell of a table that is composed of a node, in the order the grid resolves them, as the
+     * layout placed it; a cell the layout placed in no box is left out.
+     */
+    private List<ComposedCell> composedCellsOf(TableNode table) {
+        List<ComposedCell> cells = new ArrayList<>();
+        for (List<TableGrid.Placement> row : TableGrid.resolve(table)) {
+            for (TableGrid.Placement placement : row) {
+                XWPFTableCell written = composedCellsWritten.get(new CellAt(placement.row(), placement.column()));
+                // A node standing in more than one place is laid out once, so the lines of the
+                // paragraphs written for it in this cell are another cell's: the cell cannot say
+                // where its own content stands, and its drawings keep to the text nearest them.
+                // A cell of a repeated header row carries none either: Word repeats such a row,
+                // and what is anchored in it, on every page the table reaches, so the drawing
+                // would stand on each of them beside the layout's own copy there. A cell written
+                // as a nested table hides that from the anchor, whose own guard reads the row of
+                // the paragraph it anchors in — by then an inner row of its own.
+                if (written == null || placement.cell().content() == null
+                    || placement.row() < table.repeatedHeaderRowCount()
+                    || layout.placedMoreThanOnce(placement.cell().content())) {
+                    continue;
+                }
+                List<DocxLayoutMetrics.CellBox> boxes = layout.cellBoxes(table, placement.row(), placement.column());
+                if (!boxes.isEmpty()) {
+                    cells.add(new ComposedCell(written, boxes));
+                }
+            }
+        }
+        return cells;
+    }
+
+    /**
+     * The cell whose box holds a drawing its table paints for it, or {@code null} where no cell's
+     * box holds it — a drawing the table paints across its cells, or one a layer's offset or a
+     * margin below zero takes out of its own.
+     *
+     * <p>Where the boxes of two cells hold it, the first the grid resolves takes it. Only the
+     * table's own cells are among them: a table composed in a cell has no rows of its own in the
+     * layout, so its cells are given no box ({@link DocxLayoutMetrics#cellBoxes}).</p>
+     *
+     * <p>The cell is handed over as written where the page fills its box, so that the drawing may
+     * be anchored in it although the author set it to the middle (see
+     * {@link DocxDrawingAnchors.HoldingCell}).</p>
+     */
+    private DocxDrawingAnchors.HoldingCell cellHolding(TableNode table, List<ComposedCell> cells,
+                                                       com.demcha.compose.document.layout.PlacedFragment fragment) {
+        for (ComposedCell cell : cells) {
+            for (DocxLayoutMetrics.CellBox box : cell.boxes()) {
+                if (box.holds(fragment)) {
+                    return new DocxDrawingAnchors.HoldingCell(cell.written(),
+                            pageFillsTheCell(table, box, cell.written()));
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Whether the page fills a composed cell's box: what the layout placed in it reaches within a
+     * stroke's width of the room the cell's own margins leave, above and below, so that an editor
+     * setting the cell's content from its top has nothing to move.
+     *
+     * <p>The content is read from the fragments the table laid out inside the box, held to the box
+     * — a composed cell's content is laid out under its table, so those are all it has, and a
+     * fragment is counted as inside the box a point either side of it. Among them is the row's own
+     * fragment, where the cell spans its row: a box holds that fragment only where it is as wide
+     * as the table, and such a cell's box is the row's, which the layout sets at its content. A
+     * cell narrower than its row is measured by its content alone, the row's fragment reaching
+     * past it on both sides. The room comes from the cell's margins as written.</p>
+     */
+    private boolean pageFillsTheCell(TableNode table, DocxLayoutMetrics.CellBox box, XWPFTableCell written) {
+        // The layout's y grows up the page, as every reading of a fragment's top shows
+        // (canvasHeight - y - height), so a box's top edge is its larger y and a fragment's top is
+        // y + height. The room above the content is measured against the cell's top margin.
+        double contentTop = Double.NEGATIVE_INFINITY;
+        double contentBottom = Double.POSITIVE_INFINITY;
+        for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(table)) {
+            if (box.holds(fragment)) {
+                contentTop = Math.max(contentTop, Math.min(box.top(), fragment.y() + fragment.height()));
+                contentBottom = Math.min(contentBottom, Math.max(box.bottom(), fragment.y()));
+            }
+        }
+        if (Double.isInfinite(contentTop)) {
+            return false;
+        }
+        return box.top() - contentTop - cellMargin(written, true) / TWIPS_PER_POINT <= CELL_FILL_SLACK
+               && contentBottom - box.bottom() - cellMargin(written, false) / TWIPS_PER_POINT <= CELL_FILL_SLACK;
     }
 
     /**
@@ -17538,6 +17681,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (!boxes.isEmpty()) {
                 composedCellBoxes = boxes;
                 composedCell = cell;
+                // Where its drawings go: the table anchors them once its rows are written.
+                composedCellsWritten.put(new CellAt(placement.row(), placement.column()), cell);
                 composedCellRepeats = placement.row() < node.repeatedHeaderRowCount();
                 List<DocumentNode> rules = new ArrayList<>();
                 collectRules(source.content(), overlayDepth, oneLayerDepth, rules);

@@ -9914,11 +9914,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * comes out the band's width to the left and the cell carries the shape from there: measured
      * on the test's card, 292pt across its cell instead of 150.</p>
      *
-     * <p>A line hung left past its cell's padding offers no place at all. Word draws no text past
-     * a cell's left edge, so such a line is written with no indent ({@link #leftIndentTwips}) and
-     * its text does not start where the layout puts it; the cell's text column cannot be read back
-     * from the place, and the shapes beside the line keep to the text nearest them, as they did
-     * before any of this.</p>
+     * <p>A line the layout starts left of its cell's text column offers no place at all — a band
+     * pulled out by a margin below zero, whether into the cell's padding or past it. Word draws no
+     * text past a cell's left edge, so the indent written for such a line is held at nought
+     * ({@link #leftIndentTwips}) and its text does not start where the layout puts it; the cell's
+     * text column cannot be read back from the place, and the shapes beside the line keep to the
+     * text nearest them, as they did before any of this.</p>
      *
      * <p>How far it reaches across is the whole line's, not that half's: a shape standing beside
      * the dates at the line's right end, or in the gap between the two texts, stands beside the
@@ -9928,7 +9929,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * that box the line was reckoned 250pt from a shape beside the dates, which a paragraph of
      * body text above it then took.</p>
      *
+     * @param para      the one paragraph the two halves are written in
      * @param band      where the layout placed the overlay, the box both halves are set in
+     * @param pair      the two halves, as {@link DocxLinePair} read them
      * @param lineInset where the line's text is written from, inside its cell
      */
     private void offerTheSharedLine(XWPFParagraph para, com.demcha.compose.document.layout.PlacedNode band,

@@ -33,9 +33,10 @@ follow semantic versioning; release dates are ISO 8601.
     paragraph: stated as the box, the column came out the band's width to the left, and a card
     carried its drawing 292pt across its cell where the page draws it at 150. The line's reach
     across is the whole line's, so that a drawing beside the dates at its right end, or in the gap
-    between the two texts, stands beside the line. A line hung left past its cell's padding offers
-    no place at all: Word draws no text past a cell's left edge, so such a line is written with no
-    indent and its text does not start where the layout puts it.
+    between the two texts, stands beside the line. A line the layout starts left of its cell's text
+    column offers no place at all — a band pulled out by a margin below zero, into the cell's
+    padding or past it: Word draws no text past a cell's left edge, so the indent written for such
+    a line is held at nought and its text does not start where the layout puts it.
   - A table's own cell text offers no place yet, and a drawing whose block's text is written only
     so keeps the nearest-text rule: a table's cells state no width of their own — their table's
     grid holds it — and a drawing anchored in a cell is placed from the cell's text column, which

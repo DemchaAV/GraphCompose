@@ -1531,8 +1531,9 @@ must be the one edge — stated as the box, the column comes out the band's widt
 the cell carries the shape from there. How far the line reaches across is the whole line's, to the
 end of the box the other half is laid out in, so that a shape beside the dates at its right end,
 or in the gap between the two texts, stands beside the line and not beside some other paragraph.
-A line hung left past its cell's padding offers no place: Word draws no text past a cell's left
-edge, so such a line is written with no indent at all and its text does not start where the
+A line the layout starts left of its cell's text column offers no place — a band pulled out by a
+margin below zero, into the cell's padding or past it: Word draws no text past a cell's left edge,
+so the indent written for such a line is held at nought and its text does not start where the
 layout puts it, and the shapes beside it keep to the text nearest them.
 An item offers its place only where the export matched the layout's items to the list's one by
 one, which its line gap and its own seating need as well: a list with an item split across a

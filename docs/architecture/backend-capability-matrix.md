@@ -53,7 +53,9 @@ matched to, and the one line two halves of a band share. A table's own cell text
 offers none — its cell states no width for a shape to be placed from — so a
 shape whose block's text is written only so keeps to the text nearest it. A
 shared line is offered from its text's own start, which its indent is written
-from, and reaches across to the end of the box its other half is set in.
+from, and reaches across to the end of the box its other half is set in; one
+the layout starts left of its cell's text column offers none, its indent being
+held at nought there.
 Inside a filled panel a shape stands in
 front of the text unless it frames text; anchored in a paragraph of the panel's
 cell, it is placed from the cell's text column, as Word lays a shape anchored in a

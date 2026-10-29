@@ -203,7 +203,7 @@ class DocxTextWriterAnchorTest {
         // shape anchored in a cell is placed from the cell's text column, which the place states
         // by its left edge less that indent. Here the band's title is centred in a box as wide as
         // the band, so its box starts a long way left of its text: stated as the box, the column
-        // would come out short by that much and the cell would be given no shape to carry.
+        // comes out that much to the left and the cell carries the shape from there.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addSection(
                 card -> card.softPanel(SURFACE, 0, 10).addContainer(band -> band.name("EntryHead")
                         .rectangle(320, 16).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
@@ -224,6 +224,10 @@ class DocxTextWriterAnchorTest {
                     .containsExactly(STRelFromV.PARAGRAPH);
             assertThat(offsetAcross(shared)).as("from the cell's text column, where the page draws it")
                     .isCloseTo(DOT_ACROSS, within(1.0));
+            // The line's own top, from which it is placed down: the dot is centred on the band, a
+            // little below where the line starts, and well inside the band's height.
+            assertThat(offsetDown(shared)).as("down from the line's top, where it stands")
+                    .isBetween(0.0, 16.0);
         }
     }
 
@@ -253,10 +257,10 @@ class DocxTextWriterAnchorTest {
     }
 
     @Test
-    void aSharedLineHungPastItsCellsPaddingOffersNone() throws Exception {
-        // Word draws no text past a cell's left edge, so a line pulled out past its card's
-        // padding is written with no indent at all and its text does not start where the layout
-        // puts it. The cell's text column cannot be read back from such a place, so the line
+    void aSharedLineStartedLeftOfItsCellsTextColumnOffersNone() throws Exception {
+        // Word draws no text past a cell's left edge, so the indent written for a line the layout
+        // starts left of its cell's text column is held at nought and its text does not start
+        // where the layout puts it. The column cannot be read back from such a place, so the line
         // offers none and the drawing keeps to the text nearest it, as before this rule.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> {
             page.addParagraph(p -> p.text("Above the card"));
@@ -277,8 +281,12 @@ class DocxTextWriterAnchorTest {
             XWPFParagraph shared = card.getParagraphs().stream()
                     .filter(para -> para.getText().contains("\t")).findFirst().orElseThrow();
 
-            assertThat(indentOf(shared)).as("written with no indent, hung out as it is").isZero();
+            assertThat(indentOf(shared)).as("its indent held at nought, hung out as it is").isZero();
             assertThat(placedFrom(shared)).as("the line takes none").isEmpty();
+            assertThat(placedFrom(document.getParagraphs().get(0)))
+                    .as("the paragraph above the card keeps it, as before this rule")
+                    .containsExactly(STRelFromV.PARAGRAPH);
+            assertThat(onThePage(document)).as("and it is not left to the page").isZero();
         }
     }
 

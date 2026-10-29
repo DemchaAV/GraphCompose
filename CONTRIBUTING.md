@@ -358,7 +358,8 @@ Choose the smallest tests that match the change:
   A change that moves documents, nearer the page included, rewrites the baseline with
   `-Dgraphcompose.docxFidelity.update=true`, and commits it with the change: its diff shows
   which documents moved, and which way. A new preset joins the corpus in its family's
-  `*DocxCorpus` class, and so does a preset on a longer fixture; a shape no preset has — a page break inside a
+  `*DocxCorpus` class, and so does a preset on a longer fixture; a shape no preset has
+  — a page break inside a
   panel, a break in a row's column, a shape container narrower than the block it stands in
   or clipped short of its text, an icon a layer stack lays over a card's corner — goes in
   `SyntheticDocxCorpus`. Its baseline holds it as the editors set it, a defect of the export
@@ -381,20 +382,23 @@ Choose the smallest tests that match the change:
   half a point nearer the page across, until three documents stood 0.48pt further and the next
   change to touch them would have failed the gate for drift it did not cause. The slack is read
   afresh against each rewrite, so it bounds no total: what two-sidedness buys is that every move
-  past rounding is seen and written down, not that drift cannot accumulate over many changes. A failure naming lines that moved nearer the page
-  is not a defect to fix — it is the export doing better, and the baseline is how it gets
-  recorded; carry any explanatory `#` note of the rows you rewrite over into the new file, as a
-  rewrite keeps only the header. Each baseline's header records the build it was shot on, and a
+  past rounding is seen and written down, not that drift cannot accumulate over many changes.
+  A failure naming lines that moved nearer the page is not a defect to fix — it is the export
+  doing better, and the baseline is how it gets recorded. A rewrite keeps the `#` notes the file
+  it replaces carried, by either path, and leaves it to you to prune the ones it has made stale;
+  a note is a block under the header, not an annotation of the rows below it, and comes back
+  above them. Each baseline's header records the build it was shot on, and a
   differing build is rarely the cause: Word 16.0.20430 and 16.0.20527 measure the corpus as
   #899 exported it identically, row for row.
   `libreoffice-windows.tsv` is known stale, and the local LibreOffice run fails on it: 2
   documents fail even one-sidedly — 8 lines no longer found, 2 page counts and 65 lines more
   than half a point further, 8 of them `proposal-indigo`'s, 10.25pt lower than it holds them
-  on the LibreOffice build the baseline names. Neither LibreOffice baseline has been shot whole
-  since #898. Do not rewrite it as part of an unrelated change: find the commit that moved
-  those documents first, as the Word baseline's drift was attributed before #975 rewrote it, and
-  rewrite it with that reckoning. Until then, read a local LibreOffice run against the documents
-  your change touches rather than against a green run.
+  on the LibreOffice build the baseline names. It has not been shot whole since #898, where
+  `libreoffice-linux.tsv` now has. Do not rewrite it as part of an unrelated change: a move
+  further from the page wants the commit that made it found first, as the Word baseline's drift
+  was attributed before #975 rewrote it, and the file rewritten with that reckoning. Until then,
+  read a local LibreOffice run against the documents your change touches rather than against a
+  green run.
   Each run also writes `measured-<editor>-acceptance.md`: which documents the editor sets as the
   page does — the same pages, 95% of the lines found, a median of 1pt or less, no more than 10%
   past 2pt — and what keeps the rest short of it. CI shows LibreOffice's in the job summary.

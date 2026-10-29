@@ -383,11 +383,58 @@ class DocxFidelityGateTest {
 
         FidelityBaseline.write(file, "second", List.of(doc("cv-a", 1, 1, line(1, "aa", 0.30, 1.5))));
 
-        assertThat(Files.readAllLines(file)).containsSubsequence("# second", "# rows of cv-a: from run 7");
-        assertThat(Files.readAllLines(lines)).anyMatch(row -> row.equals("# cv-a's heading stood 0.08pt low"));
-        assertThat(Files.readAllLines(lines)).first().asString().startsWith("# second");
+        // Exactly these notes: keeping the old header as well would annotate the file with a
+        // build it was not shot on, and would add one such line on every rewrite thereafter.
+        assertThat(Files.readAllLines(file).stream().filter(row -> row.startsWith("#")).toList())
+                .containsExactly("# second", "# rows of cv-a: from run 7");
+        assertThat(Files.readAllLines(lines).stream().filter(row -> row.startsWith("#")).toList())
+                .containsExactly("# second — document, line, drift below the page (pt), "
+                                 + "drift right of the page (pt), letters",
+                        "# cv-a's heading stood 0.08pt low");
         assertThat(FidelityBaseline.read(file).divergences(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.30, 1.5)))))
                 .as("and reads back past its notes").isEmpty();
+
+        FidelityBaseline.write(file, "third", List.of(doc("cv-a", 1, 1, line(1, "aa", 0.30, 1.5))));
+
+        assertThat(Files.readAllLines(file).stream().filter(row -> row.startsWith("#")).toList())
+                .as("a second rewrite neither duplicates them nor adds a header")
+                .containsExactly("# third", "# rows of cv-a: from run 7");
+    }
+
+    @Test
+    void aBaselineThatDoesNotOpenWithItsHeaderIsRefusedRatherThanHalfRead() throws Exception {
+        // The header cannot be told from a note by its text, so it is known by standing first.
+        // A file shaped otherwise would come back naming a build it was never shot on, its own
+        // header kept as though it were a note; it is refused instead.
+        Path file = dir.resolve("baseline.tsv");
+        FidelityBaseline.write(file, "build A", List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, 1.5))));
+        List<String> rows = new java.util.ArrayList<>(Files.readAllLines(file));
+        rows.add(0, "document\tengine_pages\teditor_pages\tlines\tmatched\tmedian\tp90\tover2");
+        Files.write(file, rows);
+
+        assertThatThrownBy(() -> FidelityBaseline.write(file, "build B",
+                List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, 1.5)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("does not open with the note of where it was taken");
+    }
+
+    @Test
+    void aMeasurementCarryingNoDriftOfItsOwnFails() {
+        // Math.round(NaN) is 0, so a step measured against it compares false: both axes fail
+        // closed on a measurement that carries no number, not the across one alone.
+        FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.10, 1.5))));
+
+        assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1,
+                Map.entry("1:aa", new FidelityMeasurement.Found(1, "aa", Double.NaN, 1.5))))))
+                .singleElement().asString().contains("1 line moved")
+                .contains("+0.10pt in the baseline, and no place measured");
+    }
+
+    @Test
+    void aBaselineRowHoldingAMedianThatIsNotANumberIsRefused() {
+        assertThatThrownBy(() -> FidelityMeasurement.parse("cv-a\t1\t1\t40\t0\tNaN\t0.5\t1", Map.of()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("read as passing every limit");
     }
 
     @Test

@@ -540,8 +540,8 @@ jobs:
     # qa/src/test/resources/docx-fidelity/libreoffice-linux*.tsv
     # (DocxFidelityCorpusTest): a change that moves any line of any document more than 0.5pt from
     # where the baseline holds it — down or across, nearer the engine's PDF or further — or sets a
-    # document at other words, on another number of pages, or with another set of its lines found,
-    # fails here. A move nearer the page is the export doing better and fails all the same, until
+    # document at other words, on another number of pages, with another set of its lines found, or
+    # one the engine draws on another number of pages or lines, fails here. A move nearer the page is the export doing better and fails all the same, until
     # the change records it by rewriting the baseline: held one-sidedly, the Word baseline drifted
     # stale in 1609 of its 5165 rows over 74 commits without a single red run (FidelityBaseline's
     # javadoc has the breakdown). Gated on `docx` — what an export of the corpus is made from.

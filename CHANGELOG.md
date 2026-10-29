@@ -4353,7 +4353,8 @@ follow semantic versioning; release dates are ISO 8601.
     that came nearer, and a line found that the baseline did not hold all passed, at any size.
   - Each is now measured as a step from where the baseline holds it: a line fails when its drift
     moves more than 0.5pt, down or across, nearer the page or further, and a document fails when
-    the editor sets it on another number of pages, when the engine draws it on another number, or
+    the editor sets it on another number of pages, when the engine draws it on another number of
+    pages or another number of lines, or
     when the set of its lines found is not the set the baseline holds. The failure names each
     line's step — `+1.10 -> +0.00pt (-1.10)` — so the direction is in the message.
   - Measured on the gate as it stood: a line moving 1.10pt nearer the page, one moving 5pt
@@ -4369,8 +4370,10 @@ follow semantic versioning; release dates are ISO 8601.
     without one red run: 1388 rows moved down the page — 717 nearer it, 635 further, and 36
     crossing it to stand the same distance on the other side — and 229 moved across, 228 of them
     nearer by as much as 1.10pt. Of all that, 228 rows had moved more than the slack, 226 across
-    and 2 down, and no row's *distance* from the page had grown by more than 0.41pt, which is
-    exactly why a rule reading distances stayed quiet.
+    and 2 down. And yet no row's *distance* from the page had grown by more than 0.48pt — 21 rows
+    of `cv-serif_headline`, `cv-panel` and `invoice-obsidian` by that much, the rest by 0.36pt or
+    less — which against half a point of slack is exactly why a rule reading distances stayed
+    quiet, and those three documents are the ones that ended 0.48pt further.
   - A baseline line row whose drift or place across is not a number is now refused. Every
     comparison against `NaN` is false, so such a row held its line to nothing however far it
     moved — and these files are patched by hand, so one mistyped cell was enough.

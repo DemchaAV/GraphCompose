@@ -36,10 +36,12 @@ import java.util.Set;
  * 1388 moved down the page — 717 nearer it, 635 further, and 36 crossing it to stand the same
  * distance on the other side — and 229 moved across, 228 of them nearer by as much as 1.10pt,
  * 8 rows moving both ways. Of all that, 228 rows moved more than the slack: 226 across and 2
- * down, both of those crossing the page's line. No row's <em>distance</em> from the page grew
- * by more than 0.41pt, which is the whole reason a rule reading distances stayed quiet — until
- * three documents stood 0.48pt further and the next change to touch them would have failed for
- * drift it did not cause. A move nearer the page that goes unwritten is worse than
+ * down, both of those crossing the page's line. And yet no row's <em>distance</em> from the page
+ * grew by more than 0.48pt — 21 rows of {@code cv-serif_headline}, {@code cv-panel} and
+ * {@code invoice-obsidian} by that much and the rest by 0.36pt or less — which is the whole
+ * reason a rule reading distances against half a point of slack stayed quiet. Those same three
+ * documents are the ones that ended 0.48pt further, where the next change to touch them would
+ * have failed for drift it did not cause. A move nearer the page that goes unwritten is worse than
  * untidy: the baseline keeps the further value, so a later change may walk the line back to it
  * and spend the slack again on top. Comparing where a line is now against where it was, rather
  * than which of the two is further from the page, also catches a line that crosses the page's:
@@ -143,13 +145,27 @@ final class FidelityBaseline {
      * stale is for the author to prune, which the file in front of them shows.</p>
      */
     static void write(Path documents, String note, Collection<FidelityMeasurement> measurements) throws IOException {
+        write(documents, note, measurements, documents);
+    }
+
+    /**
+     * Writes the measurements, taking the notes to keep from another baseline than the file being
+     * written.
+     *
+     * <p>A measured run writes its own files in {@code target}, which carry no notes of their own,
+     * and a run on a machine the baseline cannot be shot on — CI — is copied over the baseline
+     * from there. Written with the baseline as its notes, that copy carries them, so the path the
+     * contributor is told to take keeps the record as the {@code update} path does.</p>
+     */
+    static void write(Path documents, String note, Collection<FidelityMeasurement> measurements,
+                      Path notesFrom) throws IOException {
         List<FidelityMeasurement> sorted = measurements.stream()
                 .sorted(Comparator.comparing(FidelityMeasurement::stem)).toList();
         List<String> rows = new ArrayList<>(List.of("# " + note, FidelityMeasurement.HEADER));
-        rows.addAll(1, notesOf(documents));
+        rows.addAll(1, notesOf(notesFrom));
         List<String> lines = new ArrayList<>(List.of("# " + note
                 + " — document, line, drift below the page (pt), " + ACROSS_COLUMN + ", letters"));
-        lines.addAll(notesOf(linesOf(documents)));
+        lines.addAll(notesOf(linesOf(notesFrom)));
         for (FidelityMeasurement measured : sorted) {
             rows.add(measured.row());
             lines.addAll(measured.lineRows());
@@ -159,14 +175,27 @@ final class FidelityBaseline {
         Files.write(linesOf(documents), lines, StandardCharsets.UTF_8);
     }
 
-    /** Every note a baseline file carries but the first, which is its own header. */
+    /**
+     * Every note a baseline file carries under its header, which is its first line.
+     *
+     * <p>Where the header stands is the file's shape, not a guess: {@link #write} puts it there
+     * and {@link #read} reads the line file's from there. The header cannot be told from a note
+     * by its text — both are a {@code #} row of prose — so a note written above it could not be
+     * kept without dropping the header in its place, and the file would come back naming a build
+     * it was never shot on. A file that does not open with its header is therefore refused here
+     * rather than half-read: notes are a block under the header, and a file shaped otherwise is
+     * not one this wrote.</p>
+     */
     private static List<String> notesOf(Path file) throws IOException {
         if (!Files.exists(file)) {
             return List.of();
         }
-        List<String> notes = Files.readAllLines(file, StandardCharsets.UTF_8).stream()
-                .filter(row -> row.startsWith("#")).toList();
-        return notes.isEmpty() ? List.of() : notes.subList(1, notes.size());
+        List<String> rows = Files.readAllLines(file, StandardCharsets.UTF_8);
+        if (!rows.isEmpty() && !rows.get(0).startsWith("#")) {
+            throw new IllegalStateException("the baseline " + file + " does not open with the note of"
+                    + " where it was taken, so its own notes cannot be told from its header: " + rows.get(0));
+        }
+        return rows.stream().skip(1).filter(row -> row.startsWith("#")).toList();
     }
 
     /**
@@ -194,8 +223,8 @@ final class FidelityBaseline {
                           + ", and the baseline holds " + pages(was.enginePages()));
             }
             if (now.lines() != was.lines()) {
-                apart.add(now.stem() + ": the page draws " + now.lines() + " lines, and the baseline holds "
-                          + was.lines());
+                apart.add(now.stem() + ": the page draws " + lineCount(now.lines())
+                          + ", and the baseline holds " + was.lines());
             }
             List<String> lost = new ArrayList<>();
             List<String> moved = new ArrayList<>();
@@ -207,7 +236,9 @@ final class FidelityBaseline {
                 }
                 // Named once, with every way it moved.
                 List<String> ways = new ArrayList<>(2);
-                if (moved(line.drift(), there.drift())) {
+                // Both axes fail closed on a measurement that carries no number: Math.round(NaN)
+                // is 0, so a step against it compares false and the line would pass unheld.
+                if (Double.isNaN(there.drift()) || moved(line.drift(), there.drift())) {
                     ways.add(step(line.drift(), there.drift(), ""));
                 }
                 // A baseline holding a place across holds the line to it: a measurement without
@@ -227,15 +258,15 @@ final class FidelityBaseline {
                 }
             });
             if (!lost.isEmpty()) {
-                apart.add(now.stem() + ": " + lines(lost.size()) + " no longer found, set at other words or "
+                apart.add(now.stem() + ": " + lineCount(lost.size()) + " no longer found, set at other words or "
                           + "on another page: " + named(lost));
             }
             if (!gained.isEmpty()) {
-                apart.add(now.stem() + ": " + lines(gained.size()) + " found that the baseline does not hold: "
+                apart.add(now.stem() + ": " + lineCount(gained.size()) + " found that the baseline does not hold: "
                           + named(gained));
             }
             if (!moved.isEmpty()) {
-                apart.add(now.stem() + ": " + lines(moved.size()) + " moved: " + named(moved));
+                apart.add(now.stem() + ": " + lineCount(moved.size()) + " moved: " + named(moved));
             }
         }
         return apart;
@@ -264,7 +295,8 @@ final class FidelityBaseline {
         return String.format(Locale.ROOT, "%+.2f -> %+.2fpt%s (%+.2f)", was, now, axis, now - was);
     }
 
-    private static String lines(int count) {
+    /** A count of lines, named so it reads in a sentence. */
+    private static String lineCount(int count) {
         return count + (count == 1 ? " line" : " lines");
     }
 

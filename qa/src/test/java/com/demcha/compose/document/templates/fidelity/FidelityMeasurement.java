@@ -177,9 +177,17 @@ record FidelityMeasurement(String stem, int enginePages, int editorPages, int li
             throw new IllegalArgumentException("a baseline row has 8 cells, not " + cells.length + ": " + row);
         }
         try {
+            double median = Double.parseDouble(cells[5]);
+            double p90 = Double.parseDouble(cells[6]);
+            // Nothing holds these to anything — they follow from the lines — but a row read back
+            // with a median that is not a number would read as passing every limit it is put to.
+            if (!Double.isFinite(median) || !Double.isFinite(p90)) {
+                throw new IllegalArgumentException("a baseline row holds a median or p90 that is not a "
+                                                   + "number, which would read as passing every limit: " + row);
+            }
             return new FidelityMeasurement(cells[0], Integer.parseInt(cells[1]), Integer.parseInt(cells[2]),
-                    Integer.parseInt(cells[3]), Integer.parseInt(cells[4]), Double.parseDouble(cells[5]),
-                    Double.parseDouble(cells[6]), Integer.parseInt(cells[7]), found);
+                    Integer.parseInt(cells[3]), Integer.parseInt(cells[4]), median,
+                    p90, Integer.parseInt(cells[7]), found);
         } catch (NumberFormatException malformed) {
             throw new IllegalArgumentException("a baseline row holds a cell that is not a number: " + row, malformed);
         }

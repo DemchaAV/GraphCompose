@@ -24,14 +24,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Every template preset's DOCX, and that of each document built for a shape no preset has
- * ({@link SyntheticDocxCorpus}), set by an editor, stands no further from the engine's PDF than
- * its baseline holds it.
+ * ({@link SyntheticDocxCorpus}), set by an editor, stands where its baseline holds it.
  *
  * <p>The engine draws each corpus document to PDF and exports it to DOCX; an editor converts the
  * DOCX to PDF; each document is measured line by line against the page
  * ({@link FidelityMeasurement}) and held to the baseline for this editor and operating system
- * ({@link FidelityBaseline}). A change to the export that sets any document further from the
- * page fails here, wherever the document is.</p>
+ * ({@link FidelityBaseline}). A change to the export that moves any document fails here,
+ * wherever the document is and whichever way it moved: a move nearer the page is the export
+ * doing better and is recorded the same way, by rewriting the baseline in the same commit.</p>
  *
  * <p>It runs only when asked for, with {@code -Dgraphcompose.docxFidelity}, and takes a few
  * minutes; a value it does not know fails. {@code libreoffice} exports, converts with
@@ -41,9 +41,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Word converts them, and {@code word} measures Word's PDFs against {@code word-windows.tsv} —
  * each only when the DOCX Word converted, by the SHA-256 its conversion records, is the one
  * this tree exports ({@link WordConversion}). {@code -Dgraphcompose.docxFidelity.update=true}
- * writes what it measured as the baseline, for a change that moves documents nearer the page;
- * the baseline's diff then shows the reviewer which documents moved. The documents, their PDFs
- * and the report are left in {@code target/docx-fidelity}.</p>
+ * writes what it measured as the baseline, which is how a change that moves documents records
+ * the move; the baseline's diff then shows the reviewer which documents moved, and which way.
+ * The documents, their PDFs and the report are left in {@code target/docx-fidelity}.</p>
  */
 class DocxFidelityCorpusTest {
 
@@ -52,7 +52,7 @@ class DocxFidelityCorpusTest {
     private static final String EXPORT = "export";
 
     @Test
-    void everyDocumentStandsNoFurtherFromThePageThanItsBaseline() throws Exception {
+    void everyDocumentStandsWhereItsBaselineHoldsIt() throws Exception {
         String mode = System.getProperty("graphcompose.docxFidelity", "");
         Assumptions.assumeTrue(!mode.isEmpty(), "NOT_RUN: the DOCX fidelity corpus runs with "
                 + "-Dgraphcompose.docxFidelity=libreoffice, or with Word through scripts/docx-visual/word-fidelity.ps1");
@@ -109,15 +109,17 @@ class DocxFidelityCorpusTest {
 
         Path baseline = Path.of("src", "test", "resources", "docx-fidelity",
                 mode + "-" + LibreOfficeConverter.platform() + ".tsv");
-        List<String> regressions = FidelityBaseline.read(baseline).regressions(measurements);
+        List<String> divergences = FidelityBaseline.read(baseline).divergences(measurements);
         if (Boolean.getBoolean("graphcompose.docxFidelity.update")) {
             // Written all the same: what it lets through is the baseline's diff, shown here first.
-            regressions.forEach(regression -> System.err.println("baseline rewritten over: " + regression));
+            divergences.forEach(divergence -> System.err.println("baseline rewritten over: " + divergence));
             FidelityBaseline.write(baseline, note, measurements);
             return;
         }
-        assertThat(regressions)
-                .as("documents set further from the page than %s holds them (measured: %s)",
+        assertThat(divergences)
+                .as("documents standing apart from %s, whichever way they moved: a change that moves "
+                    + "them — nearer the page included — rewrites the baseline in the same commit, with "
+                    + "-Dgraphcompose.docxFidelity.update=true, so its diff shows what moved (measured: %s)",
                         baseline, work.resolve("measured-" + mode + ".tsv"))
                 .isEmpty();
     }

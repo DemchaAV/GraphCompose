@@ -4345,6 +4345,44 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The DOCX fidelity gate holds each document where its baseline puts it, whichever way it
+  moved, instead of only catching lines set further from the page.**
+  - A document failed when a line stood more than 0.5pt further from the engine's PDF than its
+    baseline held it, when a line the baseline found was no longer found, or when the editor set
+    it on a page count further from the engine's. A line that moved nearer the page, a page count
+    that came nearer, and a line found that the baseline did not hold all passed, at any size.
+  - Each is now measured as a step from where the baseline holds it: a line fails when its drift
+    moves more than 0.5pt, down or across, nearer the page or further, and a document fails when
+    the editor sets it on another number of pages, when the engine draws it on another number, or
+    when the set of its lines found is not the set the baseline holds. The failure names each
+    line's step — `+1.10 -> +0.00pt (-1.10)` — so the direction is in the message.
+  - Measured on the gate as it stood: a line moving 1.10pt nearer the page, one moving 5pt
+    nearer, a page count coming onto the engine's own, and a line newly found were each let
+    through in silence, as was `+3.00 -> -3.00pt` — six points of movement, which a rule comparing
+    which of two drifts is further from the page cannot see at all, since both stand three points
+    away.
+  - A change that moves documents, nearer the page included, now rewrites the baseline in the
+    same commit (`-Dgraphcompose.docxFidelity.update=true`), and that diff is the record of what
+    moved. Held one-sidedly, the Word baseline went stale in 1609 of its 5165 rows over 74
+    commits without one red run — 227 of them standing as much as a point nearer the page across
+    after #944 and #948, an improvement nothing wrote down, which left the further value in place
+    for a later change to walk back to and spend the 0.5pt on top of.
+  - The slack stays one number for both directions: it is rounding, and rounding is the same size
+    whichever way a line rounds. A step of exactly 0.5pt is still rounding, for every drift from
+    0 to 5pt and in both directions. The aggregates a row carries — its median, its p90, its
+    lines past 2pt — are held to nothing: they follow from the lines, which are held one by one.
+  - The export does not change: the 71-document corpus exports byte for byte as before, and the
+    Word baseline needs no rewrite — Word 16.0.20527 measures all 71 documents and 5165 line rows
+    exactly as `word-windows.tsv` holds them, not a row differing.
+  - `libreoffice-windows.tsv` is a different matter, and is left as it stands. Neither LibreOffice
+    baseline has been shot whole since #898; both were only ever patched where the one-sided gate
+    went red, and the Windows one — which nothing in CI runs — is red already under the rule it
+    was written for: 2 documents, 8 lines no longer found, 2 page counts and 65 lines standing
+    more than half a point further. `proposal-indigo` accounts for the worst of them, 8 lines
+    10.25pt lower than it holds them, on the same LibreOffice build, so the move is the export's
+    and not the editor's. Rewriting it here would bury that in a baseline diff; it wants
+    attributing to the commit that moved it first, and is named in `CONTRIBUTING.md` until then.
+
 - **The DOCX fidelity corpus holds an icon laid over a card's corner, as the export writes it
   today.**
   - `SyntheticDocxCorpus` takes `icon_over_card`: a layer stack laying an 18pt icon over the top

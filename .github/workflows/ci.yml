@@ -538,9 +538,13 @@ jobs:
     # Every template preset, and the documents built for shapes no preset has, exported to
     # DOCX, set by LibreOffice, and held line by line to
     # qa/src/test/resources/docx-fidelity/libreoffice-linux*.tsv
-    # (DocxFidelityCorpusTest): a change that sets any line of any document further
-    # from the engine's PDF, down or across, at other words, or on more pages fails here. Gated on
-    # `docx` — what an export of the corpus is made from.
+    # (DocxFidelityCorpusTest): a change that moves any line of any document more than 0.5pt from
+    # where the baseline holds it — down or across, nearer the engine's PDF or further — or sets a
+    # document at other words, on another number of pages, or with another set of its lines found,
+    # fails here. A move nearer the page is the export doing better and fails all the same, until
+    # the change records it by rewriting the baseline: held one-sidedly, the Word baseline drifted
+    # stale in 1609 of its 5165 rows over 74 commits without a single red run (FidelityBaseline's
+    # javadoc has the breakdown). Gated on `docx` — what an export of the corpus is made from.
     #
     # The image is pinned, not ubuntu-latest: the baseline is LibreOffice's setting
     # of the text, and a new image's LibreOffice sets some lines a little apart. A

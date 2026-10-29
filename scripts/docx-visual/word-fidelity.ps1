@@ -24,8 +24,9 @@
     run.
 
 .PARAMETER Update
-    Rewrites the Word baseline with what was measured, for a change that moves
-    documents nearer the page. What it writes over is printed first.
+    Rewrites the Word baseline with what was measured, which is how a change
+    that moves documents — nearer the page included — records the move. What it
+    writes over is printed first.
 
 .EXAMPLE
     .\mvnw.cmd -B -ntp -DskipTests install -pl :graph-compose-qa -am

@@ -349,34 +349,56 @@ Choose the smallest tests that match the change:
   [DocxFidelityCorpusTest.java](qa/src/test/java/com/demcha/compose/document/templates/fidelity/DocxFidelityCorpusTest.java).
   It exports every template preset to DOCX, with documents built for shapes no preset has on
   its own fixture, has LibreOffice set each one, and holds every
-  line of every document to the drift its baseline records, down and across: a line set further
-  from the page either way, a line set at other words, or a page more fails it. It needs
+  line of every document to the drift its baseline records, down and across: a line that
+  moved more than 0.5pt from where the baseline holds it, nearer the page or further, a line
+  set at other words, a line found that the baseline does not hold, another number of pages
+  from the editor, or another number of pages or lines from the engine fails it. It needs
   LibreOffice and runs only when asked for — install first, as for any standalone `qa` run:
   `./mvnw -B -ntp test -f qa/pom.xml -Dtest=DocxFidelityCorpusTest -Dgraphcompose.docxFidelity=libreoffice`.
-  A change that moves documents nearer the page rewrites the baseline with
+  A change that moves documents, nearer the page included, rewrites the baseline with
   `-Dgraphcompose.docxFidelity.update=true`, and commits it with the change: its diff shows
-  which documents moved. A new preset joins the corpus in its family's `*DocxCorpus` class,
-  and so does a preset on a longer fixture; a shape no preset has — a page break inside a
+  which documents moved, and which way. A new preset joins the corpus in its family's
+  `*DocxCorpus` class, and so does a preset on a longer fixture; a shape no preset has
+  — a page break inside a
   panel, a break in a row's column, a shape container narrower than the block it stands in
   or clipped short of its text, an icon a layer stack lays over a card's corner — goes in
   `SyntheticDocxCorpus`. Its baseline holds it as the editors set it, a defect of the export
   included, and the change fixing that rewrites its rows nearer the page.
   CI runs it on Linux (the `DOCX Fidelity` job) against `libreoffice-linux.tsv`, and uploads
   what it measured: LibreOffice sets text a little differently per platform, so a change that
-  moves documents nearer the page takes that artifact's files as the Linux baseline, and its own
-  run's as the Windows one. Microsoft Word, the editor the export answers to, is not in CI: on
+  moves documents takes that artifact's files as the Linux baseline, and its own run's as the
+  Windows one. Microsoft Word, the editor the export answers to, is not in CI: on
   Windows with Word, `scripts/docx-visual/word-fidelity.ps1` (`-Update` to rewrite) exports the
   corpus, has a private Word instance convert it, and holds it to `word-windows.tsv` — run it
   from PowerShell (pwsh), after the install above, before a DOCX export change is opened.
-  Rewrite the baseline in the change that moves the documents: the gate cannot remind you, as
-  it fails a line only once it stands more than 0.5pt further from the page than the baseline
-  holds it, so a change that moves documents nearer — or less than that further — passes with
-  the baseline left as it was. Between #899 and #974 that left 1609 of the Word baseline's 5165
-  rows stale over 74 commits, 220 of them standing about a point nearer the page, until three
-  documents stood 0.48pt further and the next change to touch them would have failed the gate
-  for drift it did not cause. Each baseline's header records the build it was shot on, and a
+  Rewrite the baseline in the change that moves the documents, and the gate will remind you —
+  as long as you run it, which for Word means running the script above: it fails a line that has
+  moved more than 0.5pt from where the baseline holds it, nearer the page or further, a document
+  the editor sets on another number of pages, one the engine draws on another number of pages or
+  lines, and one whose lines the editor finds a different set of. Until the gate was made
+  two-sided it only looked for lines set further, which let a change move documents nearer, or
+  less than 0.5pt further, with the baseline left as it was: between #899 and #974 that left
+  1609 of the Word baseline's 5165 rows stale over 74 commits, 226 of them standing more than
+  half a point nearer the page across, until three documents stood 0.48pt further and the next
+  change to touch them would have failed the gate for drift it did not cause. The slack is read
+  afresh against each rewrite, so it bounds no total: what two-sidedness buys is that every move
+  past rounding is seen and written down, not that drift cannot accumulate over many changes.
+  A failure naming lines that moved nearer the page is not a defect to fix — it is the export
+  doing better, and the baseline is how it gets recorded. A rewrite keeps the `#` notes the file
+  it replaces carried, by either path, and leaves it to you to prune the ones it has made stale;
+  a note is a block under the header, not an annotation of the rows below it, and comes back
+  above them. Each baseline's header records the build it was shot on, and a
   differing build is rarely the cause: Word 16.0.20430 and 16.0.20527 measure the corpus as
   #899 exported it identically, row for row.
+  `libreoffice-windows.tsv` is known stale, and the local LibreOffice run fails on it: 2
+  documents fail even one-sidedly — 8 lines no longer found, 2 page counts and 65 lines more
+  than half a point further, 8 of them `proposal-indigo`'s, 10.25pt lower than it holds them
+  on the LibreOffice build the baseline names. It has not been shot whole since #898, where
+  `libreoffice-linux.tsv` now has. Do not rewrite it as part of an unrelated change: a move
+  further from the page wants the commit that made it found first, as the Word baseline's drift
+  was attributed before #975 rewrote it, and the file rewritten with that reckoning. Until then,
+  read a local LibreOffice run against the documents your change touches rather than against a
+  green run.
   Each run also writes `measured-<editor>-acceptance.md`: which documents the editor sets as the
   page does — the same pages, 95% of the lines found, a median of 1pt or less, no more than 10%
   past 2pt — and what keeps the rest short of it. CI shows LibreOffice's in the job summary.

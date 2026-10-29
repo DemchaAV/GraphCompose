@@ -19,7 +19,7 @@ import java.util.Locale;
  * than {@value #MEDIAN_POINTS}pt from the page, and sets no more than
  * {@value #FAR_SHARE_PERCENT} in a hundred more than 2pt off. It is a report of where each
  * document stands, not a gate: the baseline ({@link FidelityBaseline}) is what keeps a document
- * from moving further away.</p>
+ * from moving at all, either way, without the move being recorded.</p>
  */
 final class FidelityAcceptance {
 

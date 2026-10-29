@@ -177,9 +177,17 @@ record FidelityMeasurement(String stem, int enginePages, int editorPages, int li
             throw new IllegalArgumentException("a baseline row has 8 cells, not " + cells.length + ": " + row);
         }
         try {
+            double median = Double.parseDouble(cells[5]);
+            double p90 = Double.parseDouble(cells[6]);
+            // Nothing holds these to anything — they follow from the lines — but a row read back
+            // with a median that is not a number would read as passing every limit it is put to.
+            if (!Double.isFinite(median) || !Double.isFinite(p90)) {
+                throw new IllegalArgumentException("a baseline row holds a median or p90 that is not a "
+                                                   + "number, which would read as passing every limit: " + row);
+            }
             return new FidelityMeasurement(cells[0], Integer.parseInt(cells[1]), Integer.parseInt(cells[2]),
-                    Integer.parseInt(cells[3]), Integer.parseInt(cells[4]), Double.parseDouble(cells[5]),
-                    Double.parseDouble(cells[6]), Integer.parseInt(cells[7]), found);
+                    Integer.parseInt(cells[3]), Integer.parseInt(cells[4]), median,
+                    p90, Integer.parseInt(cells[7]), found);
         } catch (NumberFormatException malformed) {
             throw new IllegalArgumentException("a baseline row holds a cell that is not a number: " + row, malformed);
         }
@@ -211,8 +219,20 @@ record FidelityMeasurement(String stem, int enginePages, int editorPages, int li
             boolean measuredAcross = cells.length == 5;
             double across = measuredAcross ? Double.parseDouble(cells[3]) : Double.NaN;
             String preview = measuredAcross ? cells[4] : cells.length > 3 ? cells[3] : "";
+            double drift = Double.parseDouble(cells[2]);
+            // A drift that is not a number holds its line to nothing: every comparison against
+            // NaN is false, so the line would pass however far it moved. These files are patched
+            // by hand, so a cell mistyped that way is refused rather than read.
+            if (!Double.isFinite(drift)) {
+                throw new IllegalArgumentException("a baseline line row holds a drift that is not a "
+                                                   + "number, which would hold its line to nothing: " + row);
+            }
+            if (measuredAcross && !Double.isFinite(across)) {
+                throw new IllegalArgumentException("a baseline line row holds a place across that is not a "
+                                                   + "number, which would hold its line to nothing: " + row);
+            }
             byDocument.computeIfAbsent(cells[0], stem -> new LinkedHashMap<>())
-                    .put(cells[1], new Found(page, preview, Double.parseDouble(cells[2]), across));
+                    .put(cells[1], new Found(page, preview, drift, across));
         } catch (NumberFormatException | StringIndexOutOfBoundsException malformed) {
             throw new IllegalArgumentException("a baseline line row is malformed: " + row, malformed);
         }

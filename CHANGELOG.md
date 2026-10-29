@@ -15,21 +15,21 @@ follow semantic versioning; release dates are ISO 8601.
     it was nearest, or on the page where it stood beside none. Six invoices' service tiles were
     placed from the page's edges: edited above, every line row moved and the tiles did not, and
     LibreOffice 24.2, which sets those rows 1.96pt shorter than the page does, left each tile
-    further out of its row than the last — 7.9pt by the fifth.
+    further out of its row than the last: 0.94, 2.94, 4.89, 6.84 and 8.79pt down the five rows.
   - The cell whose box the layout placed the drawing in now stands for the block holding it, and
     the drawing is anchored in the first paragraph of that cell able to carry it, placed from
     that cell's text column and the paragraph's top, exactly as a drawing a node paints is. A
     drawing no cell's box holds — one the table paints across its cells — keeps the
     nearest-text rule, as does one whose cell writes no paragraph that can carry it.
-  - A cell set to the middle or the bottom takes one only where the page fills its box and the
-    cell carrying the drawing holds no text of its own, since LibreOffice 24.2 sets a cell
-    carrying a drawing — and the cell holding its table — from its top. Measured in Word
-    16.0.20527 and LibreOffice 24.2: with room to centre in, such a cell had its own text set 4pt
-    and 23.75pt higher and the text of the cell holding its table 43.7pt higher, while a cell the
-    page fills moved no line in either editor, and nor did one holding no text whatever room it
-    was left — but a cell with room to centre in centres the drawing along with the paragraph
-    carrying it, so where the drawing stands no longer tells where that paragraph starts, and
-    that is why the page must fill the cell either way.
+  - A cell set to the middle or the bottom takes one only where the page fills its box, since
+    LibreOffice 24.2 sets a cell carrying a drawing — and the cell holding its table — from its
+    top. Measured in Word 16.0.20527 and LibreOffice 24.2: with room to centre in, such a cell had
+    its own text set 4pt and 23.75pt higher and the text of the cell holding its table 43.7pt
+    higher, while a cell the page fills moved no line in either editor, and nor did one holding no
+    text whatever room it was left. The cell the page fills is excused its own alignment whatever
+    it holds — the page leaves it nothing to centre — while a cell *inside* it must hold nothing
+    an editor would set lower: no text, a link's included, no picture, no paragraph border and no
+    table of its own.
   - The same rule now holds for a drawing the text nearest it carries, which it did not: a
     neighbouring cell takes one only where it, and each cell holding its table, sets its content
     from its top. It was held to its own alignment alone, and a cell inside one set to the middle
@@ -45,6 +45,9 @@ follow semantic versioning; release dates are ISO 8601.
     first cell's, and a cell that cannot say where its own content stands cannot place a drawing
     from it. Nor does a cell of a repeated header row: Word repeats such a row, and what is
     anchored in it, on every page the table reaches, beside the copy the layout placed there.
+    A drawing any of these refuses keeps the nearest-text rule, as one no cell's box holds does —
+    the paragraph whose text it stands nearest, within reach, and the page where it stands beside
+    none. The report's note names all four.
   - Of the 190 drawings the fidelity corpus composed in table cells, 165 are now anchored in
     their cell. The 25 left are `PaymentsInvoice`'s, `WorkspaceInvoice`'s and
     `MerchantInvoice`'s, whose rows nest a row inside a cell: the cell between the composed cell
@@ -63,8 +66,9 @@ follow semantic versioning; release dates are ISO 8601.
     (−999999, −999997, −999994, −999993), while 0.30pt and every larger offset — 0.40, 0.50,
     0.60, 0.75, 0.97 — is reported as itself. A shape standing less than 0.30pt above its
     paragraph is placed at its top, where it practically stands; one standing further keeps its
-    own offset. A stroke's width was allowed before, which stood a service tile 0.96pt low.
-  - A table cell is given no drawing standing further above its paragraph than that, on the
+    own offset. A stroke's width was allowed before, which squared the 0.97pt a service tile
+    needed to nothing and stood it 0.96pt low.
+  - A table cell is given no drawing standing 0.30pt or further above its paragraph, on the
     nearest-text rule: a 20.5pt rule placed a stroke's width above its paragraph in a cell moved
     that row's text 1.8pt up in the Linux LibreOffice the build checks with, and such an offset is
     now written rather than squared to nothing.

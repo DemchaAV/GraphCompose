@@ -698,11 +698,10 @@ final class DocxDrawingAnchors {
      * cell's own content fills, the two are the same place and nothing in the file moves).
      */
     private static void readItFromItsTop(XWPFTableCell cell) {
-        CTTcPr properties = cell.getCTTc().isSetTcPr() ? cell.getCTTc().getTcPr() : cell.getCTTc().addNewTcPr();
-        if (properties.isSetVAlign()) {
-            properties.getVAlign().setVal(
-                    org.openxmlformats.schemas.wordprocessingml.x2006.main.STVerticalJc.TOP);
-        }
+        // Asked for only where the cell says it is read some other way (Place#setItsCell), so it
+        // has the alignment this rewrites and none is added.
+        cell.getCTTc().getTcPr().getVAlign().setVal(
+                org.openxmlformats.schemas.wordprocessingml.x2006.main.STVerticalJc.TOP);
     }
 
     /**
@@ -917,9 +916,10 @@ final class DocxDrawingAnchors {
             }
             // Only the cell that ends up carrying the shape has to be set from its top: this one
             // may simply be where the row's text is measured, and hand the shape to a neighbour.
+            // Its own alignment is left alone whatever it says: a seat is offered only for a
+            // paragraph holding text, so this cell holds text to be set lower.
             Place here = setFromTheTop(cell, filled)
-                    ? new Place(paragraph, cellLeft + leftMargin(cell), top,
-                            !alignedToTheTop(cell) && !holdsAnyText(cell)) : null;
+                    ? new Place(paragraph, cellLeft + leftMargin(cell), top) : null;
             if (holdsAcross(shape, cellLeft, width)) {
                 return here;
             }
@@ -942,7 +942,7 @@ final class DocxDrawingAnchors {
         private static boolean setFromTheTop(XWPFTableCell cell, CTTc filled) {
             for (XWPFTableCell at = cell; at != null; ) {
                 boolean nothingToSetLower = filled != null && (at.getCTTc() == filled
-                                                               || at == cell && !holdsAnyText(at));
+                                                               || at == cell && !holdsAnythingToSetLower(at));
                 if (!alignedToTheTop(at) && !nothingToSetLower) {
                     return false;
                 }
@@ -952,24 +952,31 @@ final class DocxDrawingAnchors {
         }
 
         /**
-         * Whether a cell holds anything an editor could set lower, at any depth: a line of text —
-         * a link's among it, which POI leaves out of a paragraph's own text
-         * ({@link #firstRunOfText}) — or a picture or a drawing of its own, which an editor moves
-         * with the text.
+         * Whether a cell holds anything an editor would set lower were the cell read from its top:
+         * a paragraph holding text — a link's among it, which POI leaves out of a paragraph's own
+         * text ({@link #firstRunOfText}) — a picture, a drawing, or a border, which is drawn round
+         * the paragraph and moves with it; and a table of any kind, empty or not, which stands in
+         * the cell and may be ruled or shaded. Only an empty paragraph with nothing drawn on it is
+         * nothing to set lower, which is what a cell drawn into alone holds.
          */
-        private static boolean holdsAnyText(XWPFTableCell cell) {
+        private static boolean holdsAnythingToSetLower(XWPFTableCell cell) {
             for (IBodyElement element : cell.getBodyElements()) {
                 if (element instanceof XWPFParagraph paragraph
-                    && (new Seat(paragraph, 0, 0, 0, 0, null).holdsText() || draws(paragraph))) {
+                    && (new Seat(paragraph, 0, 0, 0, 0, null).holdsText() || draws(paragraph)
+                        || bordered(paragraph))) {
                     return true;
                 }
-                if (element instanceof org.apache.poi.xwpf.usermodel.XWPFTable table
-                    && table.getRows().stream().flatMap(row -> row.getTableCells().stream())
-                            .anyMatch(Seat::holdsAnyText)) {
+                if (element instanceof org.apache.poi.xwpf.usermodel.XWPFTable) {
                     return true;
                 }
             }
             return false;
+        }
+
+        /** Whether a paragraph has a border of its own, which is drawn round it and moves with it. */
+        private static boolean bordered(XWPFParagraph paragraph) {
+            CTPPr properties = paragraph.getCTP().getPPr();
+            return properties != null && properties.isSetPBdr();
         }
 
         /** Whether a paragraph holds a picture or a drawing of its own, a link's among them. */
@@ -1158,7 +1165,7 @@ final class DocxDrawingAnchors {
      *                    to the middle of a row four lines tall stood 7.10pt below where the page
      *                    puts it, and 0.30pt from it once that cell was read from its top; in a
      *                    row the cell's own content fills, the two are the same place. Nothing
-     *                    moves with it, the cell holding no text ({@link Seat#holdsAnyText})
+     *                    moves with it, the cell holding no text ({@link Seat#holdsAnythingToSetLower})
      */
     record Place(XWPFParagraph paragraph, double column, double top, boolean setItsCell) {
 

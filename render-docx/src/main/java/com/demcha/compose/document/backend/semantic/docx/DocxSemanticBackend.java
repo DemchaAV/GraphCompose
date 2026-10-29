@@ -16396,19 +16396,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * past it on both sides. The room comes from the cell's margins as written.</p>
      */
     private boolean pageFillsTheCell(TableNode table, DocxLayoutMetrics.CellBox box, XWPFTableCell written) {
-        double upper = Double.NEGATIVE_INFINITY;
-        double lower = Double.POSITIVE_INFINITY;
+        // The layout's y grows up the page, as every reading of a fragment's top shows
+        // (canvasHeight - y - height), so a box's top edge is its larger y and a fragment's top is
+        // y + height. The room above the content is measured against the cell's top margin.
+        double contentTop = Double.NEGATIVE_INFINITY;
+        double contentBottom = Double.POSITIVE_INFINITY;
         for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(table)) {
             if (box.holds(fragment)) {
-                upper = Math.max(upper, Math.min(box.top(), fragment.y() + fragment.height()));
-                lower = Math.min(lower, Math.max(box.bottom(), fragment.y()));
+                contentTop = Math.max(contentTop, Math.min(box.top(), fragment.y() + fragment.height()));
+                contentBottom = Math.min(contentBottom, Math.max(box.bottom(), fragment.y()));
             }
         }
-        if (Double.isInfinite(upper)) {
+        if (Double.isInfinite(contentTop)) {
             return false;
         }
-        return box.top() - upper - cellMargin(written, true) / TWIPS_PER_POINT <= CELL_FILL_SLACK
-               && lower - box.bottom() - cellMargin(written, false) / TWIPS_PER_POINT <= CELL_FILL_SLACK;
+        return box.top() - contentTop - cellMargin(written, true) / TWIPS_PER_POINT <= CELL_FILL_SLACK
+               && contentBottom - box.bottom() - cellMargin(written, false) / TWIPS_PER_POINT <= CELL_FILL_SLACK;
     }
 
     /**

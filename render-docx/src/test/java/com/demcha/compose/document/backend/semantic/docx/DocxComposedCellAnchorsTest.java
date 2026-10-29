@@ -6,6 +6,7 @@ import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.junit.jupiter.api.Test;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTblWidth;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STVerticalJc;
@@ -106,22 +107,62 @@ class DocxComposedCellAnchorsTest {
     @Test
     void aCellSetToTheMiddleHoldingTextCarriesNoneOfItsOwn() {
         // The tile over the text's own cell, which is set to the middle and holds text: that cell
-        // cannot carry it, since LibreOffice would set its text from the cell's top. The drawing
-        // goes no further than the rule the export had before, which seats it beside that text —
-        // read off its own offset, which that rule measures from the text and this one would
-        // measure from the row's first paragraph.
+        // cannot carry it, since LibreOffice would set its text from the cell's top. It stands
+        // 60pt below that text, further than the nearest-text rule reaches, so nothing else can
+        // take it either and it keeps the page — where that cell carrying it would have put it in
+        // the cell instead.
         Composed composed = composed(new XWPFDocument());
         DocxDrawingAnchors anchors = anchors();
         anchors.paragraphOn(0, composed.outside(), true);
         anchors.seat(0, composed.title(), TITLE, composed.title(), 60, 300, 100, 110);
 
-        queue(anchors, List.of(tile(70, 100.5)), new DocxDrawingAnchors.HoldingCell(composed.cell(), true));
+        queue(anchors, List.of(tile(70, 160)), new DocxDrawingAnchors.HoldingCell(composed.cell(), true));
         anchors.endSection(0, null, composed.document()::createParagraph);
 
         assertThat(drawingsIn(composed.tileCell())).isEmpty();
-        String drawing = drawingsIn(composed.title()).get(0);
-        assertThat(offsetAcross(drawing)).as("beside the text, from its own column").isCloseTo(10, within(0.01));
-        assertThat(offsetDown(drawing)).as("half a point below the text's top").isCloseTo(0.5, within(0.01));
+        assertThat(drawingsIn(composed.title())).isEmpty();
+        assertThat(drawingsIn(composed.outside())).singleElement().asString()
+                .contains("<wp:positionV relativeFrom=\"page\">");
+    }
+
+    @Test
+    void aCellHoldingOnlyABorderedParagraphCarriesNoDrawing() {
+        // A border is drawn round its paragraph and moves with it, so such a cell is not read from
+        // its top for a drawing: the rule it draws would move from the cell's middle to the row's
+        // top. Under the paragraph, where the rule a border draws stands and where the refusal of
+        // a paragraph bordered above it does not reach.
+        Composed composed = composed(new XWPFDocument());
+        CTPPr properties = composed.tileCell().getCTP().isSetPPr()
+                ? composed.tileCell().getCTP().getPPr() : composed.tileCell().getCTP().addNewPPr();
+        properties.addNewPBdr().addNewBottom().setVal(
+                org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder.SINGLE);
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, composed.outside(), true);
+        anchors.seat(0, composed.title(), TITLE, composed.title(), 60, 300, 100, 110);
+
+        queue(anchors, List.of(tile(22, 99)), new DocxDrawingAnchors.HoldingCell(composed.cell(), true));
+        anchors.endSection(0, null, composed.document()::createParagraph);
+
+        assertThat(drawingsIn(composed.outside())).singleElement().asString()
+                .contains("<wp:positionV relativeFrom=\"page\">");
+    }
+
+    @Test
+    void aDrawingIsNotGivenACellFromFurtherAboveThanItIsPlacedAtItsTop() {
+        // 0.4pt above the text's paragraph: further than the rise a shape is placed at that top
+        // from, so no cell is given it to carry (a rule placed above its paragraph in a cell moved
+        // that row's text 1.8pt up in the Linux LibreOffice the build checks with).
+        Composed composed = composed(new XWPFDocument());
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, composed.outside(), true);
+        anchors.seat(0, composed.title(), TITLE, composed.title(), 60, 300, 100, 110);
+
+        queue(anchors, List.of(tile(70, 99.6)), null);
+        anchors.endSection(0, null, composed.document()::createParagraph);
+
+        assertThat(drawingsIn(composed.title())).isEmpty();
+        assertThat(drawingsIn(composed.outside())).singleElement().asString()
+                .contains("<wp:positionV relativeFrom=\"page\">");
     }
 
     @Test

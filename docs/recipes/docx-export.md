@@ -1531,7 +1531,8 @@ holds it rather than by a path, since the layout names a node standing in two ce
 set to the middle or the bottom takes one only where the page fills its box — where what the
 layout placed in it reaches within a stroke's width of the room its margins leave, above and
 below, so that an editor setting the cell's content from its top has nothing to move — and the
-cell carrying the drawing must then either be set from its top or hold no text of its own
+cell carrying the drawing must then either be set from its top or, where it stands inside the cell
+the page fills, hold nothing an editor would set lower
 (measured in Word 16.0.20527 and LibreOffice 24.2: a cell set to the middle with room to centre in
 had its own text set 4pt and 23.75pt higher when it carried a drawing, and the text of the cell
 holding its table 43.7pt higher in LibreOffice, while a cell the page fills moved no line in
@@ -1539,8 +1540,8 @@ either editor, and nor did one holding no text whatever room it was left; the pa
 cell either way, because a cell with room to centre in centres the drawing along with the
 paragraph carrying it, and where the drawing stands then no longer tells where that paragraph
 starts). What a cell between the composed cell and the drawing's own leaves its content the layout
-does not say, so a drawing in a row nested inside a cell set to the middle stays where the page
-puts it. So does one in a cell composed of a node that stands in more than one place: such a node
+does not say, so a drawing in a row nested inside a cell set to the middle keeps the nearest-text
+rule below. So does one in a cell composed of a node that stands in more than one place: such a node
 is laid out once, so the lines of the paragraphs written for it in the second cell are the first
 cell's. So does one in a repeated header row, which Word repeats on every page the table reaches
 with what is anchored in it, beside the copy the layout placed there. The cell that does carry a
@@ -1548,9 +1549,9 @@ drawing is written to be read from its top, which it holds no text to be read an
 Word centres a cell set to the middle along with the drawing its paragraph carries, which stood a
 tile 7.10pt below where the page puts it in a row four lines tall, and 0.30pt from it once the
 cell was read from its top (in a row the cell's own content fills, the two are the same place).
-So does a drawing no cell's box holds — one the table paints across its cells — and one
-whose cell writes no paragraph that can carry it: those are anchored in the paragraph whose text is
-nearest, within 48pt across and down together, when they rise above that paragraph's top by their
+A drawing no cell's box holds — one the table paints across its cells — and one whose cell writes
+no paragraph that can carry it keep that same rule: all of them are anchored in the paragraph whose
+text is nearest, within 48pt across and down together, when they rise above that paragraph's top by their
 own height at most, 24pt at most, as a dot centred on a first line does — in a table cell no
 further above it than they are then placed at that top, since a rule a stroke's width above its
 paragraph in a cell moved that row's text 1.8pt up in the Linux LibreOffice the build checks with

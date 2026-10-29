@@ -589,7 +589,7 @@ final class DocxLayoutMetrics {
             }
             boolean sameItem = previous != null && level(previous, fragment);
             ItemText text = new ItemText(paragraph.lines(), fragment.x() + paragraph.padding().left(),
-                    fragment.pageIndex(), Math.max(0, paragraph.lineGap()));
+                    fragment.pageIndex(), Math.max(0, paragraph.lineGap()), textBoxOf(fragment, paragraph));
             if (!sameItem) {
                 items.add(text);
             } else if (text.x() >= items.get(items.size() - 1).x()) {
@@ -604,11 +604,15 @@ final class DocxLayoutMetrics {
      * An item's text as a list laid it out.
      *
      * @param lines   its lines
-     * @param x       where its text starts across the page, in points
+     * @param x       where its text starts across the page, in points — the box's left edge as
+     *                well, held apart from it because an item the page laid no line of has no box
      * @param page    the page it was set on
      * @param lineGap the gap the page sets between its lines, in points
+     * @param box     where the page sets that same text, which the item's paragraph is offered to
+     *                the shapes beside with ({@code DocxSemanticBackend.offerASeat}); {@code null}
+     *                for an item the page laid no line of, which has no text to stand beside
      */
-    record ItemText(List<ParagraphLine> lines, double x, int page, double lineGap) {
+    record ItemText(List<ParagraphLine> lines, double x, int page, double lineGap, TextBox box) {
 
         /**
          * How tall the page sets the item's lines together, as {@link #linesHeight(DocumentNode)}
@@ -1188,16 +1192,31 @@ final class DocxLayoutMetrics {
      */
     java.util.Optional<TextBox> firstTextBox(DocumentNode node) {
         for (PlacedFragment fragment : textFragmentsOf(node)) {
-            if (fragment.payload() instanceof ParagraphFragmentPayload paragraph && !paragraph.lines().isEmpty()) {
-                double top = ParagraphLineGeometry.contentTop(fragment.y(), fragment.height(), paragraph.padding().top());
-                ParagraphLine first = paragraph.lines().get(0);
-                return java.util.Optional.of(new TextBox(fragment.pageIndex(),
-                        fragment.x() + paragraph.padding().left(),
-                        fragment.x() + fragment.width() - paragraph.padding().right(),
-                        top, top - first.lineHeight() + first.baselineOffsetFromBottom()));
+            if (fragment.payload() instanceof ParagraphFragmentPayload paragraph) {
+                TextBox box = textBoxOf(fragment, paragraph);
+                if (box != null) {
+                    return java.util.Optional.of(box);
+                }
             }
         }
         return java.util.Optional.empty();
+    }
+
+    /**
+     * Where the page sets the lines of one fragment of paragraph text: its content box, inside the
+     * paragraph's padding, and its first line's baseline. {@code null} for a fragment holding no
+     * line.
+     */
+    private static TextBox textBoxOf(PlacedFragment fragment, ParagraphFragmentPayload paragraph) {
+        if (paragraph.lines().isEmpty()) {
+            return null;
+        }
+        double top = ParagraphLineGeometry.contentTop(fragment.y(), fragment.height(), paragraph.padding().top());
+        ParagraphLine first = paragraph.lines().get(0);
+        return new TextBox(fragment.pageIndex(),
+                fragment.x() + paragraph.padding().left(),
+                fragment.x() + fragment.width() - paragraph.padding().right(),
+                top, top - first.lineHeight() + first.baselineOffsetFromBottom());
     }
 
     /**

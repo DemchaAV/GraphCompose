@@ -1517,10 +1517,20 @@ The paragraph's top is where Word places from: the space written above its first
 included, and the line where Word stands it — an exact line's baseline four fifths of the way
 down it, raised by the run's position — measured in Word 16.0.20430 and LibreOffice to a tenth
 of a point; a paragraph with a border above its line, contextual spacing or space reckoned in
-lines carries none. Only the first paragraph holding text that a paragraph node is written as
-offers its place, in a column's cell too; a table's own cell text, a list's items and a pair
-of lines do not yet, so a shape whose block's text is written only so goes to the paragraph
-nearest it.
+lines carries none. Three writers of text offer their paragraphs, and the first
+paragraph of each piece of text that holds text takes the place: a paragraph node's own
+paragraph, in a column's cell too; each item of a list, so that a card whose only text is a
+list's items carries the drawings laid over it, and a shape standing beside the third item takes
+that item; and the one line two halves of a band share — a title at the left, its dates at the
+right — offered as the half that starts the line, since both are written in that one paragraph.
+An item offers its place only where the export matched the layout's items to the list's one by
+one, which its line gap and its own seating need as well: a list with an item split across a
+page is laid out as more pieces of text than it has items, and none of its items offers a place.
+A table's own cell text offers none yet either: a table's cells state no width of their own,
+their table's grid holding it, and a shape anchored in a cell is placed from the cell's text
+column, which cannot be read without that width; a text cell is also set to the middle by
+default, and such a cell carries no drawing (above). So a shape whose block's text is written
+only as a table's cells goes to the paragraph nearest it.
 
 What a table's composed cell draws has no node of its own: a composed cell's content is laid out
 under its table, and its drawings stand among the table's own fragments. The cell whose box the

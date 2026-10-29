@@ -877,6 +877,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** Where the list being written starts its items on the page, in points; NaN unknown. */
     private double listTextLeft = Double.NaN;
+    /**
+     * The path of the list being written, which each of its items is offered to the shapes beside
+     * it with ({@link #seatTheItem}); {@code null} outside a list.
+     */
+    private String listPath;
     /** Whether the layout's items are matched to the list's, one by one: each then has its place. */
     private boolean listItemsMatched;
     /**
@@ -5760,6 +5765,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double previousTextLeft = listTextLeft;
         com.demcha.compose.document.layout.PlacedNode listBox = layout.placement(list);
         listTextLeft = listBox == null ? Double.NaN : listBox.placementX() + list.padding().left();
+        // Whose items the shapes beside them are offered (seatTheItem).
+        String previousPath = listPath;
+        listPath = layout.pathOf(list);
         // Its own sides hold its items in, as a paragraph's hold its text (see writeParagraph):
         // NavySidebar indents its closing lists to clear the badge beside their heading, and
         // without it their markers stood under the badge, the text a line short in Word.
@@ -5802,6 +5810,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             itemsLowered = previousLowered;
             listItemLines = previousItemLines;
             listTextLeft = previousTextLeft;
+            listPath = previousPath;
             listItemsMatched = previousMatched;
             listItemsWritten = previousWritten;
         }
@@ -6378,6 +6387,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void seatTheItem(XWPFParagraph para, DocxLayoutMetrics.ItemText laidOut, boolean wordDrawsTheMarker) {
         if (laidOut == null) {
             return;
+        }
+        // Each item is a piece of text of its own, offered to the shapes beside it: a shape the
+        // list or a block round it holds takes the first item written on its page.
+        if (laidOut.box() != null && listPath != null) {
+            offerASeat(para, laidOut, listPath, laidOut.box(), 0);
         }
         boolean opensItsPage = itemPage < 0 ? listOpensItsPage : laidOut.page() > itemPage;
         itemPage = laidOut.page();
@@ -9871,13 +9885,51 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * first of them that holds text takes the place.
      */
     private void offerASeat(XWPFParagraph para) {
-        if (!(writing instanceof ParagraphNode node) || Double.isNaN(canvasHeight)) {
+        if (writing instanceof ParagraphNode node) {
+            offerASeatFor(para, node);
+        }
+    }
+
+    /**
+     * Offers a paragraph to the shapes beside the text of one paragraph node written in it, with
+     * the baseline the page draws its first line on, seated as the page seats it.
+     */
+    private void offerASeatFor(XWPFParagraph para, ParagraphNode node) {
+        layout.firstTextBox(node).ifPresent(box -> offerASeat(para, node, layout.pathOf(node), box, seatShift(node)));
+    }
+
+    /**
+     * Offers a paragraph written for any piece of text to the shapes standing beside it: a
+     * paragraph node's text, an item of a list whose items the layout's are matched to
+     * ({@link #listItemsMatched}), the line two halves of a band share.
+     *
+     * <p>A shape belongs to the node drawing it and to the blocks holding that node, and is
+     * anchored in the first paragraph the nearest of them writes on its page
+     * ({@link DocxDrawingAnchors}). A block whose text another writer writes had no paragraph to
+     * offer: a card whose only text is a list's items, a CV entry's head band written as one Word
+     * line. Their shapes went to the text nearest them instead — in the body, the paragraph above
+     * the card, whose top does not move when that paragraph grows a line and the card does.
+     * Measured in Word 16.0.20527 and LibreOffice 24.2 on a probe of each, with the paragraph above
+     * lengthened by a line: the card's own text moved 9.72pt in Word and 19.40pt in LibreOffice,
+     * and the shape 0.00 in both; carried by the item or by the shared line it moves with them,
+     * 9.70 and 19.35pt, and stands on the card's corner, 0.09pt from it in Word against 13.76pt
+     * before.</p>
+     *
+     * @param owner the piece of text the paragraph was written for: the first paragraph of it that
+     *              holds text takes the place, so each item and each shared line is its own
+     * @param path  the path of the node whose text it is, which a shape's holders are matched
+     *              against; a list's own for each of its items
+     * @param box   where the page sets that text, y up from the foot of the page
+     * @param seated how far the page moves it off its baseline to seat it ({@link #seatShift}), 0
+     *               where the page sets it on its baseline
+     */
+    private void offerASeat(XWPFParagraph para, Object owner, String path,
+                            DocxLayoutMetrics.TextBox box, double seated) {
+        if (Double.isNaN(canvasHeight)) {
             return;
         }
-        // The baseline the page draws the first line on, seated as the page seats it.
-        layout.firstTextBox(node).ifPresent(box ->
-                anchors.seat(box.page(), node, layout.pathOf(node), para, box.left(), box.right(),
-                        canvasHeight - box.top(), canvasHeight - box.baseline() - seatShift(node)));
+        anchors.seat(box.page(), owner, path, para, box.left(), box.right(),
+                canvasHeight - box.top(), canvasHeight - box.baseline() - seated);
     }
 
     /**
@@ -11151,6 +11203,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         int rightAnchor = openAnchor(para, pair.right().anchor());
         writeParagraphRuns(para, pair.right(), false, lineTopAbove(lineTop, pair.right()), false);
         closeAnchor(para, rightAnchor);
+        // The line the two halves share is offered to the shapes beside it, as the text of the
+        // half that starts it: a shape the overlay or a block round it holds takes that line. One
+        // seat is enough for it, since both halves are written in this one paragraph and a seat
+        // stands for a paragraph; the half that starts the line is the one whose text begins where
+        // the line begins, and whose raise is the one Word reads back from the line's first run
+        // (DocxDrawingAnchors.Seat#paragraphTop). The line itself is raised by the lesser of what
+        // its two halves call for (raiseTheSharedLine), so a shape placed from it stands as far
+        // below the page's place as the line does: 0.2 to 0.33pt, measured there.
+        offerASeatFor(para, pair.left());
         raiseTheSharedLine(para, pair, lineTop, opensItsPage);
         // A Word paragraph has one outline level, and its outline lists the whole line by it: the
         // left side's level where it has one, the right side's where not; the other's is lost.

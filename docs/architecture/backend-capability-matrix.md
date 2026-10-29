@@ -46,7 +46,7 @@ nodes are a different case: `ShapeNode`, `LineNode`, `EllipseNode`,
 `DocxSemanticBackend.writeNode`. A horizontal `LineNode` or a thin filled
 `ShapeNode` is written as a rule; any other rectangle, rounded rectangle,
 ellipse, line, polygon or path is drawn from the fragments the layout placed
-it as, a floating DrawingML shape behind the text, anchored in the first paragraph the nearest block holding it writes on its page — the paragraph nearest it where none does, the first paragraph of the cell whose box holds it for what a composed cell draws — or else to the page (`DocxDrawings`, `DocxDrawingAnchors`,
+it as, a floating DrawingML shape behind the text, anchored in the first paragraph the nearest block holding it writes on its page, whichever of three writers wrote that paragraph — a paragraph node's own, an item of a list the layout's items are matched to, the one line two halves of a band share; not a table's own cell text, which states no width for a shape to be placed from — the paragraph nearest it where none does, the first paragraph of the cell whose box holds it for what a composed cell draws — or else to the page (`DocxDrawings`, `DocxDrawingAnchors`,
 polygons and paths as custom geometry). Inside a filled panel a shape stands in
 front of the text unless it frames text; anchored in a paragraph of the panel's
 cell, it is placed from the cell's text column, as Word lays a shape anchored in a

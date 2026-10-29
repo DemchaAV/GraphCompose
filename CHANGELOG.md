@@ -8,6 +8,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export anchors a drawing in a paragraph written by any writer of text — a list's item,
+  the one line two halves of a band share — so a card whose only text is written so moves its
+  drawings with it when the text above is edited.**
+  - A paragraph was offered to the drawings standing beside it only while a paragraph node was
+    being written, so a block whose text another writer writes had no paragraph to offer: a card
+    whose only text is a list's items, and a CV entry's head band written as one Word line. Their
+    drawings went to the text nearest them — in the body, the paragraph above the card, whose top
+    does not move when that paragraph grows a line and the card does.
+  - Measured in Word 16.0.20527 and LibreOffice 24.2, with a paragraph above lengthened by one
+    line: the card's own text moved 9.72pt in Word and 19.40pt in LibreOffice, and the drawing
+    moved 0.00 in both. Carried by the item or by the shared line, it moves with them — 9.70 and
+    19.35pt — and stands on the card's corner where the page draws it, 0.09pt from it in Word
+    against 13.76pt before.
+  - Each item of a list is offered with its own text's box, so a drawing standing beside the third
+    item is anchored in that item — where the export matched the layout's items to the list's one
+    by one, which the items' line gap and their own seating need as well; a list with an item split
+    across a page is laid out as more pieces of text than it has items, and offers none. A band's
+    shared line is offered as the half that starts it: both halves are written in that one
+    paragraph, and that half's text begins where the line does.
+  - A table's own cell text offers no place yet, and a drawing whose block's text is written only
+    so keeps the nearest-text rule: a table's cells state no width of their own — their table's
+    grid holds it — and a drawing anchored in a cell is placed from the cell's text column, which
+    cannot be read without it; a text cell is set to the middle by default besides, and such a
+    cell carries no drawing.
 - **A DOCX export anchors what a table's composed cell draws in that cell, so it moves with the
   cell's row when the text above is edited.**
   - Such a drawing has no node of its own — a composed cell's content is laid out under its

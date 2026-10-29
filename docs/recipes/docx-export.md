@@ -1527,9 +1527,13 @@ That line's text starts where the line's own indent puts it, at that half's inke
 than at the edge of the box it is laid out in, which is as wide as the band where the half is set
 in it by its alignment: a shape anchored in a cell is placed from the cell's text column, and the
 column is read from the place's left edge less the indent written on the paragraph, so the two
-must be the one edge. How far the line reaches across is the whole line's, to the end of the box
-the other half is laid out in, so that a shape beside the dates at its right end, or in the gap
-between the two texts, stands beside the line and not beside some other paragraph.
+must be the one edge — stated as the box, the column comes out the band's width to the left and
+the cell carries the shape from there. How far the line reaches across is the whole line's, to the
+end of the box the other half is laid out in, so that a shape beside the dates at its right end,
+or in the gap between the two texts, stands beside the line and not beside some other paragraph.
+A line hung left past its cell's padding offers no place: Word draws no text past a cell's left
+edge, so such a line is written with no indent at all and its text does not start where the
+layout puts it, and the shapes beside it keep to the text nearest them.
 An item offers its place only where the export matched the layout's items to the list's one by
 one, which its line gap and its own seating need as well: a list with an item split across a
 page is laid out as more pieces of text than it has items, and none of its items offers a place.

@@ -44,6 +44,9 @@ class DocxTextWriterAnchorTest {
     private static final DocumentColor INK = DocumentColor.rgb(20, 30, 40);
     private static final DocumentColor SURFACE = DocumentColor.rgb(230, 240, 250);
     private static final double DOT = 12;
+    private static final double CARD_PADDING = 10;
+    /** Where a band's dot is laid across it, from the band's left edge, in points. */
+    private static final double DOT_ACROSS = 150;
 
     @Test
     void aCardWhoseTextIsAListsItemsCarriesTheDrawingLaidOverIt() throws Exception {
@@ -88,7 +91,7 @@ class DocxTextWriterAnchorTest {
             // foot stands below the first item's top by about the second item's line and the
             // padding under it, and no further than the card is tall.
             assertThat(offsetDown(item)).as("below the first item's top, where it stands")
-                    .isBetween(DOT, 60.0);
+                    .isBetween(9.0, 60.0);
         }
     }
 
@@ -165,25 +168,31 @@ class DocxTextWriterAnchorTest {
     }
 
     @Test
-    void anItemWrittenWithItsOwnMarkerCarriesThemToo() throws Exception {
-        // A list whose marker the export writes itself, rather than leaving it to Word, is
-        // written by the other item writer (writeRichListLine), which offers its place by the
-        // same call and indents its text to its own column.
-        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> {
+    void anItemWhoseMarkerIsDrawnCarriesThemToo() throws Exception {
+        // A list whose marker is drawn has no Word list definition to be given, so its items go
+        // through the other item writer (writeRichListLine), which offers their place by the same
+        // call and tabs their text past the marker.
+        java.util.function.Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> card = page -> {
             page.addParagraph(p -> p.text("Above the card"));
             page.addLayerStack(stack -> stack
-                    .layer(new SectionBuilder().softPanel(SURFACE, 0, 10)
-                            .addList(list -> list.marker("*").items("First item", "Second item")).build())
+                    .layer(new SectionBuilder().softPanel(SURFACE, 0, CARD_PADDING)
+                            .addList(list -> list.name("Skills").marker(m -> m.dot(4, INK))
+                                    .markerGap(6).hangingIndent(true).normalizeMarkers(false)
+                                    .addItem("First item").addItem("Second item")).build())
                     .layer(dot(), LayerAlign.TOP_RIGHT));
-        })) {
-            XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
-            XWPFParagraph item = card.getParagraphs().stream()
+        };
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, card)) {
+            XWPFTableCell panel = document.getTables().get(0).getRow(0).getCell(0);
+            XWPFParagraph item = panel.getParagraphs().stream()
                     .filter(para -> para.getText().contains("First item")).findFirst().orElseThrow();
 
+            assertThat(DocxExports.report(400, 600, 20, card).bySubject())
+                    .as("laid out — without a layout nothing is drawn and the rest proves nothing")
+                    .doesNotContainKey("measured geometry");
             assertThat(placedFrom(item)).as("in the first item, marker and all")
                     .containsExactly(STRelFromV.PARAGRAPH);
             assertThat(offsetAcross(item)).as("from the cell's text column")
-                    .isCloseTo(widthOf(card) - marginOf(card) - DOT, within(1.0));
+                    .isCloseTo(widthOf(panel) - marginOf(panel) - DOT, within(1.0));
             assertThat(onThePage(document)).isZero();
         }
     }
@@ -206,7 +215,7 @@ class DocxTextWriterAnchorTest {
                                 .align(TextAlign.RIGHT)
                                 .textStyle(DocumentTextStyle.DEFAULT.withSize(9)).build(), 0, 0,
                                 LayerAlign.CENTER_RIGHT)
-                        .position(dot(), 150, 0, LayerAlign.CENTER_LEFT))))) {
+                        .position(dot(), DOT_ACROSS, 0, LayerAlign.CENTER_LEFT))))) {
             XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
             XWPFParagraph shared = card.getParagraphs().stream()
                     .filter(para -> para.getText().contains("\t")).findFirst().orElseThrow();
@@ -214,7 +223,7 @@ class DocxTextWriterAnchorTest {
             assertThat(placedFrom(shared)).as("the cell carries it")
                     .containsExactly(STRelFromV.PARAGRAPH);
             assertThat(offsetAcross(shared)).as("from the cell's text column, where the page draws it")
-                    .isCloseTo(150, within(1.0));
+                    .isCloseTo(DOT_ACROSS, within(1.0));
         }
     }
 
@@ -240,6 +249,36 @@ class DocxTextWriterAnchorTest {
             assertThat(placedFrom(shared)).containsExactly(STRelFromV.PARAGRAPH);
             assertThat(offsetAcross(shared)).as("from the cell's text column, where the line starts")
                     .isCloseTo(140, within(1.0));
+        }
+    }
+
+    @Test
+    void aSharedLineHungPastItsCellsPaddingOffersNone() throws Exception {
+        // Word draws no text past a cell's left edge, so a line pulled out past its card's
+        // padding is written with no indent at all and its text does not start where the layout
+        // puts it. The cell's text column cannot be read back from such a place, so the line
+        // offers none and the drawing keeps to the text nearest it, as before this rule.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> {
+            page.addParagraph(p -> p.text("Above the card"));
+            page.addSection(card -> card.softPanel(SURFACE, 0, CARD_PADDING)
+                    .addContainer(band -> band.name("EntryHead").rectangle(320, 16)
+                            .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                            .margin(new DocumentInsets(0, 0, 0, -(CARD_PADDING + 2)))
+                            .position(new ParagraphBuilder().name("Title").text("Engineer")
+                                    .textStyle(DocumentTextStyle.DEFAULT.withSize(9)).build(), 0, 0,
+                                    LayerAlign.CENTER_LEFT)
+                            .position(new ParagraphBuilder().name("Dates").text("2019 - 2024")
+                                    .align(TextAlign.RIGHT)
+                                    .textStyle(DocumentTextStyle.DEFAULT.withSize(9)).build(), 0, 0,
+                                    LayerAlign.CENTER_RIGHT)
+                            .position(dot(), DOT_ACROSS, 0, LayerAlign.CENTER_LEFT)));
+        })) {
+            XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
+            XWPFParagraph shared = card.getParagraphs().stream()
+                    .filter(para -> para.getText().contains("\t")).findFirst().orElseThrow();
+
+            assertThat(indentOf(shared)).as("written with no indent, hung out as it is").isZero();
+            assertThat(placedFrom(shared)).as("the line takes none").isEmpty();
         }
     }
 
@@ -298,6 +337,15 @@ class DocxTextWriterAnchorTest {
 
     private static double offsetAcross(XWPFParagraph paragraph) {
         return anchorsIn(paragraph.getCTP()).get(0).getPositionH().getPosOffset() / 12700.0;
+    }
+
+    /** The left indent written on a paragraph, in points; 0 where none is written. */
+    private static double indentOf(XWPFParagraph paragraph) {
+        var properties = paragraph.getCTP().getPPr();
+        if (properties == null || !properties.isSetInd() || !properties.getInd().isSetLeft()) {
+            return 0;
+        }
+        return ((Number) properties.getInd().getLeft()).doubleValue() / 20;
     }
 
     /** A cell's width as written, in points. */

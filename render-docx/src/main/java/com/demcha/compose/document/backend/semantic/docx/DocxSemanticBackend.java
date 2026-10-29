@@ -9911,7 +9911,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * alignment. A shape anchored in a table cell is placed from the cell's text column, and a
      * place states that column by its text's left edge less the indent written on it
      * ({@link DocxDrawingAnchors.Seat#textLeft}) — the two must be the one edge, or the column
-     * comes out short by the band's width and the cell is given no shape to carry.</p>
+     * comes out the band's width to the left and the cell carries the shape from there: measured
+     * on the test's card, 292pt across its cell instead of 150.</p>
+     *
+     * <p>A line hung left past its cell's padding offers no place at all. Word draws no text past
+     * a cell's left edge, so such a line is written with no indent ({@link #leftIndentTwips}) and
+     * its text does not start where the layout puts it; the cell's text column cannot be read back
+     * from the place, and the shapes beside the line keep to the text nearest them, as they did
+     * before any of this.</p>
      *
      * <p>How far it reaches across is the whole line's, not that half's: a shape standing beside
      * the dates at the line's right end, or in the gap between the two texts, stands beside the
@@ -9920,12 +9927,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * its own width — the title of the test's band is 60pt of a line 360pt wide — and offered as
      * that box the line was reckoned 250pt from a shape beside the dates, which a paragraph of
      * body text above it then took.</p>
+     *
+     * @param band      where the layout placed the overlay, the box both halves are set in
+     * @param lineInset where the line's text is written from, inside its cell
      */
-    private void offerTheSharedLine(XWPFParagraph para, DocumentNode overlay, DocxLinePair.Pair pair) {
+    private void offerTheSharedLine(XWPFParagraph para, com.demcha.compose.document.layout.PlacedNode band,
+                                    DocxLinePair.Pair pair, double lineInset) {
+        if (currentCell != null && lineInset + cellTextShift < 0) {
+            return;
+        }
         ParagraphNode starts = pair.left();
-        com.demcha.compose.document.layout.PlacedNode band = layout.placement(overlay);
         java.util.Optional<DocxLayoutMetrics.TextBox> box = layout.firstTextBox(starts);
-        if (band == null || box.isEmpty()) {
+        if (box.isEmpty()) {
             return;
         }
         double ends = layout.firstTextBox(pair.right()).map(DocxLayoutMetrics.TextBox::right)
@@ -11241,7 +11254,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         int rightAnchor = openAnchor(para, pair.right().anchor());
         writeParagraphRuns(para, pair.right(), false, lineTopAbove(lineTop, pair.right()), false);
         closeAnchor(para, rightAnchor);
-        offerTheSharedLine(para, overlay, pair);
+        offerTheSharedLine(para, box, pair, lineStart + pair.leftOffset());
         raiseTheSharedLine(para, pair, lineTop, opensItsPage);
         // A Word paragraph has one outline level, and its outline lists the whole line by it: the
         // left side's level where it has one, the right side's where not; the other's is lost.

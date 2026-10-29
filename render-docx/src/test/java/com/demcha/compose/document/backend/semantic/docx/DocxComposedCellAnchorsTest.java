@@ -85,6 +85,25 @@ class DocxComposedCellAnchorsTest {
     }
 
     @Test
+    void theCarryingCellIsReadFromItsTop() {
+        // Word centres a cell set to the middle along with the drawing its paragraph carries,
+        // which stood a tile 7.10pt below where the page puts it in a row four lines tall, and
+        // 0.30pt from it once the cell was read from its top. The cell holds no text, so nothing
+        // in the file moves with it.
+        Composed composed = composed(new XWPFDocument());
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, composed.outside(), true);
+        anchors.seat(0, composed.title(), TITLE, composed.title(), 60, 300, 100, 110);
+
+        queue(anchors, List.of(tile(22, 99)), new DocxDrawingAnchors.HoldingCell(composed.cell(), true));
+        anchors.endSection(0, null, composed.document()::createParagraph);
+
+        assertThat(verticalAlignOf(composed.tileCell())).as("the tile's own cell").isEqualTo("top");
+        assertThat(verticalAlignOf(composed.title())).as("the text's cell, left as it is")
+                .isEqualTo("center");
+    }
+
+    @Test
     void aCellSetToTheMiddleHoldingTextCarriesNoneOfItsOwn() {
         // The tile over the text's own cell, which is set to the middle and holds text: that cell
         // cannot carry it, since LibreOffice would set its text from the cell's top. The drawing
@@ -161,6 +180,23 @@ class DocxComposedCellAnchorsTest {
         // holding one is not excused its vertical alignment.
         Composed composed = composed(new XWPFDocument());
         composed.tileCell().createRun().getCTR().addNewDrawing();
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, composed.outside(), true);
+        anchors.seat(0, composed.title(), TITLE, composed.title(), 60, 300, 100, 110);
+
+        queue(anchors, List.of(tile(22, 99)), new DocxDrawingAnchors.HoldingCell(composed.cell(), true));
+        anchors.endSection(0, null, composed.document()::createParagraph);
+
+        assertThat(drawingsIn(composed.outside())).singleElement().asString()
+                .contains("<wp:positionV relativeFrom=\"page\">");
+    }
+
+    @Test
+    void aCellWhoseOnlyTextIsALinkCarriesNoDrawing() {
+        // POI leaves a link's runs out of a paragraph's own text, so a cell holding nothing but a
+        // cross-reference would read as text-free and be excused its middle alignment.
+        Composed composed = composed(new XWPFDocument());
+        composed.tileCell().getCTP().addNewHyperlink().addNewR().addNewT().setStringValue("See page");
         DocxDrawingAnchors anchors = anchors();
         anchors.paragraphOn(0, composed.outside(), true);
         anchors.seat(0, composed.title(), TITLE, composed.title(), 60, 300, 100, 110);
@@ -279,6 +315,13 @@ class DocxComposedCellAnchorsTest {
     private static void middle(XWPFTableCell cell) {
         CTTcPr properties = cell.getCTTc().isSetTcPr() ? cell.getCTTc().getTcPr() : cell.getCTTc().addNewTcPr();
         properties.addNewVAlign().setVal(STVerticalJc.CENTER);
+    }
+
+    /** How the cell holding a paragraph is read, top to bottom, or "top" where it does not say. */
+    private static String verticalAlignOf(XWPFParagraph paragraph) {
+        CTTcPr properties = ((XWPFTableCell) paragraph.getBody()).getCTTc().getTcPr();
+        return properties == null || !properties.isSetVAlign() ? "top"
+                : properties.getVAlign().getVal().toString();
     }
 
     private static List<String> drawingsIn(XWPFParagraph paragraph) {

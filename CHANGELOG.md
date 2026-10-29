@@ -34,10 +34,17 @@ follow semantic versioning; release dates are ISO 8601.
     neighbouring cell takes one only where it, and each cell holding its table, sets its content
     from its top. It was held to its own alignment alone, and a cell inside one set to the middle
     took a drawing LibreOffice would then have moved its row's text for.
+  - The cell that carries the drawing is written to be read from its top, which it holds no text
+    to be read any other way by. Word centres a cell set to the middle along with the drawing its
+    paragraph carries: measured in Word 16.0.20527, a tile carried by such a cell in a row four
+    lines tall stood 7.10pt below where the page puts it, and 0.30pt from it once the cell was
+    read from its top; in a row the cell's own content fills — every one the fidelity corpus has
+    — the two are the same place and nothing in the file moves.
   - A cell composed of a node that stands in more than one place carries none either: such a node
     is laid out once, so the lines of the paragraphs written for it in the second cell are the
     first cell's, and a cell that cannot say where its own content stands cannot place a drawing
-    from it.
+    from it. Nor does a cell of a repeated header row: Word repeats such a row, and what is
+    anchored in it, on every page the table reaches, beside the copy the layout placed there.
   - Of the 190 drawings the fidelity corpus composed in table cells, 165 are now anchored in
     their cell. The 25 left are `PaymentsInvoice`'s, `WorkspaceInvoice`'s and
     `MerchantInvoice`'s, whose rows nest a row inside a cell: the cell between the composed cell

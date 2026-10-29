@@ -315,11 +315,6 @@ final class DocxDrawingAnchors {
         queueOrdered(ordered(shapes, painted), owner, null);
     }
 
-    /** Keeps shapes given their places in the paint order for the section's end, as {@link #queue} does. */
-    void queueOrdered(List<Ordered> shapes, Owner owner) {
-        queueOrdered(shapes, owner, null);
-    }
-
     /**
      * Keeps shapes given their places in the paint order for the section's end, as {@link #queue}
      * does, with the cell holding them.
@@ -674,6 +669,10 @@ final class DocxDrawingAnchors {
      * wherever an edit takes it.
      */
     private void anchorBeside(XWPFParagraph paragraph, List<Placed> shapes) {
+        if (shapes.stream().anyMatch(placed -> placed.place().setItsCell())
+            && paragraph.getBody() instanceof XWPFTableCell cell) {
+            readItFromItsTop(cell);
+        }
         XWPFRun run = paragraph.insertNewRun(0);
         for (Placed placed : shapes) {
             Ordered ordered = placed.ordered();
@@ -688,6 +687,21 @@ final class DocxDrawingAnchors {
                     : DocxDrawings.drawingInCell(ordered.shape(), ids.getAsLong(), ordered.order(), ordered.drawn(),
                             new DocxDrawings.CellOrigin(column, top)));
             carry(paragraph, ordered);
+        }
+    }
+
+    /**
+     * Reads a cell from its top, which it holds no text to be read any other way by: Word centres
+     * a cell set to the middle along with the drawing its paragraph carries, which stood a tile
+     * 7.10pt below where the page puts it in a row four lines tall, and 0.30pt from it once the
+     * cell was read from its top (measured in Word 16.0.20527 and LibreOffice 24.2; in a row the
+     * cell's own content fills, the two are the same place and nothing in the file moves).
+     */
+    private static void readItFromItsTop(XWPFTableCell cell) {
+        CTTcPr properties = cell.getCTTc().isSetTcPr() ? cell.getCTTc().getTcPr() : cell.getCTTc().addNewTcPr();
+        if (properties.isSetVAlign()) {
+            properties.getVAlign().setVal(
+                    org.openxmlformats.schemas.wordprocessingml.x2006.main.STVerticalJc.TOP);
         }
     }
 
@@ -904,7 +918,8 @@ final class DocxDrawingAnchors {
             // Only the cell that ends up carrying the shape has to be set from its top: this one
             // may simply be where the row's text is measured, and hand the shape to a neighbour.
             Place here = setFromTheTop(cell, filled)
-                    ? new Place(paragraph, cellLeft + leftMargin(cell), top) : null;
+                    ? new Place(paragraph, cellLeft + leftMargin(cell), top,
+                            !alignedToTheTop(cell) && !holdsAnyText(cell)) : null;
             if (holdsAcross(shape, cellLeft, width)) {
                 return here;
             }
@@ -937,13 +952,15 @@ final class DocxDrawingAnchors {
         }
 
         /**
-         * Whether a cell holds anything an editor could set lower, at any depth: a line of text,
-         * or a picture or a drawing of its own, which an editor moves with the text.
+         * Whether a cell holds anything an editor could set lower, at any depth: a line of text —
+         * a link's among it, which POI leaves out of a paragraph's own text
+         * ({@link #firstRunOfText}) — or a picture or a drawing of its own, which an editor moves
+         * with the text.
          */
         private static boolean holdsAnyText(XWPFTableCell cell) {
             for (IBodyElement element : cell.getBodyElements()) {
                 if (element instanceof XWPFParagraph paragraph
-                    && (!paragraph.getText().isBlank() || draws(paragraph))) {
+                    && (new Seat(paragraph, 0, 0, 0, 0, null).holdsText() || draws(paragraph))) {
                     return true;
                 }
                 if (element instanceof org.apache.poi.xwpf.usermodel.XWPFTable table
@@ -955,11 +972,17 @@ final class DocxDrawingAnchors {
             return false;
         }
 
-        /** Whether a paragraph holds a picture or a drawing of its own. */
+        /** Whether a paragraph holds a picture or a drawing of its own, a link's among them. */
         private static boolean draws(XWPFParagraph paragraph) {
-            return paragraph.getCTP().selectPath(
+            for (org.apache.xmlbeans.XmlObject found : paragraph.getCTP().selectPath(
                     "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' "
-                    + "./w:r/w:drawing | ./w:r/w:pict").length > 0;
+                    + "./w:r | ./w:hyperlink/w:r")) {
+                if (found instanceof org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR run
+                    && (run.sizeOfDrawingArray() > 0 || run.sizeOfPictArray() > 0)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /**
@@ -978,8 +1001,10 @@ final class DocxDrawingAnchors {
          * above its paragraph ({@link #placeHeld}).</p>
          */
         private static boolean risesNoFurther(DocxDrawings.Shape shape, double top, boolean inCell) {
-            double rise = inCell ? READABLE_RISE : Math.max(SLACK, Math.min(shape.height(), FURTHEST_RISE));
-            return shape.top() >= top - rise;
+            // In a cell, short of the rise: one at it is written as its own offset, which is what
+            // this holds a cell clear of.
+            return inCell ? shape.top() > top - READABLE_RISE
+                    : shape.top() >= top - Math.max(SLACK, Math.min(shape.height(), FURTHEST_RISE));
         }
 
         /**
@@ -1048,7 +1073,7 @@ final class DocxDrawingAnchors {
                 || !(opening.get(0) instanceof XWPFParagraph first) || borderedAbove(first)) {
                 return null;
             }
-            return new Place(first, cellLeft + leftMargin(cell), top);
+            return new Place(first, cellLeft + leftMargin(cell), top, !alignedToTheTop(cell));
         }
 
         /** Where the paragraph's text's left edge stands without its indent; NaN when not known. */
@@ -1121,12 +1146,26 @@ final class DocxDrawingAnchors {
     /**
      * Where a shape is anchored and placed from.
      *
-     * @param paragraph the paragraph it is anchored in
-     * @param column    where Word's column starts, from the page's left edge; infinite for a
-     *                  paragraph of the body, whose shapes are placed from the page's edge
-     * @param top       where the paragraph's top stands, from the page's top edge
+     * @param paragraph   the paragraph it is anchored in
+     * @param column      where Word's column starts, from the page's left edge; infinite for a
+     *                    paragraph of the body, whose shapes are placed from the page's edge
+     * @param top         where the paragraph's top stands, from the page's top edge
+     * @param setItsCell  whether the paragraph's cell is to be read from its top, which it is
+     *                    where it is set to the middle or the bottom and holds no text: Word
+     *                    centres such a cell's paragraph along with the drawing it carries, and
+     *                    the row's top is where the page measured the paragraph this shape is
+     *                    placed from. Measured in Word 16.0.20527: a tile carried by a cell set
+     *                    to the middle of a row four lines tall stood 7.10pt below where the page
+     *                    puts it, and 0.30pt from it once that cell was read from its top; in a
+     *                    row the cell's own content fills, the two are the same place. Nothing
+     *                    moves with it, the cell holding no text ({@link Seat#holdsAnyText})
      */
-    record Place(XWPFParagraph paragraph, double column, double top) {
+    record Place(XWPFParagraph paragraph, double column, double top, boolean setItsCell) {
+
+        /** A place in a paragraph whose cell is left as it is. */
+        Place(XWPFParagraph paragraph, double column, double top) {
+            this(paragraph, column, top, false);
+        }
     }
 
     /** A shape and where it is placed from. */

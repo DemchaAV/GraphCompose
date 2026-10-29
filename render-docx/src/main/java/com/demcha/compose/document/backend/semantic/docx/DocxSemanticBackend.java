@@ -231,8 +231,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static final String ANCHORED_IN_ITS_CELL = "anchored in the first paragraph able to carry it "
             + "of the cell whose box holds it, so it moves with that cell's row when the text above is "
-            + "edited; " + ANCHORED_BESIDE_ITS_TEXT + " where no cell's box holds it, or where that cell "
-            + "has no such paragraph on its page";
+            + "edited; " + ANCHORED_BESIDE_ITS_TEXT + " where no cell's box holds it, where that cell has "
+            + "no such paragraph on its page, and where it stands in a repeated header row or in a cell "
+            + "composed of a node the document places more than once";
     /** How a drawing a node paints is anchored, as the report says it (see DocxDrawingAnchors). */
     private static final String ANCHORED_IN_ITS_BLOCK = "anchored in the first paragraph able to carry it "
             + "that the nearest block holding it writes on its page, so it moves with that block when the text "
@@ -16336,7 +16337,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // A node standing in more than one place is laid out once, so the lines of the
                 // paragraphs written for it in this cell are another cell's: the cell cannot say
                 // where its own content stands, and its drawings keep to the text nearest them.
+                // A cell of a repeated header row carries none either: Word repeats such a row,
+                // and what is anchored in it, on every page the table reaches, so the drawing
+                // would stand on each of them beside the layout's own copy there. A cell written
+                // as a nested table hides that from the anchor, whose own guard reads the row of
+                // the paragraph it anchors in — by then an inner row of its own.
                 if (written == null || placement.cell().content() == null
+                    || placement.row() < table.repeatedHeaderRowCount()
                     || layout.placedMoreThanOnce(placement.cell().content())) {
                     continue;
                 }

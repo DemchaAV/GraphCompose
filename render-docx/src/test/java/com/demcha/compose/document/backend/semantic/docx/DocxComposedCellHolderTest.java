@@ -92,6 +92,23 @@ class DocxComposedCellHolderTest {
     }
 
     @Test
+    void aComposedCellOfARepeatedHeaderRowTakesNone() throws Exception {
+        // Word repeats such a row, and what is anchored in it, on every page the table reaches,
+        // so the drawing would stand on each of them beside the layout's own copy there.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(300))
+                .rowCells(DocumentTableCell.node(line()))
+                .rowCells(DocumentTableCell.text("Below"))
+                .repeatHeader()))) {
+            XWPFParagraph carrier = document.getTables().get(0).getRow(0).getCell(0)
+                    .getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0);
+
+            assertThat(placedFrom(carrier)).as("the header's own cell takes none").isEmpty();
+            assertThat(onThePage(document)).as("left where the page puts them").isPositive();
+        }
+    }
+
+    @Test
     void theReportSaysWhereWhatACellsDrawGoes() throws Exception {
         DocxExportReport report = DocxExports.report(400, 600, 20, page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(300))

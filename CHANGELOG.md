@@ -8,6 +8,60 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export anchors what a table's composed cell draws in that cell, so it moves with the
+  cell's row when the text above is edited.**
+  - Such a drawing has no node of its own — a composed cell's content is laid out under its
+    table, its drawings among the table's own fragments — and stood in the paragraph whose text
+    it was nearest, or on the page where it stood beside none. Six invoices' service tiles were
+    placed from the page's edges: edited above, every line row moved and the tiles did not, and
+    LibreOffice 24.2, which sets those rows 1.96pt shorter than the page does, left each tile
+    further out of its row than the last — 7.9pt by the fifth.
+  - The cell whose box the layout placed the drawing in now stands for the block holding it, and
+    the drawing is anchored in the first paragraph of that cell able to carry it, placed from
+    that cell's text column and the paragraph's top, exactly as a drawing a node paints is. A
+    drawing no cell's box holds — one the table paints across its cells — keeps the
+    nearest-text rule, as does one whose cell writes no paragraph that can carry it.
+  - A cell set to the middle or the bottom takes one only where the page fills its box and the
+    cell carrying the drawing holds no text of its own, since LibreOffice 24.2 sets a cell
+    carrying a drawing — and the cell holding its table — from its top. Measured in Word
+    16.0.20527 and LibreOffice 24.2: with room to centre in, such a cell had its own text set 4pt
+    and 23.75pt higher and the text of the cell holding its table 43.7pt higher, while a cell the
+    page fills moved no line in either editor, and nor did one holding no text whatever room it
+    was left — but a cell with room to centre in centres the drawing along with the paragraph
+    carrying it, so where the drawing stands no longer tells where that paragraph starts, and
+    that is why the page must fill the cell either way.
+  - The same rule now holds for a drawing the text nearest it carries, which it did not: a
+    neighbouring cell takes one only where it, and each cell holding its table, sets its content
+    from its top. It was held to its own alignment alone, and a cell inside one set to the middle
+    took a drawing LibreOffice would then have moved its row's text for.
+  - A cell composed of a node that stands in more than one place carries none either: such a node
+    is laid out once, so the lines of the paragraphs written for it in the second cell are the
+    first cell's, and a cell that cannot say where its own content stands cannot place a drawing
+    from it.
+  - Of the 190 drawings the fidelity corpus composed in table cells, 165 are now anchored in
+    their cell. The 25 left are `PaymentsInvoice`'s, `WorkspaceInvoice`'s and
+    `MerchantInvoice`'s, whose rows nest a row inside a cell: the cell between the composed cell
+    and the drawing's own is set to the middle, and the layout does not say how much room it is
+    left. Two notes are gone with the change: the shapes `MeteredInvoice`'s longer form anchored
+    in a cell for want of another paragraph on the page, which Word might have printed clipped to
+    it, now stand in the cell that holds them.
+  - Measured in Word 16.0.20527 and LibreOffice 24.2 on `MeteredInvoice`: the tile stood 10.84pt
+    above its line's title on the page, 9.90, 7.90 and 5.95pt above it down the rows in
+    LibreOffice before, and 10.85pt above it in every row after; Word keeps it within 0.03pt, and
+    0.5pt further across, where Word also sets that row's text.
+
+- **A drawing is placed from its paragraph's top only where Word reads that offset back.**
+  - Measured in Word 16.0.20527: an offset of 0.05, 0.13, 0.21, 0.25 or 0.29pt above a paragraph
+    is drawn where it says but reported to a reader as one of Word's position keywords
+    (−999999, −999997, −999994, −999993), while 0.30pt and every larger offset — 0.40, 0.50,
+    0.60, 0.75, 0.97 — is reported as itself. A shape standing less than 0.30pt above its
+    paragraph is placed at its top, where it practically stands; one standing further keeps its
+    own offset. A stroke's width was allowed before, which stood a service tile 0.96pt low.
+  - A table cell is given no drawing standing further above its paragraph than that, on the
+    nearest-text rule: a 20.5pt rule placed a stroke's width above its paragraph in a cell moved
+    that row's text 1.8pt up in the Linux LibreOffice the build checks with, and such an offset is
+    now written rather than squared to nothing.
+
 - **A DOCX export anchors a drawing in a paragraph of the block it belongs to, so it moves with
   that block when the text above is edited.**
   - A shape stood in the paragraph whose text was nearest it, within 48pt, rising above that
@@ -25,8 +79,8 @@ follow semantic versioning; release dates are ISO 8601.
     sitting in one, carries none: the block's next
     paragraph able to place it takes the drawing, or else the next block up. A drawing no node
     paints — a timeline's rail — and one whose blocks write no such paragraph on its page go to
-    the paragraph nearest it there. What a table's composed cell draws keeps the nearest-text
-    rule. The report's note on each drawing says how it is anchored.
+    the paragraph nearest it there. What a table's composed cell draws goes to the cell whose box
+    holds it (above). The report's note on each drawing says how it is anchored.
   - Measured in Word 16.0.20527 and LibreOffice 24.2: a shape anchored in a table cell's
     paragraph stands where both say — rising 36pt above its row, hanging below its table, out of
     its cell, taller than its row, in an exact row or a nested table, in front of the text or

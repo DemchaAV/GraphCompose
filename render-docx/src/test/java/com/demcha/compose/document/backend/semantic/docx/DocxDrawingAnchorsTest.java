@@ -156,7 +156,29 @@ class DocxDrawingAnchorsTest {
     }
 
     @Test
-    void aShapeReachingAStrokePastItsParagraphsTopIsPlacedAtThatTop() {
+    void aShapeWordWouldNotReadBackIsPlacedAtItsParagraphsTop() {
+        // Measured in Word 16.0.20527: an offset of 0.05, 0.13, 0.21, 0.25 or 0.29pt above a
+        // paragraph is drawn where it says but reported to a reader as a position keyword
+        // (-999999, -999997, -999994, -999993), and the editing protocol reads a drawing's place
+        // through that. A shape standing 0.2pt above its paragraph is placed at its top instead.
+        XWPFDocument document = new XWPFDocument();
+        XWPFParagraph first = text(document, "First");
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, first, true);
+        anchors.seat(0, first, null, first, 40, 300, 100, 110);
+
+        queue(anchors, List.of(dot(30, 99.8)));
+        anchors.endSection(0, null, document::createParagraph);
+
+        String drawing = drawingsIn(first).get(0);
+        assertThat(drawing).contains("<wp:positionV relativeFrom=\"paragraph\">");
+        assertThat(offsetDown(drawing)).isZero();
+    }
+
+    @Test
+    void aShapeWordReadsBackKeepsItsOffsetAboveItsParagraph() {
+        // 0.30pt and every larger offset came back as itself, so it is written as it stands: a
+        // service line's tile stands 0.97pt above the first paragraph of its row.
         XWPFDocument document = new XWPFDocument();
         XWPFParagraph first = text(document, "First");
         DocxDrawingAnchors anchors = anchors();
@@ -166,9 +188,7 @@ class DocxDrawingAnchorsTest {
         queue(anchors, List.of(dot(30, 99.5)));
         anchors.endSection(0, null, document::createParagraph);
 
-        String drawing = drawingsIn(first).get(0);
-        assertThat(drawing).contains("<wp:positionV relativeFrom=\"paragraph\">");
-        assertThat(offsetDown(drawing)).isZero();
+        assertThat(offsetDown(drawingsIn(first).get(0))).isCloseTo(-0.5, within(0.01));
     }
 
     @Test

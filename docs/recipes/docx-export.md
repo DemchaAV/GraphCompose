@@ -1522,10 +1522,41 @@ offers its place, in a column's cell too; a table's own cell text, a list's item
 of lines do not yet, so a shape whose block's text is written only so goes to the paragraph
 nearest it.
 
-What a table's composed cell draws has no node of its own, and is anchored in the paragraph
-whose text is nearest it, within 48pt across and down together, when it rises above that
-paragraph's top by its own height at most, 24pt at most, as a dot centred on a first line
-does — in a table cell by a stroke's width at most — or else stays where the page puts it.
+What a table's composed cell draws has no node of its own: a composed cell's content is laid out
+under its table, and its drawings stand among the table's own fragments. The cell whose box the
+layout placed such a drawing in stands for the block holding it, found by geometry, and the
+drawing is anchored in the first paragraph of that cell able to carry it, placed from that cell's
+text column and the paragraph's top, by the rules above; the paragraph is found by the cell that
+holds it rather than by a path, since the layout names a node standing in two cells once. A cell
+set to the middle or the bottom takes one only where the page fills its box — where what the
+layout placed in it reaches within a stroke's width of the room its margins leave, above and
+below, so that an editor setting the cell's content from its top has nothing to move — and the
+cell carrying the drawing must then either be set from its top or hold no text of its own
+(measured in Word 16.0.20527 and LibreOffice 24.2: a cell set to the middle with room to centre in
+had its own text set 4pt and 23.75pt higher when it carried a drawing, and the text of the cell
+holding its table 43.7pt higher in LibreOffice, while a cell the page fills moved no line in
+either editor, and nor did one holding no text whatever room it was left; the page must fill the
+cell either way, because a cell with room to centre in centres the drawing along with the
+paragraph carrying it, and where the drawing stands then no longer tells where that paragraph
+starts). What a cell between the composed cell and the drawing's own leaves its content the layout
+does not say, so a drawing in a row nested inside a cell set to the middle stays where the page
+puts it. So does one in a cell composed of a node that stands in more than one place: such a node
+is laid out once, so the lines of the paragraphs written for it in the second cell are the first
+cell's. So does a drawing no cell's box holds — one the table paints across its cells — and one
+whose cell writes no paragraph that can carry it: those are anchored in the paragraph whose text is
+nearest, within 48pt across and down together, when they rise above that paragraph's top by their
+own height at most, 24pt at most, as a dot centred on a first line does — in a table cell no
+further above it than they are then placed at that top, since a rule a stroke's width above its
+paragraph in a cell moved that row's text 1.8pt up in the Linux LibreOffice the build checks with
+— or else stay where the page puts them. A neighbouring cell takes such a drawing only where it,
+and each cell holding its table, sets its content from its top, as a block's does.
+
+A shape is placed from its paragraph's top only as far above it as Word reads back: measured in
+Word 16.0.20527, an offset of 0.05, 0.13, 0.21, 0.25 or 0.29pt above a paragraph is drawn where
+it says but reported to a reader as one of Word's position keywords (−999999, −999997, −999994,
+−999993), while 0.30pt and every larger offset — 0.40, 0.50, 0.60, 0.75, 0.97 — is reported as
+itself. A shape standing less than 0.30pt above its paragraph is placed at its top, where it
+practically stands; one standing further keeps its own offset.
 
 A shape no paragraph on its page can carry stays where the page puts it whatever the text does. It is
 anchored at the start of the first body paragraph written on its page,

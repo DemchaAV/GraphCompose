@@ -1523,6 +1523,13 @@ paragraph, in a column's cell too; each item of a list, so that a card whose onl
 list's items carries the drawings laid over it, and a shape standing beside the third item takes
 that item; and the one line two halves of a band share — a title at the left, its dates at the
 right — offered as the half that starts the line, since both are written in that one paragraph.
+That line's text starts where the line's own indent puts it, at that half's inked start rather
+than at the edge of the box it is laid out in, which is as wide as the band where the half is set
+in it by its alignment: a shape anchored in a cell is placed from the cell's text column, and the
+column is read from the place's left edge less the indent written on the paragraph, so the two
+must be the one edge. How far the line reaches across is the whole line's, to the end of the box
+the other half is laid out in, so that a shape beside the dates at its right end, or in the gap
+between the two texts, stands beside the line and not beside some other paragraph.
 An item offers its place only where the export matched the layout's items to the list's one by
 one, which its line gap and its own seating need as well: a list with an item split across a
 page is laid out as more pieces of text than it has items, and none of its items offers a place.

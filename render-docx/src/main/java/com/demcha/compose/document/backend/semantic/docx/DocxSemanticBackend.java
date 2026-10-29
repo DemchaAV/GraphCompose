@@ -6391,7 +6391,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Each item is a piece of text of its own, offered to the shapes beside it: a shape the
         // list or a block round it holds takes the first item written on its page. Only a list
         // whose items the layout's are matched to one by one gets this far: the list keeps the
-        // layout's items for the writers only then ({@link #listItemsMatched}), and an item with
+        // layout's items for the writers only then (listItemsMatched), and an item with
         // none of them is seated in no way at all (the guard above).
         if (laidOut.box() != null && listPath != null) {
             offerASeat(para, laidOut, listPath, laidOut.box(), 0);
@@ -9888,22 +9888,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * first of them that holds text takes the place.
      */
     private void offerASeat(XWPFParagraph para) {
-        if (writing instanceof ParagraphNode node) {
-            offerASeatFor(para, node);
+        if (!(writing instanceof ParagraphNode node)) {
+            return;
         }
-    }
-
-    /**
-     * Offers a paragraph to the shapes beside the text of one paragraph node written in it, with
-     * the baseline the page draws its first line on, seated as the page seats it.
-     */
-    private void offerASeatFor(XWPFParagraph para, ParagraphNode node) {
+        // The baseline the page draws the first line on, seated as the page seats it.
         layout.firstTextBox(node).ifPresent(box -> offerASeat(para, node, layout.pathOf(node), box, seatShift(node)));
     }
 
     /**
      * Offers the one line two halves of a band share to the shapes beside it, as the text of the
-     * half that starts it, reaching to the far end of the other.
+     * half that starts it, reaching across to the end of the other's box.
      *
      * <p>One place is enough for the line, since both halves are written in this one paragraph and
      * a place stands for a paragraph. The half that starts it is the one whose text begins where
@@ -9912,23 +9906,32 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * what its two halves call for ({@link #raiseTheSharedLine}), so a shape placed from it stands
      * as far below the page's place as the line does — 0.2 to 0.33pt, measured there.</p>
      *
-     * <p>How far the text reaches across is the whole line's, not that half's: a shape is taken in
-     * by the text it stands nearest, counted from its edges ({@code DocxDrawingAnchors.distance}),
-     * and the half that starts the line is laid out in a box of its own width — a title at the
-     * left of a band is 120pt of a line 510pt wide. Offered as that box, the line stood 330pt from
-     * a shape beside the dates at its right end, and any other paragraph on the page took the
-     * shape instead.</p>
+     * <p>Where its text starts is where the line's own indent puts it: the half's inked start, not
+     * the box it is laid out in, which is as wide as the band where the half is set in it by its
+     * alignment. A shape anchored in a table cell is placed from the cell's text column, and a
+     * place states that column by its text's left edge less the indent written on it
+     * ({@link DocxDrawingAnchors.Seat#textLeft}) — the two must be the one edge, or the column
+     * comes out short by the band's width and the cell is given no shape to carry.</p>
+     *
+     * <p>How far it reaches across is the whole line's, not that half's: a shape standing beside
+     * the dates at the line's right end, or in the gap between the two texts, stands beside the
+     * line, and the text nearest a shape is reckoned from its edges
+     * ({@code DocxDrawingAnchors.distance}). The half that starts the line is laid out in a box of
+     * its own width — the title of the test's band is 60pt of a line 360pt wide — and offered as
+     * that box the line was reckoned 250pt from a shape beside the dates, which a paragraph of
+     * body text above it then took.</p>
      */
-    private void offerTheSharedLine(XWPFParagraph para, DocxLinePair.Pair pair) {
+    private void offerTheSharedLine(XWPFParagraph para, DocumentNode overlay, DocxLinePair.Pair pair) {
         ParagraphNode starts = pair.left();
+        com.demcha.compose.document.layout.PlacedNode band = layout.placement(overlay);
         java.util.Optional<DocxLayoutMetrics.TextBox> box = layout.firstTextBox(starts);
-        if (box.isEmpty()) {
+        if (band == null || box.isEmpty()) {
             return;
         }
         double ends = layout.firstTextBox(pair.right()).map(DocxLayoutMetrics.TextBox::right)
                 .orElse(box.get().right());
         offerASeat(para, starts, layout.pathOf(starts),
-                new DocxLayoutMetrics.TextBox(box.get().page(), box.get().left(),
+                new DocxLayoutMetrics.TextBox(box.get().page(), band.placementX() + pair.leftOffset(),
                         Math.max(box.get().right(), ends), box.get().top(), box.get().baseline()),
                 seatShift(starts));
     }
@@ -11238,7 +11241,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         int rightAnchor = openAnchor(para, pair.right().anchor());
         writeParagraphRuns(para, pair.right(), false, lineTopAbove(lineTop, pair.right()), false);
         closeAnchor(para, rightAnchor);
-        offerTheSharedLine(para, pair);
+        offerTheSharedLine(para, overlay, pair);
         raiseTheSharedLine(para, pair, lineTop, opensItsPage);
         // A Word paragraph has one outline level, and its outline lists the whole line by it: the
         // left side's level where it has one, the right side's where not; the other's is lost.

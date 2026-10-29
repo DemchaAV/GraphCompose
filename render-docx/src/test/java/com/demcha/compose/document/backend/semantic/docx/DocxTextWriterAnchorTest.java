@@ -85,9 +85,10 @@ class DocxTextWriterAnchorTest {
 
             assertThat(placedFrom(item)).containsExactly(STRelFromV.PARAGRAPH);
             // The card holds two items of one line and 10pt of padding either side: the dot at its
-            // foot stands below the first item's top by more than a line and less than the card.
+            // foot stands below the first item's top by about the second item's line and the
+            // padding under it, and no further than the card is tall.
             assertThat(offsetDown(item)).as("below the first item's top, where it stands")
-                    .isBetween(10.0, 60.0);
+                    .isBetween(DOT, 60.0);
         }
     }
 
@@ -164,25 +165,56 @@ class DocxTextWriterAnchorTest {
     }
 
     @Test
-    void aNestedItemCarriesThemToo() throws Exception {
-        // A nested item is written by the same writer and offered the same way; its own indent
-        // states the cell's text column, as a top-level item's does.
+    void anItemWrittenWithItsOwnMarkerCarriesThemToo() throws Exception {
+        // A list whose marker the export writes itself, rather than leaving it to Word, is
+        // written by the other item writer (writeRichListLine), which offers its place by the
+        // same call and indents its text to its own column.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> {
             page.addParagraph(p -> p.text("Above the card"));
             page.addLayerStack(stack -> stack
                     .layer(new SectionBuilder().softPanel(SURFACE, 0, 10)
-                            .addList(list -> list.bullet().addItem("First item",
-                                    nested -> nested.items("Under it", "And under it"))).build())
+                            .addList(list -> list.marker("*").items("First item", "Second item")).build())
                     .layer(dot(), LayerAlign.TOP_RIGHT));
         })) {
             XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
-            XWPFParagraph item = firstItem(document);
+            XWPFParagraph item = card.getParagraphs().stream()
+                    .filter(para -> para.getText().contains("First item")).findFirst().orElseThrow();
 
-            assertThat(placedFrom(item)).as("in the first item, nested items and all")
+            assertThat(placedFrom(item)).as("in the first item, marker and all")
                     .containsExactly(STRelFromV.PARAGRAPH);
             assertThat(offsetAcross(item)).as("from the cell's text column")
                     .isCloseTo(widthOf(card) - marginOf(card) - DOT, within(1.0));
             assertThat(onThePage(document)).isZero();
+        }
+    }
+
+    @Test
+    void aSharedLineStatesItsTextsOwnStartNotTheBoxItIsSetIn() throws Exception {
+        // The line's indent is written from the inked start of the half that starts it, and a
+        // shape anchored in a cell is placed from the cell's text column, which the place states
+        // by its left edge less that indent. Here the band's title is centred in a box as wide as
+        // the band, so its box starts a long way left of its text: stated as the box, the column
+        // would come out short by that much and the cell would be given no shape to carry.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addSection(
+                card -> card.softPanel(SURFACE, 0, 10).addContainer(band -> band.name("EntryHead")
+                        .rectangle(320, 16).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                        .position(new ParagraphBuilder().name("Title").text("Engineer")
+                                .align(TextAlign.CENTER)
+                                .textStyle(DocumentTextStyle.DEFAULT.withSize(9)).build(), 0, 0,
+                                LayerAlign.CENTER_LEFT)
+                        .position(new ParagraphBuilder().name("Dates").text("2019 - 2024")
+                                .align(TextAlign.RIGHT)
+                                .textStyle(DocumentTextStyle.DEFAULT.withSize(9)).build(), 0, 0,
+                                LayerAlign.CENTER_RIGHT)
+                        .position(dot(), 150, 0, LayerAlign.CENTER_LEFT))))) {
+            XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
+            XWPFParagraph shared = card.getParagraphs().stream()
+                    .filter(para -> para.getText().contains("\t")).findFirst().orElseThrow();
+
+            assertThat(placedFrom(shared)).as("the cell carries it")
+                    .containsExactly(STRelFromV.PARAGRAPH);
+            assertThat(offsetAcross(shared)).as("from the cell's text column, where the page draws it")
+                    .isCloseTo(150, within(1.0));
         }
     }
 

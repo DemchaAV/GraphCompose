@@ -4489,20 +4489,23 @@ follow semantic versioning; release dates are ISO 8601.
     holds a drawing nailed to a page with no text on it, which is the one disposition the corpus
     does not reach; one holds a nailed drawing whose place the geometry cannot give, paired with the
     document where a carried drawing fails for that same reason; one drawing is placed down from the
-    page's margin, which is neither answer; and two drawings share a name. Eleven sabotages, nine of
-    them caught by the probe written for each: a nailed drawing let into the verdict again, what it
-    is placed down from no longer read from Word, the nailed ones no longer named, the ones that
+    page's margin, which is neither answer; and two drawings share a name. Thirteen sabotages, nine
+    of them caught by the probe written for each: a nailed drawing let into the verdict again, what
+    it is placed down from no longer read from Word, the nailed ones no longer named, the ones that
     left their text no longer named one by one, the nailed ones counted but no longer measured,
     every drawing of a document holding a nailed one let off, anything but a paragraph taken for
     nailed, an unreadable nailed drawing failing the scenario again, and a shared name passed over
-    in silence. The other two — a drawing the reading no longer finds no longer failing, on either
-    side — are reached by nothing, since no document can make Word drop a shape or rename one; they
-    were broken on purpose and nothing caught them, which is recorded rather than claimed.
-  - This meets the part of the floating-layer acceptance that asks for drawings to follow text in
-    95% of the corpus in Word, and no other part of it: 32 drawings are still placed from the page,
-    each one ledgered with why, and the 23 carried drawings that answer for the eight failing
-    documents — 15 that do not follow text that moved, 8 that move from text that did not — are the
-    export's to answer for.
+    in silence. The other four are reached by nothing and are recorded as such rather than claimed:
+    a drawing the reading no longer finds no longer failing, on either side, since no document can
+    make Word drop a shape or give two shapes one name over an edit; and the two the nailed set
+    carries of its own, a drawing whose text cannot be placed again and one whose place the geometry
+    stops giving after the edit, both of which are counted and reported and fail nothing.
+  - What the figure is and is not. It is taken over the drawings the export already anchors in a
+    paragraph, so it says how well those keep to their text and nothing about the 32 the ledger
+    still holds — a ledger of work to do, not of cases where the sheet is right. The eight failing
+    documents answer for 23 carried drawings: 15 that do not follow text that moved and 8 that move
+    from text that did not. And 305 of 320 clears 95% by a single drawing, so one more carried
+    stray would put it under.
 - **The editing protocol holds a drawing to the paragraph whose space above it stands in, reads the
   drawings beside text an edit leaves standing, and lengthens the first paragraph of body text
   rather than the longest — so what it measures of a document is most of it, and what it says of a

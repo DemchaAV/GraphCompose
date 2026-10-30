@@ -440,8 +440,9 @@ Choose the smallest tests that match the change:
     is each drawing's own anchor and not the document it stands in. Nothing may leave the verdict
     by carrying an answer the scenario has no question for: a drawing placed down from anything
     else — neither its paragraph nor the page — is named and fails, and so is a name Word gives to
-    more than one drawing, which is read as no drawing at all. A drawing belongs to the paragraph
-    nearest its top-left corner — how far that corner stands from
+    more than one drawing, which is read as no drawing at all and is reported on its own rather
+    than among the places the page geometry does not give, the geometry not being what failed
+    there. A drawing belongs to the paragraph nearest its top-left corner — how far that corner stands from
     where the paragraph's text begins, plus how far it stands outside the width that text runs to —
     and a drawing standing in the space above a paragraph counts as standing no distance down the
     page from it, the width still having its say; a page's backgrounds are left out. The corner, the
@@ -464,18 +465,22 @@ Choose the smallest tests that match the change:
     and the naming is what makes that visible; one it cannot place after the edit is counted against
     the drawing held to it, and fails where a paragraph carries that drawing. A drawing the reading
     no longer finds after the save and the reopen — Word does not name it, or names it and another
-    alike so that neither can be told from the other — is counted apart from that and fails for
+    alike so that none of them can be told from another — is counted apart from that and fails for
     either set: a drawing gone from the document, or one that can no longer be told apart, is not a
-    question of what it was placed from, and no other scenario counts the shapes. A document whose paragraphs it can place
+    question of what it was placed from, and no other scenario counts the shapes.
+    A document whose paragraphs it can place
     none of, or where no drawing found text to stand beside while some paragraph could not be
     placed, is the instrument failing and is raised, as Word naming no rectangle for any drawing
     is. `-SelfCheck` runs the protocol over probe documents it writes itself: it holds where it
     reads a place to where Word's own PDF draws the same drawing, holds the attribution with
     documents one wrong owner fails, and holds what is asked of whom with a document carrying a
     nailed drawing beside one that ought to follow and fails to. Run it after changing how a place
-    is read, how an owner is chosen, or what the verdict is taken over. A nailed drawing going
-    missing over the edit is the one rule no probe reaches, since no document can make Word drop a
-    shape; it was broken on purpose and nothing caught it, which is recorded rather than claimed.
+    is read, how an owner is chosen, or what the verdict is taken over. Four rules no probe
+    reaches are broken on purpose and recorded as caught by nothing rather than claimed: a drawing
+    the reading no longer finds no longer failing, on either side, since no document can make Word
+    drop a shape or give two shapes one name over an edit; and the two the nailed set carries of
+    its own, a drawing whose text cannot be placed again and one whose place the geometry stops
+    giving after the edit, which are counted and reported and fail nothing.
 
   A scenario a document has nothing to edit for — no table, no list, no drawing beside text —
   is recorded `N/A` with what the document lacks, rather than left out of the JSON.

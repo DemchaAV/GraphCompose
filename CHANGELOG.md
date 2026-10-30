@@ -4483,8 +4483,9 @@ follow semantic versioning; release dates are ISO 8601.
     drawing sharing character 0 with a header drawing of its size — and three run the scenario
     itself: the same drawing beside the same line of text, anchored to that line's paragraph where
     it must follow and to the page at the very place it already stands where it must not, and one
-    in a repeated head, where its place cannot be read at all. Each is read for what the protocol measured and not only for
-    whether it passed, since any breakage at all would satisfy a document that is meant to fail.
+    in a repeated head, where its place cannot be read at all. Each of the three is read for
+    what the protocol measured and not only for whether it passed, since any breakage at all
+    would satisfy a document that is meant to fail.
 - **A test holds every drawing the DOCX export writes for a block that writes text to a paragraph
   of that text, so none of them is left placed from the page.**
   - Word and LibreOffice move a drawing placed from its paragraph with that paragraph when the

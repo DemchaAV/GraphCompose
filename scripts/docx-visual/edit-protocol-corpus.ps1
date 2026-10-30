@@ -25,6 +25,9 @@
     protocol records NOT_RUN and the script exits 2; a scenario that neither passes nor is N/A
     exits 1.
 
+    -SelfCheck runs the protocol over probe documents it writes itself instead, and holds where it
+    reads a drawing's place to where Word's own PDF draws the same drawing.
+
 .PARAMETER Docx
     One or more exported .docx files. All are copied into the output directory before the first
     is edited, and only the copies are opened.
@@ -105,8 +108,10 @@ $READABLE_POINTS = 4
 # How far a drawing may stand from the text it follows, in points. Word gives its page geometry
 # in whole points, so the place read before an edit and the place read after it can each be half
 # a point out, and a drawing that moved with its text exactly can read a whole point adrift. The
-# limit must therefore be more than a point; at a point and a half it admits half a point of
-# drift that is really there, which is the price of reading the geometry Word states.
+# limit must therefore be more than a point. At a point and a half it passes every drawing whose
+# own drift is under half a point, and where the rounding runs the other way it can pass one that
+# drifted by as much as two and a half: the geometry Word states cannot tell the two apart, and
+# measuring drift finer than that wants a reading finer than whole points.
 $FOLLOWS_WITHIN_POINTS = 1.5
 
 # What a document lacks when a scenario has nothing in it to edit.
@@ -401,14 +406,13 @@ function Get-ShapeRectangles {
             $count = $rectangles.Count
             for ($i = 1; $i -le $count; $i++) {
                 $rectangle = $rectangles.Item($i)
-                if ($rectangle.RectangleType -ne $WD_SHAPE_RECTANGLE) { continue }
+                if ([int]$rectangle.RectangleType -ne $WD_SHAPE_RECTANGLE) { continue }
                 # A character counts from the start of its own story, and the shapes read here
                 # are the main story's: a page's background is written as a shape anchored in a
                 # header, which is drawn on every page that header is and whose rectangle sits
                 # on character 0 of that header — the character a body drawing that opens the
                 # document sits on too. A shape rectangle whose range cannot be read at all is
                 # left out, and the shape it belongs to is then reported as unmeasurable.
-                $start = $null
                 try {
                     if ([int]$rectangle.Range.StoryType -ne $WD_MAIN_TEXT_STORY) { continue }
                     $start = [int]$rectangle.Range.Start
@@ -426,24 +430,24 @@ function Get-ShapeRectangles {
     } finally {
         $window.View.Type = $view
     }
-    # No geometry at all is the instrument failing, not every drawing of the document leaving its
-    # text behind, and it is told apart here rather than reported as 760 findings.
-    if ($byAnchor.Count -eq 0 -and $Doc.Shapes.Count -gt 0) {
-        throw "Word's page geometry named no rectangle for any of the $($Doc.Shapes.Count) drawings of this document"
-    }
     return $byAnchor
 }
 
-# The rectangle Word drew one shape in: anchored on the same character, of the same size to the
-# point Word rounds it to, and not already another shape's. A drawing the page geometry does not
-# name is reported rather than measured — a place reckoned from its anchor is what this protocol
-# got wrong, so it is no fallback. Nor is a rectangle of another size: Word states the size it
-# draws, clipping nothing (measured, a 700pt rectangle on a 595pt page: Word reports 700).
+# The rectangle Word drew one shape in: anchored on the same character, of the shape's own size,
+# and not already another shape's — the first such one, where a character carries several. A
+# drawing the page geometry does not name is reported rather than measured — a place reckoned
+# from its anchor is what this protocol got wrong, so it is no fallback. Nor is a rectangle of
+# another size: Word states the size it draws, clipping nothing (measured, a 700pt rectangle on a
+# 595pt page: Word reports 700).
 function Find-ShapeRectangle {
     param($Shape, $Rectangles, $Taken)
     $start = [int]$Shape.Anchor.Start
     $onIt = @($Rectangles[$start] | Where-Object { $_ })
     $free = @($onIt | Where-Object { -not $Taken.ContainsKey($_.id) })
+    # Word rounds the geometry it states to whole points, so a rectangle's size differs from its
+    # shape's by half a point at most — every size measured did. The limit is set at a point
+    # rather than at that bound, so that a rectangle a shade off still matches its shape instead
+    # of a drawing the instrument could have read being refused.
     $sized = @($free | Where-Object {
         [Math]::Abs($_.width - [double]$Shape.Width) -le 1 -and [Math]::Abs($_.height - [double]$Shape.Height) -le 1
     })
@@ -478,6 +482,12 @@ function Get-DrawingPlaces {
         if ($places.ContainsKey($shape.Name)) { $places[$shape.Name] = $null; continue }
         $places[$shape.Name] = Find-ShapeRectangle $shape $rectangles $taken
     }
+    # No geometry at all, for a document that has drawings to read, is the instrument failing and
+    # not every drawing of that document leaving its text behind: it is raised here rather than
+    # reported as a finding against each of them.
+    if ($rectangles.Count -eq 0 -and $places.Count -gt 0) {
+        throw "Word's page geometry named no rectangle for any of the $($places.Count) drawings of this document"
+    }
     return $places
 }
 
@@ -506,6 +516,15 @@ function Get-ParagraphPlaces {
 # The paragraph a drawing belongs beside: of those with text starting on its page, the nearest
 # to its top-left corner, up or down from the paragraph's start and across from its text. A dot stands
 # at the start of its entry, a rail at its first entry's, a skill's bar beside its label.
+#
+# The two sides are not read the same way, which is the limit of this attribution. A drawing's
+# place is where Word draws it; a paragraph's is where a range reports its first line, and its
+# page is the page that range reports. Where a row begins on one page and is drawn on the next,
+# Word reports its cell paragraphs on the page the row begins — measured — so a drawing on the
+# page it is drawn on can have the paragraph it stands beside filtered out by the page test here,
+# and fall to another paragraph of that page or to none. Reading the paragraphs from the same page
+# geometry would settle it, and would change which paragraph owns a drawing throughout: that
+# belongs with the work on the attribution itself, not with reading the place.
 function Find-Owner {
     param($Drawing, $Paragraphs)
     $page = [Math]::Floor($Drawing.place / 10000)
@@ -836,6 +855,10 @@ function Invoke-Protocol {
         $state.paragraphs = Get-ParagraphPlaces $doc
         $state.owners = @{}
         $state.unreadable = @()
+        # Drawings this scenario says nothing about: one standing beside no text on its page has
+        # nothing to follow, and the count is reported rather than left out, so that a document
+        # measuring one drawing of twelve cannot read as a document of one.
+        $state.beside = @()
         foreach ($name in $state.drawings.Keys) {
             if ($null -eq $state.drawings[$name]) { continue }
             # A drawing whose place Word's page geometry does not give is named, not guessed at:
@@ -845,7 +868,7 @@ function Invoke-Protocol {
                 continue
             }
             $owner = Find-Owner $state.drawings[$name] $state.paragraphs
-            if ($null -ne $owner) { $state.owners[$name] = $owner }
+            if ($null -ne $owner) { $state.owners[$name] = $owner } else { $state.beside += $name }
         }
         # Drawings beside no text — a page's backgrounds alone — leave nothing to follow, unless
         # one could not be read at all, which is a finding of its own.
@@ -870,7 +893,8 @@ function Invoke-Protocol {
             if ([Math]::Abs($drawingMoved - $ownerMoved) -le $FOLLOWS_WITHIN_POINTS) { $followed++; continue }
             $stray += "$name by $([Math]::Round($drawingMoved, 1)) beside '$((Get-Text $doc.Paragraphs($owner)) -replace '^(.{0,24}).*', '$1')' by $([Math]::Round($ownerMoved, 1))"
         }
-        $detail = "'$($state.target)…' lengthened; $($state.owners.Count) drawings, $moved beside text that moved, $followed of them followed it, $lost not found again"
+        $detail = "'$($state.target)…' lengthened; $($state.owners.Count) drawings beside text, $moved beside text that moved, $followed of them followed it, $lost not found again"
+        if ($state.beside.Count -gt 0) { $detail += ", $($state.beside.Count) beside no text on their page" }
         if ($stray.Count -gt 0) { $detail += "; not following: " + (($stray | Select-Object -First 3) -join '; ') }
         if ($unreadable.Count -gt 0) {
             $detail += "; $($unreadable.Count) whose place Word's page geometry does not give: " +
@@ -896,13 +920,12 @@ function Invoke-Protocol {
 
 # --- The self-check -------------------------------------------------------------------------
 # Probe documents of one 20x10pt red rectangle each, written here so the check needs nothing on
-# disk. Four hold a rectangle whose place was measured once in Word's own PDF, and the protocol
-# is held to that place; three of them put it at offset 0, where the place Word draws it at *is*
+# disk. Four hold a rectangle whose place was measured once in Word's own PDF, and the protocol is
+# held to that place; each of the four puts it at offset 0, where the place Word draws it at *is*
 # the point Word reckons the offset from. The other three run the scenario itself: the same
-# rectangle beside the same line of
-# text, anchored to that line's paragraph where it must follow the text and to the page at the
-# very place it already stands where it must not, and one in a row Word repeats, where its place
-# cannot be read at all.
+# rectangle beside the same line of text, anchored to that line's paragraph where it must follow
+# the text and to the page at the very place it already stands where it must not, and one in a row
+# Word repeats, where its place cannot be read at all.
 
 $PROBE_CONTENT_TYPES = @'
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -1127,7 +1150,9 @@ function New-ProbeFollows {
         @{
             name   = 'one-drawing-in-two-rectangles'
             status = 'FAIL'
-            detail = '*page geometry does not give*'
+            # Not the phrase every refusal carries, but this refusal's own reason: any other would
+            # pass a document meant to fail for this one.
+            detail = '*stands in 2 rectangles of its own 20x10pt*'
             # A row Word repeats as a table's head is drawn on every page the table reaches, and
             # the drawing it holds with it, so one shape stands in two rectangles anchored on the
             # one character. Which of them followed the text is not a question with an answer, and
@@ -1170,6 +1195,8 @@ function Invoke-SelfCheck {
                     $failures += "$($probe.name): $($probe.what) — Word names no drawing in the probe"
                 } elseif ($drawing.unreadable) {
                     $failures += "$($probe.name): $($probe.what) — no place read: the drawing $($drawing.unreadable)"
+                # Half a point: Word states its page geometry in whole points, and the places
+                # below were measured in its PDF, which does not round.
                 } elseif ([Math]::Abs($drawing.place - $probe.place) -gt 0.5 -or [Math]::Abs($drawing.left - $probe.left) -gt 0.5) {
                     $failures += ("$($probe.name): $($probe.what) — read page {0} at {1:F2}pt, {2:F2}pt across; Word's PDF draws it on page {3} at {4:F2}pt, {5:F2}pt across" -f
                         [Math]::Floor($drawing.place / 10000), ($drawing.place % 10000), $drawing.left,

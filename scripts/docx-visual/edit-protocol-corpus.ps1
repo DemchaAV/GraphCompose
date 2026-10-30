@@ -25,6 +25,9 @@
     protocol records NOT_RUN and the script exits 2; a scenario that neither passes nor is N/A
     exits 1.
 
+    -SelfCheck runs the protocol over probe documents it writes itself instead, and holds where it
+    reads a drawing's place to where Word's own PDF draws the same drawing.
+
 .PARAMETER Docx
     One or more exported .docx files. All are copied into the output directory before the first
     is edited, and only the copies are opened.
@@ -32,6 +35,11 @@
 .PARAMETER Scenario
     The scenarios to run, by the names the protocol records them under; all of them when
     left out.
+
+.PARAMETER SelfCheck
+    Runs the protocol against probe documents it writes itself, instead of over a corpus, and
+    holds where it reads a drawing's place to where Word's own PDF puts the same drawing. Run
+    it after changing how a place is read. Exits 1 if a check fails, 2 without Word.
 
 .PARAMETER OutputDir
     Where the inputs' copies, the edited copies, their PDFs and edit-protocol-corpus.json are
@@ -41,12 +49,17 @@
     # Export the corpus once, then run the protocol over it (about a minute a document).
     ./mvnw -B -ntp test -f qa/pom.xml -Dtest=DocxFidelityCorpusTest -Dgraphcompose.docxFidelity=export
     ./scripts/docx-visual/edit-protocol-corpus.ps1 -Docx (Get-ChildItem qa/target/docx-fidelity/engine/*.docx).FullName -OutputDir $env:TEMP/docx-edit
+
+.EXAMPLE
+    # Check the protocol itself against the places Word draws a drawing at.
+    ./scripts/docx-visual/edit-protocol-corpus.ps1 -SelfCheck -OutputDir $env:TEMP/docx-edit-selfcheck
 #>
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'Corpus')]
 param(
-    [Parameter(Mandatory = $true)][string[]]$Docx,
+    [Parameter(Mandatory = $true, ParameterSetName = 'Corpus')][string[]]$Docx,
     [Parameter(Mandatory = $true)][string]$OutputDir,
-    [string[]]$Scenario
+    [Parameter(ParameterSetName = 'Corpus')][string[]]$Scenario,
+    [Parameter(Mandatory = $true, ParameterSetName = 'SelfCheck')][switch]$SelfCheck
 )
 
 $ErrorActionPreference = 'Stop'
@@ -77,8 +90,9 @@ $WD_LINE_SPACE_EXACTLY = 4
 $WD_HEADER_FOOTER_PRIMARY = 1
 $WD_HEADER_FOOTER_FIRST_PAGE = 2
 $WD_HEADER_FOOTER_EVEN_PAGES = 3
-$WD_RELATIVE_TO_MARGIN = 0
-$WD_RELATIVE_TO_PAGE = 1
+$WD_PRINT_VIEW = 3
+$WD_SHAPE_RECTANGLE = 1
+$WD_MAIN_TEXT_STORY = 1
 
 # An exact line shorter than this share of its letters' size cuts them on Word's screen: Word
 # sets a single line of its faces at 1.15 to 1.2 of the size.
@@ -90,6 +104,15 @@ $WD_FRAME_EXACT = 2
 # The smallest size typed text is read at, in points: a paragraph that holds only pictures has
 # its runs and mark a point tall, and text typed on from it would continue at that point.
 $READABLE_POINTS = 4
+
+# How far a drawing may stand from the text it follows, in points. Word gives its page geometry
+# in whole points, so the place read before an edit and the place read after it can each be half
+# a point out, and a drawing that moved with its text exactly can read a whole point adrift. The
+# limit must therefore be more than a point. At a point and a half it passes every drawing whose
+# own drift is under half a point, and where the rounding runs the other way it can pass one that
+# drifted by as much as two and a half: the geometry Word states cannot tell the two apart, and
+# measuring drift finer than that wants a reading finer than whole points.
+$FOLLOWS_WITHIN_POINTS = 1.5
 
 # What a document lacks when a scenario has nothing in it to edit.
 $NOT_APPLICABLE = @{
@@ -352,27 +375,118 @@ function Get-FooterOn {
     return ($Section.Footers($kind).Range.Text -replace "[`r`a0-9]", '').Trim()
 }
 
-# Where each floating drawing of the main story stands, by its name: its place as Get-Place
-# counts it, and its left edge. One placed from the page stands at its offset on the page its
-# anchor lands on; one placed from its paragraph or its column, at its offset from them.
+# Where Word lays out the rectangles it draws the floating shapes of the main story in, by the
+# character each shape's anchor sits on: Word's page geometry gives a drawing a rectangle
+# wherever it draws it, in points from the top-left corner of that page, and the rectangle's
+# range starts exactly where the shape's anchor does.
+#
+# Read this way a drawing's place is Word's own. Reckoning it from the anchor instead is what
+# this protocol had wrong: a stored offset counts from the top of the anchor paragraph's box,
+# the space above the paragraph included, while a range reports the top of the paragraph's
+# first line — 11.87pt lower wherever a 12pt space stands above it. Measured on 29 probe
+# documents of one 20x10pt rectangle each at offset 0, against the same rectangle in Word's own
+# PDF: the page geometry is right within 0.41pt in every one, while the paragraph reckoning is
+# out by the space above the paragraph, and for a drawing whose row begins on the page before
+# the one it is drawn on it names the wrong page altogether. Word gives the geometry in whole
+# points, which is why a drawing is held to following its text within a point and a half.
+function Get-ShapeRectangles {
+    param($Doc)
+    $byAnchor = @{}
+    $window = $Doc.ActiveWindow
+    $view = $window.View.Type
+    # Word lays a document out in pages only in print view, and the protocol leaves the view as
+    # it found it.
+    $window.View.Type = $WD_PRINT_VIEW
+    try {
+        $pane = $window.Panes(1)
+        $pages = $pane.Pages
+        $pageCount = $pages.Count
+        for ($page = 1; $page -le $pageCount; $page++) {
+            $rectangles = $pages.Item($page).Rectangles
+            $count = $rectangles.Count
+            for ($i = 1; $i -le $count; $i++) {
+                $rectangle = $rectangles.Item($i)
+                if ([int]$rectangle.RectangleType -ne $WD_SHAPE_RECTANGLE) { continue }
+                # A character counts from the start of its own story, and the shapes read here
+                # are the main story's: a page's background is written as a shape anchored in a
+                # header, which is drawn on every page that header is and whose rectangle sits
+                # on character 0 of that header — the character a body drawing that opens the
+                # document sits on too. A shape rectangle whose range cannot be read at all is
+                # left out, and the shape it belongs to is then reported as unmeasurable.
+                try {
+                    if ([int]$rectangle.Range.StoryType -ne $WD_MAIN_TEXT_STORY) { continue }
+                    $start = [int]$rectangle.Range.Start
+                } catch { continue }
+                if (-not $byAnchor.ContainsKey($start)) { $byAnchor[$start] = @() }
+                $byAnchor[$start] += @{
+                    id     = "$page.$i"
+                    place  = $page * 10000 + [double]$rectangle.Top
+                    left   = [double]$rectangle.Left
+                    width  = [double]$rectangle.Width
+                    height = [double]$rectangle.Height
+                }
+            }
+        }
+    } finally {
+        $window.View.Type = $view
+    }
+    return $byAnchor
+}
+
+# The rectangle Word drew one shape in: anchored on the same character, of the shape's own size,
+# and not already another shape's — the first such one, where a character carries several. A
+# drawing the page geometry does not name is reported rather than measured — a place reckoned
+# from its anchor is what this protocol got wrong, so it is no fallback. Nor is a rectangle of
+# another size: Word states the size it draws, clipping nothing (measured, a 700pt rectangle on a
+# 595pt page: Word reports 700).
+function Find-ShapeRectangle {
+    param($Shape, $Rectangles, $Taken)
+    $start = [int]$Shape.Anchor.Start
+    $onIt = @($Rectangles[$start] | Where-Object { $_ })
+    $free = @($onIt | Where-Object { -not $Taken.ContainsKey($_.id) })
+    # Word rounds the geometry it states to whole points, so a rectangle's size differs from its
+    # shape's by half a point at most — every size measured did. The limit is set at a point
+    # rather than at that bound, so that a rectangle a shade off still matches its shape instead
+    # of a drawing the instrument could have read being refused.
+    $sized = @($free | Where-Object {
+        [Math]::Abs($_.width - [double]$Shape.Width) -le 1 -and [Math]::Abs($_.height - [double]$Shape.Height) -le 1
+    })
+    if ($sized.Count -ne 1) {
+        $size = "$([Math]::Round([double]$Shape.Width))x$([Math]::Round([double]$Shape.Height))pt"
+        $why = if ($sized.Count -gt 1) {
+            "stands in $($sized.Count) rectangles of its own $size, so which of them followed the text is not a question with an answer"
+        } elseif ($free.Count -gt 0) {
+            "stands on a character carrying $($free.Count) rectangles, none of them $size"
+        } elseif ($onIt.Count -gt 0) {
+            "stands on a character whose $($onIt.Count) rectangles were all matched to other drawings"
+        } else {
+            "is drawn in no rectangle of Word's page geometry on the character it is anchored on"
+        }
+        return @{ place = 0; left = 0; unreadable = $why }
+    }
+    $Taken[$sized[0].id] = $true
+    return @{ place = $sized[0].place; left = $sized[0].left; unreadable = $null }
+}
+
+# Where each floating drawing of the main story stands, by its name: its place and its left
+# edge, both as Word's page geometry gives them. A drawing whose rectangle cannot be told apart
+# carries the reason instead of a place.
 function Get-DrawingPlaces {
     param($Doc)
+    $rectangles = Get-ShapeRectangles $Doc
+    $taken = @{}
     $places = @{}
     foreach ($shape in $Doc.Shapes) {
         # A page's background belongs to the page, not to the text on it.
         if ($shape.Name -like 'Page background*') { continue }
         if ($places.ContainsKey($shape.Name)) { $places[$shape.Name] = $null; continue }
-        $anchor = $shape.Anchor.Paragraphs(1).Range.Duplicate
-        $anchor.Collapse(1)
-        $page = [double]$anchor.Information($WD_ACTIVE_END_PAGE)
-        $place = switch ($shape.RelativeVerticalPosition) {
-            $WD_RELATIVE_TO_PAGE { $page * 10000 + $shape.Top }
-            $WD_RELATIVE_TO_MARGIN { $page * 10000 + $Doc.Sections(1).PageSetup.TopMargin + $shape.Top }
-            default { (Get-Place $anchor) + $shape.Top }
-        }
-        $left = if ($shape.RelativeHorizontalPosition -eq $WD_RELATIVE_TO_PAGE) { $shape.Left } `
-            else { [double]$anchor.Information($WD_HORIZONTAL_POSITION_ON_PAGE) + $shape.Left }
-        $places[$shape.Name] = @{ place = $place; left = $left }
+        $places[$shape.Name] = Find-ShapeRectangle $shape $rectangles $taken
+    }
+    # No geometry at all, for a document that has drawings to read, is the instrument failing and
+    # not every drawing of that document leaving its text behind: it is raised here rather than
+    # reported as a finding against each of them.
+    if ($rectangles.Count -eq 0 -and $places.Count -gt 0) {
+        throw "Word's page geometry named no rectangle for any of the $($places.Count) drawings of this document"
     }
     return $places
 }
@@ -402,6 +516,15 @@ function Get-ParagraphPlaces {
 # The paragraph a drawing belongs beside: of those with text starting on its page, the nearest
 # to its top-left corner, up or down from the paragraph's start and across from its text. A dot stands
 # at the start of its entry, a rail at its first entry's, a skill's bar beside its label.
+#
+# The two sides are not read the same way, which is the limit of this attribution. A drawing's
+# place is where Word draws it; a paragraph's is where a range reports its first line, and its
+# page is the page that range reports. Where a row begins on one page and is drawn on the next,
+# Word reports its cell paragraphs on the page the row begins — measured — so a drawing on the
+# page it is drawn on can have the paragraph it stands beside filtered out by the page test here,
+# and fall to another paragraph of that page or to none. Reading the paragraphs from the same page
+# geometry would settle it, and would change which paragraph owns a drawing throughout: that
+# belongs with the work on the attribution itself, not with reading the place.
 function Find-Owner {
     param($Drawing, $Paragraphs)
     $page = [Math]::Floor($Drawing.place / 10000)
@@ -722,7 +845,8 @@ function Invoke-Protocol {
     # 8. Lengthen the same paragraph as the first scenario, and see that each drawing beside
     #    text the edit moved — a timeline's dot, a rail, an icon, a badge — moved with it, by as
     #    much and onto the same page. A drawing is held to the paragraph nearest its top-left
-    #    corner when the document opens.
+    #    corner when the document opens, and that corner is where Word's page geometry draws it,
+    #    not where its stored offset is reckoned from.
     $results += Invoke-Scenario $Word $Source 'drawings-follow-text' -Edit {
         param($doc, $state)
         $state.index = Find-BodyParagraph $doc
@@ -730,13 +854,25 @@ function Invoke-Protocol {
         $state.drawings = Get-DrawingPlaces $doc
         $state.paragraphs = Get-ParagraphPlaces $doc
         $state.owners = @{}
+        $state.unreadable = @()
+        # Drawings this scenario says nothing about: one standing beside no text on its page has
+        # nothing to follow, and the count is reported rather than left out, so that a document
+        # measuring one drawing of twelve cannot read as a document of one.
+        $state.beside = @()
         foreach ($name in $state.drawings.Keys) {
             if ($null -eq $state.drawings[$name]) { continue }
+            # A drawing whose place Word's page geometry does not give is named, not guessed at:
+            # the protocol can say nothing about whether it follows its text.
+            if ($state.drawings[$name].unreadable) {
+                $state.unreadable += "$name $($state.drawings[$name].unreadable)"
+                continue
+            }
             $owner = Find-Owner $state.drawings[$name] $state.paragraphs
-            if ($null -ne $owner) { $state.owners[$name] = $owner }
+            if ($null -ne $owner) { $state.owners[$name] = $owner } else { $state.beside += $name }
         }
-        # Drawings beside no text — a page's backgrounds alone — leave nothing to follow.
-        if ($state.owners.Count -eq 0) { return $false }
+        # Drawings beside no text — a page's backgrounds alone — leave nothing to follow, unless
+        # one could not be read at all, which is a finding of its own.
+        if ($state.owners.Count -eq 0 -and $state.unreadable.Count -eq 0) { return $false }
         $p = $doc.Paragraphs($state.index)
         $state.target = (Get-Text $p).Substring(0, 30)
         (Get-TextRange $p).InsertAfter($ADDED)
@@ -745,19 +881,26 @@ function Invoke-Protocol {
         $drawings = Get-DrawingPlaces $doc
         $paragraphs = Get-ParagraphPlaces $doc
         $moved = 0; $followed = 0; $lost = 0; $stray = @()
+        $unreadable = @($state.unreadable)
         foreach ($name in $state.owners.Keys) {
             $owner = $state.owners[$name]
             if (-not $drawings.ContainsKey($name) -or $null -eq $drawings[$name] -or -not $paragraphs.ContainsKey($owner)) { $lost++; continue }
+            if ($drawings[$name].unreadable) { $unreadable += "$name $($drawings[$name].unreadable) after the edit"; continue }
             $ownerMoved = $paragraphs[$owner].place - $state.paragraphs[$owner].place
             if ([Math]::Abs($ownerMoved) -le 0.5) { continue }
             $moved++
             $drawingMoved = $drawings[$name].place - $state.drawings[$name].place
-            if ([Math]::Abs($drawingMoved - $ownerMoved) -le 1) { $followed++; continue }
+            if ([Math]::Abs($drawingMoved - $ownerMoved) -le $FOLLOWS_WITHIN_POINTS) { $followed++; continue }
             $stray += "$name by $([Math]::Round($drawingMoved, 1)) beside '$((Get-Text $doc.Paragraphs($owner)) -replace '^(.{0,24}).*', '$1')' by $([Math]::Round($ownerMoved, 1))"
         }
-        $detail = "'$($state.target)…' lengthened; $($state.owners.Count) drawings, $moved beside text that moved, $followed of them followed it, $lost not found again"
+        $detail = "'$($state.target)…' lengthened; $($state.owners.Count) drawings beside text, $moved beside text that moved, $followed of them followed it, $lost not found again"
+        if ($state.beside.Count -gt 0) { $detail += ", $($state.beside.Count) beside no text on their page" }
         if ($stray.Count -gt 0) { $detail += "; not following: " + (($stray | Select-Object -First 3) -join '; ') }
-        if ($stray.Count -gt 0 -or $lost -gt 0) { return New-Result 'drawings-follow-text' 'FAIL' $detail }
+        if ($unreadable.Count -gt 0) {
+            $detail += "; $($unreadable.Count) whose place Word's page geometry does not give: " +
+                (($unreadable | Select-Object -First 3) -join '; ')
+        }
+        if ($stray.Count -gt 0 -or $lost -gt 0 -or $unreadable.Count -gt 0) { return New-Result 'drawings-follow-text' 'FAIL' $detail }
         New-Result 'drawings-follow-text' 'PASS' $detail
     }
 
@@ -773,6 +916,344 @@ function Invoke-Protocol {
         New-Result 'round-trip' 'PASS' $detail
     }
     return @($results | Where-Object { $_ })
+}
+
+# --- The self-check -------------------------------------------------------------------------
+# Probe documents of one 20x10pt red rectangle each, written here so the check needs nothing on
+# disk. Four hold a rectangle whose place was measured once in Word's own PDF, and the protocol is
+# held to that place; each of the four puts it at offset 0, where the place Word draws it at *is*
+# the point Word reckons the offset from. The other three run the scenario itself: the same
+# rectangle beside the same line of text, anchored to that line's paragraph where it must follow
+# the text and to the page at the very place it already stands where it must not, and one in a row
+# Word repeats, where its place cannot be read at all.
+
+$PROBE_CONTENT_TYPES = @'
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>
+'@
+
+$PROBE_PACKAGE_RELS = @'
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>
+'@
+
+$PROBE_DOCUMENT_RELS = @'
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>
+'@
+
+# For the one probe that needs a header of its own, to put a drawing in a story that is not the
+# body's.
+$PROBE_HEADER_TYPE = '<Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>'
+
+$PROBE_HEADER_RELS = @'
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/>
+</Relationships>
+'@
+
+$PROBE_NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"' +
+    ' xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"' +
+    ' xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"' +
+    ' xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"'
+$PROBE_RPR = '<w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>'
+$PROBE_SECT = '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>' +
+    '<w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr>'
+# 20x10pt in EMU, and a point in EMU.
+$PROBE_WIDTH = 254000
+$PROBE_HEIGHT = 127000
+$EMU_A_POINT = 12700
+
+function New-ProbeDrawing {
+    param([string]$From = 'paragraph', [double]$OffsetPoints = 0, [switch]$InCell, [int]$Id = 1)
+    $cell = [int]$InCell.IsPresent
+    $across = if ($InCell) { 'column' } else { 'page' }
+    $offset = [long]($OffsetPoints * $EMU_A_POINT)
+    return '<w:drawing><wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0"' +
+        ' relativeHeight="251658240" behindDoc="0" locked="0" layoutInCell="' + $cell + '" allowOverlap="1">' +
+        '<wp:simplePos x="0" y="0"/>' +
+        '<wp:positionH relativeFrom="' + $across + '"><wp:posOffset>0</wp:posOffset></wp:positionH>' +
+        '<wp:positionV relativeFrom="' + $From + '"><wp:posOffset>' + $offset + '</wp:posOffset></wp:positionV>' +
+        '<wp:extent cx="' + $PROBE_WIDTH + '" cy="' + $PROBE_HEIGHT + '"/>' +
+        '<wp:effectExtent l="0" t="0" r="0" b="0"/><wp:wrapNone/>' +
+        '<wp:docPr id="' + $Id + '" name="Drawing ' + $Id + '"/><wp:cNvGraphicFramePr/>' +
+        '<a:graphic><a:graphicData uri="http://schemas.microsoft.com/office/word/2010/wordprocessingShape">' +
+        '<wps:wsp><wps:cNvSpPr/><wps:spPr>' +
+        '<a:xfrm><a:off x="0" y="0"/><a:ext cx="' + $PROBE_WIDTH + '" cy="' + $PROBE_HEIGHT + '"/></a:xfrm>' +
+        '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>' +
+        '<a:solidFill><a:srgbClr val="FF0000"/></a:solidFill><a:ln><a:noFill/></a:ln>' +
+        '</wps:spPr><wps:bodyPr/></wps:wsp></a:graphicData></a:graphic></wp:anchor></w:drawing>'
+}
+
+function New-ProbeParagraph {
+    param([string]$Text = '', [int]$Before = 0, [string]$Drawing = '')
+    $runs = ''
+    if ($Drawing) { $runs += '<w:r>' + $PROBE_RPR + $Drawing + '</w:r>' }
+    if ($Text) { $runs += '<w:r>' + $PROBE_RPR + '<w:t xml:space="preserve">' + $Text + '</w:t></w:r>' }
+    return '<w:p><w:pPr><w:spacing w:before="' + $Before + '" w:after="0"/>' + $PROBE_RPR + '</w:pPr>' + $runs + '</w:p>'
+}
+
+function New-ProbeCell {
+    param([string[]]$Paragraphs)
+    return '<w:tc><w:tcPr><w:tcW w:w="4000" w:type="dxa"/></w:tcPr>' + ($Paragraphs -join '') + '</w:tc>'
+}
+
+function New-ProbeRow {
+    param([string[]]$Cells, [int]$Height = 0, [switch]$Header)
+    $props = ''
+    if ($Height -gt 0) { $props += '<w:trHeight w:val="' + $Height + '" w:hRule="atLeast"/>' }
+    if ($Header) { $props += '<w:tblHeader/>' }
+    if ($props) { $props = '<w:trPr>' + $props + '</w:trPr>' }
+    return '<w:tr>' + $props + ($Cells -join '') + '</w:tr>'
+}
+
+function New-ProbeTable {
+    param([string[]]$Rows)
+    return '<w:tbl><w:tblPr><w:tblW w:w="8000" w:type="dxa"/><w:tblInd w:w="0" w:type="dxa"/>' +
+        '<w:tblLayout w:type="fixed"/><w:tblCellMar>' +
+        '<w:top w:w="0" w:type="dxa"/><w:left w:w="0" w:type="dxa"/>' +
+        '<w:bottom w:w="0" w:type="dxa"/><w:right w:w="0" w:type="dxa"/>' +
+        '</w:tblCellMar></w:tblPr>' +
+        '<w:tblGrid><w:gridCol w:w="4000"/><w:gridCol w:w="4000"/></w:tblGrid>' +
+        ($Rows -join '') + '</w:tbl>'
+}
+
+function New-ProbeDocument {
+    param([string]$Path, [string]$Body, [string]$Header = '')
+    if (-not ('System.IO.Compression.ZipFile' -as [type])) {
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+    }
+    if (Test-Path $Path) { Remove-Item $Path -Force }
+    $namespaces = $PROBE_NS
+    $sect = $PROBE_SECT
+    $types = $PROBE_CONTENT_TYPES
+    $rels = $PROBE_DOCUMENT_RELS
+    if ($Header) {
+        $namespaces += ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"'
+        $sect = $PROBE_SECT -replace '<w:sectPr>', '<w:sectPr><w:headerReference w:type="default" r:id="rId1"/>'
+        $types = $PROBE_CONTENT_TYPES -replace '</Types>', ($PROBE_HEADER_TYPE + "`n</Types>")
+        $rels = $PROBE_HEADER_RELS
+    }
+    $document = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ' + $namespaces +
+        '><w:body>' + $Body + $sect + '</w:body></w:document>'
+    $parts = @(
+        @{ name = '[Content_Types].xml'; text = $types }
+        @{ name = '_rels/.rels'; text = $PROBE_PACKAGE_RELS }
+        @{ name = 'word/_rels/document.xml.rels'; text = $rels }
+        @{ name = 'word/document.xml'; text = $document }
+    )
+    if ($Header) {
+        $parts += @{
+            name = 'word/header1.xml'
+            text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ' + $PROBE_NS + '>' +
+                   $Header + '</w:hdr>'
+        }
+    }
+    $zip = [System.IO.Compression.ZipFile]::Open($Path, 'Create')
+    try {
+        foreach ($part in $parts) {
+            $writer = New-Object System.IO.StreamWriter($zip.CreateEntry($part.name).Open())
+            try { $writer.Write($part.text) } finally { $writer.Dispose() }
+        }
+    } finally {
+        $zip.Dispose()
+    }
+    return Get-Item $Path
+}
+
+# The body text the protocol lengthens, and the short line a drawing stands beside.
+$PROBE_LONG = 'A paragraph of body text long enough for the protocol to pick it out and lengthen it, so that everything below it has to move down to make room.'
+$PROBE_SHORT = 'Delivery timeline for the programme.'
+
+function New-ProbePlaces {
+    # place is the page times 10000 plus the points down the page, as Get-DrawingPlaces counts
+    # it, and left is from the page's left edge: both are where Word's own PDF puts the
+    # rectangle's top-left corner, the page carried in the place so that a wrong page cannot be
+    # taken for a place half a point out.
+    return @(
+        @{
+            name  = 'space-above-a-paragraph'
+            what  = 'a drawing at offset 0 in a body paragraph with 12pt above it'
+            place = 10087.98
+            left  = 0.00
+            body  = (New-ProbeParagraph -Text 'A first line above the one that holds the drawing.') +
+                   (New-ProbeParagraph -Text 'Body paragraph that holds the drawing.' -Before 240 -Drawing (New-ProbeDrawing))
+        }
+        @{
+            name  = 'the-second-paragraph-of-a-cell'
+            what  = 'a drawing at offset 0 in the second paragraph of a cell, a line below the top of the row'
+            place = 10087.98
+            left  = 72.00
+            body  = New-ProbeTable @((New-ProbeRow @(
+                       (New-ProbeCell @((New-ProbeParagraph -Text 'First paragraph of the cell.'),
+                                        (New-ProbeParagraph -Text 'Second paragraph holds the drawing.' -Drawing (New-ProbeDrawing -InCell)))),
+                       (New-ProbeCell @((New-ProbeParagraph -Text 'Neighbour.'))))))
+        }
+        @{
+            # A character counts from the start of its own story, so a drawing of a header sits on
+            # character 0 of that header — as a page's background does, which is how the export
+            # writes one — and a body drawing that opens the document sits on character 0 too. Of
+            # the same size, the two are told apart only by the story their character belongs to.
+            name   = 'a-header-drawing-on-the-same-character'
+            what   = 'a body drawing anchored on character 0 beside a header drawing of its size on character 0 of the header'
+            place  = 10072.00
+            left   = 0.00
+            header = New-ProbeParagraph -Drawing (New-ProbeDrawing -From 'page' -OffsetPoints 20 -Id 2)
+            body   = New-ProbeParagraph -Text 'Body text that opens the document with a drawing.' -Drawing (New-ProbeDrawing)
+        }
+        @{
+            name  = 'a-row-that-opens-a-page'
+            what  = 'a drawing in the first paragraph of a cell of a row Word opens page 2 with, while the row begins on page 1'
+            place = 20072.00
+            left  = 72.00
+            body  = New-ProbeTable @(
+                       (New-ProbeRow -Height 13600 -Cells @(
+                           (New-ProbeCell @((New-ProbeParagraph -Text 'A tall first row.'))),
+                           (New-ProbeCell @((New-ProbeParagraph -Text 'Neighbour.'))))),
+                       (New-ProbeRow @(
+                           (New-ProbeCell @((New-ProbeParagraph -Text 'Second row cell holding the drawing.' -Before 240 -Drawing (New-ProbeDrawing -InCell)))),
+                           (New-ProbeCell @((New-ProbeParagraph -Text 'Neighbour.'))))))
+        }
+    )
+}
+
+function New-ProbeFollows {
+    return @(
+        @{
+            name   = 'a-drawing-anchored-to-its-paragraph'
+            status = 'PASS'
+            detail = '*1 beside text that moved, 1 of them followed it*'
+            what   = 'a drawing anchored to the paragraph it stands beside follows it down'
+            body   = (New-ProbeParagraph -Text $PROBE_LONG) +
+                     (New-ProbeParagraph -Text $PROBE_SHORT -Drawing (New-ProbeDrawing))
+        }
+        @{
+            name   = 'a-drawing-anchored-to-the-page'
+            status = 'FAIL'
+            detail = '*not following: Drawing 1 by 0 beside*'
+            # 103.95pt down page 1 is where the probe above it draws the same rectangle — the top
+            # of the short paragraph's box, two lines of $PROBE_LONG below the margin, measured in
+            # Word. The two documents must look alike, so that what tells them apart is the edit
+            # and not the place: a page-anchored drawing elsewhere could be caught for standing
+            # beside nothing, which is not what this probe is for.
+            what   = 'the same drawing anchored to the page at the place it already stands does not'
+            body   = (New-ProbeParagraph -Text $PROBE_LONG) +
+                     (New-ProbeParagraph -Text $PROBE_SHORT -Drawing (New-ProbeDrawing -From 'page' -OffsetPoints 103.95))
+        }
+        @{
+            name   = 'one-drawing-in-two-rectangles'
+            status = 'FAIL'
+            # Not the phrase every refusal carries, but this refusal's own reason: any other would
+            # pass a document meant to fail for this one.
+            detail = '*stands in 2 rectangles of its own 20x10pt*'
+            # A row Word repeats as a table's head is drawn on every page the table reaches, and
+            # the drawing it holds with it, so one shape stands in two rectangles anchored on the
+            # one character. Which of them followed the text is not a question with an answer, and
+            # the protocol says so instead of measuring one of the two.
+            what   = 'a drawing in a row Word repeats stands in a rectangle on every page'
+            body   = (New-ProbeParagraph -Text $PROBE_LONG) +
+                     (New-ProbeTable @(
+                         (New-ProbeRow -Header -Cells @(
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'Repeated head holding the drawing.' -Drawing (New-ProbeDrawing -InCell)))),
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'Neighbour.'))))),
+                         (New-ProbeRow -Height 6000 -Cells @(
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'A tall row.'))),
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'Neighbour.'))))),
+                         (New-ProbeRow -Height 6000 -Cells @(
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'Another tall row.'))),
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'Neighbour.'))))),
+                         (New-ProbeRow -Height 6000 -Cells @(
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'A third tall row, on the page after.'))),
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'Neighbour.')))))))
+        }
+    )
+}
+
+function Invoke-SelfCheck {
+    param($Word, [string]$Directory)
+    New-Item -ItemType Directory -Force $Directory | Out-Null
+    $failures = @()
+    $checked = 0
+    # Each probe is counted before it is measured and its own errors are caught: with
+    # $ErrorActionPreference at Stop, one failing COM call would otherwise leave the whole check
+    # with nothing said about any of them.
+    foreach ($probe in New-ProbePlaces) {
+        $checked++
+        try {
+            $file = New-ProbeDocument (Join-Path $Directory ($probe.name + '.docx')) $probe.body $probe.header
+            $doc = $Word.Documents.Open($file.FullName, [ref]$false, [ref]$true)
+            try {
+                $drawing = (Get-DrawingPlaces $doc)['Drawing 1']
+                if (-not $drawing) {
+                    $failures += "$($probe.name): $($probe.what) — Word names no drawing in the probe"
+                } elseif ($drawing.unreadable) {
+                    $failures += "$($probe.name): $($probe.what) — no place read: the drawing $($drawing.unreadable)"
+                # Half a point: Word states its page geometry in whole points, and the places
+                # below were measured in its PDF, which does not round.
+                } elseif ([Math]::Abs($drawing.place - $probe.place) -gt 0.5 -or [Math]::Abs($drawing.left - $probe.left) -gt 0.5) {
+                    $failures += ("$($probe.name): $($probe.what) — read page {0} at {1:F2}pt, {2:F2}pt across; Word's PDF draws it on page {3} at {4:F2}pt, {5:F2}pt across" -f
+                        [Math]::Floor($drawing.place / 10000), ($drawing.place % 10000), $drawing.left,
+                        [Math]::Floor($probe.place / 10000), ($probe.place % 10000), $probe.left)
+                }
+            } finally {
+                $doc.Close([ref]$false)
+                [Runtime.InteropServices.Marshal]::ReleaseComObject($doc) | Out-Null
+            }
+        } catch {
+            $failures += "$($probe.name): $($probe.what) — the check itself failed: $($_.Exception.Message)"
+        }
+    }
+    # The scenario itself, on the one scenario these documents are for. Nothing runs after the
+    # self-check, so the narrowing is not put back.
+    $script:Scenario = @('drawings-follow-text')
+    foreach ($probe in New-ProbeFollows) {
+        $checked++
+        try {
+            $file = New-ProbeDocument (Join-Path $Directory ($probe.name + '.docx')) $probe.body
+            $result = @(Invoke-Protocol $Word $file) | Where-Object { $_.scenario -eq 'drawings-follow-text' }
+            # The status alone would be met by any breakage at all where the status wanted is
+            # FAIL, so what the protocol measured is read too.
+            if ($result.status -ne $probe.status) {
+                $failures += "$($probe.name): $($probe.what) — the protocol says $($result.status), not $($probe.status): $($result.detail)"
+            } elseif ($result.detail -notlike $probe.detail) {
+                $failures += "$($probe.name): $($probe.what) — $($probe.status) for another reason: $($result.detail)"
+            }
+        } catch {
+            $failures += "$($probe.name): $($probe.what) — the check itself failed: $($_.Exception.Message)"
+        }
+    }
+    foreach ($failure in $failures) { Write-Host "SELF-CHECK FAIL $failure" }
+    # The probes are written to the first directory; the copies the scenario edits, which is what
+    # a person opens to see why a check failed, are written to the output directory itself.
+    Write-Host "$checked checks, $($failures.Count) failed. Probes: $Directory, edited copies: $OutputDir"
+    return $failures.Count
+}
+
+if ($SelfCheck) {
+    try {
+        $word = New-Object -ComObject Word.Application
+    } catch {
+        Write-Warning 'NOT_RUN: Microsoft Word is not available'
+        exit 2
+    }
+    $word.Visible = $false
+    $word.DisplayAlerts = 0
+    try {
+        $failed = Invoke-SelfCheck $word (Join-Path $OutputDir 'selfcheck')
+    } finally {
+        $word.Quit()
+        [Runtime.InteropServices.Marshal]::ReleaseComObject($word) | Out-Null
+        [GC]::Collect(); [GC]::WaitForPendingFinalizers()
+    }
+    if ($failed -gt 0) { exit 1 }
+    exit 0
 }
 
 # The inputs are copied first: a build that exports the corpus again while the protocol runs

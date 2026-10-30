@@ -217,6 +217,9 @@ final class DocxDrawingPlacements {
                         case "posOffset" -> {
                             readingOffset = true;
                             offset.setLength(0);
+                            if ("V".equals(position) && !being.isEmpty()) {
+                                being.peek().saidHowFarDown = true;
+                            }
                         }
                         case "docPr" -> {
                             if (!being.isEmpty()) {
@@ -239,7 +242,8 @@ final class DocxDrawingPlacements {
                         case "anchor", "inline" -> {
                             if (!being.isEmpty()) {
                                 Being read = being.pop();
-                                add(part, read.name, read.placedFrom, read.placedAcross, read.down, read.floating,
+                                add(part, read.name, read.placedFrom, read.placedAcross,
+                                        read.saidHowFarDown ? read.down : Long.MIN_VALUE, read.floating,
                                         read.simplePos);
                             }
                         }
@@ -262,6 +266,12 @@ final class DocxDrawingPlacements {
         private String name;
         private long down;
         private String simplePos;
+        /**
+         * Whether its {@code wp:positionV} gave an offset at all. A schema-legal
+         * {@code <wp:align>bottom</wp:align>} gives a keyword instead, which would otherwise leave
+         * the offset at nought and read as a drawing sitting on its paragraph's top.
+         */
+        private boolean saidHowFarDown;
 
         private Being(boolean floating) {
             this.floating = floating;
@@ -294,8 +304,11 @@ final class DocxDrawingPlacements {
         } else if (floating && !placement.placedFrom().equals("paragraph") && !placement.placedFrom().equals("page")) {
             problems.add(where + " is placed down from \"" + placement.placedFrom() + "\", which this reader does not know");
         }
-        if (floating && down == Long.MIN_VALUE) {
-            problems.add(where + " has no offset down this reader can read");
+        // Only where it does name something to be placed down from: an anchor with no
+        // wp:positionV at all is that one problem, not two.
+        if (floating && !placement.placedFrom().isEmpty() && down == Long.MIN_VALUE) {
+            problems.add(where + " says how far down in nothing this reader can read: a wp:posOffset that is"
+                         + " no number, or a wp:align keyword in its place");
         }
         // The export places a drawing across from its cell's text column, or from the page's edge
         // where no cell holds it. Anything else is a drawing this reader was not written to judge.

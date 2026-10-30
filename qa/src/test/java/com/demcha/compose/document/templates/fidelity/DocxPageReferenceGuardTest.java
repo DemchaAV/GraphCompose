@@ -12,9 +12,7 @@ import com.demcha.compose.document.templates.fidelity.PageReferenceDocxDocuments
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Modifier;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -23,13 +21,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import static com.demcha.compose.document.templates.fidelity.DocxFixtures.NAMESPACES;
 import static com.demcha.compose.document.templates.fidelity.DocxFixtures.assertLaidOut;

@@ -4460,12 +4460,12 @@ follow semantic versioning; release dates are ISO 8601.
     fixes what the export does today; the six hold the rule, and every drawing in them must be
     placed down from a paragraph, not merely kept off the page.
   - The 32 the corpus still places from the page are named one by one with the reason each is
-    there: 25 of a table's composed cell, where the walk from the cell holding the drawing
-    crosses a cell set to the middle of a nested row whose room the layout does not state; 6
-    whose owner's own text is written as the drawing itself — a brand lockup's badges and a
-    closing banner's, laid over the flow — so no paragraph of the blocks holding it stands on its
-    page at all; and one standing 3.43pt above the nearest paragraph's top with four paragraphs
-    of its own block on its page that none of them was placed from. The list is a ledger of work
+    there: 25 of a table's composed cell, where the walk from the cell whose box holds the
+    drawing finds no paragraph of that cell it can be placed from; 6 whose owner's own text is
+    written as the drawing itself — a brand lockup's badges and a closing banner's, laid over the
+    flow — so no paragraph of the blocks holding it stands on its page at all; and one standing
+    3.43pt above the nearest paragraph's top, with four paragraphs of its own block on its page
+    that none of them was placed from. The list is a ledger of work
     still to do and not a set of cases where the page is right: when the export learns to carry
     those drawings, the test fails until the ledger is brought down to match.
   - It fails closed on a reader that stops reading. Every page fill must come back placed from

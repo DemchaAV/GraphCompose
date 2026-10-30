@@ -2,6 +2,7 @@ package com.demcha.compose.document.templates.fidelity;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.EllipseBuilder;
+import com.demcha.compose.document.dsl.LayerStackBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.LayerAlign;
@@ -57,7 +58,8 @@ final class FlowOwnerDrawingDocuments {
      *
      * @param name     its name, which a failure is reported under
      * @param writer   the writer of text the drawings' owners hold, named for the report
-     * @param drawings how many drawings a node paints in it
+     * @param drawings how many floating drawings a node paints in it — the ones placed from
+     *                 something, which are the only ones that can be placed from the page
      * @param compose  how it is composed
      */
     record FlowOwnerDocument(String name, String writer, int drawings, Consumer<DocumentSession> compose) {
@@ -144,12 +146,20 @@ final class FlowOwnerDrawingDocuments {
     /**
      * A table a cell of which holds nothing but a disc, its neighbour holding text. A drawing that
      * is all its cell holds is the export's own exception: it is anchored in that cell's paragraph
-     * directly, without the walk from the cell whose box holds it
-     * ({@code DocxDrawingAnchors#anchorInCell}), so this document holds that path and not the walk.
+     * directly, placed from the cell's text column, without the walk from the cell whose box holds
+     * it — the exception a sidebar strip's band icons needed, each alone in the first column of its
+     * row.
      *
-     * <p>The walk itself has no document here. A composed cell holding text as well as a drawing
-     * leaves the drawing on the page today, as 25 of the corpus's do, so there is nothing for a
-     * document of the rule to assert: the corpus ledger carries that case until the export does.</p>
+     * <p>The cell is composed of a layer stack of one layer, which is what the exception asks for:
+     * it fires for a layer stack or a shape container that only draws, holds no rule, states no
+     * margin, is laid out on one page and paints inside its box. A bare {@code EllipseNode} in the
+     * cell is none of those things and would be anchored by the ordinary walk instead, which is
+     * what the paragraph documents above already hold.</p>
+     *
+     * <p>The walk from a holding cell has no document here. A composed cell holding text as well as
+     * a drawing leaves the drawing on the page today, as 25 of the corpus's do, so there is nothing
+     * for a document of the rule to assert: the corpus ledger carries that case until the export
+     * does.</p>
      */
     private static void discAloneInACell(DocumentSession session) {
         session.pageSize(300, 320).margin(MARGIN);
@@ -158,8 +168,10 @@ final class FlowOwnerDrawingDocuments {
                 .addTable(table -> table
                         .columns(DocumentTableColumn.fixed(80), DocumentTableColumn.fixed(170))
                         .defaultCellStyle(CELLS)
-                        .rowCells(DocumentTableCell.node(new EllipseBuilder().circle(18).fillColor(INK)
-                                        .stroke(DocumentStroke.of(INK, 1)).build()),
+                        .rowCells(DocumentTableCell.node(new LayerStackBuilder()
+                                        .layer(new EllipseBuilder().circle(18).fillColor(INK)
+                                                .stroke(DocumentStroke.of(INK, 1)).build())
+                                        .build()),
                                 DocumentTableCell.text("Beside the disc, in the cell next to it."))
                         .rowCells(DocumentTableCell.text("Second row"), DocumentTableCell.text("Under the disc")))
                 .addParagraph(p -> text(p, "Under the table, on the same page.")));

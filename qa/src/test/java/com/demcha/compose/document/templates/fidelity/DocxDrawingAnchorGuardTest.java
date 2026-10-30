@@ -52,12 +52,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DocxDrawingAnchorGuardTest {
 
     /**
-     * Drawings of a table's composed cell, between which and the cell the drawing stands in there
-     * is a cell set to the middle of a nested row, whose room the layout does not state: the walk
-     * from the holding cell stops there rather than guess, and the drawing stays on the sheet.
+     * Drawings of a table's composed cell: the walk from the cell whose box holds the drawing to a
+     * paragraph of that cell finds none it can be placed from, and the drawing stays on the sheet.
+     *
+     * <p>Which step of the walk gives up has not been pinned down. A cell set to the middle of a
+     * nested row stands in the way in these three invoices, and was taken for the cause, but a
+     * composed cell holding text and a drawing leaves the drawing on the sheet with no nested row
+     * anywhere near it, so that is at most one way in. The reason here is therefore the outcome,
+     * not a mechanism.</p>
      */
     private static final String COMPOSED_CELL_WALK_STOPS =
-            "a composed cell's drawing, the walk to it crossing a cell set to the middle of a nested row";
+            "a composed cell's drawing, which the walk from its holding cell found no paragraph for";
 
     /**
      * Drawings painted for a block whose own text is written as the drawing itself — a lockup or a
@@ -84,7 +89,7 @@ class DocxDrawingAnchorGuardTest {
      *
      * <p>Twenty-five are a composed cell's ({@link #COMPOSED_CELL_WALK_STOPS}): thirteen in
      * {@code invoice-payments} under {@code LineItemsBox/LineItems}, eight in
-     * {@code invoice-workspace} and four in {@code invoice-merchant}, each with ninety or more
+     * {@code invoice-workspace} and four in {@code invoice-merchant}, each with 92 or more
      * paragraphs on its page to choose from, so it is not for want of one. Seven are painted for a
      * block of a sidebar or a closing banner: six in {@code invoice-luma_studio_long} — the brand
      * lockup's four text badges on page 1 and the closing banner's two on page 3
@@ -119,11 +124,27 @@ class DocxDrawingAnchorGuardTest {
     }
 
     /**
+     * The ledger as a failure reads it: each document, how many drawings it is allowed to leave on
+     * the page, and the reason recorded for them. A change that moves a drawing onto the sheet, or
+     * carries one at last, fails against this.
+     */
+    private static String ledgerAsText() {
+        StringBuilder text = new StringBuilder();
+        new TreeMap<>(STILL_ON_THE_PAGE).forEach((stem, still) -> text.append("  ").append(stem).append(": ")
+                .append(still.named().size()).append(" — ").append(still.reason()).append(System.lineSeparator()));
+        return text.toString();
+    }
+
+    /**
      * How many floating drawings the corpus has a node paint, as a floor: a reader that stopped
      * finding them would otherwise report every document clean. Measured at 760 over 71 documents,
      * beside 381 inline ones, which are placed from nothing and so are not this guard's business.
+     *
+     * <p>Held close to the measurement rather than loosely, since the slack is what a drawing could
+     * go missing in: a document that stops painting a drawing altogether is not this guard's
+     * subject, but a reader that stops seeing them is exactly what the floor is here to catch.</p>
      */
-    private static final int AT_LEAST_THIS_MANY_DRAWINGS = 700;
+    private static final int AT_LEAST_THIS_MANY_DRAWINGS = 750;
 
     /**
      * How many page fills the corpus holds, as a floor, each of which must come back placed from
@@ -176,7 +197,9 @@ class DocxDrawingAnchorGuardTest {
         Map<String, List<String>> ledgered = new TreeMap<>();
         STILL_ON_THE_PAGE.forEach((stem, still) ->
                 ledgered.put(stem, still.named().stream().sorted().toList()));
-        assertThat(onThePage).as("the drawings still placed from the page, each ledgered with its reason")
+        // The reasons go into the message, so that a failure says what the ledger claims about each
+        // document and the reader can see at once which claim the change has broken.
+        assertThat(onThePage).as("the drawings still placed from the page, against the ledger:%n%s", ledgerAsText())
                 .isEqualTo(ledgered);
     }
 
@@ -360,6 +383,24 @@ class DocxDrawingAnchorGuardTest {
     }
 
     @Test
+    void aKeywordWhereTheOffsetShouldBeIsAProblemAndNotNought() throws Exception {
+        // wp:align in place of wp:posOffset is schema-legal and says a keyword — "bottom" — where
+        // the export says a number. Read as a missing offset it would come out as nought, which is
+        // a drawing sitting exactly on its paragraph's top: a reading, and a wrong one.
+        DocxDrawingPlacements placements = DocxDrawingPlacements.read(docx(Map.of("word/document.xml",
+                body(paragraph("<w:r><w:drawing><wp:anchor simplePos=\"0\">" + ACROSS
+                               + "<wp:positionV relativeFrom=\"paragraph\"><wp:align>bottom</wp:align>"
+                               + "</wp:positionV>"
+                               + "<wp:docPr id=\"1\" name=\"Drawing 1\"/></wp:anchor></w:drawing></w:r>")))));
+
+        assertThat(placements.problems()).singleElement()
+                .satisfies(problem -> assertThat(problem).contains("\"Drawing 1\"")
+                        .contains("says how far down in nothing this reader can read"));
+        assertThat(placements.placements()).singleElement()
+                .satisfies(drawing -> assertThat(drawing.down()).as("not read as nought").isEqualTo(Long.MIN_VALUE));
+    }
+
+    @Test
     void anOffsetThatIsNoNumberIsAProblem() throws Exception {
         DocxDrawingPlacements placements = DocxDrawingPlacements.read(docx(Map.of("word/document.xml",
                 body(paragraph("<w:r><w:drawing><wp:anchor simplePos=\"0\">" + ACROSS
@@ -368,7 +409,7 @@ class DocxDrawingAnchorGuardTest {
                                + "<wp:docPr id=\"1\" name=\"Drawing 1\"/></wp:anchor></w:drawing></w:r>")))));
 
         assertThat(placements.problems()).singleElement()
-                .satisfies(problem -> assertThat(problem).contains("no offset down this reader can read"));
+                .satisfies(problem -> assertThat(problem).contains("says how far down in nothing this reader can read"));
     }
 
     /** Placed across from the page's edge, so a fixture may be about what it is placed down from. */

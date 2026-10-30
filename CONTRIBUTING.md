@@ -425,7 +425,17 @@ Choose the smallest tests that match the change:
     text it continues (or, after an empty paragraph, on lines that fit it);
   - each drawing beside text the lengthening moved moving with it, by as much and onto the same
     page. A drawing belongs to the paragraph nearest its top-left corner, up or down from where
-    the paragraph starts and across from its text; a page's backgrounds are left out.
+    the paragraph starts and across from its text; a page's backgrounds are left out. That corner
+    is read from Word's own page geometry, which gives every drawing a rectangle in points from
+    the corner of the page it is drawn on: a drawing placed from its paragraph stands a stored
+    offset below the top of the paragraph's box, space above the paragraph included, so reckoning
+    its place from where the paragraph's text begins puts it a space too low and holds it against
+    the wrong text. A drawing Word's page geometry does not name is reported with the reason and
+    not measured, and the scenario fails: a document the instrument cannot read is not a document
+    that passed.
+    `-SelfCheck` runs the protocol over probe documents it writes itself and holds where it reads
+    a place to where Word's own PDF draws the same drawing; run it after changing how a place is
+    read.
 
   A scenario a document has nothing to edit for — no table, no list, no drawing beside text —
   is recorded `N/A` with what the document lacks, rather than left out of the JSON.

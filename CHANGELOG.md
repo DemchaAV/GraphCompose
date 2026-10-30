@@ -4444,6 +4444,47 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The editing protocol reads where a floating drawing stands from Word's own page geometry, so
+  a drawing that follows its text is no longer recorded as leaving it behind.**
+  - It took the place of a drawing placed from its paragraph to be where the paragraph's text
+    begins plus the offset the drawing states. Word reckons that offset from the top of the
+    paragraph's box, the space above the paragraph included, and a range reports the top of the
+    paragraph's first line instead — 11.87pt lower wherever 12pt of space stands above it. A place
+    a line out is held against the text a line out: seven drawings in four invoices were recorded
+    as not following text they never stood beside, each read as not having moved at all while the
+    paragraph it was held against moved 9.4 to 10.9pt.
+  - Word's page geometry gives a drawing a rectangle wherever it draws it, in points from the
+    top-left corner of that page, and the rectangle's range starts on the character the shape's
+    anchor sits on, so the two are matched one for one — by that character and the story it
+    counts from, since a page's background is a shape anchored in a header and its rectangle sits
+    on character 0 of that header. Measured on 29 probe documents of
+    one 20x10pt rectangle each at offset 0 — where the place Word draws it at is the very point
+    Word reckons the offset from — against the same rectangle in Word's own PDF: the page geometry
+    is right within 0.41pt in all 29. It gives the left edge the same way, and the page the
+    drawing is drawn on, which the old reckoning named wrongly altogether for a drawing in a row
+    that begins on the page before. Word states the geometry in whole points, so a drawing is held
+    to its text within a point and a half rather than a point.
+  - A drawing the page geometry does not name — none of its size on the character it is anchored
+    on, or more than one — is reported with the reason and not measured. A place reckoned from its
+    anchor is no fallback, since that is what was wrong, and neither is a rectangle of another
+    size: Word states the size it draws and clips nothing, measured at 700pt on a 595pt page. A
+    row Word repeats as a table's head is drawn on every page the table reaches, and the one
+    drawing it holds stands in a rectangle on each of them, so which of those followed the text is
+    not a question with an answer.
+  - Over the template corpus the protocol now passes 31 documents of the 71 where it passed 27,
+    the four invoices it had wrong among them, and fails 7 where it failed 11; no document went the
+    other way, and all 760 drawings it measures were named by the page geometry. Of the drawings
+    standing beside text an edit moved, 213 of 227 follow it where 211 of 232 did. Two of those
+    four invoices pass with no drawing beside text the edit moves at all: read where Word draws
+    them, their tiles stand beside text that stays where it is.
+  - `-SelfCheck` holds the protocol to that, over seven documents it writes itself: four fix the
+    place Word's PDF puts a drawing at — 12pt of space above a body paragraph, the second
+    paragraph of a cell a line below the top of its row, a row Word opens a page with, and a body
+    drawing sharing character 0 with a header drawing of its size — and three run the scenario
+    itself: the same drawing beside the same line of text, anchored to that line's paragraph where
+    it must follow and to the page at the very place it already stands where it must not, and one
+    in a repeated head, where its place cannot be read at all. Each is read for what the protocol measured and not only for
+    whether it passed, since any breakage at all would satisfy a document that is meant to fail.
 - **A test holds every drawing the DOCX export writes for a block that writes text to a paragraph
   of that text, so none of them is left placed from the page.**
   - Word and LibreOffice move a drawing placed from its paragraph with that paragraph when the

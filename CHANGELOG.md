@@ -4444,6 +4444,55 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The editing protocol asks a drawing to follow text only where a paragraph carries it, and names
+  the ones nailed to the sheet with what they did instead of counting them as having failed to
+  follow — so the figure it reports is of the drawings the question is about.**
+  - A drawing nailed to the sheet — `wp:positionV relativeFrom="page"` — is placed from the top of
+    the page it is drawn on and by nothing else. Measured on the self-check's two alike probe
+    documents, with the paragraph above lengthened by two lines: such a drawing moved 0.00pt in
+    Word 16 and 0.00pt in LibreOffice 24.2 while its own text moved 32.04 and 52.50pt, where the
+    same drawing carried by that text's paragraph in the other document moved 31.96 and 52.50pt
+    with it. Which anchor the export chose is a question of its own, held by
+    `DocxDrawingAnchorGuardTest`, whose ledger names every drawing of the corpus still placed from
+    the page and fails when one is added to it or taken off.
+  - What a drawing is placed down from is read from Word, per drawing. Measured over the corpus
+    both ways round: the files hold 774 `wp:anchor` in the body and Word names 774 shapes there,
+    and `wp:positionV relativeFrom` agrees with Word's `RelativeVerticalPosition` on every one —
+    46 from the page, 14 of them page fills, and 728 from their paragraph, with no third answer and
+    no name carried twice. The 32 drawings left are the 32 the guard's ledger names, document for
+    document and name for name; the 18 further anchors the files hold outside the body are page
+    fills in headers, which the main story does not reach.
+  - Over the corpus, **305 of the 320 drawings a paragraph carries that stand beside text the edit
+    moved follow it**, and 400 of the 408 beside text it leaves standing stand still too. The 32
+    nailed to the sheet are measured the same way and reported apart: 13 stood beside text that
+    moved and none followed it, 19 stood beside text that stayed and all 19 stood still. Added back
+    together those give 305 of 333 and 419 of 427 — the two figures this protocol last reported, so
+    the denominator is all that has changed.
+  - 30 documents pass, 8 fail and 33 have nothing to measure, where it was 28, 10 and 33. The two
+    that pass now failed only on drawings nailed to the sheet: `invoice-payments`, whose eleven
+    line-item tiles do not move while their text moves 40pt, and `invoice-luma_studio_long`, two of
+    its six. A document is not let off for holding them: `invoice-merchant` sets its four aside and
+    still fails, on `Drawing 15`, which a paragraph carries and which crosses onto the page after
+    while the text it stands beside stays. The figure is of the drawings the export already anchors
+    in a paragraph and says nothing of the 32 the ledger still holds; the eight failing documents
+    answer for 23 carried drawings, 15 that do not follow text that moved and 8 that move from text
+    that did not.
+  - Two further readings are now named. A drawing placed down from anything that is neither its
+    paragraph nor the page is one the scenario has no question for, which is a hole the new
+    exclusion would otherwise open; it was measured against its text before, there being no anchor
+    read at all. And a name Word gives to more than one drawing, which is read as no drawing at
+    all, was until now passed over in silence. Both fail the scenario. A drawing the reading no longer
+    finds after the save and the reopen is counted apart from one whose own text cannot be placed
+    again, and fails for either set, of the drawings each set measures: a drawing gone from the
+    document, or one that can no longer be told apart, is not a question of what it was placed
+    from. Text that cannot be placed again fails for the carried set alone, since it answers
+    nothing about a drawing nothing is asked of.
+  - `-SelfCheck` runs 15 probes where it ran 10, and 13 sabotages break one rule each: 9 are caught
+    by the probe written for them. The other 4 are reached by no probe and are run to record that:
+    a drawing the reading no longer finds no longer failing, on either side, and the two the nailed
+    set is excused — one whose own text cannot be placed again, and one whose place the geometry
+    stops giving after the edit. The order the names print in is not probed either; it changes no
+    verdict.
 - **The editing protocol holds a drawing to the paragraph whose space above it stands in, reads the
   drawings beside text an edit leaves standing, and lengthens the first paragraph of body text
   rather than the longest — so what it measures of a document is most of it, and what it says of a

@@ -597,9 +597,10 @@ function Get-DrawingPlaces {
 #
 # The first line, the left edge and the reach across stay a range's. The geometry has no rectangle
 # for a cell either: a row's line runs the width of the table, and of the rectangles Word draws on
-# a page only text and shape rectangles carry anything of the text — measured over four documents
-# of the corpus, which hold those two kinds and one other, once or a few times a page, that holds
-# no paragraph's text. So a cell's text column cannot be read from the geometry.
+# a page only text and shape rectangles carry anything of the text. Measured over four documents of
+# the corpus: they hold rectangles of type 0 and type 1, the two read here, and of type 7, once or
+# a few times a page, which holds no paragraph's text; no rectangle of a cell or of a row is drawn
+# at all. So a cell's text column cannot be read from the geometry.
 function Get-ParagraphPlaces {
     param($Doc, $Geometry)
     $places = @{}
@@ -653,8 +654,8 @@ function Get-ParagraphPlaces {
             continue
         }
         $line = [double]$start.Information($WD_VERTICAL_POSITION_ON_PAGE)
-        # Every line holding where the paragraph starts is a line of this box too, so the box is
-        # never empty here.
+        # At least one line holding where the paragraph starts is on this page — the page was taken
+        # from those lines — and such a line is a line of this box too, so the box is never empty.
         $box = @($Geometry.lines | Where-Object { $_.page -eq $page -and $_.start -lt $to -and $_.end -gt $from })
         # The box is this paragraph's own only while every line of it draws this paragraph's text
         # and no other's. A row's line reaches from the row's first character to its last, so a
@@ -682,7 +683,7 @@ function Get-ParagraphPlaces {
     # naming no rectangle for any of a document's drawings, because the scenario would otherwise
     # find no owner for anything and record the document as having nothing to edit.
     if ($places.Count -gt 0 -and @($places.Values | Where-Object { -not $_.unplaced }).Count -eq 0) {
-        throw "Word's page geometry drew no line holding where any of the $($places.Count) paragraphs with text of this document starts"
+        throw "none of the $($places.Count) paragraphs with text of this document could be placed; the first: $(@($places.Values)[0].unplaced)"
     }
     return $places
 }
@@ -1058,11 +1059,11 @@ function Invoke-Protocol {
         $geometry = Get-PageGeometry $doc
         $state.drawings = Get-DrawingPlaces $doc $geometry
         $state.paragraphs = Get-ParagraphPlaces $doc $geometry
-        # What the reading could not do before the edit, named rather than left silent: a
-        # paragraph it could not place at all, and the paragraphs of a row Word draws on more than
-        # one page, whose own page it takes from a range.
+        # What the reading could not do before the edit, named rather than left silent: the
+        # paragraphs it could not place at all, and the paragraphs of a row Word draws on more than
+        # one page, whose own page none of that row's lines answers for.
         $state.unplaced = @($state.paragraphs.Values | Where-Object { $_.unplaced } | ForEach-Object { $_.unplaced })
-        $state.pagesFromARange = @($state.paragraphs.Values | Where-Object { $_.drawnTwice }).Count
+        $state.inASplitRow = @($state.paragraphs.Values | Where-Object { $_.drawnTwice }).Count
         $state.owners = @{}
         $state.unreadable = @()
         # Drawings this scenario says nothing about: one standing beside no text on its page has
@@ -1079,6 +1080,12 @@ function Invoke-Protocol {
             }
             $owner = Find-Owner $state.drawings[$name] $state.paragraphs
             if ($null -ne $owner) { $state.owners[$name] = $owner } else { $state.beside += $name }
+        }
+        # Where no drawing found text to stand beside and the reading could not place some of the
+        # paragraphs, it is the reading that left them without one — a page whose text lines could
+        # not be read, say — and the document must not be recorded as having nothing to measure.
+        if ($state.owners.Count -eq 0 -and $state.unplaced.Count -gt 0) {
+            throw "no drawing of this document found text to stand beside, and $($state.unplaced.Count) of its paragraphs could not be placed; the first: $($state.unplaced[0])"
         }
         # Drawings beside no text — a page's backgrounds alone — leave nothing to follow, unless
         # one could not be read at all, which is a finding of its own.
@@ -1119,8 +1126,8 @@ function Invoke-Protocol {
         $detail = "'$($state.target)…' lengthened; $($state.owners.Count) drawings beside text, $moved beside text that moved, $followed of them followed it, " +
             "$stayed beside text that stayed, $stood of them stood still, $lost not found again"
         if ($state.beside.Count -gt 0) { $detail += ", $($state.beside.Count) beside no text on their page" }
-        if ($state.pagesFromARange -gt 0) {
-            $detail += ", $($state.pagesFromARange) paragraphs in a row Word draws on more than one page"
+        if ($state.inASplitRow -gt 0) {
+            $detail += ", $($state.inASplitRow) paragraphs in a row Word draws on more than one page"
         }
         # A paragraph the reading could not place is named, so that a drawing held to another
         # paragraph for want of it can be seen for what it is. It is not a failure of the
@@ -1422,11 +1429,11 @@ function New-ProbeFollows {
             # The count of paragraphs in a row Word draws on more than one page is in the detail
             # so that this probe can be held to having reached that case: without it the probe
             # would pass on any row that happens not to break, and the reading it is written for
-            # would go untried. Twelve paragraphs of one cell, after a body that leaves two or
-            # three lines of the page, break over it: the row needs 12 lines and has 3, and it
-            # keeps breaking until the body leaves it no line at all, at which point Word moves
-            # the whole row to the next page and this probe fails on that count rather than
-            # passing quietly on a row that never broke.
+            # would go untried. Twelve paragraphs of one cell, after a body that fills page 1 down
+            # to its last lines, break over it: the row wants far more lines than the body leaves
+            # it, and it keeps breaking until the body leaves it none at all — at which point Word
+            # moves the whole row to the next page, and then this probe fails on that count rather
+            # than passing quietly on a row that never broke.
             detail = '*1 beside text that moved, 1 of them followed it*in a row Word draws on more than one page*'
             # Every line of a row a page break runs through holds where each of that row's
             # paragraphs starts, so the geometry alone does not say which page one of them is

@@ -445,11 +445,12 @@ Choose the smallest tests that match the change:
     detail instead of failing the scenario, since a drawing beside it is held to another paragraph
     and the naming is what makes that visible; one it cannot place after the edit counts among the
     drawings it could not find again, which does fail. A document whose paragraphs it can place
-    none of is the instrument failing and is raised, as Word naming no rectangle for any drawing
-    is. `-SelfCheck` runs the protocol over probe documents it
-    writes itself: it holds where it reads a place to where Word's own PDF draws the same drawing,
-    and holds the attribution with documents one wrong owner fails. Run it after changing how a
-    place is read, or how an owner is chosen.
+    none of, or where no drawing found text to stand beside while some paragraph could not be
+    placed, is the instrument failing and is raised, as Word naming no rectangle for any drawing
+    is. `-SelfCheck` runs the protocol over probe documents it writes itself: it holds where it
+    reads a place to where Word's own PDF draws the same drawing, and holds the attribution with
+    documents one wrong owner fails. Run it after changing how a place is read, or how an owner is
+    chosen.
 
   A scenario a document has nothing to edit for — no table, no list, no drawing beside text —
   is recorded `N/A` with what the document lacks, rather than left out of the JSON.

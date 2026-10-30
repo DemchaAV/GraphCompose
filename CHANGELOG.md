@@ -4467,12 +4467,14 @@ follow semantic versioning; release dates are ISO 8601.
     paragraph of a row keeps its first line, and the limit with it: where the space above such a
     paragraph is wider than the text above it within that row, its drawing is still held against
     that text.
-  - A paragraph's page is read from the geometry too, as a drawing's is. A range reports the same
-    page in all 3647 of them and in all ten probes, and a sabotage that takes the page from a range
-    passes every one, so this removes a way of being wrong rather than a wrong number: what Word
-    reported on the page before was a drawing's anchor, not the paragraph. A paragraph of a row Word
-    draws on more than one page takes the page a range reports, since none of the row's lines
-    answers for that one paragraph, and the scenario's detail says how many those were. A paragraph
+  - A paragraph's page is read from the geometry too, as a drawing's is. Wherever the geometry names
+    one page for a paragraph it is the page a range reports as well — 3629 of those 3647, and all
+    ten probes — and a sabotage that takes the page from a range passes every probe, so this removes
+    a way of being wrong rather than a wrong number: what Word reported on the page before was a
+    drawing's anchor, not the paragraph. For the other 18 the geometry names several pages, because
+    Word draws their row on more than one, and none of those lines answers for one paragraph of it;
+    there the page a range reports is taken, which is one of the pages the geometry names, and the
+    scenario's detail counts the paragraphs of such a row. A paragraph
     the reading cannot place before the edit is named there with the reason instead of failing the
     scenario; one it cannot place after the edit counts among the drawings it could not find again,
     which fails; and a document it can place no paragraph of is raised as the instrument failing,
@@ -4503,7 +4505,9 @@ follow semantic versioning; release dates are ISO 8601.
     beside stays, which must be caught; and a row a page break runs through, whose paragraph the
     geometry alone cannot put on a page, held to having reached that case by the count in its own
     detail. Seven sabotages, six caught by the probe written for each and the seventh — the page
-    from a range — caught by nothing, which is what it was run to show. The figures of the entry
+    from a range — caught by nothing, which is what it was run to show. A move onto another page is
+    written in the detail as the pages and the points now: a place counts its page as 10000 points,
+    so a drawing that crossed one read as "by 9225", which is a page on and 775pt up it. The figures of the entry
     below were measured with the longest paragraph lengthened and the paragraph read from its first
     letter; these replace them.
 - **The editing protocol reads where a floating drawing stands from Word's own page geometry, so

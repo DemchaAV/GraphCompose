@@ -20,15 +20,22 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Small documents whose every drawing is painted for a block that writes text in the flow: one for
- * each writer of a paragraph that carries a drawing today — a paragraph of the body, a panel's, a
- * column of a row, an item of a list, the one line two halves of a band share, and a table cell a
- * drawing is all of.
+ * Small documents whose every drawing is painted for a block that writes text in the flow, one for
+ * each paragraph that carries a drawing today: a paragraph of the body, a panel's, a column of a
+ * row, an item of a list, the one line two halves of a band share, and a table cell a drawing is
+ * all of.
+ *
+ * <p>Between them they cover all three writers of text that offer a paragraph to the drawings
+ * standing beside it — a paragraph node, an item of a list, and the line two halves of a band
+ * share — and the exception for a drawing that is all a table cell holds, which offers no
+ * paragraph and anchors the drawing in the cell itself. The first three documents share the
+ * paragraph node as their writer and differ in the holder whose paragraph the walk must find: the
+ * body's flow, a panel, a column of a row.</p>
  *
  * <p>The template corpus proves what the export does today over whole presets, where a drawing's
  * owner is buried in a preset's tree. These documents hold the rule itself: a drawing whose owner
  * writes text must be carried by a paragraph, never nailed to the sheet, and each document is
- * small enough that a failure names the writer that stopped offering its paragraph
+ * small enough that a failure names what stopped carrying the drawing
  * ({@link DocxDrawingAnchorGuardTest}).</p>
  *
  * <p>Each is laid out on a small page, its drawing standing beside its owner's text so that there
@@ -53,18 +60,18 @@ final class FlowOwnerDrawingDocuments {
     }
 
     /**
-     * A document and the writer of text whose paragraph is to carry its drawings.
+     * A document and what must carry its drawings.
      *
      * @param name     its name, which a failure is reported under
-     * @param writer   the writer of text the drawings' owners hold, named for the report
+     * @param carrier  what must carry the drawings — the paragraph, or the cell, named for the report
      * @param drawings how many floating drawings a node paints in it — the ones placed from
      *                 something, which are the only ones that can be placed from the page
      * @param compose  how it is composed
      */
-    record FlowOwnerDocument(String name, String writer, int drawings, Consumer<DocumentSession> compose) {
+    record FlowOwnerDocument(String name, String carrier, int drawings, Consumer<DocumentSession> compose) {
     }
 
-    /** One document for each writer of a paragraph that may carry a drawing. */
+    /** One document for each paragraph, and the one cell, that carries a drawing today. */
     static List<FlowOwnerDocument> documents() {
         return List.of(
                 new FlowOwnerDocument("disc_beside_body_text", "a paragraph of the body", 1,

@@ -4454,18 +4454,22 @@ follow semantic versioning; release dates are ISO 8601.
     every suite green.
   - Held over the template corpus, where 728 of the 760 floating drawings a node paints are
     carried by a paragraph — its 381 inline ones stand in the text itself and are placed from
-    nothing — and over six documents of its own, one for each writer of a paragraph that carries
-    a drawing today: a paragraph of the body, a panel's, a column of a row, an item of a list,
-    the one line two halves of a band share, and a table cell a drawing is all of. The corpus
-    fixes what the export does today; the six hold the rule, and every drawing in them must be
-    placed down from a paragraph, not merely kept off the page.
+    nothing — and over six documents of its own, one for each paragraph that carries a drawing
+    today: a paragraph of the body, a panel's, a column of a row, an item of a list, the one line
+    two halves of a band share, and a table cell a drawing is all of. Between them they cover all
+    three writers of text that offer a paragraph — a paragraph node, a list's item, a band's
+    shared line — and the exception for a drawing that is all a cell holds, which offers none.
+    The corpus fixes what the export does today; the six hold the rule, and every drawing in them
+    must be placed down from a paragraph, not merely kept off the page.
   - The 32 the corpus still places from the page are named one by one with the reason each is
     there: 25 of a table's composed cell, where the walk from the cell whose box holds the
-    drawing finds no paragraph of that cell it can be placed from; 6 whose owner's own text is
-    written as the drawing itself — a brand lockup's badges and a closing banner's, laid over the
-    flow — so no paragraph of the blocks holding it stands on its page at all; and one standing
-    3.43pt above the nearest paragraph's top, with four paragraphs of its own block on its page
-    that none of them was placed from. The list is a ledger of work
+    drawing finds no paragraph of that cell it can be placed from and the fallback to the nearest
+    text refuses it too; 6 whose owner's own text is written as the drawing itself — a brand
+    lockup's badges and a closing banner's, laid over the flow — so no paragraph of the blocks
+    holding it stands on its page at all; and one with four paragraphs of its own block on its
+    page that none of them was placed from, nor any other paragraph of that page. How far that
+    one rises is not what refuses it: the rise is read only on the path a composed cell's drawing
+    takes, and a drawing a node paints is placed by a walk that never asks. The list is a ledger of work
     still to do and not a set of cases where the page is right: when the export learns to carry
     those drawings, the test fails until the ledger is brought down to match.
   - It fails closed on a reader that stops reading. Every page fill must come back placed from

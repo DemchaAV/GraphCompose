@@ -211,11 +211,10 @@ final class DocxDrawingPlacements {
                         case "positionV" -> {
                             position = "V";
                             if (!being.isEmpty()) {
-                                if (being.peek().placedFrom != null) {
-                                    // A second one would leave this reader saying what one of them
-                                    // names and how far down the other says.
-                                    being.peek().placedDownTwice = true;
-                                }
+                                // Counted, not inferred from what the last one said: a first
+                                // wp:positionV with no relativeFrom of its own would otherwise go
+                                // unnoticed and leave its offset read against the second's name.
+                                being.peek().placedDownTwice = ++being.peek().positionVs > 1;
                                 being.peek().placedFrom = xml.getAttributeValue(null, "relativeFrom");
                             }
                         }
@@ -285,6 +284,8 @@ final class DocxDrawingPlacements {
         private boolean saidHowFarDown;
         /** Whether it carried more than one {@code wp:positionV}, which no reading of it can trust. */
         private boolean placedDownTwice;
+        /** How many {@code wp:positionV} it carried, whatever each of them named. */
+        private int positionVs;
 
         private Being(boolean floating) {
             this.floating = floating;

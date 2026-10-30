@@ -27,10 +27,10 @@ import java.util.jar.JarFile;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 
-import static com.demcha.compose.document.templates.fidelity.DocxFixtures.NAMESPACES;
 import static com.demcha.compose.document.templates.fidelity.DocxFixtures.assertLaidOut;
 import static com.demcha.compose.document.templates.fidelity.DocxFixtures.body;
 import static com.demcha.compose.document.templates.fidelity.DocxFixtures.docx;
+import static com.demcha.compose.document.templates.fidelity.DocxFixtures.header;
 import static com.demcha.compose.document.templates.fidelity.DocxFixtures.paragraph;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -178,7 +178,7 @@ class DocxPageReferenceGuardTest {
         DocxPageReferenceFields fields = DocxPageReferenceFields.read(docx(Map.of(
                 "word/document.xml", body(paragraph(bookmark("1", "intro") + field(" PAGEREF terms \\h ", "3")
                                                     + field(" PAGEREF head \\h ", "3"))),
-                "word/header1.xml", "<w:hdr " + NAMESPACES + ">" + paragraph(bookmark("2", "head")) + "</w:hdr>")));
+                "word/header1.xml", header(paragraph(bookmark("2", "head"))))));
 
         assertThat(fields.problems()).satisfiesExactly(
                 problem -> assertThat(problem).contains("PAGEREF \"terms\"").contains("names a bookmark the file does not hold"),
@@ -195,8 +195,7 @@ class DocxPageReferenceGuardTest {
                                    + "</w:drawing></w:r>");
         DocxPageReferenceFields fields = DocxPageReferenceFields.read(docx(Map.of(
                 "word/document.xml", body(nested + textBox),
-                "word/header1.xml", "<w:hdr " + NAMESPACES + ">" + paragraph(field(" PAGEREF inHeader \\h ", "1"))
-                                    + "</w:hdr>")));
+                "word/header1.xml", header(paragraph(field(" PAGEREF inHeader \\h ", "1"))))));
 
         assertThat(fields.pageReferences()).extracting(DocxPageReferenceFields.Field::bookmark)
                 .containsExactlyInAnyOrder("inTable", "inBox", "inHeader");
@@ -280,8 +279,8 @@ class DocxPageReferenceGuardTest {
                        + "<w:bookmarkEnd w:id=\"5\"/>";
         DocxPageReferenceFields fields = DocxPageReferenceFields.read(docx(Map.of(
                 "word/document.xml", body(paragraph(stray)),
-                "word/header1.xml", "<w:hdr " + NAMESPACES + ">" + paragraph(over) + "</w:hdr>",
-                "word/header2.xml", "<w:hdr " + NAMESPACES + ">" + paragraph(twice) + "</w:hdr>")));
+                "word/header1.xml", header(paragraph(over)),
+                "word/header2.xml", header(paragraph(twice)))));
 
         assertThat(fields.problems()).satisfiesExactly(
                 problem -> assertThat(problem).isEqualTo("an instruction where no field's code is open, in word/document.xml"),

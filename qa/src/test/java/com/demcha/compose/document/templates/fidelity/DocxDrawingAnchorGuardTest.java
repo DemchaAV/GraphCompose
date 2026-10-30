@@ -62,7 +62,8 @@ class DocxDrawingAnchorGuardTest {
      * not a mechanism.</p>
      */
     private static final String COMPOSED_CELL_WALK_STOPS =
-            "a composed cell's drawing, which the walk from its holding cell found no paragraph for";
+            "a composed cell's drawing, which the walk from its holding cell found no paragraph for,"
+            + " and which the fall back to the text nearest it did not place either";
 
     /**
      * Drawings painted for a block whose own text is written as the drawing itself — a lockup or a
@@ -90,7 +91,8 @@ class DocxDrawingAnchorGuardTest {
      * no neighbour. Which of those it is has not been measured.</p>
      */
     private static final String HOLDER_PARAGRAPH_REFUSED =
-            "paragraphs of its block stand on its page and none of them placed it";
+            "paragraphs of its block stand on its page and none of them placed it, nor did any other"
+            + " paragraph of that page once the nearest were tried in turn";
 
     /**
      * The drawings of the corpus still placed from the page: which they are, and why each is there.
@@ -244,7 +246,7 @@ class DocxDrawingAnchorGuardTest {
                 if (!drawing.placedFrom().equals("paragraph")) {
                     wrong.add(document.name() + ": " + drawing.name() + " is placed from \""
                               + drawing.placedFrom() + "\" and not down from a paragraph of "
-                              + document.writer());
+                              + document.carrier());
                 }
             }
         }

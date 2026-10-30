@@ -1513,6 +1513,9 @@ next paragraph able to place it, or else to the next block up that writes one. A
 header row carry none either. A shape no node draws — a timeline's rail — and one none of
 whose blocks writes such a paragraph on its page — a badge beside a table holding its stack's
 text — is anchored in the paragraph nearest it on its page that can place it, however far off.
+A shape the export can place from no paragraph at all stays placed from the page: it keeps its
+place on the sheet while the text it belongs to is edited away from under it, and the note naming
+how it is anchored says that this may be where it ends up.
 The paragraph's top is where Word places from: the space written above its first line
 included, and the line where Word stands it — an exact line's baseline four fifths of the way
 down it, raised by the run's position — measured in Word 16.0.20430 and LibreOffice to a tenth

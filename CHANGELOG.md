@@ -4444,6 +4444,43 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **A test holds every drawing the DOCX export writes for a block that writes text to a paragraph
+  of that text, so none of them is left placed from the page.**
+  - Word and LibreOffice move a drawing placed from its paragraph with that paragraph when the
+    text above it is edited; one placed from the page keeps its place on the sheet while the text
+    it belongs to is edited away from under it. Four changes in a row taught the export to carry
+    such drawings, bringing the template corpus from 465 drawings placed from the page down to
+    32, and nothing held what they won: a change putting one back on the sheet would have left
+    every suite green.
+  - Held over the template corpus, where 728 of the 760 floating drawings a node paints are
+    carried by a paragraph — its 381 inline ones stand in the text itself and are placed from
+    nothing — and over six documents of its own, one for each writer of a paragraph that carries
+    a drawing today: a paragraph of the body, a panel's, a column of a row, an item of a list,
+    the one line two halves of a band share, and a table cell a drawing is all of. The corpus
+    fixes what the export does today; the six hold the rule, and every drawing in them must be
+    placed down from a paragraph, not merely kept off the page.
+  - The 32 the corpus still places from the page are named one by one with the reason each is
+    there: 25 of a table's composed cell, where the walk from the cell holding the drawing
+    crosses a cell set to the middle of a nested row whose room the layout does not state; 6
+    whose owner's own text is written as the drawing itself — a brand lockup's badges and a
+    closing banner's, laid over the flow — so no paragraph of the blocks holding it stands on its
+    page at all; and one standing 3.43pt above the nearest paragraph's top with four paragraphs
+    of its own block on its page that none of them was placed from. The list is a ledger of work
+    still to do and not a set of cases where the page is right: when the export learns to carry
+    those drawings, the test fails until the ledger is brought down to match.
+  - It fails closed on a reader that stops reading. Every page fill must come back placed from
+    the page, which a reader that lost the ability to read what a drawing is placed from cannot
+    show; the corpus must come back with the hundreds of carried drawings it holds; and an anchor
+    the reader cannot classify — one with nothing to be placed down from, no name of its own, a
+    name that is neither a drawing nor a page fill, an offset that is no number, or a place this
+    reader was not written to judge — is a failure rather than a silence.
+  - `simplePos` is read as well as `positionV`, because at `simplePos="1"` Word and LibreOffice
+    take the place from `wp:simplePos` and read neither `positionH` nor `positionV`: a drawing
+    nailed to the sheet that way still says `relativeFrom="paragraph"` in the file, and a test
+    reading only what a drawing says it is placed from would call it carried. Every floating
+    drawing of the corpus must carry an explicit `simplePos="0"`, and a truthy value is a
+    failure; left out, the attribute means what `"0"` means.
+
 - **The DOCX fidelity gate holds each document where its baseline puts it, whichever way it
   moved, instead of only catching lines set further from the page.**
   - A document failed when a line stood more than 0.5pt further from the engine's PDF than its

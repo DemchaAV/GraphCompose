@@ -31,6 +31,11 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static com.demcha.compose.document.templates.fidelity.DocxFixtures.NAMESPACES;
+import static com.demcha.compose.document.templates.fidelity.DocxFixtures.assertLaidOut;
+import static com.demcha.compose.document.templates.fidelity.DocxFixtures.body;
+import static com.demcha.compose.document.templates.fidelity.DocxFixtures.docx;
+import static com.demcha.compose.document.templates.fidelity.DocxFixtures.paragraph;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
@@ -298,14 +303,6 @@ class DocxPageReferenceGuardTest {
         return page == null ? "" : String.valueOf(page);
     }
 
-    /**
-     * The export was made from the document's layout: where the layout fails, the export writes the
-     * document without it, saying so under this subject, and a page reference reads no page.
-     */
-    private static void assertLaidOut(String document, DocxExportReport report) {
-        assertThat(report.bySubject()).as("%s: exported from its layout", document).doesNotContainKey("measured geometry");
-    }
-
     private static long notedAsText(DocxExportReport report) {
         return report.notes().stream()
                 .filter(note -> note.subject().equals("PageReferenceNode") && note.detail().contains(NO_BOOKMARK))
@@ -350,20 +347,6 @@ class DocxPageReferenceGuardTest {
         return kinds;
     }
 
-    private static final String NAMESPACES =
-            "xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" "
-            + "xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" "
-            + "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" "
-            + "xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\"";
-
-    private static String body(String content) {
-        return "<w:document " + NAMESPACES + "><w:body>" + content + "</w:body></w:document>";
-    }
-
-    private static String paragraph(String content) {
-        return "<w:p>" + content + "</w:p>";
-    }
-
     private static String bookmark(String id, String name) {
         return "<w:bookmarkStart w:id=\"" + id + "\" w:name=\"" + name + "\"/><w:bookmarkEnd w:id=\"" + id + "\"/>";
     }
@@ -376,16 +359,4 @@ class DocxPageReferenceGuardTest {
                + "<w:r><w:fldChar w:fldCharType=\"end\"/></w:r>";
     }
 
-    /** A package of the given parts, enough for the reader, which reads XML parts alone. */
-    private static byte[] docx(Map<String, String> parts) throws Exception {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        try (ZipOutputStream zip = new ZipOutputStream(bytes)) {
-            for (Map.Entry<String, String> part : new TreeMap<>(parts).entrySet()) {
-                zip.putNextEntry(new ZipEntry(part.getKey()));
-                zip.write(part.getValue().getBytes(StandardCharsets.UTF_8));
-                zip.closeEntry();
-            }
-        }
-        return bytes.toByteArray();
-    }
 }

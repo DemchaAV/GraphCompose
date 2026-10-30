@@ -12,9 +12,7 @@ import com.demcha.compose.document.templates.fidelity.PageReferenceDocxDocuments
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Modifier;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -23,14 +21,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
+import static com.demcha.compose.document.templates.fidelity.DocxFixtures.assertLaidOut;
+import static com.demcha.compose.document.templates.fidelity.DocxFixtures.body;
+import static com.demcha.compose.document.templates.fidelity.DocxFixtures.docx;
+import static com.demcha.compose.document.templates.fidelity.DocxFixtures.header;
+import static com.demcha.compose.document.templates.fidelity.DocxFixtures.paragraph;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
@@ -177,7 +178,7 @@ class DocxPageReferenceGuardTest {
         DocxPageReferenceFields fields = DocxPageReferenceFields.read(docx(Map.of(
                 "word/document.xml", body(paragraph(bookmark("1", "intro") + field(" PAGEREF terms \\h ", "3")
                                                     + field(" PAGEREF head \\h ", "3"))),
-                "word/header1.xml", "<w:hdr " + NAMESPACES + ">" + paragraph(bookmark("2", "head")) + "</w:hdr>")));
+                "word/header1.xml", header(paragraph(bookmark("2", "head"))))));
 
         assertThat(fields.problems()).satisfiesExactly(
                 problem -> assertThat(problem).contains("PAGEREF \"terms\"").contains("names a bookmark the file does not hold"),
@@ -194,8 +195,7 @@ class DocxPageReferenceGuardTest {
                                    + "</w:drawing></w:r>");
         DocxPageReferenceFields fields = DocxPageReferenceFields.read(docx(Map.of(
                 "word/document.xml", body(nested + textBox),
-                "word/header1.xml", "<w:hdr " + NAMESPACES + ">" + paragraph(field(" PAGEREF inHeader \\h ", "1"))
-                                    + "</w:hdr>")));
+                "word/header1.xml", header(paragraph(field(" PAGEREF inHeader \\h ", "1"))))));
 
         assertThat(fields.pageReferences()).extracting(DocxPageReferenceFields.Field::bookmark)
                 .containsExactlyInAnyOrder("inTable", "inBox", "inHeader");
@@ -279,8 +279,8 @@ class DocxPageReferenceGuardTest {
                        + "<w:bookmarkEnd w:id=\"5\"/>";
         DocxPageReferenceFields fields = DocxPageReferenceFields.read(docx(Map.of(
                 "word/document.xml", body(paragraph(stray)),
-                "word/header1.xml", "<w:hdr " + NAMESPACES + ">" + paragraph(over) + "</w:hdr>",
-                "word/header2.xml", "<w:hdr " + NAMESPACES + ">" + paragraph(twice) + "</w:hdr>")));
+                "word/header1.xml", header(paragraph(over)),
+                "word/header2.xml", header(paragraph(twice)))));
 
         assertThat(fields.problems()).satisfiesExactly(
                 problem -> assertThat(problem).isEqualTo("an instruction where no field's code is open, in word/document.xml"),
@@ -296,14 +296,6 @@ class DocxPageReferenceGuardTest {
         }
         Integer page = pages.get(reference.anchor());
         return page == null ? "" : String.valueOf(page);
-    }
-
-    /**
-     * The export was made from the document's layout: where the layout fails, the export writes the
-     * document without it, saying so under this subject, and a page reference reads no page.
-     */
-    private static void assertLaidOut(String document, DocxExportReport report) {
-        assertThat(report.bySubject()).as("%s: exported from its layout", document).doesNotContainKey("measured geometry");
     }
 
     private static long notedAsText(DocxExportReport report) {
@@ -350,20 +342,6 @@ class DocxPageReferenceGuardTest {
         return kinds;
     }
 
-    private static final String NAMESPACES =
-            "xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" "
-            + "xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" "
-            + "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" "
-            + "xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\"";
-
-    private static String body(String content) {
-        return "<w:document " + NAMESPACES + "><w:body>" + content + "</w:body></w:document>";
-    }
-
-    private static String paragraph(String content) {
-        return "<w:p>" + content + "</w:p>";
-    }
-
     private static String bookmark(String id, String name) {
         return "<w:bookmarkStart w:id=\"" + id + "\" w:name=\"" + name + "\"/><w:bookmarkEnd w:id=\"" + id + "\"/>";
     }
@@ -376,16 +354,4 @@ class DocxPageReferenceGuardTest {
                + "<w:r><w:fldChar w:fldCharType=\"end\"/></w:r>";
     }
 
-    /** A package of the given parts, enough for the reader, which reads XML parts alone. */
-    private static byte[] docx(Map<String, String> parts) throws Exception {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        try (ZipOutputStream zip = new ZipOutputStream(bytes)) {
-            for (Map.Entry<String, String> part : new TreeMap<>(parts).entrySet()) {
-                zip.putNextEntry(new ZipEntry(part.getKey()));
-                zip.write(part.getValue().getBytes(StandardCharsets.UTF_8));
-                zip.closeEntry();
-            }
-        }
-        return bytes.toByteArray();
-    }
 }

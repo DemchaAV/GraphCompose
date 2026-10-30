@@ -4472,20 +4472,26 @@ follow semantic versioning; release dates are ISO 8601.
     passes every one, so this removes a way of being wrong rather than a wrong number: what Word
     reported on the page before was a drawing's anchor, not the paragraph. A paragraph of a row Word
     draws on more than one page takes the page a range reports, since none of the row's lines
-    answers for that one paragraph, and the scenario's detail says how many those were; a paragraph
-    the reading cannot place at all is named there with the reason.
+    answers for that one paragraph, and the scenario's detail says how many those were. A paragraph
+    the reading cannot place before the edit is named there with the reason instead of failing the
+    scenario; one it cannot place after the edit counts among the drawings it could not find again,
+    which fails; and a document it can place no paragraph of is raised as the instrument failing,
+    as Word naming no rectangle for any drawing is.
   - A drawing beside text an edit leaves standing now has to stay standing. Only drawings beside
     text that moved were read before, so a drawing could wander off while the text it belongs beside
     stood still and the scenario would say nothing of it. Over the corpus 427 drawings stand beside
     text the edit leaves where it is, and 419 of them stay with it; the eight that do not are in
-    four documents, one of them moving 9225pt onto the page after while its text stays.
+    four documents, one of them crossing onto the page after while its text stays.
   - Which paragraph is lengthened decides how much of a document moves at all, and the longest one
     is often among the last things these templates set. Lengthening the first paragraph of body text
     instead measures 333 drawings against text that moved where 227 were measured before, and 305 of
     them follow it: 91.6% where the figure was 93.8% of a third fewer drawings. The 106 further
-    drawings bring 92 that follow and 14 that do not, and four documents that passed now fail — one
-    on six drawings that cross to the next page 40pt from their text, one on eleven that do not move
-    while their text moves 40pt, and two on drawings that leave standing text. "The first paragraph
+    drawings bring 92 that follow and 14 that do not, so 28 documents of the 71 pass, 10 fail and 33
+    have nothing to measure, where it was 31, 7 and 33. Four that passed now fail — one on six
+    drawings that cross to the next page 40pt from their text, one on eleven that do not move while
+    their text moves 40pt, one on four that move 23 to 24pt while their text stands, and one on a
+    drawing that crosses onto the page after while its text stays — and one that failed now passes,
+    its five drawings all standing beside text this edit leaves where it is. "The first paragraph
     with any text" was measured and refused: where that text is one character in a sidebar's own
     cell, lengthening it grew the row past the page, and Word, which will not break a row, drew it
     over the page's edge — page 1's rectangles at 1006 and 1510pt — so every drawing of that

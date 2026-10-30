@@ -6,8 +6,8 @@
 .DESCRIPTION
     edit-protocol-word.ps1 exercises the one document it was written for: it finds its targets
     by their text. This protocol finds them by their shape, so it runs over every document of
-    the fidelity corpus: the longest paragraph of body text, the table with the most rows, the
-    first list, the end of the document.
+    the fidelity corpus: the longest paragraph of body text, the first one, the table with the
+    most rows, the first list, the end of the document.
 
     Each scenario edits a copy, saves it, reopens it from disk and records what it measured.
     What it decides by itself is objective: text kept or lost, a paragraph grown or shrunk and
@@ -146,6 +146,18 @@ function New-Result {
     return [ordered]@{ scenario = $Name; status = $Status; detail = $Detail }
 }
 
+# How far something moved, from the difference of two places. A place counts the page it is on as
+# 10000 points, so a move onto another page reads as thousands of points: it is written as the
+# pages and the points, since "by 9225" will be read as 9225 points by anyone who has not the
+# encoding in mind — a page on and 775pt up the next one is what it means.
+function Format-Move {
+    param([double]$Points)
+    $pages = [Math]::Round($Points / 10000)
+    $down = [Math]::Round($Points - $pages * 10000, 1)
+    if ($pages -eq 0) { return "${down}pt" }
+    return "$(if ($pages -gt 0) { '+' })$pages page$(if ([Math]::Abs($pages) -ne 1) { 's' }) and ${down}pt"
+}
+
 # Where a range starts, as one number that grows down the document: page, then points from the top.
 function Get-Place {
     param($Range)
@@ -244,7 +256,7 @@ function Find-BodyParagraph {
 # over the corpus with the first paragraph holding any text at all: in a document whose first text
 # is one character — a glyph in a sidebar's own cell — lengthening it by a sentence grew that cell's
 # row past the page, and Word, which will not break the row, drew it over the page's edge, putting
-# page 1's rectangles at 1006 and 1510pt. Every drawing of those documents was then measured
+# page 1's rectangles at 1006 and 1510pt. Every drawing of that document was then measured
 # against a layout that had collapsed, which says nothing about whether a drawing follows its text.
 function Find-FirstBodyParagraph {
     param($Doc)
@@ -570,9 +582,10 @@ function Get-DrawingPlaces {
 # its first letter to the right edge of its cell, or of the page's margin.
 #
 # The page comes from the geometry, so that a paragraph's page is the page Word draws it on, as a
-# drawing's is. A range reports the same page in all 3647 paragraphs of the corpus's documents with
-# drawings and in every probe measured, so this settles nothing a document has shown; it reads the
-# page off the lines Word draws rather than asking for it, which cannot be wrong about a page.
+# drawing's is. Wherever the geometry names one page for a paragraph it is the page a range reports
+# as well — 3629 of the 3647 paragraphs of the corpus's documents with drawings, and every probe
+# measured — so this settles nothing a document has shown; it reads the page off the lines Word
+# draws rather than asking for it, which cannot be wrong about a page.
 #
 # The space above the paragraph is read from the geometry where the geometry draws this paragraph a
 # box and nothing else: that box's top is the point Word reckons a drawing's offset from, the space
@@ -583,8 +596,10 @@ function Get-DrawingPlaces {
 # has no space of its own above it here, and keeps the limit that goes with that (see Find-Owner).
 #
 # The first line, the left edge and the reach across stay a range's. The geometry has no rectangle
-# for a cell either — a row's line runs the width of the table — so a cell's text column cannot be
-# read from it.
+# for a cell either: a row's line runs the width of the table, and of the rectangles Word draws on
+# a page only text and shape rectangles carry anything of the text — measured over four documents
+# of the corpus, which hold those two kinds and one other, once or a few times a page, that holds
+# no paragraph's text. So a cell's text column cannot be read from the geometry.
 function Get-ParagraphPlaces {
     param($Doc, $Geometry)
     $places = @{}
@@ -630,13 +645,16 @@ function Get-ParagraphPlaces {
             }
         }
         if ($null -eq $page) {
-            # A paragraph the geometry cannot be read for cannot be held against a drawing, and a
-            # drawing beside it then falls to another paragraph as though this one were not there.
-            # The reason is carried so that the scenario can name it rather than count it alone.
-            $places[$i] = @{ unplaced = $why }
+            # A paragraph the reading cannot place cannot be held against a drawing, and a drawing
+            # beside it then falls to another paragraph as though this one were not there. The
+            # reason is carried so that the scenario can name it before the edit; after the edit
+            # such a paragraph counts among the drawings it could not find again, which fails.
+            $places[$i] = @{ unplaced = $why; drawnTwice = $drawnTwice }
             continue
         }
         $line = [double]$start.Information($WD_VERTICAL_POSITION_ON_PAGE)
+        # Every line holding where the paragraph starts is a line of this box too, so the box is
+        # never empty here.
         $box = @($Geometry.lines | Where-Object { $_.page -eq $page -and $_.start -lt $to -and $_.end -gt $from })
         # The box is this paragraph's own only while every line of it draws this paragraph's text
         # and no other's. A row's line reaches from the row's first character to its last, so a
@@ -645,7 +663,7 @@ function Get-ParagraphPlaces {
         # its first line alone, exactly as every paragraph was before.
         $shared = @($box | Where-Object { $_.start -lt $from -or $_.end -gt $to })
         $above = $null
-        if ($box.Count -gt 0 -and $shared.Count -eq 0) {
+        if ($shared.Count -eq 0) {
             # Not Measure-Object -Property: Windows PowerShell does not reach a hashtable's keys
             # that way, and with $ErrorActionPreference at Stop it throws there.
             $above = [double]($box | ForEach-Object { $_.top } | Measure-Object -Minimum).Minimum
@@ -658,6 +676,13 @@ function Get-ParagraphPlaces {
             page       = $page
             drawnTwice = $drawnTwice
         }
+    }
+    # No line for any paragraph of a document that has text is the instrument failing, not a
+    # document with no text to hold a drawing against: raised here as the shapes half raises Word
+    # naming no rectangle for any of a document's drawings, because the scenario would otherwise
+    # find no owner for anything and record the document as having nothing to edit.
+    if ($places.Count -gt 0 -and @($places.Values | Where-Object { -not $_.unplaced }).Count -eq 0) {
+        throw "Word's page geometry drew no line holding where any of the $($places.Count) paragraphs with text of this document starts"
     }
     return $places
 }
@@ -1037,7 +1062,7 @@ function Invoke-Protocol {
         # paragraph it could not place at all, and the paragraphs of a row Word draws on more than
         # one page, whose own page it takes from a range.
         $state.unplaced = @($state.paragraphs.Values | Where-Object { $_.unplaced } | ForEach-Object { $_.unplaced })
-        $state.drawnTwice = @($state.paragraphs.Values | Where-Object { $_.drawnTwice }).Count
+        $state.pagesFromARange = @($state.paragraphs.Values | Where-Object { $_.drawnTwice }).Count
         $state.owners = @{}
         $state.unreadable = @()
         # Drawings this scenario says nothing about: one standing beside no text on its page has
@@ -1083,26 +1108,26 @@ function Invoke-Protocol {
                 $moved++
                 if ([Math]::Abs($drawingMoved - $ownerMoved) -le $FOLLOWS_WITHIN_POINTS) { $followed++; continue }
                 $beside = (Get-Text $doc.Paragraphs($owner)) -replace '^(.{0,24}).*', '$1'
-                $stray += "$name by $([Math]::Round($drawingMoved, 1)) beside '$beside' by $([Math]::Round($ownerMoved, 1))"
+                $stray += "$name by $(Format-Move $drawingMoved) beside '$beside' by $(Format-Move $ownerMoved)"
             } else {
                 $stayed++
                 if ([Math]::Abs($drawingMoved) -le $FOLLOWS_WITHIN_POINTS) { $stood++; continue }
                 $beside = (Get-Text $doc.Paragraphs($owner)) -replace '^(.{0,24}).*', '$1'
-                $adrift += "$name by $([Math]::Round($drawingMoved, 1)) beside '$beside' that stayed"
+                $adrift += "$name by $(Format-Move $drawingMoved) beside '$beside' that stayed"
             }
         }
         $detail = "'$($state.target)…' lengthened; $($state.owners.Count) drawings beside text, $moved beside text that moved, $followed of them followed it, " +
             "$stayed beside text that stayed, $stood of them stood still, $lost not found again"
         if ($state.beside.Count -gt 0) { $detail += ", $($state.beside.Count) beside no text on their page" }
-        if ($state.drawnTwice -gt 0) {
-            $detail += ", $($state.drawnTwice) paragraphs in a row Word draws on more than one page"
+        if ($state.pagesFromARange -gt 0) {
+            $detail += ", $($state.pagesFromARange) paragraphs in a row Word draws on more than one page"
         }
         # A paragraph the reading could not place is named, so that a drawing held to another
         # paragraph for want of it can be seen for what it is. It is not a failure of the
         # scenario: what the scenario answers for is the drawings, and a paragraph without a
         # place has not been shown to carry one.
         if ($state.unplaced.Count -gt 0) {
-            $detail += "; placed no line for " + (($state.unplaced | Select-Object -First 3) -join '; ')
+            $detail += "; could not place " + (($state.unplaced | Select-Object -First 3) -join '; ')
         }
         if ($stray.Count -gt 0) { $detail += "; not following: " + (($stray | Select-Object -First 3) -join '; ') }
         if ($adrift.Count -gt 0) { $detail += "; moving from text that did not: " + (($adrift | Select-Object -First 3) -join '; ') }
@@ -1353,7 +1378,7 @@ function New-ProbeFollows {
         @{
             name   = 'a-drawing-anchored-to-the-page'
             status = 'FAIL'
-            detail = '*not following: Drawing 1 by 0 beside*'
+            detail = '*not following: Drawing 1 by 0pt beside*'
             # 103.95pt down page 1 is where the probe above it draws the same rectangle — the top
             # of the short paragraph's box, two lines of $PROBE_LONG below the margin, measured in
             # Word. The two documents must look alike, so that what tells them apart is the edit
@@ -1397,9 +1422,11 @@ function New-ProbeFollows {
             # The count of paragraphs in a row Word draws on more than one page is in the detail
             # so that this probe can be held to having reached that case: without it the probe
             # would pass on any row that happens not to break, and the reading it is written for
-            # would go untried. Twelve paragraphs of one cell, after a body long enough to leave
-            # a few lines of the page, break over the page whatever the font metrics do to the
-            # line count by a line or two either way.
+            # would go untried. Twelve paragraphs of one cell, after a body that leaves two or
+            # three lines of the page, break over it: the row needs 12 lines and has 3, and it
+            # keeps breaking until the body leaves it no line at all, at which point Word moves
+            # the whole row to the next page and this probe fails on that count rather than
+            # passing quietly on a row that never broke.
             detail = '*1 beside text that moved, 1 of them followed it*in a row Word draws on more than one page*'
             # Every line of a row a page break runs through holds where each of that row's
             # paragraphs starts, so the geometry alone does not say which page one of them is

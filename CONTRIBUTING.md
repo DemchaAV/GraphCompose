@@ -441,9 +441,12 @@ Choose the smallest tests that match the change:
     more than one page takes the page a range reports, since none of the row's lines answers that
     one paragraph at a time. A drawing Word's page geometry does not name is reported with the
     reason and not measured, and the scenario fails: a document the instrument cannot read is not a
-    document that passed. A paragraph the reading cannot place is named in the detail instead, and
-    does not fail the scenario: what the scenario answers for is the drawings, and a drawing beside
-    such a paragraph is held to another one. `-SelfCheck` runs the protocol over probe documents it
+    document that passed. A paragraph the reading cannot place before the edit is named in the
+    detail instead of failing the scenario, since a drawing beside it is held to another paragraph
+    and the naming is what makes that visible; one it cannot place after the edit counts among the
+    drawings it could not find again, which does fail. A document whose paragraphs it can place
+    none of is the instrument failing and is raised, as Word naming no rectangle for any drawing
+    is. `-SelfCheck` runs the protocol over probe documents it
     writes itself: it holds where it reads a place to where Word's own PDF draws the same drawing,
     and holds the attribution with documents one wrong owner fails. Run it after changing how a
     place is read, or how an owner is chosen.

@@ -17,8 +17,8 @@
     typed at the end of the document readable below everything else, a drawing its paragraph
     carries moving with the text it stands beside and standing still where that text does, a save
     that changes nothing. A drawing nailed to the sheet is placed from the page and by nothing
-    else, so it is measured and named with what it did and left out of the verdict; which drawings
-    those are is held by DocxDrawingAnchorGuardTest, which names each one and fails closed.
+    else, so it is measured, named, and left out of the verdict; which drawings those are is held
+    by DocxDrawingAnchorGuardTest, which names each one and fails closed.
     Where a drawing stands, which page a paragraph is drawn on, and the space above a paragraph
     the geometry draws a box for all come from Word's own page geometry, in points down the page
     Word draws them on; a paragraph's first line and the width its text runs to come from a
@@ -1202,7 +1202,18 @@ function Invoke-Protocol {
         # A drawing nailed to the sheet found its text as well as a carried one would, so it
         # answers this: it is the reading that is in question here, not what is asked of whom.
         if ($state.owners.Count -eq 0 -and $state.onTheSheet.Count -eq 0 -and $state.unplaced.Count -gt 0) {
-            throw "no drawing of this document was both read and found text to stand beside, and $($state.unplaced.Count) of its paragraphs could not be placed; the first: $($state.unplaced[0])"
+            # What the reading did find is carried into the error, or it would be lost: this is the
+            # one way out of the scenario that reports no detail, and a document raised here with a
+            # shared name or a third anchor among its drawings would otherwise have that named
+            # nowhere at all.
+            $found = @($state.sharedNames) + @($state.placedFromElsewhere) + @($state.unreadable) +
+                @($state.onTheSheetSilent)
+            # The drawings that stood beside no text go in as a count, as the detail gives them:
+            # every bucket of drawings the detail reports is reported here too, or this error would
+            # be the one way out of the scenario that loses what the reading did find.
+            if ($state.beside.Count -gt 0) { $found += "$($state.beside.Count) stood beside no text on their page" }
+            $also = if ($found.Count -gt 0) { '; of its drawings the reading found: ' + ($found -join '; ') } else { '' }
+            throw "no drawing of this document was both read and found text to stand beside, and $($state.unplaced.Count) of its paragraphs could not be placed; the first: $($state.unplaced[0])$also"
         }
         # Drawings beside no text — a page's backgrounds alone — leave nothing to follow, unless
         # one could not be read at all, which is a finding of its own.
@@ -1236,11 +1247,13 @@ function Invoke-Protocol {
         # The drawings nailed to the sheet, named one by one and with what each of them did: the
         # verdict leaves them out, so the reader is given the number, which they are, every one that
         # left its text, and the measurement the old denominator was made of. Every one of them is
-        # named, where the sets the verdict rests on name their first three beside a count: a figure
-        # is only as good as the exclusion it was taken over, so the exclusion is given in full and
-        # a failure's strays are given as a sample of a number already stated.
+        # named, where the verdict's own findings — the strays, the ones adrift and the unreadable —
+        # are given as the first three beside counts stated or derivable from them: a figure is only
+        # as good as the exclusion it was taken over, so the exclusion is given in full while a
+        # failure's findings are a sample of a number the reader already has.
         #
-        # They are ordered by the number in the name, since they are enumerated from a hashtable and
+        # The ones with text beside them come first, then the rest with their reasons, each group
+        # ordered by the number in the name, since they are enumerated from a hashtable and
         # "Drawing 10" would otherwise come before "Drawing 8". The key reads the FIRST number of
         # the line, not every digit in it: the lines that carry a reason hold other numbers, and
         # "Drawing 1 stands in 2 rectangles of its own 20x10pt" keyed on all of them sorts as
@@ -1257,13 +1270,16 @@ function Invoke-Protocol {
             # The counts below are of the ones that found text beside them, which is what there was
             # anything to measure about; the rest carry their reason in the roster above, so the
             # counts do not sum to the number nailed wherever one of them is there.
-            $detail += " — of the $($state.onTheSheet.Count) with text beside them, $($onTheSheet.moved) stood beside text that moved, " +
-                "$($onTheSheet.followed) followed it, $($onTheSheet.stayed) beside text that stayed, $($onTheSheet.stood) stood still, " +
+            $detail += " — of the $($state.onTheSheet.Count) with text beside them, $($onTheSheet.moved) beside text that moved, " +
+                "$($onTheSheet.followed) of them followed it, $($onTheSheet.stayed) beside text that stayed, $($onTheSheet.stood) of them stood still, " +
                 "$($onTheSheet.gone) the reading no longer finds, $($onTheSheet.lost) whose own text could not be placed again, " +
                 "$($onTheSheet.unreadable.Count) whose place the geometry no longer gives"
-            # Each nailed drawing that left its text, by name: the count alone would not say which
-            # of thirteen tiles were the eleven over moved text.
-            $left = @($onTheSheet.stray) + @($onTheSheet.adrift)
+            # Each nailed drawing that left its text or lost its place, by name and with its
+            # reason, as the carried ones are given: the count alone would not say which of
+            # thirteen tiles were the eleven over moved text. Only the two the reading can say
+            # nothing of at all — a drawing gone and one whose own text could not be placed again
+            # — stay counts, as they are for the carried set too, there being no reason to give.
+            $left = @($onTheSheet.stray) + @($onTheSheet.adrift) + @($onTheSheet.unreadable)
             if ($left.Count -gt 0) { $detail += '; of them, ' + ($left -join '; ') }
         }
         if ($state.inASplitRow -gt 0) {
@@ -1287,8 +1303,10 @@ function Invoke-Protocol {
                 ", and this scenario does not know what to ask of a drawing placed down from that"
         }
         if ($state.sharedNames.Count -gt 0) {
-            $detail += '; given to more than one drawing each, so none of those drawings can be told from another: ' +
-                (($state.sharedNames | Sort-Object $byItsNumber, { $_ }) -join ', ')
+            $given = if ($state.sharedNames.Count -eq 1) { 'name given to more than one drawing' }
+                else { 'names given to more than one drawing each' }
+            $detail += "; $($state.sharedNames.Count) $given, so none of those drawings can be told from another: " +
+                (($state.sharedNames | Sort-Object $byItsNumber, { $_ }) -join '; ')
         }
         # A drawing Word no longer names is gone from the document, whichever set it was in: that is
         # content lost over a save and a reopen, and no other scenario counts the shapes.
@@ -1547,7 +1565,7 @@ function New-ProbeFollows {
             # it, which is what a drawing placed from the page does and what this scenario does
             # not ask of it. Measured on this very document: 0.00pt in Word 16 and 0.00pt in
             # LibreOffice 24.2 while its text moved 32.04 and 52.50pt.
-            detail = '*1 nailed to the sheet, which this scenario asks nothing of: Drawing 1*of the 1 with text beside them, 1 stood beside text that moved, 0 followed it*; of them, Drawing 1 by *'
+            detail = '*1 nailed to the sheet, which this scenario asks nothing of: Drawing 1*of the 1 with text beside them, 1 beside text that moved, 0 of them followed it*; of them, Drawing 1 by *'
             # 103.95pt down page 1 is where the probe above it draws the same rectangle — the top
             # of the short paragraph's box, two lines of $PROBE_LONG below the margin, measured in
             # Word. The two documents must look alike, so that what tells them apart is the edit
@@ -1625,7 +1643,7 @@ function New-ProbeFollows {
         @{
             name   = 'two-drawings-of-one-name'
             status = 'FAIL'
-            detail = '*given to more than one drawing each*: Drawing 1*'
+            detail = '*1 name given to more than one drawing, so none of those drawings can be told from another: Drawing 1*'
             # A name Word gives to more than one drawing is read as no drawing at all, so what it
             # is placed from cannot be told either. Were such a name passed over, a drawing that
             # ought to follow could leave the reading without being counted or named anywhere —

@@ -14,8 +14,11 @@
     still above the block after it, a row held to an exact height that would hide what the edit
     added, the body size following the Normal style with room for it wherever the restyle
     reaches — lines, rows, frames and the text drawings hold — a list continued by Enter, text
-    typed at the end of the document readable below everything else, a drawing moving with the
-    text it stands beside and standing still where that text does, a save that changes nothing.
+    typed at the end of the document readable below everything else, a drawing its paragraph
+    carries moving with the text it stands beside and standing still where that text does, a save
+    that changes nothing. A drawing nailed to the sheet is placed from the page and by nothing
+    else, so it is measured and named with what it did and left out of the verdict; which drawings
+    those are is held by DocxDrawingAnchorGuardTest, which names each one and fails closed.
     Where a drawing stands, which page a paragraph is drawn on, and the space above a paragraph
     the geometry draws a box for all come from Word's own page geometry, in points down the page
     Word draws them on; a paragraph's first line and the width its text runs to come from a
@@ -30,8 +33,9 @@
     exits 1.
 
     -SelfCheck runs the protocol over probe documents it writes itself instead: it holds where it
-    reads a drawing's place to where Word's own PDF draws the same drawing, and holds the
-    attribution with documents one wrong owner fails.
+    reads a drawing's place to where Word's own PDF draws the same drawing, holds the attribution
+    with documents one wrong owner fails, and holds what is asked of whom with a document carrying
+    a drawing nailed to the sheet beside one that ought to follow its text and does not.
 
 .PARAMETER Docx
     One or more exported .docx files. All are copied into the output directory before the first
@@ -43,10 +47,11 @@
 
 .PARAMETER SelfCheck
     Runs the protocol against probe documents it writes itself, instead of over a corpus. It
-    holds where it reads a drawing's place to where Word's own PDF puts the same drawing, and
-    holds the paragraph a drawing is attributed to with documents one wrong owner fails. Run it
-    after changing how a place is read, or how an owner is chosen. Exits 1 if a check fails,
-    2 without Word.
+    holds where it reads a drawing's place to where Word's own PDF puts the same drawing, holds
+    the paragraph a drawing is attributed to with documents one wrong owner fails, and holds what
+    is asked of whom with documents that carry a drawing nailed to the sheet. Run it after
+    changing how a place is read, how an owner is chosen, or what the verdict is taken over.
+    Exits 1 if a check fails, 2 without Word.
 
 .PARAMETER OutputDir
     Where the inputs' copies, the edited copies, their PDFs and edit-protocol-corpus.json are
@@ -101,6 +106,15 @@ $WD_PRINT_VIEW = 3
 $WD_SHAPE_RECTANGLE = 1
 $WD_TEXT_RECTANGLE = 0
 $WD_MAIN_TEXT_STORY = 1
+$WD_RELATIVE_VERTICAL_PAGE = 1
+$WD_RELATIVE_VERTICAL_PARAGRAPH = 2
+
+# What Word calls each thing a floating drawing can be placed down from, for a message naming one
+# this scenario does not know what to ask of. The export writes only the paragraph and the page.
+$RELATIVE_VERTICAL = @{
+    0 = "the page's margin"; 1 = 'the page'; 2 = 'its paragraph'; 3 = 'the line'
+    4 = 'the top margin'; 5 = 'the bottom margin'; 6 = 'the inner margin'; 7 = 'the outer margin'
+}
 
 # An exact line shorter than this share of its letters' size cuts them on Word's screen: Word
 # sets a single line of its faces at 1.15 to 1.2 of the size.
@@ -555,8 +569,18 @@ function Find-ShapeRectangle {
 }
 
 # Where each floating drawing of the main story stands, by its name: its place and its left
-# edge, both as Word's page geometry gives them. A drawing whose rectangle cannot be told apart
-# carries the reason instead of a place.
+# edge, both as Word's page geometry gives them, and what Word places it down from. A drawing
+# whose rectangle cannot be told apart carries the reason instead of a place.
+#
+# What a drawing is placed down from is read from Word rather than from the file, and it is the
+# same thing the file says. Measured over the 71 documents of the corpus, both ways round: the
+# files hold 774 `wp:anchor` in the body and Word names 774 shapes there, with no anchor the one
+# reading has and the other has not, and `wp:positionV relativeFrom` agrees with Word's
+# RelativeVerticalPosition on every one — 46 from the page, 14 of them page fills, and 728 from
+# their paragraph, with no third answer and no name carried twice. The 32 drawings left are the 32
+# DocxDrawingAnchorGuardTest holds a named ledger of, document for document and name for name. The
+# 18 further anchors the files hold outside the body are page fills in headers, which belong to the
+# sheet and which this reading, being of the main story, does not reach.
 function Get-DrawingPlaces {
     param($Doc, $Geometry)
     $rectangles = $Geometry.shapes
@@ -566,7 +590,9 @@ function Get-DrawingPlaces {
         # A page's background belongs to the page, not to the text on it.
         if ($shape.Name -like 'Page background*') { continue }
         if ($places.ContainsKey($shape.Name)) { $places[$shape.Name] = $null; continue }
-        $places[$shape.Name] = Find-ShapeRectangle $shape $rectangles $taken
+        $place = Find-ShapeRectangle $shape $rectangles $taken
+        $place.placedDownFrom = [int]$shape.RelativeVerticalPosition
+        $places[$shape.Name] = $place
     }
     # No geometry at all, for a document that has drawings to read, is the instrument failing and
     # not every drawing of that document leaving its text behind: it is raised here rather than
@@ -738,6 +764,47 @@ function Find-Owner {
         }
     }
     return $best
+}
+
+# How one set of drawings fared across the edit: how many stood beside text the edit moved and
+# moved with it, how many stood beside text it left standing and stood still too, and which of
+# them did neither. Reading only the first of those would let a drawing wander off a page while
+# the text it belongs beside stays put, and say nothing of it.
+#
+# Two sets are measured this way and reported apart: the drawings a paragraph carries, which the
+# scenario holds to this, and the drawings nailed to the sheet, which it asks nothing of (see the
+# scenario). The measuring is the same for both — what differs is whether the answer is a verdict.
+#
+# A drawing the reading does not find again is counted apart from one whose own text it cannot place
+# again, because the two are not the same question and the sets answer for them differently. A
+# drawing the reading no longer finds — Word does not name it after the save and the reopen, or
+# names it and another alike so that neither can be told from the other — is a drawing gone from
+# the document or one that can no longer be told apart, which is not a matter of what it was placed
+# from, so it fails for either set. Text that cannot be placed again is the instrument losing the
+# paragraph a drawing was held to, which answers nothing about a drawing nothing is asked of.
+function Measure-Following {
+    param($Doc, $Owners, $Before, $After, $ParagraphsBefore, $ParagraphsAfter)
+    $m = @{ moved = 0; followed = 0; stayed = 0; stood = 0; gone = 0; lost = 0; stray = @(); adrift = @(); unreadable = @() }
+    foreach ($name in $Owners.Keys) {
+        $owner = $Owners[$name]
+        if (-not $After.ContainsKey($name) -or $null -eq $After[$name]) { $m.gone++; continue }
+        if (-not $ParagraphsAfter.ContainsKey($owner) -or $ParagraphsAfter[$owner].unplaced) { $m.lost++; continue }
+        if ($After[$name].unreadable) { $m.unreadable += "$name $($After[$name].unreadable) after the edit"; continue }
+        $ownerMoved = $ParagraphsAfter[$owner].place - $ParagraphsBefore[$owner].place
+        $drawingMoved = $After[$name].place - $Before[$name].place
+        if ([Math]::Abs($ownerMoved) -gt 0.5) {
+            $m.moved++
+            if ([Math]::Abs($drawingMoved - $ownerMoved) -le $FOLLOWS_WITHIN_POINTS) { $m.followed++; continue }
+            $beside = (Get-Text $Doc.Paragraphs($owner)) -replace '^(.{0,24}).*', '$1'
+            $m.stray += "$name by $(Format-Move $drawingMoved) beside '$beside' by $(Format-Move $ownerMoved)"
+        } else {
+            $m.stayed++
+            if ([Math]::Abs($drawingMoved) -le $FOLLOWS_WITHIN_POINTS) { $m.stood++; continue }
+            $beside = (Get-Text $Doc.Paragraphs($owner)) -replace '^(.{0,24}).*', '$1'
+            $m.adrift += "$name by $(Format-Move $drawingMoved) beside '$beside' that stayed"
+        }
+    }
+    return $m
 }
 
 # An edit Word refuses is a result of that scenario, not the end of the document's protocol.
@@ -1052,6 +1119,21 @@ function Invoke-Protocol {
     #    paragraph counts as standing at its text. That corner, the pages, and the space above a
     #    paragraph the geometry draws a box for are Word's page geometry; the first line, the left
     #    edge and the width come from a range.
+    #
+    #    Only a drawing a paragraph carries is asked to follow text. One nailed to the sheet —
+    #    `wp:positionV relativeFrom="page"` — is placed from the top of the page it is drawn on and
+    #    by nothing else, so the text beside it has no claim on where it stands: measured on the
+    #    self-check's two alike probe documents, with the paragraph above lengthened by two lines,
+    #    such a drawing moved 0.00pt in Word 16 and 0.00pt in LibreOffice 24.2 while its own text
+    #    moved 32.04 and 52.50pt, where the same drawing carried by that text's paragraph in the
+    #    other document moved 31.96 and 52.50pt with it. Holding one to
+    #    the text it does not belong to measures the export's choice of anchor, which is not this
+    #    scenario's question and is held elsewhere: DocxDrawingAnchorGuardTest names every drawing
+    #    of the corpus still placed from the page, one by one with the reason, and fails closed when
+    #    one more appears. So the nailed ones are measured here as the carried ones are, named and
+    #    counted in the detail with what they did, and left out of the verdict — a drawing that
+    #    ought to follow stays in it, nailed neighbours or none, since what is read is each
+    #    drawing's own anchor and not the document it stands in.
     $results += Invoke-Scenario $Word $Source 'drawings-follow-text' -Edit {
         param($doc, $state)
         $state.index = Find-FirstBodyParagraph $doc
@@ -1070,26 +1152,67 @@ function Invoke-Protocol {
         # nothing to follow, and the count is reported rather than left out, so that a document
         # measuring one drawing of twelve cannot read as a document of one.
         $state.beside = @()
+        # The drawings nailed to the sheet, which are asked nothing: those with text beside them,
+        # measured as the carried ones are, and those the reading has nothing to say of either way.
+        $state.onTheSheet = @{}
+        $state.onTheSheetSilent = @()
+        # A drawing placed down from something that is neither: nothing is asked of a nailed
+        # drawing, so a drawing must not be able to fall out of the reading by carrying a name this
+        # scenario does not know. The export writes only the paragraph and the page, and the corpus
+        # holds nothing else, so this is a hole closed rather than a case seen.
+        $state.placedFromElsewhere = @()
         foreach ($name in $state.drawings.Keys) {
-            if ($null -eq $state.drawings[$name]) { continue }
-            # A drawing whose place Word's page geometry does not give is named, not guessed at:
-            # the protocol can say nothing about whether it follows its text.
-            if ($state.drawings[$name].unreadable) {
-                $state.unreadable += "$name $($state.drawings[$name].unreadable)"
+            $place = $state.drawings[$name]
+            # Two or more drawings Word names alike are read as nothing at all, and what one of
+            # them is placed from cannot be told either, so such a name is named rather than
+            # passed over: a drawing that ought to follow must not be able to leave the reading by
+            # sharing a name. No document of the corpus carries a name twice.
+            if ($null -eq $place) {
+                $state.unreadable += "$name is the name of more than one drawing, so neither can be told from the other"
                 continue
             }
-            $owner = Find-Owner $state.drawings[$name] $state.paragraphs
+            $nailed = $place.placedDownFrom -eq $WD_RELATIVE_VERTICAL_PAGE
+            if (-not $nailed -and $place.placedDownFrom -ne $WD_RELATIVE_VERTICAL_PARAGRAPH) {
+                $called = $RELATIVE_VERTICAL[$place.placedDownFrom]
+                if (-not $called) { $called = "what Word calls $($place.placedDownFrom)" }
+                $state.placedFromElsewhere += "$name is placed down from $called"
+                continue
+            }
+            # A drawing whose place Word's page geometry does not give is named, not guessed at:
+            # the protocol can say nothing about whether it follows its text.
+            if ($place.unreadable) {
+                if ($nailed) { $state.onTheSheetSilent += "$name $($place.unreadable)" }
+                else { $state.unreadable += "$name $($place.unreadable)" }
+                continue
+            }
+            $owner = Find-Owner $place $state.paragraphs
+            if ($nailed) {
+                if ($null -ne $owner) { $state.onTheSheet[$name] = $owner } else { $state.onTheSheetSilent += "$name stands beside no text on its page" }
+                continue
+            }
             if ($null -ne $owner) { $state.owners[$name] = $owner } else { $state.beside += $name }
         }
         # Where no drawing found text to stand beside and the reading could not place some of the
         # paragraphs, it is the reading that left them without one — a page whose text lines could
         # not be read, say — and the document must not be recorded as having nothing to measure.
-        if ($state.owners.Count -eq 0 -and $state.unplaced.Count -gt 0) {
+        # A drawing nailed to the sheet found its text as well as a carried one would, so it
+        # answers this: it is the reading that is in question here, not what is asked of whom.
+        if ($state.owners.Count -eq 0 -and $state.onTheSheet.Count -eq 0 -and $state.unplaced.Count -gt 0) {
             throw "no drawing of this document found text to stand beside, and $($state.unplaced.Count) of its paragraphs could not be placed; the first: $($state.unplaced[0])"
         }
         # Drawings beside no text — a page's backgrounds alone — leave nothing to follow, unless
         # one could not be read at all, which is a finding of its own.
-        if ($state.owners.Count -eq 0 -and $state.unreadable.Count -eq 0) { return $false }
+        #
+        # A document whose drawings are all nailed to the sheet is not one of those: this scenario
+        # asks nothing of them, but it did read them, and recording it N/A would say the document
+        # has nothing this scenario edits, which is not so. It is measured, and its detail names
+        # them beside the nought carried drawings it holds to the verdict. Nothing is hidden by
+        # that: a reading that called every drawing of the corpus nailed would read as green here
+        # either way, and what it is held by is DocxDrawingAnchorGuardTest, whose named ledger of
+        # the drawings still placed from the page fails closed when one is added to it.
+        if ($state.owners.Count -eq 0 -and $state.onTheSheet.Count -eq 0 -and
+            $state.onTheSheetSilent.Count -eq 0 -and $state.unreadable.Count -eq 0 -and
+            $state.placedFromElsewhere.Count -eq 0) { return $false }
         $p = $doc.Paragraphs($state.index)
         $state.target = (Get-Text $p).Substring(0, 30)
         (Get-TextRange $p).InsertAfter($ADDED)
@@ -1098,34 +1221,38 @@ function Invoke-Protocol {
         $geometry = Get-PageGeometry $doc
         $drawings = Get-DrawingPlaces $doc $geometry
         $paragraphs = Get-ParagraphPlaces $doc $geometry
-        $moved = 0; $followed = 0; $stayed = 0; $stood = 0; $lost = 0; $stray = @(); $adrift = @()
-        $unreadable = @($state.unreadable)
-        foreach ($name in $state.owners.Keys) {
-            $owner = $state.owners[$name]
-            if (-not $drawings.ContainsKey($name) -or $null -eq $drawings[$name] -or
-                -not $paragraphs.ContainsKey($owner) -or $paragraphs[$owner].unplaced) { $lost++; continue }
-            if ($drawings[$name].unreadable) { $unreadable += "$name $($drawings[$name].unreadable) after the edit"; continue }
-            $ownerMoved = $paragraphs[$owner].place - $state.paragraphs[$owner].place
-            $drawingMoved = $drawings[$name].place - $state.drawings[$name].place
-            # A drawing beside text the edit moved has to move with it; one beside text the edit
-            # left standing has to stand still. Reading only the first of those would let a
-            # drawing wander off a page while the text it belongs beside stays put, and say
-            # nothing of it.
-            if ([Math]::Abs($ownerMoved) -gt 0.5) {
-                $moved++
-                if ([Math]::Abs($drawingMoved - $ownerMoved) -le $FOLLOWS_WITHIN_POINTS) { $followed++; continue }
-                $beside = (Get-Text $doc.Paragraphs($owner)) -replace '^(.{0,24}).*', '$1'
-                $stray += "$name by $(Format-Move $drawingMoved) beside '$beside' by $(Format-Move $ownerMoved)"
-            } else {
-                $stayed++
-                if ([Math]::Abs($drawingMoved) -le $FOLLOWS_WITHIN_POINTS) { $stood++; continue }
-                $beside = (Get-Text $doc.Paragraphs($owner)) -replace '^(.{0,24}).*', '$1'
-                $adrift += "$name by $(Format-Move $drawingMoved) beside '$beside' that stayed"
-            }
-        }
+        $carried = Measure-Following $doc $state.owners $state.drawings $drawings $state.paragraphs $paragraphs
+        $moved = $carried.moved; $followed = $carried.followed; $stayed = $carried.stayed
+        $stood = $carried.stood; $gone = $carried.gone; $lost = $carried.lost
+        $stray = $carried.stray; $adrift = $carried.adrift
+        $unreadable = @($state.unreadable) + $carried.unreadable
         $detail = "'$($state.target)…' lengthened; $($state.owners.Count) drawings beside text, $moved beside text that moved, $followed of them followed it, " +
-            "$stayed beside text that stayed, $stood of them stood still, $lost not found again"
+            "$stayed beside text that stayed, $stood of them stood still, $gone the reading no longer finds, $lost whose own text could not be placed again"
         if ($state.beside.Count -gt 0) { $detail += ", $($state.beside.Count) beside no text on their page" }
+        # The drawings nailed to the sheet, named one by one and with what each of them did: the
+        # verdict leaves them out, so the reader is given the number, which they are, every one that
+        # left its text, and the measurement the old denominator was made of. The carried ones are
+        # named in the order their numbers run, since they are enumerated from a hashtable and
+        # "Drawing 10" would otherwise come before "Drawing 8"; the rest carry their reason with
+        # them and are ordered by the same key.
+        $byItsNumber = { ($_ -replace '[^0-9]', '') -as [int] }
+        $nailedCount = $state.onTheSheet.Count + $state.onTheSheetSilent.Count
+        $nailedGone = 0
+        if ($nailedCount -gt 0) {
+            $onTheSheet = Measure-Following $doc $state.onTheSheet $state.drawings $drawings $state.paragraphs $paragraphs
+            $nailedGone = $onTheSheet.gone
+            $named = @($state.onTheSheet.Keys | Sort-Object $byItsNumber, { $_ }) +
+                @($state.onTheSheetSilent | Sort-Object $byItsNumber, { $_ })
+            $detail += "; $nailedCount nailed to the sheet, which this scenario asks nothing of: " + ($named -join '; ')
+            $detail += " — $($onTheSheet.moved) of them beside text that moved, $($onTheSheet.followed) followed it, " +
+                "$($onTheSheet.stayed) beside text that stayed, $($onTheSheet.stood) stood still, " +
+                "$($onTheSheet.gone) the reading no longer finds, $($onTheSheet.lost) whose own text could not be placed again, " +
+                "$($onTheSheet.unreadable.Count) whose place the geometry no longer gives"
+            # Each nailed drawing that left its text, by name, as the carried ones are named: the
+            # count alone would not say which of thirteen tiles were the eleven over moved text.
+            $left = @($onTheSheet.stray) + @($onTheSheet.adrift)
+            if ($left.Count -gt 0) { $detail += '; of them, ' + ($left -join '; ') }
+        }
         if ($state.inASplitRow -gt 0) {
             $detail += ", $($state.inASplitRow) paragraphs in a row Word draws on more than one page"
         }
@@ -1142,7 +1269,14 @@ function Invoke-Protocol {
             $detail += "; $($unreadable.Count) whose place Word's page geometry does not give: " +
                 (($unreadable | Select-Object -First 3) -join '; ')
         }
-        if ($stray.Count -gt 0 -or $adrift.Count -gt 0 -or $lost -gt 0 -or $unreadable.Count -gt 0) {
+        if ($state.placedFromElsewhere.Count -gt 0) {
+            $detail += '; ' + (($state.placedFromElsewhere | Sort-Object $byItsNumber, { $_ }) -join '; ') +
+                ", and this scenario does not know what to ask of a drawing placed down from that"
+        }
+        # A drawing Word no longer names is gone from the document, whichever set it was in: that is
+        # content lost over a save and a reopen, and no other scenario counts the shapes.
+        if ($stray.Count -gt 0 -or $adrift.Count -gt 0 -or $gone -gt 0 -or $nailedGone -gt 0 -or
+            $lost -gt 0 -or $unreadable.Count -gt 0 -or $state.placedFromElsewhere.Count -gt 0) {
             return New-Result 'drawings-follow-text' 'FAIL' $detail
         }
         New-Result 'drawings-follow-text' 'PASS' $detail
@@ -1168,12 +1302,17 @@ function Invoke-Protocol {
 # held to that place; each of the four puts it at offset 0, where the place Word draws it at *is*
 # the point Word reckons the offset from. The other three run the scenario itself: the same
 # rectangle beside the same line of text, anchored to that line's paragraph where it must follow
-# the text and to the page at the very place it already stands where it must not, and one in a row
-# Word repeats, where its place cannot be read at all. Three more came with the reading of the
-# space above a paragraph: a paragraph with more space above it than the line above is tall, which
-# must keep its own drawing; a drawing that moves while the text it stands beside stays, which the
-# standing-text check must catch; and a row a page break runs through, whose paragraph the geometry
-# alone cannot put on a page.
+# the text and nailed to the sheet at the very place it already stands where it is asked nothing,
+# and one in a row Word repeats, where its place cannot be read at all. Three more came with the
+# reading of the space above a paragraph: a paragraph with more space above it than the line above
+# is tall, which must keep its own drawing; a drawing that moves while the text it stands beside
+# stays, which the standing-text check must catch; and a row a page break runs through, whose
+# paragraph the geometry alone cannot put on a page. Four came with setting the nailed drawings
+# outside the verdict: one document holding a nailed drawing and a carried one that leaves its
+# text, where the carried one must still fail the scenario; a drawing nailed to a page with no text
+# on it, the one disposition the corpus does not reach; a nailed drawing whose place the geometry
+# cannot give, which is the same document as the carried one that fails for it; and one drawing
+# placed down from the page's margin, which is neither answer and must not pass for either.
 
 $PROBE_CONTENT_TYPES = @'
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -1241,8 +1380,9 @@ function New-ProbeDrawing {
 }
 
 function New-ProbeParagraph {
-    param([string]$Text = '', [int]$Before = 0, [string]$Drawing = '')
+    param([string]$Text = '', [int]$Before = 0, [string]$Drawing = '', [switch]$PageBreak)
     $runs = ''
+    if ($PageBreak) { $runs += '<w:r>' + $PROBE_RPR + '<w:br w:type="page"/></w:r>' }
     if ($Drawing) { $runs += '<w:r>' + $PROBE_RPR + $Drawing + '</w:r>' }
     if ($Text) { $runs += '<w:r>' + $PROBE_RPR + '<w:t xml:space="preserve">' + $Text + '</w:t></w:r>' }
     return '<w:p><w:pPr><w:spacing w:before="' + $Before + '" w:after="0"/>' + $PROBE_RPR + '</w:pPr>' + $runs + '</w:p>'
@@ -1384,16 +1524,110 @@ function New-ProbeFollows {
         }
         @{
             name   = 'a-drawing-anchored-to-the-page'
-            status = 'FAIL'
-            detail = '*not following: Drawing 1 by 0pt beside*'
+            status = 'PASS'
+            # Named, and with what it did: it stood beside text that moved and did not move with
+            # it, which is what a drawing placed from the page does and what this scenario does
+            # not ask of it. Measured on this very document: 0.00pt in Word 16 and 0.00pt in
+            # LibreOffice 24.2 while its text moved 32.04 and 52.50pt.
+            detail = '*1 nailed to the sheet, which this scenario asks nothing of: Drawing 1*1 of them beside text that moved, 0 followed it*; of them, Drawing 1 by *'
             # 103.95pt down page 1 is where the probe above it draws the same rectangle — the top
             # of the short paragraph's box, two lines of $PROBE_LONG below the margin, measured in
             # Word. The two documents must look alike, so that what tells them apart is the edit
             # and not the place: a page-anchored drawing elsewhere could be caught for standing
             # beside nothing, which is not what this probe is for.
-            what   = 'the same drawing anchored to the page at the place it already stands does not'
+            what   = 'the same drawing nailed to the sheet at the place it already stands is asked nothing'
             body   = (New-ProbeParagraph -Text $PROBE_LONG) +
                      (New-ProbeParagraph -Text $PROBE_SHORT -Drawing (New-ProbeDrawing -From 'page' -OffsetPoints 103.95))
+        }
+        @{
+            name   = 'a-carried-drawing-beside-a-nailed-one'
+            status = 'FAIL'
+            # Drawing 2's own name, not the count: the verdict has to come from the carried
+            # drawing, and a pattern that any failure would meet would pass a document whose
+            # nailed drawing had been let into the verdict again.
+            detail = '*nailed to the sheet, which this scenario asks nothing of: Drawing 1*moving from text that did not: Drawing 2 by*'
+            # Setting a nailed drawing outside the verdict must not set its neighbours outside it
+            # too: the reading is each drawing's own anchor, and a false FAIL traded for a false
+            # PASS would be the worse of the two. So one document holds both — Drawing 1 nailed to
+            # the sheet at the place it already stands, as the probe above, and Drawing 2 carried
+            # by the short paragraph 20pt above its box, where it stands beside the lengthened
+            # paragraph's text and so leaves text that did not move. The two are anchored in
+            # different paragraphs because both are 20x10pt: on one character Word would draw two
+            # rectangles of a size neither could be told apart by.
+            what   = 'a drawing that ought to follow is still held to it beside one that need not'
+            body   = (New-ProbeParagraph -Text $PROBE_LONG -Drawing (New-ProbeDrawing -From 'page' -OffsetPoints 103.95)) +
+                     (New-ProbeParagraph -Text $PROBE_SHORT -Drawing (New-ProbeDrawing -OffsetPoints -20 -Id 2))
+        }
+        @{
+            name   = 'a-nailed-drawing-beside-no-text'
+            status = 'PASS'
+            detail = '*1 nailed to the sheet, which this scenario asks nothing of: Drawing 1 stands beside no text on its page*0 of them beside text that moved*'
+            # The third way a nailed drawing can turn out: no text on its page to stand beside at
+            # all. The corpus reaches none of it — all 32 of its nailed drawings found text beside
+            # them. A body filling page 1 pushes a row of 300pt onto the page after, both its cells
+            # hold a paragraph with no text, and the drawing is nailed to the top of that page from
+            # one of them: no paragraph of that page has any text, so none can be placed from and
+            # the drawing stands beside none.
+            #
+            # A paragraph holding only a page break was measured and refused for this: the break is
+            # a character of that paragraph's text, so the paragraph is placed, its line is drawn on
+            # the page before the break, and Word draws the drawing nailed from it on that page too
+            # — where the probe found the body's own paragraph to stand beside.
+            what   = 'a drawing nailed to a page with no text on it'
+            body   = (New-ProbeParagraph -Text (($PROBE_LONG + ' ') * 23)) +
+                     (New-ProbeTable @((New-ProbeRow -Height 6000 -Cells @(
+                         (New-ProbeCell @((New-ProbeParagraph -Drawing (New-ProbeDrawing -From 'page' -InCell)))),
+                         (New-ProbeCell @((New-ProbeParagraph)))))))
+        }
+        @{
+            name   = 'a-nailed-drawing-in-two-rectangles'
+            status = 'PASS'
+            detail = '*1 nailed to the sheet, which this scenario asks nothing of: Drawing 1 stands in 2 rectangles of its own 20x10pt*'
+            # The same document as one-drawing-in-two-rectangles below, with the drawing nailed to
+            # the sheet instead of carried by the row's text. A place the geometry cannot give fails
+            # the scenario for a carried drawing, since the instrument cannot then say whether it
+            # followed; for a nailed one there was no question to leave unanswered, so it is named
+            # with the same reason and fails nothing. The pair is what holds the two apart.
+            what   = 'a nailed drawing whose place cannot be read is named and fails nothing'
+            body   = (New-ProbeParagraph -Text $PROBE_LONG) +
+                     (New-ProbeTable @(
+                         (New-ProbeRow -Header -Cells @(
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'Repeated head holding the drawing.' -Drawing (New-ProbeDrawing -From 'page' -InCell)))),
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'Neighbour.'))))),
+                         (New-ProbeRow -Height 6000 -Cells @(
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'A tall row.'))),
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'Neighbour.'))))),
+                         (New-ProbeRow -Height 6000 -Cells @(
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'Another tall row.'))),
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'Neighbour.'))))),
+                         (New-ProbeRow -Height 6000 -Cells @(
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'A third tall row, on the page after.'))),
+                             (New-ProbeCell @((New-ProbeParagraph -Text 'Neighbour.')))))))
+        }
+        @{
+            name   = 'two-drawings-of-one-name'
+            status = 'FAIL'
+            detail = '*Drawing 1 is the name of more than one drawing*'
+            # A name Word gives to more than one drawing is read as no drawing at all, so what it
+            # is placed from cannot be told either. Were such a name passed over, a drawing that
+            # ought to follow could leave the reading without being counted or named anywhere —
+            # the same hole this change closes for a drawing placed down from a third thing. No
+            # document of the corpus carries a name twice, so the case is written here.
+            what   = 'two drawings Word names alike are named, not passed over'
+            body   = (New-ProbeParagraph -Text $PROBE_LONG -Drawing (New-ProbeDrawing)) +
+                     (New-ProbeParagraph -Text $PROBE_SHORT -Drawing (New-ProbeDrawing))
+        }
+        @{
+            name   = 'a-drawing-placed-from-the-margin'
+            status = 'FAIL'
+            detail = '*Drawing 1 is placed down from the page*margin*does not know what to ask*'
+            # Nothing is asked of a drawing nailed to the sheet, so a drawing must not be able to
+            # leave the verdict by carrying a name this scenario does not know either. The export
+            # writes only the paragraph and the page and the corpus holds nothing else, so this
+            # document is written here to reach the case at all.
+            what   = 'a drawing placed down from something that is neither the paragraph nor the page'
+            body   = (New-ProbeParagraph -Text $PROBE_LONG) +
+                     (New-ProbeParagraph -Text $PROBE_SHORT -Drawing (New-ProbeDrawing -From 'margin' -OffsetPoints 103.95))
         }
         @{
             name   = 'a-paragraph-with-space-above-it-keeps-its-drawing'

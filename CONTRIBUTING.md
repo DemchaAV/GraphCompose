@@ -412,7 +412,7 @@ Choose the smallest tests that match the change:
   - add a table row, and delete one;
   - continue a list;
   - type at the end until a new page opens;
-  - lengthen the longest paragraph again, watching the drawings;
+  - lengthen the first paragraph of body text, watching the drawings;
   - save with no edit.
 
   It records what it can decide alone in `edit-protocol-corpus.json`:
@@ -424,19 +424,33 @@ Choose the smallest tests that match the change:
   - typed text standing below everything else, outside any table, visible, in the size of the
     text it continues (or, after an empty paragraph, on lines that fit it);
   - each drawing beside text the lengthening moved moving with it, by as much and onto the same
-    page. A drawing belongs to the paragraph nearest its top-left corner, up or down from where
-    the paragraph starts and across from its text; a page's backgrounds are left out. That corner
-    is read from Word's own page geometry, which gives a drawing a rectangle wherever it draws it,
-    in points from the corner of that page: a drawing placed from its paragraph stands a stored
-    offset below the top of the paragraph's box, space above the paragraph included, so reckoning
-    its place from where the paragraph's text begins puts it a space too low and holds it against
-    the wrong text. The paragraphs it is held against are still read the other way, from where
-    their first line starts and the page a range reports them on, which is the limit of the
-    attribution. A drawing Word's page geometry does not name is reported with the reason and
-    not measured, and the scenario fails: a document the instrument cannot read is not a document
-    that passed. `-SelfCheck` runs the protocol over probe documents it writes itself and holds
-    where it reads a place to where Word's own PDF draws the same drawing; run it after changing
-    how a place is read.
+    page, and each drawing beside text the lengthening left standing staying where it was. A
+    drawing belongs to the paragraph nearest its top-left corner — how far that corner stands from
+    where the paragraph's text begins, plus how far it stands outside the width that text runs to —
+    and a drawing standing in the space above a paragraph counts as standing no distance down the
+    page from it, the width still having its say; a page's backgrounds are left out. The corner, the
+    page, and the space above a paragraph the geometry draws a box for are read from Word's own page
+    geometry, which draws a rectangle wherever it draws a shape and lines wherever it draws text, in
+    points from the corner of the page it draws them on; the first line and the width come from a
+    range. The space matters because a drawing placed from its paragraph stands a stored offset
+    below the top of that paragraph's box, the space above the paragraph included, so a paragraph
+    read from its first letter alone stands that whole space away from its own drawing and loses it
+    to the text above wherever the space is the wider. The geometry draws a box per block and not
+    per paragraph — a whole table is one, and its lines run one to a row — so a paragraph of a row
+    has no space of its own to read and keeps that limit, and a paragraph of a row Word draws on
+    more than one page takes the page a range reports, since none of the row's lines answers that
+    one paragraph at a time. A drawing Word's page geometry does not name is reported with the
+    reason and not measured, and the scenario fails: a document the instrument cannot read is not a
+    document that passed. A paragraph the reading cannot place before the edit is named in the
+    detail instead of failing the scenario, since a drawing beside it is held to another paragraph
+    and the naming is what makes that visible; one it cannot place after the edit counts among the
+    drawings it could not find again, which does fail. A document whose paragraphs it can place
+    none of, or where no drawing found text to stand beside while some paragraph could not be
+    placed, is the instrument failing and is raised, as Word naming no rectangle for any drawing
+    is. `-SelfCheck` runs the protocol over probe documents it writes itself: it holds where it
+    reads a place to where Word's own PDF draws the same drawing, and holds the attribution with
+    documents one wrong owner fails. Run it after changing how a place is read, or how an owner is
+    chosen.
 
   A scenario a document has nothing to edit for — no table, no list, no drawing beside text —
   is recorded `N/A` with what the document lacks, rather than left out of the JSON.

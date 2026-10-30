@@ -72,8 +72,8 @@ final class SyntheticDocxCorpus {
 
     /**
      * A layer stack laying an icon over the top right corner of a card, between a paragraph above
-     * it and one under it. The paragraph above is the document's longest, so an edit that
-     * lengthens the longest paragraph moves the card, and the icon has to move with it.
+     * it and one under it. The paragraph above is the document's first of body text and its
+     * longest, so an edit that lengthens either moves the card, and the icon has to move with it.
      *
      * <p>Its baseline holds the export as Word and LibreOffice set it today, off the page: the
      * stack writes the card's padding as space above and below the card as well as inside it, so

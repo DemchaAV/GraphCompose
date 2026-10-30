@@ -4444,6 +4444,72 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The editing protocol holds a drawing to the paragraph whose space above it stands in, reads the
+  drawings beside text an edit leaves standing, and lengthens the first paragraph of body text
+  rather than the longest — so what it measures of a document is most of it, and what it says of a
+  drawing no longer depends on a space it could not see.**
+  - A drawing placed from its paragraph stands at the top of that paragraph's box, the space above
+    the paragraph included, while the paragraph it was held against was read from its first letter
+    alone. The drawing therefore stood that whole space away from its own text and nearer the text
+    above it wherever the space was the wider of the two: measured at 11.87pt from its own line
+    against 15.98pt from the line above, so 4.11pt of margin stood between the right attribution
+    and the wrong one, and a space wider than the line above would cross it. The space is now read
+    from Word's page geometry wherever the geometry draws that paragraph a box and nothing else, and
+    a drawing standing in it counts as standing no distance down the page from that paragraph — the
+    width its text runs to still having its say. No drawing of the template corpus stands in such a
+    space, so none of its 760 attributions moves: this is a reading that could not be relied on,
+    made one that can.
+  - A text rectangle holds a block and not a paragraph — a whole table is one, and inside it the
+    geometry's lines run one to a row — so only 73 of the 3647 paragraphs of the corpus's documents
+    with drawings have a box of their own, and a page laid out as one table row is drawn as a single
+    box. Reading every paragraph at its box's top was measured and refused: it moves 96 of the 760
+    attributions, since in a sidebar it puts every paragraph of the page at that page's top. So a
+    paragraph of a row keeps its first line, and the limit with it: where the space above such a
+    paragraph is wider than the text above it within that row, its drawing is still held against
+    that text.
+  - A paragraph's page is read from the geometry too, as a drawing's is. Wherever the geometry names
+    one page for a paragraph it is the page a range reports as well — 3629 of those 3647, and all
+    ten probes — and a sabotage that takes the page from a range passes every probe, so this removes
+    a way of being wrong rather than a wrong number: what Word reported on the page before was a
+    drawing's anchor, not the paragraph. For the other 18 the geometry names several pages, because
+    Word draws their row on more than one, and none of those lines answers for one paragraph of it;
+    there the page a range reports is taken, which is one of the pages the geometry names, and the
+    scenario's detail counts the paragraphs of such a row. A paragraph
+    the reading cannot place before the edit is named there with the reason instead of failing the
+    scenario; one it cannot place after the edit counts among the drawings it could not find again,
+    which fails; and a document it can place no paragraph of is raised as the instrument failing,
+    as Word naming no rectangle for any drawing is.
+  - A drawing beside text an edit leaves standing now has to stay standing. Only drawings beside
+    text that moved were read before, so a drawing could wander off while the text it belongs beside
+    stood still and the scenario would say nothing of it. Over the corpus 427 drawings stand beside
+    text the edit leaves where it is, and 419 of them stay with it; the eight that do not are in
+    four documents, one of them crossing onto the page after while its text stays.
+  - Which paragraph is lengthened decides how much of a document moves at all, and the longest one
+    is often among the last things these templates set. Lengthening the first paragraph of body text
+    instead measures 333 drawings against text that moved where 227 were measured before, and 305 of
+    them follow it: 91.6% where the figure was 93.8% of a third fewer drawings. The 106 further
+    drawings bring 92 that follow and 14 that do not, so 28 documents of the 71 pass, 10 fail and 33
+    have nothing to measure, where it was 31, 7 and 33. Four that passed now fail — one on six
+    drawings that cross to the next page 40pt from their text, one on eleven that do not move while
+    their text moves 40pt, one on four that move 23 to 24pt while their text stands, and one on a
+    drawing that crosses onto the page after while its text stays — and one that failed now passes,
+    its five drawings all standing beside text this edit leaves where it is. "The first paragraph
+    with any text" was measured and refused: where that text is one character in a sidebar's own
+    cell, lengthening it grew the row past the page, and Word, which will not break a row, drew it
+    over the page's edge — page 1's rectangles at 1006 and 1510pt — so every drawing of that
+    document was measured against a layout that had collapsed. Both finders now measure a paragraph
+    of body text by one rule: 40 characters or more, outside a frame, holding no field.
+  - `-SelfCheck` runs ten documents it writes itself, six of them the scenario: the three of the
+    change before this one, and three more — a paragraph with more space above it than the line
+    above is tall, which must keep its own drawing; a drawing that moves while the text it stands
+    beside stays, which must be caught; and a row a page break runs through, whose paragraph the
+    geometry alone cannot put on a page, held to having reached that case by the count in its own
+    detail. Seven sabotages, six caught by the probe written for each and the seventh — the page
+    from a range — caught by nothing, which is what it was run to show. A move onto another page is
+    written in the detail as the pages and the points now: a place counts its page as 10000 points,
+    so a drawing that crossed one read as "by 9225", which is a page on and 775pt up it. The figures of the entry
+    below were measured with the longest paragraph lengthened and the paragraph read from its first
+    letter; these replace them.
 - **The editing protocol reads where a floating drawing stands from Word's own page geometry, so
   a drawing that follows its text is no longer recorded as leaving it behind.**
   - It took the place of a drawing placed from its paragraph to be where the paragraph's text

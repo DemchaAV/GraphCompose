@@ -9,7 +9,6 @@ import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.document.table.DocumentTableCell;
@@ -150,11 +149,18 @@ final class FlowOwnerDrawingDocuments {
      * it — the exception a sidebar strip's band icons needed, each alone in the first column of its
      * row.
      *
-     * <p>The cell is composed of a layer stack of one layer, which is what the exception asks for:
-     * it fires for a layer stack or a shape container that only draws, holds no rule, states no
-     * margin, is laid out on one page and paints inside its box. A bare {@code EllipseNode} in the
-     * cell is none of those things and would be anchored by the ordinary walk instead, which is
-     * what the paragraph documents above already hold.</p>
+     * <p>The cell is composed of a layer stack of one layer, which is what the exception asks for.
+     * It is reached by {@code DocxSemanticBackend#anchorComposedDrawing}, and only for a
+     * {@code LayerStackNode}: the shapes are collected by {@code DocxCellDrawings#shapesOf}, whose
+     * parameter is a layer stack, so a {@code ShapeContainerNode} is <em>not</em> one of them and a
+     * bare {@code EllipseNode} is not either — both would be anchored by the ordinary walk instead,
+     * which is what the paragraph documents above already hold. The other conditions are that the
+     * node be composed in the cell (laid out with no place of its own), that the cell hold nothing
+     * yet, that the stack hold no rule, and that the drawing be the one still waiting in the
+     * cell's box.</p>
+     *
+     * <p>Not {@code drawingCellFor}, which gates the same exception for a node written in the body:
+     * it wants a placement of its own, and a node composed in a cell has none by definition.</p>
      *
      * <p>The walk from a holding cell has no document here. A composed cell holding text as well as
      * a drawing leaves the drawing on the page today, as 25 of the corpus's do, so there is nothing
@@ -169,8 +175,7 @@ final class FlowOwnerDrawingDocuments {
                         .columns(DocumentTableColumn.fixed(80), DocumentTableColumn.fixed(170))
                         .defaultCellStyle(CELLS)
                         .rowCells(DocumentTableCell.node(new LayerStackBuilder()
-                                        .layer(new EllipseBuilder().circle(18).fillColor(INK)
-                                                .stroke(DocumentStroke.of(INK, 1)).build())
+                                        .layer(new EllipseBuilder().circle(18).fillColor(INK).build())
                                         .build()),
                                 DocumentTableCell.text("Beside the disc, in the cell next to it."))
                         .rowCells(DocumentTableCell.text("Second row"), DocumentTableCell.text("Under the disc")))

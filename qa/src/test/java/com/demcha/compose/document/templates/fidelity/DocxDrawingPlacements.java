@@ -24,10 +24,14 @@ import java.util.zip.ZipInputStream;
  * "Drawing N" and a page's fill under "Page background N", so the two are told apart in the file
  * ({@link Placement#paints} and {@link Placement#isPageBackground()}).</p>
  *
- * <p>{@link #problems()} names every anchor this reader cannot classify — one with no
- * {@code wp:positionV}, one whose {@code wp:docPr} carries no name, one named neither a drawing
- * nor a page background, and one placed from something neither {@code paragraph} nor {@code page}.
- * A reader that fell silent would otherwise let a broken export pass as a clean one.</p>
+ * <p>{@link #problems()} names every anchor this reader cannot classify: one with no
+ * {@code wp:positionV}, or more than one; one whose {@code wp:docPr} carries no name; one named
+ * neither a drawing nor a page background; one placed down from something neither
+ * {@code paragraph} nor {@code page}, or across from something neither {@code column} nor
+ * {@code page}; one saying how far down in something that is not a number, a {@code wp:align}
+ * keyword included; and one sent to an absolute point by {@code simplePos}, which leaves what it
+ * says it is placed from unread by the editors. A reader that fell silent would otherwise let a
+ * broken export pass as a clean one.</p>
  */
 final class DocxDrawingPlacements {
 
@@ -62,7 +66,9 @@ final class DocxDrawingPlacements {
      * @param placedFrom    what its {@code wp:positionV} names — {@code paragraph} or {@code page}
      *                      — or an empty string for an inline drawing, which names nothing
      * @param placedAcross  what its {@code wp:positionH} names, or an empty string for an inline one
-     * @param down          its {@code wp:positionV} offset in EMU, 0 for an inline one
+     * @param down          its {@code wp:positionV} offset in EMU; 0 for an inline drawing, which
+     *                      is placed from nothing, and {@link Long#MIN_VALUE} for a floating one
+     *                      whose offset this reader could not read
      * @param floating      whether it floats ({@code wp:anchor}) rather than standing in the text
      * @param simplePos     what a floating drawing's {@code simplePos} attribute says, or an empty
      *                      string for an inline one. At {@code 1} Word and LibreOffice place the
@@ -205,6 +211,11 @@ final class DocxDrawingPlacements {
                         case "positionV" -> {
                             position = "V";
                             if (!being.isEmpty()) {
+                                if (being.peek().placedFrom != null) {
+                                    // A second one would leave this reader saying what one of them
+                                    // names and how far down the other says.
+                                    being.peek().placedDownTwice = true;
+                                }
                                 being.peek().placedFrom = xml.getAttributeValue(null, "relativeFrom");
                             }
                         }
@@ -243,8 +254,8 @@ final class DocxDrawingPlacements {
                             if (!being.isEmpty()) {
                                 Being read = being.pop();
                                 add(part, read.name, read.placedFrom, read.placedAcross,
-                                        read.saidHowFarDown ? read.down : Long.MIN_VALUE, read.floating,
-                                        read.simplePos);
+                                        !read.floating || read.saidHowFarDown ? read.down : Long.MIN_VALUE,
+                                        read.floating, read.simplePos, read.placedDownTwice);
                             }
                         }
                         default -> {
@@ -272,6 +283,8 @@ final class DocxDrawingPlacements {
          * the offset at nought and read as a drawing sitting on its paragraph's top.
          */
         private boolean saidHowFarDown;
+        /** Whether it carried more than one {@code wp:positionV}, which no reading of it can trust. */
+        private boolean placedDownTwice;
 
         private Being(boolean floating) {
             this.floating = floating;
@@ -287,7 +300,7 @@ final class DocxDrawingPlacements {
     }
 
     private void add(String part, String name, String placedFrom, String placedAcross, long down, boolean floating,
-                     String simplePos) {
+                     String simplePos, boolean placedDownTwice) {
         Placement placement = new Placement(part, name == null ? "" : name,
                 placedFrom == null ? "" : placedFrom, placedAcross == null ? "" : placedAcross, down, floating,
                 simplePos == null ? "" : simplePos);
@@ -323,6 +336,10 @@ final class DocxDrawingPlacements {
         if (floating && !placement.placedAcross().equals("column") && !placement.placedAcross().equals("page")) {
             problems.add(where + " is placed across from \"" + placement.placedAcross()
                          + "\", which this reader does not know");
+        }
+        if (placedDownTwice) {
+            problems.add(where + " carries more than one wp:positionV, so what it is placed down from and how"
+                         + " far down cannot be read from the same one");
         }
     }
 }

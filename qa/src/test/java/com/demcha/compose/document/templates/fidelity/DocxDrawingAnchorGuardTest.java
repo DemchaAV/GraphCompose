@@ -75,9 +75,19 @@ class DocxDrawingAnchorGuardTest {
 
     /**
      * A drawing whose holding block does write paragraphs on its page — four of them stand within
-     * its path — and which none of them was placed from even so. It rises 3.43pt above the nearest
-     * paragraph's top, within the 24pt a drawing may rise, and that top is known, so the refusal is
-     * inside the walk through the row; which step of the walk refuses has not been measured.
+     * its path — and which none of them was placed from even so.
+     *
+     * <p>How far it rises is not what refuses it, and not because the rise is within what is
+     * allowed: the rise is not on this path at all. {@code DocxDrawingAnchors.Seat.risesNoFurther}
+     * is consulted only from {@code Seat.place}, which a composed cell's drawing reaches by way of
+     * {@code placeBeside}. A drawing a node paints is placed by {@code Seat.placeHeld}, which never
+     * asks how far it rises.</p>
+     *
+     * <p>What {@code placeHeld} does refuse on is a short list, and one of them is measured out: a
+     * paragraph whose top is not known, which this one's is (52.80pt, not NaN). The rest stand:
+     * a repeated header row, a paragraph not set from its cell's left, a cell whose width or left
+     * edge is not known in twips, and a cell not set from its top whose row hands the drawing to
+     * no neighbour. Which of those it is has not been measured.</p>
      */
     private static final String HOLDER_PARAGRAPH_REFUSED =
             "paragraphs of its block stand on its page and none of them placed it";
@@ -116,10 +126,14 @@ class DocxDrawingAnchorGuardTest {
      *                 reason the sheet is right for them
      * @param drawings their names in the file, as the export writes them
      */
-    private record OnThePage(String reason, String... drawings) {
+    private record OnThePage(String reason, List<String> drawings) {
+
+        OnThePage(String reason, String... drawings) {
+            this(reason, List.of(drawings));
+        }
 
         List<String> named() {
-            return List.of(drawings);
+            return drawings;
         }
     }
 
@@ -205,6 +219,10 @@ class DocxDrawingAnchorGuardTest {
 
     @Test
     void aDrawingWhoseOwnerWritesTextIsCarriedByAParagraph() throws Exception {
+        // Every document is read before anything fails: the point of a document per writer of text
+        // is to name which writer stopped offering its paragraph, and the first failure would
+        // otherwise hide the other five.
+        List<String> wrong = new ArrayList<>();
         for (FlowOwnerDocument document : FlowOwnerDrawingDocuments.documents()) {
             AtomicReference<DocxExportReport> report = new AtomicReference<>();
             byte[] docx;
@@ -215,18 +233,23 @@ class DocxDrawingAnchorGuardTest {
             assertLaidOut(document.name(), report.get());
             DocxDrawingPlacements placements = DocxDrawingPlacements.read(docx);
 
-            assertThat(placements.problems()).as("%s", document.name()).isEmpty();
-            assertThat(placements.floatingPainted()).as("%s: the drawings it floats", document.name())
-                    .hasSize(document.drawings());
-            assertThat(placements.paintedOnThePage())
-                    .as("%s: nothing %s paints is left on the sheet", document.name(), document.writer())
-                    .isEmpty();
+            placements.problems().forEach(problem -> wrong.add(document.name() + ": " + problem));
+            if (placements.floatingPainted().size() != document.drawings()) {
+                wrong.add(document.name() + ": floats " + placements.floatingPainted().size()
+                          + " drawings, not the " + document.drawings() + " it paints");
+            }
             // Not merely "not on the sheet": written as what moves with the text. An export that
-            // put these in the text instead would satisfy every assertion above.
-            assertThat(placements.floatingPainted())
-                    .as("%s: each drawing placed down from a paragraph of %s", document.name(), document.writer())
-                    .allSatisfy(drawing -> assertThat(drawing.placedFrom()).isEqualTo("paragraph"));
+            // put these in the text instead would leave nothing on the sheet either.
+            for (DocxDrawingPlacements.Placement drawing : placements.floatingPainted()) {
+                if (!drawing.placedFrom().equals("paragraph")) {
+                    wrong.add(document.name() + ": " + drawing.name() + " is placed from \""
+                              + drawing.placedFrom() + "\" and not down from a paragraph of "
+                              + document.writer());
+                }
+            }
         }
+
+        assertThat(wrong).as("every drawing carried by the writer of text its owner holds").isEmpty();
     }
 
     // The reader, on files written by hand: it must find what it is to judge, wherever it stands,
@@ -342,6 +365,20 @@ class DocxDrawingAnchorGuardTest {
         assertThat(placements.problems()).singleElement()
                 .satisfies(problem -> assertThat(problem).contains("\"Drawing 1\"")
                         .contains("names nothing to be placed down from"));
+    }
+
+    @Test
+    void anAnchorPlacedDownTwiceIsAProblem() throws Exception {
+        // What it is placed from would come from one of them and how far down from the other.
+        DocxDrawingPlacements placements = DocxDrawingPlacements.read(docx(Map.of("word/document.xml",
+                body(paragraph("<w:r><w:drawing><wp:anchor simplePos=\"0\">" + ACROSS
+                               + "<wp:positionV relativeFrom=\"paragraph\"><wp:posOffset>1270</wp:posOffset>"
+                               + "</wp:positionV>"
+                               + "<wp:positionV relativeFrom=\"page\"><wp:align>top</wp:align></wp:positionV>"
+                               + "<wp:docPr id=\"1\" name=\"Drawing 1\"/></wp:anchor></w:drawing></w:r>")))));
+
+        assertThat(placements.problems()).anySatisfy(problem -> assertThat(problem)
+                .contains("\"Drawing 1\"").contains("carries more than one wp:positionV"));
     }
 
     @Test

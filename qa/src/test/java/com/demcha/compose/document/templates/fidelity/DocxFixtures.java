@@ -16,8 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * by hand, so a reader can be held to finding what it is to judge in a file put together on
  * purpose, and the check that an export was made from its document's layout.
  *
- * <p>A guard's own fixtures stay with the guard — a page reference's fields, a drawing's anchor —
- * and only what every one of them needs is here.</p>
+ * <p>A guard's own fixtures stay with the guard — a page reference's fields, a drawing's anchor.
+ * Here are the parts of a DOCX itself, which carry nothing of either guard's subject: the
+ * namespaces every hand-written part declares, the three part kinds, a paragraph, and the zip.</p>
  */
 final class DocxFixtures {
 

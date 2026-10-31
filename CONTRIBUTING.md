@@ -471,8 +471,8 @@ Choose the smallest tests that match the change:
     other). The sidebar's text was then taken to run on past the next column's text at 183.25pt
     and over the gutter at 202pt where four of that column's rail dots stand, and those four were
     read as standing beside the sidebar's list — a list the edit leaves where it is — rather than
-    beside the entries that carry them.
-    The space matters because a drawing placed from its paragraph stands a stored offset
+    beside the entries that carry them. The space matters because a drawing placed from its
+    paragraph stands a stored offset
     below the top of that paragraph's box, the space above the paragraph included, so a paragraph
     read from its first letter alone stands that whole space away from its own drawing and loses it
     to the text above wherever the space is the wider. The geometry draws a box per block and not

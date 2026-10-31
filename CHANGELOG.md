@@ -25,8 +25,10 @@ follow semantic versioning; release dates are ISO 8601.
   - The space is measured to the box of the outermost panel holding the block, since every panel
     between the band and that block writes its own padding inside the cell above it — the 6pt
     card above held the outer card's padding over again above its text and both paddings over
-    again below it. Which of the two is taken shows only where the outer panel has no text of its
-    own, since a block it holds directly ends at its box either way. What stands
+    again below it. Which of the two is taken shows wherever the measured block sits inside an
+    inner panel: below it whenever the lowest block does, whether or not the outer panel has text
+    of its own; above it only where the outer panel has none, since a block it holds directly is
+    the first one either way. What stands
     above that box — the panel's own margin — is in the distance the band owes and is not written
     by the panel: a table carries no space of its own, and the margin it owes above itself is
     replaced by the space the band resumes with, so a card with a 10pt margin and 14pt padding

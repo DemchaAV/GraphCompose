@@ -335,13 +335,14 @@ final class DocxLayerColumns {
         // The lowest block is recorded as closing the band whether the foot came from its own text
         // or from its panel's box, which is what this has always done. Measured to a panel's box
         // the block is arguably not what the space below was measured from, and leaving it out
-        // would say so — but nothing reads the difference: the one reader that would, the note
-        // naming what a block written as its height alone loses below it (insetSidesLost), is not
-        // reached for a block inside a panel at all. Probed over nine shapes of a band closed by a
-        // spacer in a painted panel — padding 12, 4 and none, with one, two and three paragraphs
-        // above it — not one produced that note. The other reader, keptFromItsPanel, is shadowed
-        // inside a band by bandDepth. So the set keeps the block, as before, and the reckoning is
-        // written here rather than a difference no test can hold.
+        // would say so — but of the two readers of this set, one cannot see the difference and the
+        // other was not shown to: keptFromItsPanel is shadowed inside a band by bandDepth, and the
+        // note naming what a block written as its height alone loses below it (insetSidesLost)
+        // reads this set only for a block whose own margin or padding below it is not nought.
+        // Probed over nine shapes of a band closed by a spacer in a painted panel — padding 12, 4
+        // and none, with one, two and three paragraphs above it — not one produced that note at
+        // all, so those shapes do not tell the two apart either. The set therefore keeps the
+        // block, as before, and what is and is not known is written here.
         closing.add(lowest.place());
         return new Band(layers, standIns, resumes, over, Math.max(0, above), below, closing);
     }
@@ -632,8 +633,12 @@ final class DocxLayerColumns {
      *
      * <p>A panel's box is the leaf's edge only while both are on one page, as a column's is
      * ({@link #lowestEdge}): {@code placement} hands back the box a panel broken over pages has
-     * on its first page alone. Where a placement holds no number the edges are none either, as
-     * they were when they were read straight off it.</p>
+     * on its first page alone. Where no panel holds the block and its placement holds no number,
+     * the edges are none either, as they were when they were read straight off it — which is what
+     * tells {@code DocxSemanticBackend#writeOverlayBand} there is no resume to pay. Measured to a
+     * panel's box they are that box's numbers whatever the block's are, a difference no document
+     * here reaches: one band of the corpus has a block a panel holds, and its placement is
+     * measured.</p>
      *
      * @param node  the leaf itself, which writes its own margin above its text
      * @param place where the layout put it
@@ -645,7 +650,6 @@ final class DocxLayerColumns {
             return panel != null && panel.startPage() == panel.endPage()
                    && panel.startPage() == place.startPage();
         }
-
 
         /**
          * Where the space above the leaf ends: the top of its box, the margin it writes above

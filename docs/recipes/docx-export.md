@@ -1097,11 +1097,13 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   the resume between its layers, which is measured to the text as described — is measured
   to that panel's box, since the panel writes its padding itself, as its cell's margins:
   the outermost panel holding the block, as every panel between writes its own padding
-  inside the cell above it — which of the two is taken shows only where the outer panel
-  has no text of its own, a leaf it holds directly ending at its box either way. What
-  stands above the panel's box, its own margin, is in that
-  distance and not written by the panel: a table carries no space of its own, and the
-  margin it owes above itself is replaced by the space the band resumes with. Measured to
+  inside the cell above it. Which of the two is taken shows wherever the measured block
+  sits inside an inner panel: below the band whenever its lowest block does, whether or
+  not the outer panel has text of its own; above it only where the outer panel has none,
+  since a leaf it holds directly is the first one either way. What stands above the
+  panel's box, its own margin, is in that distance and not written by the panel: a table
+  carries no space of its own, and the margin it owes above itself is replaced by the
+  space the band resumes with. Measured to
   the text instead, a card of 14pt padding under an icon laid over its corner stood its
   text 13.99pt low in Word 16 and 13.98pt in LibreOffice, and the paragraph under it 28.02
   and 27.98pt, one of 20pt padding 19.99 and 40.02pt in Word, one with a 10pt margin of

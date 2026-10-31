@@ -1,4 +1,5 @@
 # libreoffice build 420(Build:2) on linux — document, line, drift below the page (pt), drift right of the page (pt), letters
+# rows of synthetic-icon_over_card: its card stood 13.98pt and the paragraph under it 27.98pt below the page while the band round it measured its space through the card's padding; measured to the card's box, both stand -0.02pt. Every row from CI run 41189036705. Six rows came with that run that this change did not move - invoice-luma_studio's five by 0.10 to 0.35pt and invoice-metered_long's one by 0.10pt, none past the half point the gate reads as rounding and no page count among them - whose DOCX this change leaves byte-identical: LibreOffice on CI measuring the same files again, not a move to attribute here
 # every row from CI run 40844463596, the run of the change that made this gate two-sided. Not shot whole since #898, the file had gone stale in 1778 of its 5149 rows, since the one-sided gate of that time wrote back only the rows it went red on. Of those, 230 stood more than half a point from where it held them — 226 across and 4 down, in 8 documents — and every one of the 230 stood nearer the engine's PDF, not one further; the rest had moved within the half point the gate reads as rounding
 # rows of cv-teal_pulse: its email line, set in a cell set to the middle, stood +0.08pt while the contact separator was anchored in that cell, LibreOffice 24.2 then setting the cell from its top; the separator now goes elsewhere, as a cell set to the middle carries no drawing, and LibreOffice centres the cell as its neighbours: +0.93pt, Word +1.14pt
 cv-blue_banner	0:8f1010120ed6	0.02	1.90	jordanrivera
@@ -2357,10 +2358,10 @@ invoice-consulting_long	1:3d32fa219332	0.33	0.12	+61398765432.
 invoice-consulting_long	1:a6f6e2ddab6d	0.25	0.12	paymentisduewithin30daysfromthei
 invoice-consulting_long	1:55ee5fe62c33	0.01	0.13	northpointconsultingptyltd|abn12
 invoice-consulting_long	1:1bed6052d9b3	0.01	0.09	page2/2
-invoice-luma_studio	0:ac5742bfd7c4	-9.14	0.11	&co.
-invoice-luma_studio	0:1583c0f92f86	-0.38	0.11	luma&co.studio
+invoice-luma_studio	0:ac5742bfd7c4	-9.29	0.11	&co.
+invoice-luma_studio	0:1583c0f92f86	-0.53	0.11	luma&co.studio
 invoice-luma_studio	0:1583c0f92f86#1	0.03	0.09	luma&co.studio
-invoice-luma_studio	0:b2b5b83cc26d	-0.07	0.11	branding.design.digital.
+invoice-luma_studio	0:b2b5b83cc26d	-0.17	0.11	branding.design.digital.
 invoice-luma_studio	0:c9ed0a9b9c8d	-0.03	0.09	studio3.02,theloom
 invoice-luma_studio	0:0a7d7e43c5de	-0.05	0.09	14gowerstreet
 invoice-luma_studio	0:b87f5fb5bcfa	-0.07	0.09	londonwc1e6bt
@@ -2451,8 +2452,8 @@ invoice-luma_studio	0:d53cd2cae33d	-0.33	0.00	iban
 invoice-luma_studio	0:279d55d978a1	-0.33	0.00	gb36srlg60837198765432
 invoice-luma_studio	0:e398486c0acf	-0.33	0.00	bic
 invoice-luma_studio	0:ddc998160ae0	-0.33	0.00	srlggb2l
-invoice-luma_studio	0:543a2e86433f	0.24	0.07	thankyouforchoosingluma&co.studi
-invoice-luma_studio	0:7111b3fcbf69	-0.07	0.07	paymentisdueby19june2024.
+invoice-luma_studio	0:543a2e86433f	-0.11	0.07	thankyouforchoosingluma&co.studi
+invoice-luma_studio	0:7111b3fcbf69	-0.42	0.07	paymentisdueby19june2024.
 invoice-luma_studio	0:7b14b8d2c5c4	0.01	1.04	page1of1
 invoice-luma_studio_long	0:ac5742bfd7c4	-9.14	0.11	&co.
 invoice-luma_studio_long	0:1583c0f92f86	-0.38	0.11	luma&co.studio
@@ -2954,7 +2955,7 @@ invoice-metered_long	1:8001c2743965#2	-88.76	0.92	global
 invoice-metered_long	1:8001c2743965#3	-18.62	0.92	global
 invoice-metered_long	1:8001c2743965#4	96.42	0.92	global
 invoice-metered_long	1:8001c2743965#5	-28.44	0.92	global
-invoice-metered_long	1:8001c2743965#6	86.70	0.92	global
+invoice-metered_long	1:8001c2743965#6	86.60	0.92	global
 invoice-metered_long	1:a0443240c5ed#2	-49.76	1.01	gbp0.91
 invoice-metered_long	1:a0443240c5ed#3	-49.76	1.03	gbp0.91
 invoice-metered_long	1:a0443240c5ed#4	-59.58	1.01	gbp0.91
@@ -5134,9 +5135,9 @@ synthetic-clipped_container	0:667f8b3b3eff	-0.02	0.10	noneofitslinesrunsovertheb
 synthetic-icon_over_card	0:22d08874d8c4	-0.02	0.10	beforethecard:thisparagraphisthe
 synthetic-icon_over_card	0:ea7f305a7f76	-0.02	0.10	thatlengthensthelongestparagraph
 synthetic-icon_over_card	0:e3ac6d2ba79c	-0.02	0.10	theiconoveritscornerdownthepaget
-synthetic-icon_over_card	0:887d93e46549	13.98	14.10	acardunderaniconlaidoveritstopri
-synthetic-icon_over_card	0:abfed2fbe03e	13.98	14.10	itspadding.
-synthetic-icon_over_card	0:573902639706	27.98	0.10	afterthecard:thisparagraphstands
+synthetic-icon_over_card	0:887d93e46549	-0.02	14.10	acardunderaniconlaidoveritstopri
+synthetic-icon_over_card	0:abfed2fbe03e	-0.02	14.10	itspadding.
+synthetic-icon_over_card	0:573902639706	-0.02	0.10	afterthecard:thisparagraphstands
 synthetic-narrow_container	0:fa13cab3fe73	-0.02	0.10	beforethebox,onalineofitsown.
 synthetic-narrow_container	0:ed60c8a4c178	-0.52	0.59	anotecentredinaboxnarrowerthanth
 synthetic-narrow_container	0:d7899490a8cd	-0.52	0.59	thepagewrapsitoverthreelinesinsi

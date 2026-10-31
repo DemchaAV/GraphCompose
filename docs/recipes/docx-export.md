@@ -1092,12 +1092,27 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   spacer level with another layer's content only keeps its place and is not
   written, the space above the first block written and below the last is the
   page's distance from the stack's edges, and a later layer resumes the page's
-  distance below the blocks above it, to its first block's content. The space above
-  and below is measured to the band's first and last block written, through a panel
-  among the layers: a panel opening the band writes its top padding again inside its
-  cell, and one closing it its bottom padding, so the band stands that much too tall
-  there. A card with 14pt padding under an icon laid over its corner stood 14pt low in
-  Word and LibreOffice, and the paragraph under it 28pt; the icon, anchored in the
+  distance below the blocks above it, to its first block's content. Where a panel holds
+  the band's first or lowest written block, the space above the band and below it — not
+  the resume between its layers, which is measured to the text as described — is measured
+  to that panel's box, since the panel writes its padding itself, as its cell's margins:
+  the outermost panel holding the block, as every panel between writes its own padding
+  inside the cell above it. Which of the two is taken shows wherever the measured block
+  sits inside an inner panel: below the band whenever its lowest block does, whether or
+  not the outer panel has text of its own; above it only where the outer panel has none,
+  since a leaf it holds directly is the first one either way. What stands above the
+  panel's box, its own margin, is in that distance and not written by the panel: a table
+  carries no space of its own, and the margin it owes above itself is replaced by the
+  space the band resumes with. Measured to
+  the text instead, a card of 14pt padding under an icon laid over its corner stood its
+  text 13.99pt low in Word 16 and 13.98pt in LibreOffice, and the paragraph under it 28.02
+  and 27.98pt, one of 20pt padding 19.99 and 40.02pt in Word, one with a 10pt margin of
+  its own 13.95 and 28.06pt, and one holding a further panel of 6pt 13.99 and 34.02pt —
+  the card's padding over again above its text, and both paddings over again below it;
+  measured to the panel's box, all of them stand within 0.06pt of the page. A band's
+  resume to a later layer is measured to that layer's text still, a panel round it
+  included, so a layer standing under a card in the same stack keeps the card's padding
+  twice: measured, 14pt. The icon, anchored in the
   card's text, stands on the card's corner as each editor sets the card
   (`icon_over_card` in the fidelity corpus holds the lines, not where the icon stands). What a
   later layer's first block holds above its content past the page's distance — a

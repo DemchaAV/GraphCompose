@@ -254,9 +254,11 @@ final class DocxLayerColumns {
      * @param over     for each layer the page starts above where the content of the layers before
      *                 it ends, by how much, in points (see {@link Plan#over(DocumentNode)})
      * @param above    from the stack's top to its first written block, that block's own margin
-     *                 aside
-     * @param below    from the text of its lowest written block to the stack's bottom; below zero
-     *                 when that text runs past the bottom, by as much as it hangs below it
+     *                 aside — or to the box of the panel holding it, which writes its own
+     *                 padding above that text ({@link Edge#top()})
+     * @param below    from the text of its lowest written block to the stack's bottom, or from
+     *                 the box of the panel holding it ({@link Edge#foot()}); below zero when that
+     *                 text runs past the bottom, by as much as it hangs below it
      * @param closing  where the blocks {@code below} and a resume are measured from are placed: the
      *                 space below each is the page's, its own margin and padding below it included
      */
@@ -320,22 +322,28 @@ final class DocxLayerColumns {
         for (DocumentNode layer : layers) {
             nestedStandIns(layer, layout, drawing, measured);
         }
-        DocumentNode first = null;
-        PlacedNode lowest = null;
-        for (DocumentNode layer : layers) {
-            if (first == null) {
-                first = firstLeaf(layer, layout, written(measured, none, false), drawing);
-            }
-            lowest = lowestLeaf(layer, layout, written(measured, none, true), drawing, lowest);
-        }
+        // The space round the band reaches the box of the panel its first or lowest block stands
+        // in, and only the text where no panel holds it: a panel writes its padding as its cell's
+        // margins, so measured to the text that padding stands in the file twice (Edge).
+        Edge first = firstOf(layers, layout, measured, drawing, painted, none);
+        Edge lowest = lowestOf(layers, layout, measured, drawing, painted, none);
         if (first == null || lowest == null) {
             return null;
         }
-        PlacedNode top = layout.placement(first);
-        double above = box.placementY() + box.placementHeight()
-                       - (top.placementY() + top.placementHeight()) - first.margin().top();
-        double below = lowest.placementY() + lowest.padding().bottom() - box.placementY();
-        closing.add(lowest);
+        double above = box.placementY() + box.placementHeight() - first.top();
+        double below = lowest.foot() - box.placementY();
+        // The lowest block is recorded as closing the band whether the foot came from its own text
+        // or from its panel's box, which is what this has always done. Measured to a panel's box
+        // the block is arguably not what the space below was measured from, and leaving it out
+        // would say so — but of the two readers of this set, one cannot see the difference and the
+        // other was not shown to: keptFromItsPanel is shadowed inside a band by bandDepth, and the
+        // note naming what a block written as its height alone loses below it (insetSidesLost)
+        // reads this set only for a block whose own margin or padding below it is not nought.
+        // Probed over nine shapes of a band closed by a spacer in a painted panel — padding 12, 4
+        // and none, with one, two and three paragraphs above it — not one produced that note at
+        // all, so those shapes do not tell the two apart either. The set therefore keeps the
+        // block, as before, and what is and is not known is written here.
+        closing.add(lowest.place());
         return new Band(layers, standIns, resumes, over, Math.max(0, above), below, closing);
     }
 
@@ -614,6 +622,126 @@ final class DocxLayerColumns {
     }
 
     /**
+     * A written leaf of a band, where it is placed, and the panel it stands in.
+     *
+     * <p>A panel writes what stands between its box and the text in it — its padding, as its
+     * cell's margins — so the edges a band measures its own space to are the panel's box and not
+     * that text. Measured to the text in Word 16: a card of 14pt padding under an icon laid over
+     * its corner set its text 13.99pt below where the page sets it and the paragraph under the
+     * card 28.02pt, one of 20pt padding 19.99 and 40.02pt; the same card with no second layer,
+     * which is no band, stood where the page sets it to 0.06pt.</p>
+     *
+     * <p>A panel's box is the leaf's edge only while both are on one page, as a column's is
+     * ({@link #lowestEdge}): {@code placement} hands back the box a panel broken over pages has
+     * on its first page alone. Where no panel holds the block and its placement holds no number,
+     * the edges are none either, as they were when they were read straight off it — which is what
+     * tells {@code DocxSemanticBackend#writeOverlayBand} there is no resume to pay. Measured to a
+     * panel's box they are that box's numbers whatever the block's are, a difference no document
+     * here reaches: one band of the corpus has a block a panel holds, and its placement is
+     * measured.</p>
+     *
+     * @param node  the leaf itself, which writes its own margin above its text
+     * @param place where the layout put it
+     * @param panel where the outermost painted panel holding it is placed, or {@code null}
+     */
+    private record Edge(DocumentNode node, PlacedNode place, PlacedNode panel) {
+
+        private boolean onePage() {
+            return panel != null && panel.startPage() == panel.endPage()
+                   && panel.startPage() == place.startPage();
+        }
+
+        /**
+         * Where the space above the leaf ends: the top of its box, the margin it writes above
+         * itself included, so that the band owes the distance to it less that margin.
+         */
+        double text() {
+            return place.placementY() + place.placementHeight() + node.margin().top();
+        }
+
+        /** The bottom of the leaf's own text, the padding it writes below that text aside. */
+        double textFoot() {
+            return place.placementY() + place.padding().bottom();
+        }
+
+        /**
+         * Where the space above the block ends: its panel's box, which the panel fills down to
+         * its text with the padding it writes itself; or the block's own box where no panel holds
+         * it. A panel's own margin stays in the distance the band owes, since the margin a table
+         * owes above itself is replaced by the space the band resumes with.
+         */
+        double top() {
+            return onePage() ? panel.placementY() + panel.placementHeight() : text();
+        }
+
+        /** Where the space below the block starts, by the same rule as {@link #top()}. */
+        double foot() {
+            return onePage() ? panel.placementY() : textFoot();
+        }
+    }
+
+    /**
+     * The first written leaf of some layers, stand-ins aside, and the panel it stands in;
+     * {@code null} where they write nothing.
+     */
+    private static Edge firstOf(List<DocumentNode> layers, DocxLayoutMetrics layout, Set<DocumentNode> standIns,
+                                Predicate<DocumentNode> drawing, Predicate<DocumentNode> painted, Moves moves) {
+        for (DocumentNode layer : layers) {
+            Edge first = edgeIn(layer, layout, written(standIns, moves, false), drawing, painted, null, null, true);
+            if (first != null) {
+                return first;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The lowest written leaf of some layers, stand-ins aside, and the panel it stands in;
+     * {@code null} where they write nothing.
+     *
+     * <p>The lowest by the foot of its box, which is how it has always been chosen, and only then
+     * measured.</p>
+     */
+    private static Edge lowestOf(List<DocumentNode> layers, DocxLayoutMetrics layout, Set<DocumentNode> standIns,
+                                 Predicate<DocumentNode> drawing, Predicate<DocumentNode> painted, Moves moves) {
+        Edge lowest = null;
+        for (DocumentNode layer : layers) {
+            lowest = edgeIn(layer, layout, written(standIns, moves, true), drawing, painted, null, lowest, false);
+        }
+        return lowest;
+    }
+
+    /**
+     * The leaf {@link #firstOf} or {@link #lowestOf} is after, with the outermost painted panel on
+     * the way down to it.
+     *
+     * @param first whether the first leaf written is wanted rather than the lowest placed
+     */
+    private static Edge edgeIn(DocumentNode node, DocxLayoutMetrics layout, Predicate<DocumentNode> written,
+                               Predicate<DocumentNode> drawing, Predicate<DocumentNode> painted,
+                               PlacedNode panel, Edge found, boolean first) {
+        if (!written.test(node)) {
+            return found;
+        }
+        PlacedNode outer = panel == null && painted.test(node) ? layout.placement(node) : panel;
+        if (node.children().isEmpty()) {
+            PlacedNode placed = drawing.test(node) ? null : layout.placement(node);
+            if (placed == null) {
+                return found;
+            }
+            return found == null || !first && placed.placementY() < found.place().placementY()
+                    ? new Edge(node, placed, outer) : found;
+        }
+        for (DocumentNode child : node.children()) {
+            found = edgeIn(child, layout, written, drawing, painted, outer, found, first);
+            if (first && found != null) {
+                return found;
+            }
+        }
+        return found;
+    }
+
+    /**
      * The lowest edge on the page a written leaf under {@code node} ends at: its text's bottom,
      * or the bottom of the outermost painted panel it sits in. Measured up from the page's foot,
      * so lower is smaller; {@code NaN} while none is found.
@@ -651,30 +779,8 @@ final class DocxLayerColumns {
     }
 
     /**
-     * The placed leaf under {@code node} whose bottom is lowest on the page, stand-ins aside:
-     * a stand-in at the foot of a layer holds the place of what the next layer writes, and is
-     * not written itself.
-     */
-    private static PlacedNode lowestLeaf(DocumentNode node, DocxLayoutMetrics layout,
-                                         Predicate<DocumentNode> written, Predicate<DocumentNode> drawing,
-                                         PlacedNode lowest) {
-        if (!written.test(node)) {
-            return lowest;
-        }
-        if (node.children().isEmpty()) {
-            PlacedNode placed = drawing.test(node) ? null : layout.placement(node);
-            return placed != null && (lowest == null || placed.placementY() < lowest.placementY())
-                    ? placed : lowest;
-        }
-        for (DocumentNode child : node.children()) {
-            lowest = lowestLeaf(child, layout, written, drawing, lowest);
-        }
-        return lowest;
-    }
-
-    /**
      * Where on the page the highest written content under {@code node} starts, as
-     * {@link #lowestLeaf} reads its leaves: a leaf's box's top less what the leaf writes above its
+     * {@link #edgeIn} reads its leaves: a leaf's box's top less what the leaf writes above its
      * content inside it ({@code inset}). Measured up from the page's foot, so higher is larger;
      * {@code NaN} while none is found.
      */

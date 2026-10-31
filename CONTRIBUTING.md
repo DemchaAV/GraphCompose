@@ -431,13 +431,18 @@ Choose the smallest tests that match the change:
     apart between them and the limit has to clear that; and it is held half a twip off the twip
     grid rather than on it, because a limit of a whole number of twips is a difference the
     readings can produce exactly and the verdict would then turn on the last digit of a float
-    instead of on where Word drew anything. At a point and a half it did: 15 drawings of the
-    corpus passed with the difference at exactly 1.50 and three failed by between 0.00002 and 0.05
-    of a point, and six crossed the line between two runs of the script on bytes that had not
+    instead of on where Word drew anything. At a point and a half it did: of the 279 drawings in
+    the verdict of the documents that hold every finding, 15 passed with the difference at exactly
+    1.50 and three failed by between 0.00002 and 0.05 of a point, and six crossed the line between
+    two runs of the script on bytes that had not
     changed. Neither bound of the limit moves with the half twip, drift landing on that same grid
     — a drawing that drifted half a point still passes always, one that drifted two and a half can
-    still pass, and 0.55 and 2.55, the next drifts there are, still cannot. Only a
-    drawing a paragraph carries is asked that. One nailed to the sheet — `wp:positionV
+    still pass, and 0.55 and 2.55, the next drifts there are, still cannot. Which of the two sets
+    a drawing is counted in — beside text the edit moved, or beside text it left standing — is read
+    the same way: the text counts as moved past half a point and half a twip, the half point being
+    the noise its reading leaves and the half twip keeping a move of exactly ten twips off the
+    comparison. Both thresholds are held from either side, and off that grid, by `-SelfCheck`. Only
+    a drawing a paragraph carries is asked that. One nailed to the sheet — `wp:positionV
     relativeFrom="page"` — is placed from the top of the page it is drawn on and by nothing else,
     so the text beside it has no claim on where it stands: measured on the self-check's two alike
     probe documents, with the paragraph above lengthened by two lines, such a drawing moved 0.00pt
@@ -498,11 +503,12 @@ Choose the smallest tests that match the change:
     is. `-SelfCheck` runs the protocol over probe documents it writes itself: it holds where it
     reads a place to where Word's own PDF draws the same drawing, holds the attribution with
     documents one wrong owner fails, and holds what is asked of whom with a document carrying a
-    nailed drawing beside one that ought to follow and fails to. One of its checks holds the limit
-    the verdict is read by — from both sides, and off the grid — and needs no document at all, so
-    it runs before Word is asked for: a machine without Word holds the limit, and exits 1 where
-    the limit itself is wrong. Run it after changing how a place is read, how an owner is chosen,
-    what the verdict is taken over, or the limit it is read by. What no probe reaches is
+    nailed drawing beside one that ought to follow and fails to. Two of its checks hold the two
+    thresholds the verdict is read by — each from either side, and each off the grid its readings
+    land on — and need no document at all, so they run before Word is asked for: a machine without
+    Word holds both thresholds, and exits 1 where either is wrong. Run it after changing how a
+    place is read, how an owner is chosen, what the verdict is taken over, or either threshold it
+    is read by. What no probe reaches is
     broken on purpose and recorded as caught by nothing rather than claimed: a drawing the reading
     no longer finds no longer failing, on either side, since no document can make Word drop a shape
     or give two shapes one name over an edit, and the two exclusions the nailed set carries of its

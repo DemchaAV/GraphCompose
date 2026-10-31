@@ -4485,10 +4485,11 @@ follow semantic versioning; release dates are ISO 8601.
     is a whole number of twips to within 4.9e-05, which is that float's own error. So the
     difference the verdict is read from is a whole number of twips, and a limit of a whole number
     of twips is a difference the readings can produce exactly. At a point and a half it was one:
-    15 drawings of the corpus passed with the difference at exactly 1.50 and three failed by
-    between 0.00002 and 0.05 of a point, one of them by two parts in a hundred thousand — and six
+    of the 279 drawings in the verdict of the documents that hold every finding, 15 passed with
+    the difference at exactly 1.50 and three failed by between 0.00002 and 0.05 of a point, one of
+    them by two parts in a hundred thousand — and six
     crossed the line between two runs of the script on bytes that had not changed, taking the
-    figure with them. The limit is now held half a twip above the point and a half the reading
+    figure with them. The limit is now held half a twip above the point and a half its promise
     needs, as far from 1.50 as from 1.55, the two nearest differences there are. Neither bound of
     what it promises moves, drift landing on that same grid: a drawing that drifted half a point
     still passes always, one that drifted two and a half can still pass, and 0.55 and 2.55, the
@@ -4497,10 +4498,11 @@ follow semantic versioning; release dates are ISO 8601.
     beside text it left standing — turned on the text having moved past half a point, and a
     paragraph's move is a whole number of twips too, so half a point is ten of them and a move of
     exactly that fell on the comparison. It is held half a twip above, for the reason the limit is.
-    The corpus divides nowhere near it: of the 728 drawings in the verdict the text that stayed
-    stayed exactly, not one of those 407 moving by so much as a twip, and the least any of the
-    other 321 moved by was 9.35pt — so the half twip moves no drawing of the corpus from one set
-    to the other, and is there against the document that does sit on it.
+    The corpus divides nowhere near it, measured as this change now divides it: of the 728
+    drawings in the verdict the text that stayed stayed exactly, not one of those 403 moving by so
+    much as a twip, and the least any of the other 325 moved by was 9.35pt — half a point of clear
+    air below the threshold and 8.825pt above, so the half twip moves no drawing of the corpus
+    between the sets, and is there against the document that does sit on it.
   - **A cell's text.** How far a paragraph's text can run was read as its text's left plus its
     cell's width. A cell's width counts the padding it holds its text away from on both sides, so
     that reached past the end of that text by both of them — 35.1pt in `cv-terracotta_rail`, whose
@@ -4533,14 +4535,16 @@ follow semantic versioning; release dates are ISO 8601.
   - The three readings — as the limit stood, with it off the grid, and with the cell's padding as
     well — were taken from one run of Word, by replaying the readings that run dumped through each
     rule in turn. That is what gives each of the five drawings one rule rather than both.
-  - `-SelfCheck`: **17 of 17**, where it ran 15. A drawing standing in the gutter of its own column
+  - `-SelfCheck`: **18 of 18**, where it ran 15. A drawing standing in the gutter of its own column
     with another column's text beside it at the same height, which has to be read as standing
-    beside its own — the probe fails if the reach keeps either padding or adds them. And both
-    thresholds, without a document, since no document can be laid out to put a difference exactly
-    on one: each held off the grid, and the limit held to its promise from both sides, a limit
-    under a point and a half being able to fail a drift of half a point and one at or past 1.55
-    passing a drift of 0.55 however the reading fell. That check runs before Word is asked for, so
-    a machine without Word holds the thresholds even where it can run nothing else.
+    beside its own — the probe fails if the reach keeps either padding or adds them. And one check
+    for each threshold, without a document, since no document can be laid out to put a difference
+    exactly on one: each held off the grid and from either side, a limit under a point and a half
+    being able to fail a drift of half a point and one at or past 1.55 passing a drift of 0.55
+    however the reading fell, and a sets threshold under half a point counting text that stayed as
+    moved and one at or past 0.55 counting a move as none. Those two run before Word is asked for,
+    so a machine without Word holds both thresholds even where it can run nothing else. Twelve
+    sabotages, twelve caught, each by the check written for it.
   - The export is untouched: the corpus exports 71 of 71 documents byte for byte, with 1497 notes
     before and after.
 

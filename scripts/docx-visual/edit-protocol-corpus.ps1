@@ -35,10 +35,11 @@
     -SelfCheck runs the protocol over probe documents it writes itself instead: it holds where it
     reads a drawing's place to where Word's own PDF draws the same drawing, holds the attribution
     with documents one wrong owner fails, and holds what is asked of whom with a document carrying
-    a drawing nailed to the sheet beside one that ought to follow its text and does not. One of
-    its checks holds the limit the verdict is read by and needs no document at all, so it runs
-    before Word is asked for: a machine without Word holds the limit, exits 1 if the limit itself
-    is wrong, and exits 2 otherwise, having run nothing else.
+    a drawing nailed to the sheet beside one that ought to follow its text and does not. Two of
+    its checks hold the two thresholds the verdict is read by — each from either side, and each
+    off the grid its readings land on — and need no document at all, so they run before Word is
+    asked for: a machine without Word holds both thresholds, exits 1 if either is wrong, and exits
+    2 otherwise, having run nothing else.
 
 .PARAMETER Docx
     One or more exported .docx files. All are copied into the output directory before the first
@@ -170,7 +171,19 @@ $FOLLOWS_WITHIN_POINTS = 1.525
 
 # The grid Word's own layout lands on, in points: it lays a document out in twips, so a paragraph
 # place read from a range is a whole number of them, and so is a difference of two such places.
-# $FOLLOWS_WITHIN_POINTS is held off this grid (see there, and Test-TheLimit).
+# $FOLLOWS_WITHIN_POINTS and $MOVED_AT_ALL_POINTS are both held off this grid (see there, and
+# Test-TheThresholds).
+#
+# Those two are the only numbers this script compares a reading against that could fall on a
+# value its readings produce exactly; the rest were read through once the first was found, and
+# each is sound for a reason of its own. Find-ShapeRectangle's point of slack on a rectangle's
+# size stands a deliberate half point off the rounding bound it allows for. Invoke-SelfCheck's
+# half point of slack on a probe's place is compared against places measured in Word's own PDF,
+# which are not on this grid. $SPACE_BEGINS_WITHIN_POINTS is whole points against whole points,
+# exact in a float either way, and the equality it can reach is the inclusion its own comment
+# asks for. The paragraph page logic compares character offsets and page numbers, which are
+# integers. Where a drawing's top is compared with a paragraph's line, the two do land on
+# different grids, but both branches give the same distance wherever they are equal.
 $LAYOUT_GRID_POINTS = 0.05
 
 # How far the text a drawing stands beside must move for the edit to count as having moved it, in
@@ -179,10 +192,11 @@ $LAYOUT_GRID_POINTS = 0.05
 # it for the same reason the limit above is: a paragraph's move is a difference of two places read
 # from a range, so it is a whole number of twips, and half a point is ten of them — a move of
 # exactly half a point would sit on the comparison, and which set the drawing fell in would turn
-# on the last digit of a single rather than on the page. Measured over the corpus, the 728
-# drawings in the verdict: the text that stayed stayed exactly, not one of those 407 moving by so
-# much as a twip, and the least any of the other 321 moved by was 9.35pt. So the corpus divides
-# with 9.35pt of clear air round this, and the half twip moves no drawing from one set to the
+# on the last digit of a single rather than on the page. Measured over the corpus's 728 drawings
+# in the verdict, as this script now divides them: the text that stayed stayed exactly, not one of
+# those 403 moving by so much as a twip, and the least any of the other 325 moved by was 9.35pt
+# (proposal-northline's Drawing 16). So the threshold stands with half a point of clear air below
+# it and 8.825pt above, and the half twip moves no drawing of the corpus from one set to the
 # other; it is here against the document that does sit on it, not against the ones that do not.
 $MOVED_AT_ALL_POINTS = 0.525
 
@@ -1901,31 +1915,40 @@ function New-ProbeFollows {
     )
 }
 
-# The limit the verdict is read by, against what the readings it compares can take. The one check
-# of the self-check that needs no document: every probe holds a reading to a document, and this
-# holds a constant to the grid those readings land on. A limit of a whole number of twips is a
-# difference the readings can produce exactly, and the verdict then turns on the last digit of a
-# single-precision float instead of on where Word drew anything — which is how six drawings of the
-# corpus crossed the line between two runs of this script on bytes that had not changed.
+# The two thresholds the verdict is read by, against what the readings they compare can take. The
+# checks of the self-check that need no document: every probe holds a reading to a document, and
+# these hold two constants to the grid those readings land on. A threshold of a whole number of
+# twips is a value the readings can produce exactly, and what it decides then turns on the last
+# digit of a single-precision float instead of on where Word drew anything — which is how six
+# drawings of the corpus crossed the line between two runs of this script on bytes that had not
+# changed, and one more changed which set it was counted in.
 #
-# The limit is held from BOTH sides, since each side gives away something different, and both
-# sides are about the one promise it makes: that a drift of half a point passes always and the
-# next drift up need not. Under the point and a half — a whole point of reading, which is all the
-# reading itself asks for, and the half point of drift on top — a drawing that drifted half a
-# point can be failed instead. At
+# Each is held from BOTH sides, since each side gives away something different, and both sides are
+# about the one promise that threshold makes.
+#
+# The limit promises that a drift of half a point passes always and the next drift up need not.
+# Under the point and a half — a whole point of reading, which is all the reading itself asks for,
+# and the half point of drift on top — a drawing that drifted half a point can be failed instead.
+# At
 # the next twip up, 1.55, a drift of 0.55 would pass however the reading fell, and the limit would
 # promise less than it says it does — so the limit has to stand inside one twip's gap, between
 # 1.50 and 1.55, and it must not stand on either end of that gap, those being differences the
 # readings can produce exactly. A quarter of a twip is the room asked for at each end, which
 # leaves 1.5125 to 1.5375; the limit stands in the middle of the gap, half a twip from each end.
 #
-# A limit too wide is the one direction that makes the figure larger, so it is held closed here
-# rather than left to a reader of the constant.
+# The sets threshold promises the same of a text's move: half a point of it is not a move, and the
+# next twip up is. Its gap is 0.50 to 0.55 and it stands in the middle of that one.
 #
-# It is run before Word is asked for, so a machine without Word holds the limit even where it can
-# run nothing else. One check, and at most one failure: the first thing wrong makes the rest
-# meaningless — a grid that is not Word's own says nothing about where the limit stands.
-function Test-TheLimit {
+# Either one too wide is the direction that makes the figure larger — a wider limit passes drawings
+# that did not follow, a wider sets threshold takes text that moved out of the set the figure is a
+# share of — so both are held closed here rather than left to a reader of the constants.
+#
+# This runs before Word is asked for, so a machine without Word holds the thresholds even where it
+# can run nothing else. Two checks, one per threshold, each able to fail on its own: they are
+# independent constants and one being wrong says nothing about the other. The grid is not a third
+# check but the ground both stand on, so a grid that is not Word's own is reported once and
+# nothing else is: neither threshold can be held to a grid the readings do not land on.
+function Test-TheThresholds {
     $failures = @()
     # A grid of nought or less is no length at all, and is caught before anything divides by it.
     if ($LAYOUT_GRID_POINTS -le 0) {
@@ -1936,15 +1959,22 @@ function Test-TheLimit {
     $perPoint = 1 / $LAYOUT_GRID_POINTS
     $grids = $FOLLOWS_WITHIN_POINTS / $LAYOUT_GRID_POINTS
     $offTheGrid = [Math]::Abs($grids - [Math]::Round($grids))
-    # The grid itself, before the limit is held to it: a point is twenty twips, and a grid that is
-    # not Word's own would let the checks below pass a limit sitting on the one the readings use.
-    # The twenty is written out rather than taken from a constant the grid is derived from: the two
-    # have to be able to disagree, or this check could never fire.
+    # The grid itself, before either threshold is held to it: a point is twenty twips, and a grid
+    # that is not Word's own would let the checks below pass a threshold sitting on the one the
+    # readings use. The twenty is written out rather than taken from a constant the grid is derived
+    # from: the two have to be able to disagree, or this check could never fire.
+    #
+    # It returns rather than carrying on, because both thresholds are read against the grid — the
+    # twip above the point and a half is a twip of this grid — so with the grid wrong the checks
+    # below say nothing, and one of them would fire for a threshold that is in fact where it should
+    # be, naming a fault the reader would then go looking for.
     if ([Math]::Abs($perPoint - 20) -gt 1e-9) {
         $failures += (('the-grid-is-the-twip: the grid is {0}pt, {1:F2} of them to the point, where ' +
-            'Word lays a document out in twips, twenty to the point: the limit would be held to a ' +
-            'grid the readings do not land on') -f $LAYOUT_GRID_POINTS, $perPoint)
-    } elseif ($FOLLOWS_WITHIN_POINTS -lt 1.5) {
+            'Word lays a document out in twips, twenty to the point: neither threshold can be held ' +
+            'to a grid the readings do not land on') -f $LAYOUT_GRID_POINTS, $perPoint)
+        return $failures
+    }
+    if ($FOLLOWS_WITHIN_POINTS -lt 1.5) {
         $failures += (('the-limit-passes-the-drift-it-promises: the limit is {0}pt, under the point ' +
             'and a half that promise needs — the whole point two readings of whole points can be out ' +
             'by between them, and the half point of drift the limit passes always — so a drawing ' +
@@ -1961,15 +1991,24 @@ function Test-TheLimit {
             'on it a difference falls exactly on the limit and the verdict turns on that float''s ' +
             'last digit rather than on the page') -f $FOLLOWS_WITHIN_POINTS, $offTheGrid)
     }
-    # The threshold that decides which set a drawing is counted in, and so the denominator: the
-    # same rule, for the same reason. A paragraph's move is a whole number of twips, so a threshold
-    # of a whole number of them is a move that falls on it exactly.
+    # The threshold that decides which set a drawing is counted in, and so the denominator the
+    # figure is a share of: the same rule from both sides, for the same reasons.
     $movedGrids = $MOVED_AT_ALL_POINTS / $LAYOUT_GRID_POINTS
     $movedOffTheGrid = [Math]::Abs($movedGrids - [Math]::Round($movedGrids))
-    if ($failures.Count -eq 0 -and $movedOffTheGrid -lt 0.25 - 1e-9) {
+    if ($MOVED_AT_ALL_POINTS -lt 0.5) {
+        $failures += (('the-sets-divide-above-the-noise: the text a drawing stands beside counts as ' +
+            'moved past {0}pt, under the half point that is not a move, so text that stayed where it ' +
+            'was to within the reading can be counted among the text the edit moved') -f
+            $MOVED_AT_ALL_POINTS)
+    } elseif ($MOVED_AT_ALL_POINTS -ge 0.5 + $LAYOUT_GRID_POINTS) {
+        $failures += (('the-sets-divide-below-a-real-move: the text a drawing stands beside counts as ' +
+            'moved past {0}pt, at or past the twip above the half point, so a move of {1}pt is counted ' +
+            'as no move and the drawing leaves the set the figure is a share of') -f
+            $MOVED_AT_ALL_POINTS, (0.5 + $LAYOUT_GRID_POINTS))
+    } elseif ($movedOffTheGrid -lt 0.25 - 1e-9) {
         $failures += (('the-sets-divide-off-the-grid: the text a drawing stands beside counts as moved ' +
             'past {0}pt, {1:F4} of a twip from the grid its move lands on, so a move can fall on that ' +
-            'threshold exactly and which set the drawing is counted in turn on a float''s last digit') -f
+            'threshold exactly and which set the drawing is counted in turns on a float''s last digit') -f
             $MOVED_AT_ALL_POINTS, $movedOffTheGrid)
     }
     return $failures
@@ -2041,17 +2080,17 @@ if ($SelfCheck) {
     # The thresholds first, since they need no document: a machine without Word still holds them,
     # and says so, rather than reporting that nothing could be run. The count is named here and
     # handed on, so the two places that report it cannot come to disagree.
-    $WITHOUT_A_DOCUMENT = 1
-    $limit = @(Test-TheLimit)
+    $WITHOUT_A_DOCUMENT = 2
+    $limit = @(Test-TheThresholds)
     try {
         $word = New-Object -ComObject Word.Application
     } catch {
         foreach ($failure in $limit) { Write-Host "SELF-CHECK FAIL $failure" }
-        Write-Host "$WITHOUT_A_DOCUMENT check(s), $($limit.Count) failed; the rest want Word"
+        Write-Host "$WITHOUT_A_DOCUMENT checks, $($limit.Count) failed; the rest want Word"
         # NOT_RUN only where there is nothing to report: a reader keying on it must not be told
         # nothing ran while the exit code says something failed.
         if ($limit.Count -gt 0) {
-            Write-Warning 'FAILED: the limit the verdict is read by is wrong; Microsoft Word is not available for the rest'
+            Write-Warning 'FAILED: a threshold the verdict is read by is wrong; Microsoft Word is not available for the rest'
             exit 1
         }
         Write-Warning 'NOT_RUN: Microsoft Word is not available'

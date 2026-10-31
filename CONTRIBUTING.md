@@ -433,9 +433,9 @@ Choose the smallest tests that match the change:
     readings can produce exactly and the verdict would then turn on the last digit of a float
     instead of on where Word drew anything. At a point and a half it did: of the 279 drawings in
     the verdict of the documents that hold every finding, 15 passed with the difference at exactly
-    1.50 and three failed by between 0.00002 and 0.05 of a point, and six crossed the line between
-    two runs of the script on bytes that had not
-    changed. Neither bound of the limit moves with the half twip, drift landing on that same grid
+    1.50 and three failed by between 0.00002 and 0.05 of a point, and two runs of the script on
+    bytes that had not changed came to report five fewer followers over one more drawing in the
+    set. Neither bound of the limit moves with the half twip, drift landing on that same grid
     — a drawing that drifted half a point still passes always, one that drifted two and a half can
     still pass, and 0.55 and 2.55, the next drifts there are, still cannot. Which of the two sets
     a drawing is counted in — beside text the edit moved, or beside text it left standing — is read
@@ -506,7 +506,8 @@ Choose the smallest tests that match the change:
     nailed drawing beside one that ought to follow and fails to. Two of its checks hold the two
     thresholds the verdict is read by — each from either side, and each off the grid its readings
     land on — and need no document at all, so they run before Word is asked for: a machine without
-    Word holds both thresholds, and exits 1 where either is wrong. Run it after changing how a
+    Word holds both thresholds, and exits 1 where either of them is wrong or the grid under them
+    is. Run it after changing how a
     place is read, how an owner is chosen, what the verdict is taken over, or either threshold it
     is read by. What no probe reaches is
     broken on purpose and recorded as caught by nothing rather than claimed: a drawing the reading

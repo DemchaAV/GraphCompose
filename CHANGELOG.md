@@ -4487,8 +4487,8 @@ follow semantic versioning; release dates are ISO 8601.
     of twips is a difference the readings can produce exactly. At a point and a half it was one:
     of the 279 drawings in the verdict of the documents that hold every finding, 15 passed with
     the difference at exactly 1.50 and three failed by between 0.00002 and 0.05 of a point, one of
-    them by two parts in a hundred thousand — and six
-    crossed the line between two runs of the script on bytes that had not changed, taking the
+    them by two parts in a hundred thousand — and two runs of the script on bytes that had not
+    changed came to report five fewer followers over one more drawing in the set, taking the
     figure with them. The limit is now held half a twip above the point and a half its promise
     needs, as far from 1.50 as from 1.55, the two nearest differences there are. Neither bound of
     what it promises moves, drift landing on that same grid: a drawing that drifted half a point

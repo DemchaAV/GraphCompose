@@ -38,7 +38,8 @@
     a drawing nailed to the sheet beside one that ought to follow its text and does not. Two of
     its checks hold the two thresholds the verdict is read by — each from either side, and each
     off the grid its readings land on — and need no document at all, so they run before Word is
-    asked for: a machine without Word holds both thresholds, exits 1 if either is wrong, and exits
+    asked for: a machine without Word holds both thresholds, exits 1 if either of them is wrong or
+    the grid under them is, and exits
     2 otherwise, having run nothing else.
 
 .PARAMETER Docx
@@ -160,7 +161,9 @@ $READABLE_POINTS = 4
 # documents that hold every finding, 15 passed with the difference at exactly 1.50 — no room at
 # all — and three failed by between 0.00002 and 0.05 of a point, one of them by two parts in a
 # hundred thousand. Run on bytes that had not changed, with the same build of Word and the same
-# script, the instrument moved six drawings across the line and the acceptance figure with them.
+# script, the instrument reported five fewer followers over one more drawing in the set, and took
+# the acceptance figure with them. Five of those crossed the line, or six: whether the drawing that
+# changed set followed in the later reading is not in the totals that run recorded.
 #
 # Half a twip above the point and a half is the least limit that leaves the grid: it stands as
 # far from 1.50 as from 1.55, the two nearest differences there are, so no difference can fall on
@@ -189,6 +192,17 @@ $FOLLOWS_WITHIN_POINTS = 1.525
 # asks for. The paragraph page logic compares character offsets and page numbers, which are
 # integers. Find-Owner's reach across compares two twip readings against nought, which they do
 # reach exactly, but it is taken through Max at that very bound, where equality changes nothing.
+# Find-Owner also compares one distance with another, and two can be equal: the nearer first
+# line then decides, and where those are equal too the paragraph enumerated first takes the
+# drawing, which is the order a hashtable gives and not an order anything here fixes. Measured
+# over the corpus: five drawings stand at an equal distance from two paragraphs, and four of them
+# are decided by the nearer first line — invoice-metered's Drawings 21 and 22 at 20.25pt from
+# both, and invoice-metered_long's 149 and 150 at 20.75. The fifth, proposal-indigo's Drawing 4,
+# is equal on both measures at 35.95pt and so is taken by whichever paragraph is enumerated
+# first. Its verdict does not turn on that — the two paragraphs it lies between both move 54.25pt,
+# so it is judged the same either way — but the attribution is not fixed, and a document whose
+# two tied paragraphs moved differently would be judged by enumeration order. Nothing here holds
+# that, and no threshold would help: it is an order, not a number.
 # Where a drawing's top is compared with a paragraph's line, the two do land on
 # different grids, but both branches give the same distance wherever they are equal.
 #
@@ -721,7 +735,7 @@ function Get-ParagraphPlaces {
             # A cell's width counts the padding it holds its text away from on both sides, while
             # the left read above is where the text itself starts — the cell's own left, plus that
             # left padding, plus the paragraph's indent. Adding the width to the text's left
-            # therefore reaches past the end of that text by both paddings, and a cell's text is
+            # therefore reaches past where that text can run by both paddings, and a cell's text is
             # read as running on into the column beside it. Measured in cv-terracotta_rail, all of
             # it as Word reads it: the sidebar holds its text 25.4pt from its left edge and 9.7pt
             # from its right — which is what the file says too, `tcMar` of 508 and 194 twips — and
@@ -738,10 +752,10 @@ function Get-ParagraphPlaces {
             # its width gives, which is what shipped before the padding was read at all; a cell
             # that cannot be read at all leaves the reach at the page's margin, as it was before a
             # cell was read at all — which is wider than the truth for a cell inside the margins
-            # and narrower for a table reaching past them. A cell whose left padding reads and
-            # whose right one throws is left at the cell's own right edge, between the two. No
-            # cell of the corpus reaches any of that, Word having stated the padding of every one
-            # of them.
+            # and narrower for a table reaching past them. The two paddings come off in one
+            # statement, so a cell that states one of them and not the other falls where a cell
+            # that states neither does. No cell of the corpus reaches any of that, Word having
+            # stated the padding of every one of them.
             try {
                 $cell = $p.Range.Cells(1)
                 $right = $left - $p.LeftIndent + [double]$cell.Width
@@ -1903,8 +1917,8 @@ function New-ProbeFollows {
             # and the left cell has a line at that same place. Eight of them are written so that
             # it has one however the long paragraph wraps, up to seven lines. So the vertical
             # distance is the SAME on both sides — not nought, a drawing's place being read in
-            # whole points and a line's in twips, but the same half point on each, those two lines
-            # standing in one place — and the reach decides: at 308 the left cell's
+            # whole points and a line's in twips, but whatever it comes to it is the same on both,
+            # those two lines standing in one place — and the reach decides: at 308 the left cell's
             # list, at the cell's own edges the drawing's own paragraph.
             #
             # The edit lengthens the right cell's long paragraph — the first in the document with
@@ -1934,9 +1948,9 @@ function New-ProbeFollows {
 # checks of the self-check that need no document: every probe holds a reading to a document, and
 # these hold two constants to the grid those readings land on. A threshold of a whole number of
 # twips is a value the readings can produce exactly, and what it decides then turns on the last
-# digit of a single-precision float instead of on where Word drew anything — which is how six
-# drawings of the corpus crossed the line between two runs of this script on bytes that had not
-# changed, and one more changed which set it was counted in.
+# digit of a single-precision float instead of on where Word drew anything — which is how two runs
+# of this script, on bytes that had not changed, came to report five fewer followers over one more
+# drawing in the set.
 #
 # Each is held from BOTH sides, since each side gives away something different, and both sides are
 # about the one promise that threshold makes.
@@ -1973,8 +1987,6 @@ function Test-TheThresholds {
         return $failures
     }
     $perPoint = 1 / $LAYOUT_GRID_POINTS
-    $grids = $FOLLOWS_WITHIN_POINTS / $LAYOUT_GRID_POINTS
-    $offTheGrid = [Math]::Abs($grids - [Math]::Round($grids))
     # The grid itself, before either threshold is held to it: a point is twenty twips, and a grid
     # that is not Word's own would let the checks below pass a threshold sitting on the one the
     # readings use. The twenty is written out rather than taken from a constant the grid is derived
@@ -1990,6 +2002,8 @@ function Test-TheThresholds {
             'to a grid the readings do not land on') -f $LAYOUT_GRID_POINTS, $perPoint)
         return $failures
     }
+    $grids = $FOLLOWS_WITHIN_POINTS / $LAYOUT_GRID_POINTS
+    $offTheGrid = [Math]::Abs($grids - [Math]::Round($grids))
     if ($FOLLOWS_WITHIN_POINTS -lt 1.5) {
         $failures += (('the-limit-passes-the-drift-it-promises: the limit is {0}pt, under the point ' +
             'and a half that promise needs — the whole point two readings of whole points can be out ' +
@@ -2095,7 +2109,8 @@ function Invoke-SelfCheck {
 if ($SelfCheck) {
     # The thresholds first, since they need no document: a machine without Word still holds them,
     # and says so, rather than reporting that nothing could be run. The count is named here and
-    # handed on, so the two places that report it cannot come to disagree.
+    # handed on, so the two places that report it cannot come to disagree. The roster above counts
+    # them by hand as well, which is the pair that did come to disagree once.
     $WITHOUT_A_DOCUMENT = 2
     $thresholds = @(Test-TheThresholds)
     try {
@@ -2106,7 +2121,7 @@ if ($SelfCheck) {
         # NOT_RUN only where there is nothing to report: a reader keying on it must not be told
         # nothing ran while the exit code says something failed.
         if ($thresholds.Count -gt 0) {
-            Write-Warning 'FAILED: a threshold the verdict is read by is wrong; Microsoft Word is not available for the rest'
+            Write-Warning 'FAILED: the verdict is read by a threshold, or a grid under one, that is wrong; Microsoft Word is not available for the rest'
             exit 1
         }
         Write-Warning 'NOT_RUN: Microsoft Word is not available'

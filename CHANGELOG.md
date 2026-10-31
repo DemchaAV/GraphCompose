@@ -4474,6 +4474,81 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The editing protocol reads both thresholds it judges a drawing by off the grid Word's own
+  readings land on, and reads a cell's text as reaching to that cell's edges rather than past them
+  — so neither the verdict nor the set it is taken over turns on the last digit of a float, and
+  neither turns on the column beside the drawing.**
+  - **The limit.** A drawing's place comes from Word's page geometry in whole points; the line of
+    the paragraph it is measured against comes from a range, which gives Word's own layout in
+    twips, a twentieth of a point. Measured over the corpus, 22107 readings: every drawing place
+    and every drawing move is a whole number of points exactly, and every paragraph line and move
+    is a whole number of twips to within 4.9e-05, which is that float's own error. So the
+    difference the verdict is read from is a whole number of twips, and a limit of a whole number
+    of twips is a difference the readings can produce exactly. At a point and a half it was one:
+    of the 279 drawings in the verdict of the documents that hold every finding, 15 passed with
+    the difference at exactly 1.50 and three failed by between 0.00002 and 0.05 of a point, one of
+    them by two parts in a hundred thousand — and two runs of the script on bytes that had not
+    changed came to report five fewer followers over one more drawing in the set, taking the
+    figure with them. The limit is now held half a twip above the point and a half its promise
+    needs, as far from 1.50 as from 1.55, the two nearest differences there are. Neither bound of
+    what it promises moves, drift landing on that same grid: a drawing that drifted half a point
+    still passes always, one that drifted two and a half can still pass, and 0.55 and 2.55, the
+    next drifts there are, still cannot.
+  - **The sets.** Which of the two sets a drawing is counted in — beside text the edit moved, or
+    beside text it left standing — turned on the text having moved past half a point, and a
+    paragraph's move is a whole number of twips too, so half a point is ten of them and a move of
+    exactly that fell on the comparison. It is held half a twip above, for the reason the limit is.
+    The corpus divides nowhere near it, measured as this change now divides it: of the 728
+    drawings in the verdict the text that stayed stayed exactly, not one of those 403 moving by so
+    much as a twip, and the least any of the other 325 moved by was 9.35pt — half a point of clear
+    air below the threshold and 8.825pt above, so the half twip moves no drawing of the corpus
+    between the sets, and is there against a document that would sit on it, which the corpus does
+    not hold.
+  - **A cell's text.** How far a paragraph's text can run was read as its text's left plus its
+    cell's width. A cell's width counts the padding it holds its text away from on both sides, so
+    that reached past where that text can run by both of them — 35.1pt in `cv-terracotta_rail`,
+    whose sidebar holds its text 25.4pt from its left edge and 9.7pt from its right, which is what
+    the file says (`tcMar` of 508 and 194 twips) and what Word states. That sidebar's text was then
+    read as running on over the next column's text and over the gutter four of that column's rail
+    dots stand in, and those four were read as standing beside the sidebar's list — a list the edit
+    leaves where it is — rather than beside the entries that carry them. The reach is now read from
+    the cell's own edges inward, and `Get-ParagraphPlaces` carries the measurement to the point.
+  - Over the corpus the two together move five drawings of the 728 a paragraph carries, each by one
+    of the two rules: the four rail dots of `cv-terracotta_rail`, whose owner becomes the entry
+    carrying it and whose difference falls from 23 and 24pt to 0.35 and 0.65 — they had been
+    following their own text all along — and `Drawing 21` of `invoice-luma_studio`, whose
+    difference is exactly 1.50 and which was failed by 0.00002. **The figure goes from 305 of 320
+    drawings, which is what it last reported, through 300 of 321 as it reads today, to 305 of 325
+    — 93.85%.** The 320 counted those four dots in the other set, against text the edit leaves
+    standing; the 321 is a later reading of the same instrument on the same bytes, five drawings
+    down, which is what sent this change after the limit; and the 325 counts the four dots where
+    their own text is. One drawing of the 728 is in a different set in those first two readings
+    and is not accounted for by any of this: the four dots are, and the document whose bytes
+    differ between the two is not — measured, its one drawing is counted beside text that moved
+    under each instrument on each set of bytes. Which drawing it is cannot be recovered, the
+    earlier run having recorded only totals; it is one more thing that moved between two sittings
+    of an instrument whose thresholds stood on the grid, and it is named here rather than
+    reconciled away. Beside text
+    that stayed, 400 of 403 stand still, where today's reading of the same instrument had 400 of
+    407 and the reading before it 400 of 408 — the two buckets coming to 728 in each of the three,
+    which is every `wp:positionV relativeFrom="paragraph"` anchor the 71 files hold in their
+    bodies. Thirty documents pass, eight fail, 33 have nothing to measure.
+  - The three readings — as the limit stood, with it off the grid, and with the cell's padding as
+    well — were taken from one run of Word, by replaying the readings that run dumped through each
+    rule in turn. That is what gives each of the five drawings one rule rather than both.
+  - `-SelfCheck`: **18 of 18**, where it ran 15. A drawing standing in the gutter of its own column
+    with another column's text beside it at the same height, which has to be read as standing
+    beside its own — the probe fails if the reach keeps either padding or adds them. And one check
+    for each threshold, without a document, since no document can be laid out to put a difference
+    exactly on one: each held off the grid and from either side, a limit under a point and a half
+    being able to fail a drift of half a point and one at or past 1.55 passing a drift of 0.55
+    however the reading fell, and a sets threshold under half a point counting text that stayed as
+    moved and one at or past 0.55 counting a move as none. Those two run before Word is asked for,
+    so a machine without Word holds both thresholds even where it can run nothing else. Twelve
+    sabotages, twelve caught, each by the check written for it.
+  - The export is untouched: the corpus exports 71 of 71 documents byte for byte, with 1497 notes
+    before and after.
+
 - **The editing protocol asks a drawing to follow text only where a paragraph carries it, and names
   the ones nailed to the sheet with what they did instead of counting them as having failed to
   follow — so the figure it reports is of the drawings the question is about.**

@@ -35,7 +35,10 @@
     -SelfCheck runs the protocol over probe documents it writes itself instead: it holds where it
     reads a drawing's place to where Word's own PDF draws the same drawing, holds the attribution
     with documents one wrong owner fails, and holds what is asked of whom with a document carrying
-    a drawing nailed to the sheet beside one that ought to follow its text and does not.
+    a drawing nailed to the sheet beside one that ought to follow its text and does not. One of
+    its checks holds the limit the verdict is read by and needs no document at all, so it runs
+    before Word is asked for: a machine without Word holds the limit, exits 1 if the limit itself
+    is wrong, and exits 2 otherwise, having run nothing else.
 
 .PARAMETER Docx
     One or more exported .docx files. All are copied into the output directory before the first
@@ -53,7 +56,8 @@
     the verdict is read by to the grid its readings land on — that last one without a document, so
     it is held even where Word is not there to run the rest. Run it after
     changing how a place is read, how an owner is chosen, what the verdict is taken over, or the
-    limit it is read by. Exits 1 if a check fails, 2 without Word.
+    limit it is read by. Exits 1 if a check fails — the limit's check included, Word or no Word —
+    and 2 without Word where the limit itself holds.
 
 .PARAMETER OutputDir
     Where the inputs' copies, the edited copies, their PDFs and edit-protocol-corpus.json are
@@ -164,7 +168,7 @@ $FOLLOWS_WITHIN_POINTS = 1.525
 
 # The grid Word's own layout lands on, in points: it lays a document out in twips, so a paragraph
 # place read from a range is a whole number of them, and so is a difference of two such places.
-# $FOLLOWS_WITHIN_POINTS is held off this grid (see there, and Invoke-SelfCheck).
+# $FOLLOWS_WITHIN_POINTS is held off this grid (see there, and Test-TheLimit).
 $LAYOUT_GRID_POINTS = 0.05
 
 # How far above the space over a paragraph that space is taken to begin, in points. Word states
@@ -679,7 +683,10 @@ function Get-ParagraphPlaces {
             # read as running on into the column beside it. Measured in cv-terracotta_rail, all of
             # it as Word reads it: the sidebar holds its text 25.4pt from its left edge and 9.7pt
             # from its right — which is what the file says too, `tcMar` of 508 and 194 twips — and
-            # that text starts at 25.25pt and so can run to 172.4. The reach was read as 207.5,
+            # reads that text as starting at 25.25pt, so it can run to 172.4. Those last two
+            # readings of Word's differ by three twips, which the reach carries: it comes out
+            # 0.15pt narrow, that being as near as Word's own two readings come to each other.
+            # The reach was read as 207.5,
             # which is 35.1pt past where the text ends, past the next column's text at 183.25, and
             # over the rail gutter that column's dots stand in at 202. Four of them were then read
             # as standing beside the sidebar's list, which the edit left where it was, rather than
@@ -1850,7 +1857,9 @@ function New-ProbeFollows {
             # cell's second paragraph, which is a whole number of lines down from the row's top,
             # and the left cell has a line at that same place. Eight of them are written so that
             # it has one however the long paragraph wraps, up to seven lines. So the vertical
-            # distance is nought on both sides, and the reach decides: at 308 the left cell's
+            # distance is the SAME on both sides — not nought, a drawing's place being read in
+            # whole points and a line's in twips, but the same half point on each, those two lines
+            # standing in one place — and the reach decides: at 308 the left cell's
             # list, at the cell's own edges the drawing's own paragraph.
             #
             # The edit lengthens the right cell's long paragraph — the first in the document with
@@ -1881,29 +1890,51 @@ function New-ProbeFollows {
 # holds a constant to the grid those readings land on. A limit of a whole number of twips is a
 # difference the readings can produce exactly, and the verdict then turns on the last digit of a
 # single-precision float instead of on where Word drew anything — which is how six drawings of the
-# corpus crossed the line between two runs of this script on bytes that had not changed. A quarter
-# of a twip is the room asked for; the limit stands half a one off.
+# corpus crossed the line between two runs of this script on bytes that had not changed.
+#
+# The limit is held from BOTH sides, since each side gives away something different. Under the
+# point and a half, a drawing that moved with its text exactly can be failed for the reading. At
+# the next twip up, 1.55, a drift of 0.55 would pass however the reading fell, and the limit would
+# promise less than it says it does — so the limit has to stand inside one twip's gap, between
+# 1.50 and 1.55, and it must not stand on either end of that gap, those being differences the
+# readings can produce exactly. A quarter of a twip is the room asked for at each end, which
+# leaves 1.5125 to 1.5375; the limit stands in the middle of the gap, half a twip from each end.
+#
+# A limit too wide is the one direction that makes the figure larger, so it is held closed here
+# rather than left to a reader of the constant.
 #
 # It is run before Word is asked for, so a machine without Word holds the limit even where it can
-# run nothing else.
+# run nothing else. One check, and at most one failure: the first thing wrong makes the rest
+# meaningless — a grid that is not Word's own says nothing about where the limit stands.
 function Test-TheLimit {
     $failures = @()
+    # A grid of nought or less is no length at all, and is caught before anything divides by it.
+    if ($LAYOUT_GRID_POINTS -le 0) {
+        $failures += (('the-grid-is-the-twip: the grid is {0}pt, which is no length, so nothing can ' +
+            'be held to it') -f $LAYOUT_GRID_POINTS)
+        return $failures
+    }
+    $perPoint = 1 / $LAYOUT_GRID_POINTS
     $grids = $FOLLOWS_WITHIN_POINTS / $LAYOUT_GRID_POINTS
     $offTheGrid = [Math]::Abs($grids - [Math]::Round($grids))
     # The grid itself, before the limit is held to it: a point is twenty twips, and a grid that is
-    # not Word's own would let the check below pass a limit sitting on the one the readings use.
+    # not Word's own would let the checks below pass a limit sitting on the one the readings use.
     # The twenty is written out rather than taken from a constant the grid is derived from: the two
     # have to be able to disagree, or this check could never fire.
-    if ([Math]::Abs(1 / $LAYOUT_GRID_POINTS - 20) -gt 1e-9) {
+    if ([Math]::Abs($perPoint - 20) -gt 1e-9) {
         $failures += (('the-grid-is-the-twip: the grid is {0}pt, {1:F2} of them to the point, where ' +
-            'Word lays a document out in twips, twenty to the point: the limit below would be held ' +
-            'to a grid the readings do not land on') -f $LAYOUT_GRID_POINTS, (1 / $LAYOUT_GRID_POINTS))
-    }
-    if ($FOLLOWS_WITHIN_POINTS -lt 1.5) {
+            'Word lays a document out in twips, twenty to the point: the limit would be held to a ' +
+            'grid the readings do not land on') -f $LAYOUT_GRID_POINTS, $perPoint)
+    } elseif ($FOLLOWS_WITHIN_POINTS -lt 1.5) {
         $failures += (('the-limit-clears-the-reading: the limit is {0}pt, under the point and a half ' +
             'two readings of whole points can be out by between them, so a drawing that moved with ' +
             'its text exactly can be failed for the reading') -f $FOLLOWS_WITHIN_POINTS)
-    } elseif ($offTheGrid -lt 0.25) {
+    } elseif ($FOLLOWS_WITHIN_POINTS -ge 1.5 + $LAYOUT_GRID_POINTS) {
+        $failures += (('the-limit-keeps-its-promise: the limit is {0}pt, at or past the twip above the ' +
+            'point and a half, so a drift of {1}pt would pass however the reading fell and the limit ' +
+            'would pass more than it says it does') -f
+            $FOLLOWS_WITHIN_POINTS, (0.5 + $LAYOUT_GRID_POINTS))
+    } elseif ($offTheGrid -lt 0.25 - 1e-9) {
         $failures += (('the-limit-leaves-the-grid: the limit is {0}pt, {1:F2} of a twip from the grid ' +
             'Word lays a document out on, so a difference can fall on the limit itself and the ' +
             'verdict turn on a float''s last digit rather than on the page') -f
@@ -1983,8 +2014,13 @@ if ($SelfCheck) {
     } catch {
         foreach ($failure in $limit) { Write-Host "SELF-CHECK FAIL $failure" }
         Write-Host "1 check, $($limit.Count) failed; the rest want Word"
+        # NOT_RUN only where there is nothing to report: a reader keying on it must not be told
+        # nothing ran while the exit code says something failed.
+        if ($limit.Count -gt 0) {
+            Write-Warning 'FAILED: the limit the verdict is read by is wrong; Microsoft Word is not available for the rest'
+            exit 1
+        }
         Write-Warning 'NOT_RUN: Microsoft Word is not available'
-        if ($limit.Count -gt 0) { exit 1 }
         exit 2
     }
     $word.Visible = $false

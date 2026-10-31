@@ -465,8 +465,10 @@ Choose the smallest tests that match the change:
     width its text runs to is read from the cell's own edges inward: read instead as the text's
     left plus the cell's width, it reached past the end of that text by both paddings — 35.1pt in
     `cv-terracotta_rail`, whose sidebar holds its text 25.4pt from its left edge and 9.7pt from
-    its right, so that text starts at 25.25pt and runs to 172.4 where the reach was read as
-    207.5. The sidebar's text was then taken to run on past the next column's text at 183.25pt
+    its right, and whose text Word reads as starting at 25.25pt and so running to 172.4, where
+    the reach was read as 207.5 (the two readings differ by three twips, and the reach carries
+    that: it is narrow by 0.15pt, which is as near as Word's own two readings come to each
+    other). The sidebar's text was then taken to run on past the next column's text at 183.25pt
     and over the gutter at 202pt where four of that column's rail dots stand, and those four were
     read as standing beside the sidebar's list — a list the edit leaves where it is — rather than
     beside the entries that carry them.
@@ -496,8 +498,11 @@ Choose the smallest tests that match the change:
     is. `-SelfCheck` runs the protocol over probe documents it writes itself: it holds where it
     reads a place to where Word's own PDF draws the same drawing, holds the attribution with
     documents one wrong owner fails, and holds what is asked of whom with a document carrying a
-    nailed drawing beside one that ought to follow and fails to. Run it after changing how a place
-    is read, how an owner is chosen, or what the verdict is taken over. What no probe reaches is
+    nailed drawing beside one that ought to follow and fails to. One of its checks holds the limit
+    the verdict is read by — from both sides, and off the grid — and needs no document at all, so
+    it runs before Word is asked for: a machine without Word holds the limit, and exits 1 where
+    the limit itself is wrong. Run it after changing how a place is read, how an owner is chosen,
+    what the verdict is taken over, or the limit it is read by. What no probe reaches is
     broken on purpose and recorded as caught by nothing rather than claimed: a drawing the reading
     no longer finds no longer failing, on either side, since no document can make Word drop a shape
     or give two shapes one name over an edit, and the two exclusions the nailed set carries of its

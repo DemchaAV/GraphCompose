@@ -174,16 +174,23 @@ $FOLLOWS_WITHIN_POINTS = 1.525
 # $FOLLOWS_WITHIN_POINTS and $MOVED_AT_ALL_POINTS are both held off this grid (see there, and
 # Test-TheThresholds).
 #
-# Those two are the only numbers this script compares a reading against that could fall on a
-# value its readings produce exactly; the rest were read through once the first was found, and
-# each is sound for a reason of its own. Find-ShapeRectangle's point of slack on a rectangle's
-# size stands a deliberate half point off the rounding bound it allows for. Invoke-SelfCheck's
-# half point of slack on a probe's place is compared against places measured in Word's own PDF,
-# which are not on this grid. $SPACE_BEGINS_WITHIN_POINTS is whole points against whole points,
+# Those two are the only numbers the drawings-follow-text verdict compares a reading against that
+# could fall on a value its readings produce exactly. Every comparison that verdict is read from
+# was gone through once the first was found, and the rest are sound each for a reason of its own.
+# Find-ShapeRectangle's point of slack on a rectangle's size stands a deliberate half point off
+# the rounding bound it allows for. Invoke-SelfCheck's half point of slack on a probe's place is
+# compared against places that are whole points, as the place read for it is, so their difference
+# is a whole number and cannot be the half point itself.
+# $SPACE_BEGINS_WITHIN_POINTS is whole points against whole points,
 # exact in a float either way, and the equality it can reach is the inclusion its own comment
 # asks for. The paragraph page logic compares character offsets and page numbers, which are
 # integers. Where a drawing's top is compared with a paragraph's line, the two do land on
 # different grids, but both branches give the same distance wherever they are equal.
+#
+# The other scenarios were not gone through for this. restyle-body-through-normal alone compares
+# a size reading against a floor, two size readings against each other, and a line's spacing
+# against a share of its size, and each of those can be met exactly; nothing here says they are
+# sound, only that they are not what this verdict is read from.
 $LAYOUT_GRID_POINTS = 0.05
 
 # How far the text a drawing stands beside must move for the edit to count as having moved it, in
@@ -1443,10 +1450,10 @@ function Invoke-Protocol {
 # drawings Word names alike, which are read as no drawing at all and must not be passed over. One
 # came with reading a cell's text to the cell's own edges: a drawing standing in the gutter of its
 # own column with another column's text beside it at the same height, which must be read as
-# standing beside its own. Sixteen documents, and one check that needs none — the two thresholds
-# the verdict is read by, each held to the grid its readings land on and the limit held to the
-# promise it makes from both sides, since no document can be laid out to put a difference exactly
-# on a threshold.
+# standing beside its own. Sixteen documents, and two checks that need none, one for each of the
+# thresholds the verdict is read by: each held to the grid its readings land on, and each held to
+# the promise it makes from both sides, since no document can be laid out to put a difference
+# exactly on a threshold. Eighteen checks in all.
 
 $PROBE_CONTENT_TYPES = @'
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -1933,8 +1940,9 @@ function New-ProbeFollows {
 # the next twip up, 1.55, a drift of 0.55 would pass however the reading fell, and the limit would
 # promise less than it says it does — so the limit has to stand inside one twip's gap, between
 # 1.50 and 1.55, and it must not stand on either end of that gap, those being differences the
-# readings can produce exactly. A quarter of a twip is the room asked for at each end, which
-# leaves 1.5125 to 1.5375; the limit stands in the middle of the gap, half a twip from each end.
+# readings can produce exactly. A quarter of a twip of room from each end of that gap
+# leaves 1.5125 to 1.5375 to stand in, and the limit stands in the middle of it, half a twip
+# from either end of the gap.
 #
 # The sets threshold promises the same of a text's move: half a point of it is not a move, and the
 # next twip up is. Its gap is 0.50 to 0.55 and it stands in the middle of that one.
@@ -2081,15 +2089,15 @@ if ($SelfCheck) {
     # and says so, rather than reporting that nothing could be run. The count is named here and
     # handed on, so the two places that report it cannot come to disagree.
     $WITHOUT_A_DOCUMENT = 2
-    $limit = @(Test-TheThresholds)
+    $thresholds = @(Test-TheThresholds)
     try {
         $word = New-Object -ComObject Word.Application
     } catch {
-        foreach ($failure in $limit) { Write-Host "SELF-CHECK FAIL $failure" }
-        Write-Host "$WITHOUT_A_DOCUMENT checks, $($limit.Count) failed; the rest want Word"
+        foreach ($failure in $thresholds) { Write-Host "SELF-CHECK FAIL $failure" }
+        Write-Host "$WITHOUT_A_DOCUMENT checks, $($thresholds.Count) failed; the rest want Word"
         # NOT_RUN only where there is nothing to report: a reader keying on it must not be told
         # nothing ran while the exit code says something failed.
-        if ($limit.Count -gt 0) {
+        if ($thresholds.Count -gt 0) {
             Write-Warning 'FAILED: a threshold the verdict is read by is wrong; Microsoft Word is not available for the rest'
             exit 1
         }
@@ -2099,7 +2107,7 @@ if ($SelfCheck) {
     $word.Visible = $false
     $word.DisplayAlerts = 0
     try {
-        $failed = Invoke-SelfCheck $word (Join-Path $OutputDir 'selfcheck') $limit $WITHOUT_A_DOCUMENT
+        $failed = Invoke-SelfCheck $word (Join-Path $OutputDir 'selfcheck') $thresholds $WITHOUT_A_DOCUMENT
     } finally {
         $word.Quit()
         [Runtime.InteropServices.Marshal]::ReleaseComObject($word) | Out-Null

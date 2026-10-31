@@ -1502,9 +1502,17 @@ timeline's rail — are **drawn as shapes**: each is a floating DrawingML shape,
 the text, at the place, size, fill and outline the layout gives it, and the report lists
 it as approximated. A shape belongs to the node that draws it and to the blocks holding that
 node — an icon laid over a card's corner to the card's stack, a skill's bar to its row, a
-portrait to its sidebar — and is anchored in the first paragraph the nearest of them writes on
-its page, placed down from that paragraph's top, so it moves with that block when a reader
-edits the text above it. However far from the paragraph's text it stands, where it stands
+portrait to its sidebar — and is anchored in a paragraph the nearest of them writes on its
+page, placed down from that paragraph's top, so it moves with that block when a reader
+edits the text above it. Which of that block's paragraphs is the one whose line the shape
+stands level with or below that places it at the smallest offset — usually the last of them,
+and where the block writes two columns it may be one of the other column's, which places the
+shape out of that column; both editors draw it where they drew it before, and over the fidelity
+corpus that is what carries a shape to the text it stands beside. A block writing a list writes
+its heading first, and anchoring every shape there put the whole list's height into the offsets
+of its last bars; the first paragraph is still the one a shape laid over the block's top stands
+below, so an icon on a card's corner stays on it when an edit inside the card moves the text
+under it. However far from the paragraph's text it stands, where it stands
 gives only its offset: measured in Word 16.0.20527 and LibreOffice 24.2, a shape anchored in a
 table cell's paragraph stands where both say when it rises above its row or its table, hangs
 below them, stands out of its cell, is taller than its row, or sits in a row of an exact height

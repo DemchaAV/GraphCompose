@@ -74,9 +74,12 @@ class DocxTextWriterAnchorTest {
     }
 
     @Test
-    void theFirstItemCarriesOneStandingBesideTheLast() throws Exception {
-        // The holder's first paragraph on the page takes it, however far from its text it stands:
-        // where it stands gives only its offset.
+    void theLastItemCarriesOneStandingBesideIt() throws Exception {
+        // The holder's last paragraph the dot stands below takes it, not the first it writes: the
+        // card's foot moves with the text above it, and so does the dot laid on its corner. The
+        // dot's top stands a line less its own height below the last item's, so which item takes
+        // it turns on a line taller than the dot: about 14pt of room with the default face, and a
+        // taller one only widens it.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> {
             page.addParagraph(p -> p.text("Above the card"));
             page.addLayerStack(stack -> stack
@@ -84,14 +87,16 @@ class DocxTextWriterAnchorTest {
                             .addList(list -> list.bullet().items("First item", "Second item")).build())
                     .layer(dot(), LayerAlign.BOTTOM_RIGHT));
         })) {
-            XWPFParagraph item = firstItem(document);
+            List<XWPFParagraph> items = itemsOf(document);
 
-            assertThat(placedFrom(item)).containsExactly(STRelFromV.PARAGRAPH);
+            assertThat(placedFrom(items.get(0))).as("not the first item, which the dot stands below too")
+                    .isEmpty();
+            assertThat(placedFrom(items.get(1))).containsExactly(STRelFromV.PARAGRAPH);
             // The card holds two items of one line and 10pt of padding either side: the dot at its
-            // foot stands below the first item's top by about the second item's line and the
-            // padding under it, and no further than the card is tall.
-            assertThat(offsetDown(item)).as("below the first item's top, where it stands")
-                    .isBetween(9.0, 60.0);
+            // foot stands below the last item's top by its line and the padding under it, which is
+            // less than the card is tall — the offset the first item carried.
+            assertThat(offsetDown(items.get(1))).as("below the last item's top, where it stands")
+                    .isBetween(0.0, 30.0);
         }
     }
 
@@ -326,9 +331,14 @@ class DocxTextWriterAnchorTest {
     }
 
     private static XWPFParagraph firstItem(XWPFDocument document) {
+        return itemsOf(document).stream().findFirst().orElseThrow();
+    }
+
+    /** The list's items in the card, in the order they are written. */
+    private static List<XWPFParagraph> itemsOf(XWPFDocument document) {
         return document.getTables().get(0).getRow(0).getCell(0).getParagraphs().stream()
                 .filter(para -> para.getCTP().getPPr() != null && para.getCTP().getPPr().isSetNumPr())
-                .findFirst().orElseThrow();
+                .toList();
     }
 
     private static List<STRelFromV.Enum> placedFrom(XWPFParagraph paragraph) {

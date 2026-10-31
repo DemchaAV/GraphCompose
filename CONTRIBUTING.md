@@ -424,7 +424,19 @@ Choose the smallest tests that match the change:
   - typed text standing below everything else, outside any table, visible, in the size of the
     text it continues (or, after an empty paragraph, on lines that fit it);
   - each drawing beside text the lengthening moved moving with it, by as much and onto the same
-    page, and each drawing beside text the lengthening left standing staying where it was. Only a
+    page, and each drawing beside text the lengthening left standing staying where it was.
+    "By as much" is read within a point and a half and half a twip. A drawing's place comes from
+    the page geometry in whole points and a paragraph's line from a range, which gives Word's own
+    layout in twips, so two readings of a drawing that moved with its text exactly can be a point
+    apart between them and the limit has to clear that; and it is held half a twip off the twip
+    grid rather than on it, because a limit of a whole number of twips is a difference the
+    readings can produce exactly and the verdict would then turn on the last digit of a float
+    instead of on where Word drew anything. At a point and a half it did: 15 drawings of the
+    corpus passed with the difference at exactly 1.50 and three failed by between 0.00002 and 0.05
+    of a point, and six crossed the line between two runs of the script on bytes that had not
+    changed. Neither bound of the limit moves with the half twip, drift landing on that same grid
+    — a drawing that drifted half a point still passes always, one that drifted two and a half can
+    still pass, and 0.55 and 2.55, the next drifts there are, still cannot. Only a
     drawing a paragraph carries is asked that. One nailed to the sheet — `wp:positionV
     relativeFrom="page"` — is placed from the top of the page it is drawn on and by nothing else,
     so the text beside it has no claim on where it stands: measured on the self-check's two alike
@@ -449,7 +461,16 @@ Choose the smallest tests that match the change:
     page, and the space above a paragraph the geometry draws a box for are read from Word's own page
     geometry, which draws a rectangle wherever it draws a shape and lines wherever it draws text, in
     points from the corner of the page it draws them on; the first line and the width come from a
-    range. The space matters because a drawing placed from its paragraph stands a stored offset
+    range. A cell's width counts the padding it holds its text away from on both sides, so the
+    width its text runs to is read from the cell's own edges inward: read instead as the text's
+    left plus the cell's width, it reached past the end of that text by both paddings — 35.1pt in
+    `cv-terracotta_rail`, whose sidebar holds its text 25.4pt from its left edge and 9.7pt from
+    its right, so that text starts at 25.25pt and runs to 172.4 where the reach was read as
+    207.5. The sidebar's text was then taken to run on past the next column's text at 183.25pt
+    and over the gutter at 202pt where four of that column's rail dots stand, and those four were
+    read as standing beside the sidebar's list — a list the edit leaves where it is — rather than
+    beside the entries that carry them.
+    The space matters because a drawing placed from its paragraph stands a stored offset
     below the top of that paragraph's box, the space above the paragraph included, so a paragraph
     read from its first letter alone stands that whole space away from its own drawing and loses it
     to the text above wherever the space is the wider. The geometry draws a box per block and not

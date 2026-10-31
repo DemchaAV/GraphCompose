@@ -48,10 +48,12 @@
 .PARAMETER SelfCheck
     Runs the protocol against probe documents it writes itself, instead of over a corpus. It
     holds where it reads a drawing's place to where Word's own PDF puts the same drawing, holds
-    the paragraph a drawing is attributed to with documents one wrong owner fails, and holds what
-    is asked of whom with documents that carry a drawing nailed to the sheet. Run it after
-    changing how a place is read, how an owner is chosen, or what the verdict is taken over.
-    Exits 1 if a check fails, 2 without Word.
+    the paragraph a drawing is attributed to with documents one wrong owner fails, holds what
+    is asked of whom with documents that carry a drawing nailed to the sheet, and holds the limit
+    the verdict is read by to the grid its readings land on — that last one without a document, so
+    it is held even where Word is not there to run the rest. Run it after
+    changing how a place is read, how an owner is chosen, what the verdict is taken over, or the
+    limit it is read by. Exits 1 if a check fails, 2 without Word.
 
 .PARAMETER OutputDir
     Where the inputs' copies, the edited copies, their PDFs and edit-protocol-corpus.json are
@@ -134,7 +136,36 @@ $READABLE_POINTS = 4
 # own drift is under half a point, and where the rounding runs the other way it can pass one that
 # drifted by as much as two and a half: the geometry Word states cannot tell the two apart, and
 # measuring drift finer than that wants a reading finer than whole points.
-$FOLLOWS_WITHIN_POINTS = 1.5
+#
+# The point and a half is where the reading leaves it, and the limit is set half a twip above it
+# rather than on it, because the two readings the difference is made of land on different grids
+# and the difference therefore lands on the coarser one. A drawing's place is read from the page
+# geometry in whole points; a paragraph's line is read from a range, which gives Word's own
+# layout, laid out in twips — a twentieth of a point. So the difference is a whole number of
+# twips, and a limit that is itself a whole number of twips is a value the difference can take
+# exactly: the verdict then turns on the last digit of a single-precision float rather than on
+# where Word drew anything. Measured over the corpus, 22107 readings: every drawing place and
+# every drawing move is a whole number of points exactly, and every paragraph line and move is
+# a whole number of twips to within 4.9e-05, which is that float's own error.
+#
+# At a point and a half that cost the figure its meaning. Of 279 drawings in the verdict of the
+# documents that hold every finding, 15 passed with the difference at exactly 1.50 — no room at
+# all — and three failed by between 0.00002 and 0.05 of a point, one of them by two parts in a
+# hundred thousand. Run on bytes that had not changed, with the same build of Word and the same
+# script, the instrument moved six drawings across the line and the acceptance figure with them.
+#
+# Half a twip above the point and a half is the least limit that leaves the grid: it stands as
+# far from 1.50 as from 1.55, the two nearest differences there are, so no difference can fall on
+# it. Neither bound of what this limit promises moves, because drift lands on the same grid: a
+# drawing that drifted half a point still passes always (its worst reading is 1.50, under the
+# limit), one that drifted two and a half can still pass (its best reading is 1.50), and 0.55 and
+# 2.55, the next drifts there are, still cannot.
+$FOLLOWS_WITHIN_POINTS = 1.525
+
+# The grid Word's own layout lands on, in points: it lays a document out in twips, so a paragraph
+# place read from a range is a whole number of them, and so is a difference of two such places.
+# $FOLLOWS_WITHIN_POINTS is held off this grid (see there, and Invoke-SelfCheck).
+$LAYOUT_GRID_POINTS = 0.05
 
 # How far above the space over a paragraph that space is taken to begin, in points. Word states
 # its page geometry in whole points, so a drawing drawn exactly at the top of that space — which
@@ -605,7 +636,8 @@ function Get-DrawingPlaces {
 
 # Where each paragraph with text stands, by its index: the page Word draws it on, where its own
 # first line starts, where the space above it begins, and how far across its text can run — from
-# its first letter to the right edge of its cell, or of the page's margin.
+# its first letter to the right edge of its cell's text, inside the padding the cell holds that
+# text away from its own right edge by, or to the page's right margin outside a table.
 #
 # The page comes from the geometry, so that a paragraph's page is the page Word draws it on, as a
 # drawing's is. Wherever the geometry names one page for a paragraph it is the page a range reports
@@ -640,7 +672,30 @@ function Get-ParagraphPlaces {
         $left = [double]$start.Information($WD_HORIZONTAL_POSITION_ON_PAGE)
         $right = $marginRight
         if ($start.Information($WD_WITHIN_TABLE)) {
-            try { $right = $left - $p.LeftIndent + $p.Range.Cells(1).Width } catch { }
+            # A cell's width counts the padding it holds its text away from on both sides, while
+            # the left read above is where the text itself starts — the cell's own left, plus that
+            # left padding, plus the paragraph's indent. Adding the width to the text's left
+            # therefore reaches past the end of that text by both paddings, and a cell's text is
+            # read as running on into the column beside it. Measured in cv-terracotta_rail, all of
+            # it as Word reads it: the sidebar holds its text 25.4pt from its left edge and 9.7pt
+            # from its right — which is what the file says too, `tcMar` of 508 and 194 twips — and
+            # that text starts at 25.25pt and so can run to 172.4. The reach was read as 207.5,
+            # which is 35.1pt past where the text ends, past the next column's text at 183.25, and
+            # over the rail gutter that column's dots stand in at 202. Four of them were then read
+            # as standing beside the sidebar's list, which the edit left where it was, rather than
+            # beside the entries they belong to, which moved and took them along.
+            #
+            # Two fallbacks, narrowest first. A cell whose padding cannot be read keeps the reach
+            # its width gives, which is what shipped before the padding was read at all; a cell
+            # that cannot be read at all leaves the reach at the page's margin, as it was before a
+            # cell was read at all. Both are wider than the truth, and the narrower is taken
+            # first: no cell of the corpus reaches either, Word having stated the padding of every
+            # one of them.
+            try {
+                $cell = $p.Range.Cells(1)
+                $right = $left - $p.LeftIndent + [double]$cell.Width
+                $right = $right - [double]$cell.LeftPadding - [double]$cell.RightPadding
+            } catch { }
         }
         $from = [int]$p.Range.Start
         $to = [int]$p.Range.End
@@ -1349,7 +1404,12 @@ function Invoke-Protocol {
 # on it, the one disposition the corpus does not reach; a nailed drawing whose place the geometry
 # cannot give, which is the same document as the carried one that fails for it; one drawing placed
 # down from the page's margin, which is neither answer and must not pass for either; and two
-# drawings Word names alike, which are read as no drawing at all and must not be passed over.
+# drawings Word names alike, which are read as no drawing at all and must not be passed over. One
+# came with reading a cell's text to the cell's own edges: a drawing standing in the gutter of its
+# own column with another column's text beside it at the same height, which must be read as
+# standing beside its own. Sixteen documents, and one check that needs none — the limit the
+# verdict is read by, held to the grid its readings land on and to the point and a half the
+# reading needs, since no document can be laid out to put a difference exactly on a limit.
 
 $PROBE_CONTENT_TYPES = @'
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -1396,14 +1456,16 @@ $PROBE_HEIGHT = 127000
 $EMU_A_POINT = 12700
 
 function New-ProbeDrawing {
-    param([string]$From = 'paragraph', [double]$OffsetPoints = 0, [switch]$InCell, [int]$Id = 1)
+    param([string]$From = 'paragraph', [double]$OffsetPoints = 0, [switch]$InCell, [int]$Id = 1,
+          [double]$AcrossPoints = 0)
     $cell = [int]$InCell.IsPresent
     $across = if ($InCell) { 'column' } else { 'page' }
     $offset = [long]($OffsetPoints * $EMU_A_POINT)
+    $sideways = [long]($AcrossPoints * $EMU_A_POINT)
     return '<w:drawing><wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0"' +
         ' relativeHeight="251658240" behindDoc="0" locked="0" layoutInCell="' + $cell + '" allowOverlap="1">' +
         '<wp:simplePos x="0" y="0"/>' +
-        '<wp:positionH relativeFrom="' + $across + '"><wp:posOffset>0</wp:posOffset></wp:positionH>' +
+        '<wp:positionH relativeFrom="' + $across + '"><wp:posOffset>' + $sideways + '</wp:posOffset></wp:positionH>' +
         '<wp:positionV relativeFrom="' + $From + '"><wp:posOffset>' + $offset + '</wp:posOffset></wp:positionV>' +
         '<wp:extent cx="' + $PROBE_WIDTH + '" cy="' + $PROBE_HEIGHT + '"/>' +
         '<wp:effectExtent l="0" t="0" r="0" b="0"/><wp:wrapNone/>' +
@@ -1425,8 +1487,17 @@ function New-ProbeParagraph {
 }
 
 function New-ProbeCell {
-    param([string[]]$Paragraphs)
-    return '<w:tc><w:tcPr><w:tcW w:w="4000" w:type="dxa"/></w:tcPr>' + ($Paragraphs -join '') + '</w:tc>'
+    param([string[]]$Paragraphs, [double]$PadLeftPoints = 0, [double]$PadRightPoints = 0)
+    # A cell's own padding, in twips, which overrides the nought the table sets for every cell:
+    # the room the cell holds its text away from its edges in, which its width counts and the
+    # reach of that text does not (see Get-ParagraphPlaces).
+    $margins = ''
+    if ($PadLeftPoints -gt 0 -or $PadRightPoints -gt 0) {
+        $margins = '<w:tcMar><w:left w:w="' + [int]($PadLeftPoints * 20) + '" w:type="dxa"/>' +
+            '<w:right w:w="' + [int]($PadRightPoints * 20) + '" w:type="dxa"/></w:tcMar>'
+    }
+    return '<w:tc><w:tcPr><w:tcW w:w="4000" w:type="dxa"/>' + $margins + '</w:tcPr>' +
+        ($Paragraphs -join '') + '</w:tc>'
 }
 
 function New-ProbeRow {
@@ -1754,14 +1825,100 @@ function New-ProbeFollows {
                              (New-ProbeCell @((New-ProbeParagraph -Text 'A third tall row, on the page after.'))),
                              (New-ProbeCell @((New-ProbeParagraph -Text 'Neighbour.')))))))
         }
+        @{
+            name   = 'a-drawing-in-the-gutter-of-its-own-column'
+            status = 'PASS'
+            detail = '*1 beside text that moved, 1 of them followed it*'
+            # A drawing standing in the gutter of its own column, with another column's text
+            # beside it at the same height, must be read as standing beside its own.
+            #
+            # The two cells are 200pt wide each and the table starts at the page's left margin,
+            # so the left cell runs from 72 to 272pt across and the right one from 272 to 472.
+            # The left cell holds its text 36pt from its left and 54pt from its right, so that
+            # text starts at 108pt and can run to 218. The right cell holds a drawing 10pt to the
+            # left of its own text, at 262pt across — past the left cell's text by 44pt, and
+            # 10pt from its own.
+            #
+            # Reading the left cell's reach as its text's left plus its width put it at 308pt,
+            # which covers 262, and the left cell's text was then no distance across from the
+            # drawing while its own was 10pt off.
+            #
+            # Which of the two the drawing is read as standing beside turns on the reach alone,
+            # because neither candidate is any distance down the page from it. Both cells open at
+            # the row's top with no space before or after any paragraph and set their text in one
+            # size, so their lines stand on one grid: the drawing sits at the top of the right
+            # cell's second paragraph, which is a whole number of lines down from the row's top,
+            # and the left cell has a line at that same place. Eight of them are written so that
+            # it has one however the long paragraph wraps, up to seven lines. So the vertical
+            # distance is nought on both sides, and the reach decides: at 308 the left cell's
+            # list, at the cell's own edges the drawing's own paragraph.
+            #
+            # The edit lengthens the right cell's long paragraph — the first in the document with
+            # text enough to be picked, none of the left cell's lines being long enough — which
+            # pushes the drawing's paragraph and the drawing down the page while the left cell's
+            # lines stay where they are. So under the old reach the drawing left the text it was
+            # read as standing beside, and the document failed.
+            what   = 'a drawing in its own column gutter stands beside its own text, not the column beside it'
+            body   = (New-ProbeTable @((New-ProbeRow -Cells @(
+                         (New-ProbeCell -PadLeftPoints 36 -PadRightPoints 54 -Paragraphs @(
+                             (New-ProbeParagraph -Text 'Skills.'),
+                             (New-ProbeParagraph -Text 'Drawing.'),
+                             (New-ProbeParagraph -Text 'Detailing.'),
+                             (New-ProbeParagraph -Text 'Surveying.'),
+                             (New-ProbeParagraph -Text 'Planning.'),
+                             (New-ProbeParagraph -Text 'Modelling.'),
+                             (New-ProbeParagraph -Text 'Costing.'),
+                             (New-ProbeParagraph -Text 'Handover.'))),
+                         (New-ProbeCell @(
+                             (New-ProbeParagraph -Text $PROBE_LONG),
+                             (New-ProbeParagraph -Text $PROBE_SHORT -Drawing (New-ProbeDrawing -InCell -AcrossPoints -10))))))))
+        }
     )
 }
 
-function Invoke-SelfCheck {
-    param($Word, [string]$Directory)
-    New-Item -ItemType Directory -Force $Directory | Out-Null
+# The limit the verdict is read by, against what the readings it compares can take. The one check
+# of the self-check that needs no document: every probe holds a reading to a document, and this
+# holds a constant to the grid those readings land on. A limit of a whole number of twips is a
+# difference the readings can produce exactly, and the verdict then turns on the last digit of a
+# single-precision float instead of on where Word drew anything — which is how six drawings of the
+# corpus crossed the line between two runs of this script on bytes that had not changed. A quarter
+# of a twip is the room asked for; the limit stands half a one off.
+#
+# It is run before Word is asked for, so a machine without Word holds the limit even where it can
+# run nothing else.
+function Test-TheLimit {
     $failures = @()
-    $checked = 0
+    $grids = $FOLLOWS_WITHIN_POINTS / $LAYOUT_GRID_POINTS
+    $offTheGrid = [Math]::Abs($grids - [Math]::Round($grids))
+    # The grid itself, before the limit is held to it: a point is twenty twips, and a grid that is
+    # not Word's own would let the check below pass a limit sitting on the one the readings use.
+    # The twenty is written out rather than taken from a constant the grid is derived from: the two
+    # have to be able to disagree, or this check could never fire.
+    if ([Math]::Abs(1 / $LAYOUT_GRID_POINTS - 20) -gt 1e-9) {
+        $failures += (('the-grid-is-the-twip: the grid is {0}pt, {1:F2} of them to the point, where ' +
+            'Word lays a document out in twips, twenty to the point: the limit below would be held ' +
+            'to a grid the readings do not land on') -f $LAYOUT_GRID_POINTS, (1 / $LAYOUT_GRID_POINTS))
+    }
+    if ($FOLLOWS_WITHIN_POINTS -lt 1.5) {
+        $failures += (('the-limit-clears-the-reading: the limit is {0}pt, under the point and a half ' +
+            'two readings of whole points can be out by between them, so a drawing that moved with ' +
+            'its text exactly can be failed for the reading') -f $FOLLOWS_WITHIN_POINTS)
+    } elseif ($offTheGrid -lt 0.25) {
+        $failures += (('the-limit-leaves-the-grid: the limit is {0}pt, {1:F2} of a twip from the grid ' +
+            'Word lays a document out on, so a difference can fall on the limit itself and the ' +
+            'verdict turn on a float''s last digit rather than on the page') -f
+            $FOLLOWS_WITHIN_POINTS, $offTheGrid)
+    }
+    return $failures
+}
+
+function Invoke-SelfCheck {
+    param($Word, [string]$Directory, [string[]]$Already = @(), [int]$AlreadyChecked = 0)
+    New-Item -ItemType Directory -Force $Directory | Out-Null
+    # What was held before Word was asked for is counted and reported here, so one line says how
+    # many checks ran and how many failed.
+    $failures = @($Already)
+    $checked = $AlreadyChecked
     # Each probe is counted before it is measured and its own errors are caught: with
     # $ErrorActionPreference at Stop, one failing COM call would otherwise leave the whole check
     # with nothing said about any of them.
@@ -1818,16 +1975,22 @@ function Invoke-SelfCheck {
 }
 
 if ($SelfCheck) {
+    # The limit first, since it needs no document: a machine without Word still holds it, and says
+    # so, rather than reporting that nothing could be run.
+    $limit = @(Test-TheLimit)
     try {
         $word = New-Object -ComObject Word.Application
     } catch {
+        foreach ($failure in $limit) { Write-Host "SELF-CHECK FAIL $failure" }
+        Write-Host "1 check, $($limit.Count) failed; the rest want Word"
         Write-Warning 'NOT_RUN: Microsoft Word is not available'
+        if ($limit.Count -gt 0) { exit 1 }
         exit 2
     }
     $word.Visible = $false
     $word.DisplayAlerts = 0
     try {
-        $failed = Invoke-SelfCheck $word (Join-Path $OutputDir 'selfcheck')
+        $failed = Invoke-SelfCheck $word (Join-Path $OutputDir 'selfcheck') $limit 1
     } finally {
         $word.Quit()
         [Runtime.InteropServices.Marshal]::ReleaseComObject($word) | Out-Null

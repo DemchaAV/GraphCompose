@@ -332,11 +332,17 @@ final class DocxLayerColumns {
         }
         double above = box.placementY() + box.placementHeight() - first.top();
         double below = lowest.foot() - box.placementY();
-        // Measured to a panel's box, the lowest block is not where the space below is measured
-        // from, and nothing of its own edges is left out there (insetSidesLost).
-        if (lowest.foot() == lowest.textFoot()) {
-            closing.add(lowest.place());
-        }
+        // The lowest block is recorded as closing the band whether the foot came from its own text
+        // or from its panel's box, which is what this has always done. Measured to a panel's box
+        // the block is arguably not what the space below was measured from, and leaving it out
+        // would say so — but nothing reads the difference: the one reader that would, the note
+        // naming what a block written as its height alone loses below it (insetSidesLost), is not
+        // reached for a block inside a panel at all. Probed over nine shapes of a band closed by a
+        // spacer in a painted panel — padding 12, 4 and none, with one, two and three paragraphs
+        // above it — not one produced that note. The other reader, keptFromItsPanel, is shadowed
+        // inside a band by bandDepth. So the set keeps the block, as before, and the reckoning is
+        // written here rather than a difference no test can hold.
+        closing.add(lowest.place());
         return new Band(layers, standIns, resumes, over, Math.max(0, above), below, closing);
     }
 
@@ -639,6 +645,7 @@ final class DocxLayerColumns {
             return panel != null && panel.startPage() == panel.endPage()
                    && panel.startPage() == place.startPage();
         }
+
 
         /**
          * Where the space above the leaf ends: the top of its box, the margin it writes above

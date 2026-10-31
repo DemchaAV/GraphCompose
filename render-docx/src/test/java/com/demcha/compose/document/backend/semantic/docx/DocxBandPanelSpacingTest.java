@@ -238,12 +238,23 @@ class DocxBandPanelSpacingTest {
                             + "and the page's space under the stack")
                         .isCloseTo(Math.round((SPACING + below) * 20),
                                 offset(2L));
+                // And the defect this does not fix, held to its number so that it cannot drift
+                // while the CHANGELOG, the recipe and this class's javadoc all state it: the gap a
+                // later layer resumes with is measured to its text through the card's padding, so
+                // the lower layer's own text stands the card's padding low. A band's resume takes
+                // no painted test of its own (DocxLayerColumns.band hands the flow none).
+                PlacedNode card = placed(session, "Card");
+                double gap = card.placementY() - (text.placementY() + text.placementHeight());
+                assertThat(before(middle(document)))
+                        .as("the lower layer's text stands the card's %spt padding below where the "
+                            + "page sets it, which measuring a resume to the text costs", PADDING)
+                        .isCloseTo(Math.round((gap + PADDING) * 20) - RAISE, offset(2L));
             }
         }
     }
 
     private static DocumentNode card(double padding, DocumentInsets margin) {
-        return new SectionBuilder().softPanel(SURFACE, 0, padding).margin(margin)
+        return new SectionBuilder().name("Card").softPanel(SURFACE, 0, padding).margin(margin)
                 .addParagraph(p -> p.text("A card under an icon."))
                 .build();
     }
@@ -271,6 +282,12 @@ class DocxBandPanelSpacingTest {
         return session.layoutGraph().nodes().stream()
                 .filter(node -> name.equals(node.semanticName()) || name.equals(node.path()))
                 .findFirst().orElseThrow();
+    }
+
+    /** The paragraph between the first and the last the body holds. */
+    private static XWPFParagraph middle(XWPFDocument document) {
+        List<XWPFParagraph> paragraphs = document.getParagraphs();
+        return paragraphs.get(paragraphs.size() - 2);
     }
 
     /** The paragraph under the card: the last the body holds. */

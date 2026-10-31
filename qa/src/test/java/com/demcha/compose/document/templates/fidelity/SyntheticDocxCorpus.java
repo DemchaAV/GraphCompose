@@ -79,7 +79,7 @@ final class SyntheticDocxCorpus {
      * 13.99pt low in Word and 13.98pt in LibreOffice, and the paragraph under it 28.02 and
      * 27.98pt: the stack is written as a band, and the band measured the space round it through
      * the card's padding to the text in it, which the card writes again as its cell's margins.
-     * The space is now measured to the card's box ({@code DocxLayerColumns#firstEdge}). The icon
+     * The space is now measured to the card's box ({@code DocxLayerColumns#edgeIn}). The icon
      * is carried by the card's text, so it stands on the card's corner as each editor sets the
      * card, and moves with it when the text above is edited. The gate reads lines of text only:
      * where the icon stands it does not see, and {@link DocxDrawingAnchorGuardTest} holds the

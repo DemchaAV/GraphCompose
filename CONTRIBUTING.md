@@ -468,15 +468,10 @@ Choose the smallest tests that match the change:
     points from the corner of the page it draws them on; the first line and the width come from a
     range. A cell's width counts the padding it holds its text away from on both sides, so the
     width its text runs to is read from the cell's own edges inward: read instead as the text's
-    left plus the cell's width, it reached past the end of that text by both paddings — 35.1pt in
-    `cv-terracotta_rail`, whose sidebar holds its text 25.4pt from its left edge and 9.7pt from
-    its right, and whose text Word reads as starting at 25.25pt and so running to 172.4, where
-    the reach was read as 207.5 (the two readings differ by three twips, and the reach carries
-    that: it is narrow by 0.15pt, which is as near as Word's own two readings come to each
-    other). The sidebar's text was then taken to run on past the next column's text at 183.25pt
-    and over the gutter at 202pt where four of that column's rail dots stand, and those four were
-    read as standing beside the sidebar's list — a list the edit leaves where it is — rather than
-    beside the entries that carry them. The space matters because a drawing placed from its
+    left plus the cell's width, it reaches past where that text can run by both paddings, and a
+    cell's text is taken to run on into the column beside it — which took four of one column's
+    rail dots to be standing beside the other column's list. `Get-ParagraphPlaces` carries that
+    measurement. The space matters because a drawing placed from its
     paragraph stands a stored offset
     below the top of that paragraph's box, the space above the paragraph included, so a paragraph
     read from its first letter alone stands that whole space away from its own drawing and loses it

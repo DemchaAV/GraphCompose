@@ -59,8 +59,8 @@
     makes from either side — those two without a document, so they are held even where Word is not
     there to run the rest. Run it after changing
     how a place is read, how an owner is chosen, what the verdict is taken over, or either
-    threshold it is read by. Exits 1 if a check fails — those two included, Word or no
-    Word — and 2 without Word where both thresholds hold.
+    threshold it is read by. Exits 1 if a check fails — those two included, Word or no Word, and
+    the grid under them with them — and 2 without Word where all of that holds.
 
 .PARAMETER OutputDir
     Where the inputs' copies, the edited copies, their PDFs and edit-protocol-corpus.json are
@@ -162,8 +162,9 @@ $READABLE_POINTS = 4
 # all — and three failed by between 0.00002 and 0.05 of a point, one of them by two parts in a
 # hundred thousand. Run on bytes that had not changed, with the same build of Word and the same
 # script, the instrument reported five fewer followers over one more drawing in the set, and took
-# the acceptance figure with them. Five of those crossed the line, or six: whether the drawing that
-# changed set followed in the later reading is not in the totals that run recorded.
+# the acceptance figure with them. At least five of them crossed the line: totals bound that from
+# below only, a drawing crossing back the other way hiding one that crossed, and which drawings
+# they were is not in the totals that run recorded.
 #
 # Half a twip above the point and a half is the least limit that leaves the grid: it stands as
 # far from 1.50 as from 1.55, the two nearest differences there are, so no difference can fall on
@@ -180,7 +181,8 @@ $FOLLOWS_WITHIN_POINTS = 1.525
 #
 # Those two are the only numbers the drawings-follow-text verdict compares a reading against that
 # could fall on a value its readings produce exactly. Every comparison that verdict is read from
-# was gone through once the first was found, and the rest are sound each for a reason of its own.
+# was gone through once the first was found, and all but one of the rest are sound each for a
+# reason of its own; the one that is not is the tie below.
 # Find-ShapeRectangle's point of slack on a rectangle's size stands a deliberate half point off
 # the rounding bound it allows for. Invoke-SelfCheck's half point of slack on a probe's place is
 # compared against places taken from Word's own PDF, which does not round, and not one of them
@@ -742,7 +744,7 @@ function Get-ParagraphPlaces {
             # reads that text as starting at 25.25pt, so it can run to 172.4. Those last two
             # readings of Word's differ by three twips, which the reach carries: it comes out
             # 0.15pt narrow, that being as near as Word's own two readings come to each other. The
-            # reach was read as 207.5, which is 35.1pt past where that text ends, past the next
+            # reach was read as 207.5, which is 35.1pt past where that text can run, past the next
             # column's text at 183.25, and
             # over the rail gutter that column's dots stand in at 202. Four of them were then read
             # as standing beside the sidebar's list, which the edit left where it was, rather than

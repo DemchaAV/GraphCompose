@@ -4506,15 +4506,13 @@ follow semantic versioning; release dates are ISO 8601.
     not hold.
   - **A cell's text.** How far a paragraph's text can run was read as its text's left plus its
     cell's width. A cell's width counts the padding it holds its text away from on both sides, so
-    that reached past the end of that text by both of them — 35.1pt in `cv-terracotta_rail`, whose
-    sidebar holds its text 25.4pt from its left edge and 9.7pt from its right, which is what the
-    file says (`tcMar` of 508 and 194 twips) and what Word states. Word reads that text as starting
-    at 25.25pt, so the reach now comes out at 172.4 — 0.15pt narrow of where the text ends, those
-    two readings of Word's differing by three twips — where it was read as 207.5: past the next
-    column's text at 183.25pt
-    and over the gutter at 202pt where four of that column's rail dots stand. Those four were then
-    read as standing beside the sidebar's list — a list the edit leaves where it is — rather than
-    beside the entries that carry them. The reach is now read from the cell's own edges inward.
+    that reached past where that text can run by both of them — 35.1pt in `cv-terracotta_rail`,
+    whose sidebar holds its text 25.4pt from its left edge and 9.7pt from its right, which is what
+    the file says (`tcMar` of 508 and 194 twips) and what Word states. That sidebar's text was then
+    read as running on over the next column's text and over the gutter four of that column's rail
+    dots stand in, and those four were read as standing beside the sidebar's list — a list the edit
+    leaves where it is — rather than beside the entries that carry them. The reach is now read from
+    the cell's own edges inward, and `Get-ParagraphPlaces` carries the measurement to the point.
   - Over the corpus the two together move five drawings of the 728 a paragraph carries, each by one
     of the two rules: the four rail dots of `cv-terracotta_rail`, whose owner becomes the entry
     carrying it and whose difference falls from 23 and 24pt to 0.35 and 0.65 — they had been

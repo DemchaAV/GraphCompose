@@ -1,4 +1,5 @@
 # libreoffice build 420(Build:2) on linux
+# rows of synthetic-icon_over_card: its card stood 13.98pt and the paragraph under it 27.98pt below the page while the band round it measured its space through the card's padding; measured to the card's box, both stand -0.02pt. Every row from CI run 41189036705. Six rows came with that run that this change did not move - invoice-luma_studio's five by 0.10 to 0.35pt and invoice-metered_long's one by 0.10pt, none past the half point the gate reads as rounding and no page count among them - whose DOCX this change leaves byte-identical: LibreOffice on CI measuring the same files again, not a move to attribute here
 # every row from CI run 40844463596, the run of the change that made this gate two-sided. Not shot whole since #898, the file had gone stale in 1778 of its 5149 rows, since the one-sided gate of that time wrote back only the rows it went red on. Of those, 230 stood more than half a point from where it held them — 226 across and 4 down, in 8 documents — and every one of the 230 stood nearer the engine's PDF, not one further; the rest had moved within the half point the gate reads as rounding
 # rows of cv-teal_pulse: its email line, set in a cell set to the middle, stood +0.08pt while the contact separator was anchored in that cell, LibreOffice 24.2 then setting the cell from its top; the separator now goes elsewhere, as a cell set to the middle carries no drawing, and LibreOffice centres the cell as its neighbours: +0.93pt, Word +1.14pt
 document	engine_pages	editor_pages	lines	matched	median	p90	over2
@@ -70,6 +71,6 @@ synthetic-break_in_column	1	1	7	7	0.02	0.02	0
 synthetic-break_in_panel	3	3	8	8	3.02	5.02	5
 synthetic-card_over_pages	3	3	114	114	0.98	1.08	0
 synthetic-clipped_container	1	1	10	8	0.98	0.98	0
-synthetic-icon_over_card	1	1	6	6	13.98	27.98	3
+synthetic-icon_over_card	1	1	6	6	0.02	0.02	0
 synthetic-narrow_container	1	1	6	6	0.52	1.02	0
 synthetic-rounded_card	1	1	7	7	0.02	0.62	0

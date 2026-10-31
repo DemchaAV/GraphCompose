@@ -4502,13 +4502,16 @@ follow semantic versioning; release dates are ISO 8601.
     drawings in the verdict the text that stayed stayed exactly, not one of those 403 moving by so
     much as a twip, and the least any of the other 325 moved by was 9.35pt — half a point of clear
     air below the threshold and 8.825pt above, so the half twip moves no drawing of the corpus
-    between the sets, and is there against the document that does sit on it.
+    between the sets, and is there against a document that would sit on it, which the corpus does
+    not hold.
   - **A cell's text.** How far a paragraph's text can run was read as its text's left plus its
     cell's width. A cell's width counts the padding it holds its text away from on both sides, so
     that reached past the end of that text by both of them — 35.1pt in `cv-terracotta_rail`, whose
     sidebar holds its text 25.4pt from its left edge and 9.7pt from its right, which is what the
-    file says (`tcMar` of 508 and 194 twips) and what Word states. Its text starts at 25.25pt and
-    so runs to 172.4, where the reach was read as 207.5: past the next column's text at 183.25pt
+    file says (`tcMar` of 508 and 194 twips) and what Word states. Word reads that text as starting
+    at 25.25pt, so the reach now comes out at 172.4 — 0.15pt narrow of where the text ends, those
+    two readings of Word's differing by three twips — where it was read as 207.5: past the next
+    column's text at 183.25pt
     and over the gutter at 202pt where four of that column's rail dots stand. Those four were then
     read as standing beside the sidebar's list — a list the edit leaves where it is — rather than
     beside the entries that carry them. The reach is now read from the cell's own edges inward.

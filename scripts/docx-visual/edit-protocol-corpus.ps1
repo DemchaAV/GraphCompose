@@ -53,12 +53,13 @@
     Runs the protocol against probe documents it writes itself, instead of over a corpus. It
     holds where it reads a drawing's place to where Word's own PDF puts the same drawing, holds
     the paragraph a drawing is attributed to with documents one wrong owner fails, holds what
-    is asked of whom with documents that carry a drawing nailed to the sheet, and holds the two
-    thresholds the verdict is read by to the grid their readings land on — that last one without a
-    document, so it is held even where Word is not there to run the rest. Run it after changing
+    is asked of whom with documents that carry a drawing nailed to the sheet, and holds each of the
+    two thresholds the verdict is read by to the grid its readings land on and to the promise it
+    makes from either side — those two without a document, so they are held even where Word is not
+    there to run the rest. Run it after changing
     how a place is read, how an owner is chosen, what the verdict is taken over, or either
-    threshold it is read by. Exits 1 if a check fails — the thresholds' check included, Word or no
-    Word — and 2 without Word where the thresholds themselves hold.
+    threshold it is read by. Exits 1 if a check fails — those two included, Word or no
+    Word — and 2 without Word where both thresholds hold.
 
 .PARAMETER OutputDir
     Where the inputs' copies, the edited copies, their PDFs and edit-protocol-corpus.json are
@@ -179,12 +180,16 @@ $FOLLOWS_WITHIN_POINTS = 1.525
 # was gone through once the first was found, and the rest are sound each for a reason of its own.
 # Find-ShapeRectangle's point of slack on a rectangle's size stands a deliberate half point off
 # the rounding bound it allows for. Invoke-SelfCheck's half point of slack on a probe's place is
-# compared against places that are whole points, as the place read for it is, so their difference
-# is a whole number and cannot be the half point itself.
+# compared against places taken from Word's own PDF, which does not round, and not one of them
+# stands half a point from a whole point — the nearest is two hundredths off — so the difference
+# from a place read in whole points cannot be the half point itself. The left edges it compares
+# are whole points on both sides, so their difference is a whole number and cannot be either.
 # $SPACE_BEGINS_WITHIN_POINTS is whole points against whole points,
 # exact in a float either way, and the equality it can reach is the inclusion its own comment
 # asks for. The paragraph page logic compares character offsets and page numbers, which are
-# integers. Where a drawing's top is compared with a paragraph's line, the two do land on
+# integers. Find-Owner's reach across compares two twip readings against nought, which they do
+# reach exactly, but it is taken through Max at that very bound, where equality changes nothing.
+# Where a drawing's top is compared with a paragraph's line, the two do land on
 # different grids, but both branches give the same distance wherever they are equal.
 #
 # The other scenarios were not gone through for this. restyle-body-through-normal alone compares
@@ -204,7 +209,7 @@ $LAYOUT_GRID_POINTS = 0.05
 # those 403 moving by so much as a twip, and the least any of the other 325 moved by was 9.35pt
 # (proposal-northline's Drawing 16). So the threshold stands with half a point of clear air below
 # it and 8.825pt above, and the half twip moves no drawing of the corpus from one set to the
-# other; it is here against the document that does sit on it, not against the ones that do not.
+# other. It is here against a document that would sit on it, which the corpus does not hold.
 $MOVED_AT_ALL_POINTS = 0.525
 
 # How far above the space over a paragraph that space is taken to begin, in points. Word states
@@ -529,7 +534,8 @@ function Get-FooterOn {
 # PDF: the page geometry is right within 0.41pt in every one, while the paragraph reckoning is
 # out by the space above the paragraph, and for a drawing whose row begins on the page before
 # the one it is drawn on it names the wrong page altogether. Word gives the geometry in whole
-# points, which is why a drawing is held to following its text within a point and a half.
+# points, which is why a drawing is held to following its text within a point and a half and
+# half a twip (see $FOLLOWS_WITHIN_POINTS).
 #
 # The lines are what the text side is read from: see Get-ParagraphPlaces for what they do and do
 # not give.
@@ -731,9 +737,11 @@ function Get-ParagraphPlaces {
             # Two fallbacks, narrowest first. A cell whose padding cannot be read keeps the reach
             # its width gives, which is what shipped before the padding was read at all; a cell
             # that cannot be read at all leaves the reach at the page's margin, as it was before a
-            # cell was read at all. Both are wider than the truth, and the narrower is taken
-            # first: no cell of the corpus reaches either, Word having stated the padding of every
-            # one of them.
+            # cell was read at all — which is wider than the truth for a cell inside the margins
+            # and narrower for a table reaching past them. A cell whose left padding reads and
+            # whose right one throws is left at the cell's own right edge, between the two. No
+            # cell of the corpus reaches any of that, Word having stated the padding of every one
+            # of them.
             try {
                 $cell = $p.Range.Cells(1)
                 $right = $left - $p.LeftIndent + [double]$cell.Width

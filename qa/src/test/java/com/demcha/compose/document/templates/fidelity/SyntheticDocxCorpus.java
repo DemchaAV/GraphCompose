@@ -39,7 +39,7 @@ import java.util.function.Consumer;
  * text stays inside the outline, and whether the card grows when text is added to it in an
  * editor, it does not see.</p>
  *
- * <p>The card under the icon is held as the editors set it today, off the page: see
+ * <p>The card under the icon is held where the page sets it, the icon's own place aside: see
  * {@link #iconOverCard}.</p>
  */
 final class SyntheticDocxCorpus {
@@ -75,13 +75,15 @@ final class SyntheticDocxCorpus {
      * it and one under it. The paragraph above is the document's first of body text and its
      * longest, so an edit that lengthens either moves the card, and the icon has to move with it.
      *
-     * <p>Its baseline holds the export as Word and LibreOffice set it today, off the page: the
-     * stack writes the card's padding as space above and below the card as well as inside it, so
-     * both editors set the card's text about 14pt lower than the page, and the paragraph under it
-     * about 28pt lower. The icon is placed from the page's edges, so it stands
-     * where the page draws it, above the card the editors moved down, and stays there when text
-     * above the card is edited. The gate reads lines of text only: where the icon stands, it
-     * does not see.</p>
+     * <p>Its baseline holds the card where the page sets it, within 0.06pt. It held the card
+     * 13.99pt low in Word and 13.98pt in LibreOffice, and the paragraph under it 28.02 and
+     * 27.98pt: the stack is written as a band, and the band measured the space round it through
+     * the card's padding to the text in it, which the card writes again as its cell's margins.
+     * The space is now measured to the card's box ({@code DocxLayerColumns#firstEdge}). The icon
+     * is carried by the card's text, so it stands on the card's corner as each editor sets the
+     * card, and moves with it when the text above is edited. The gate reads lines of text only:
+     * where the icon stands it does not see, and {@link DocxDrawingAnchorGuardTest} holds the
+     * anchor it is carried by.</p>
      */
     private static void iconOverCard(DocumentSession session) {
         session.pageSize(400, 500).margin(MARGIN);

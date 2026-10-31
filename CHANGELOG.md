@@ -8,6 +8,34 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export measures the space round a stack of overlapping layers to the box of the panel
+  holding its text, not through that panel's padding, so a card under an icon laid over its corner
+  stands where the page sets it.**
+  - Such a stack is written as one band, and the band holds the page's distance from the stack's
+    edges to the first block it writes and to its lowest. Where a panel held that block, the
+    distance ran through the panel's padding — which the panel writes again as its cell's margins,
+    once above its text and once below it.
+  - Measured in Word 16.0.20527 and LibreOffice 24.2: a card of 14pt padding under an icon laid
+    over its top right corner set its text 13.99pt below where the page sets it in Word and
+    13.98pt in LibreOffice, and the paragraph under the card 28.02 and 27.98pt; a card of 20pt
+    padding 19.99 and 40.02pt in Word, one with a 10pt margin of its own 13.95 and 28.06pt, and
+    one holding a further panel of 6pt padding 13.99 and 34.02pt. The same card with no second
+    layer, which is no band, already stood where the page sets it, to 0.06pt — the measurement,
+    not the padding, was what moved the others. All of them now stand within 0.06pt of the page.
+  - The space is measured to the box of the outermost panel holding the block, since every panel
+    between the band and that block writes its own padding inside the cell above it — the 6pt
+    card above held the outer card's padding over again above its text and both paddings over
+    again below it. Which of the two is taken shows only where the outer panel has no text of its
+    own, since a block it holds directly ends at its box either way. What stands
+    above that box — the panel's own margin — is in the distance the band owes and is not written
+    by the panel: a table carries no space of its own, and the margin it owes above itself is
+    replaced by the space the band resumes with, so a card with a 10pt margin and 14pt padding
+    keeps the 10pt in the space above its table and the 14pt in its cell. Where no panel holds
+    the block the distance is measured to the block itself, as before, and a stack of one layer,
+    which lays nothing over anything and is no band, is untouched.
+  - What a band owes between two of its own layers — the resume to a later layer — is measured to
+    that layer's text still, a panel round it included, and is unchanged: a layer standing under
+    a card in the same stack keeps the card's padding twice, measured at 14pt.
 - **A DOCX export anchors a drawing in a paragraph written by any writer of text — a list's item,
   the one line two halves of a band share — so a card whose only text is written so moves its
   drawings with it when the text above is edited.**

@@ -4525,16 +4525,19 @@ follow semantic versioning; release dates are ISO 8601.
     the colour and extent the page paints them at, for every kind of header its pages can take;
     nothing of them in the body, which a page the editor adds does not hold; and the eighty
     paragraphs in the document that was read back. The fixture's javadoc says so, and says where
-    the reading of the picture is: in the change that moved the fills, measured by hand in Word
-    16.0.20527 on a one-page sidebar export grown this way.
+    the reading of the picture is: in the change that moved the fills, taken in Word 16.0.20527
+    on a throwaway probe of a one-page sidebar export grown this way.
   - Eighty is a measured number rather than a guess: the engine, laying the same text out itself,
     needs more than the section's one page for it.
-  - The reading of the settings part is a helper the tests share, where two of them held a copy of
-    their own. It reads the part because POI's accessor returns whether the element is there and
-    not whether it says yes, and it now reads the element in either form it can be written in: a
-    pattern for the self-closed form alone called a document that states even and odd pages one
-    that does not, which is the answer that lets a check of the even pages' header pass without
-    running.
+- **The reading that answers whether a document states different even and odd pages reads the
+  element in either form it can be written in, and is one helper the tests share where two of them
+  held a copy of their own.**
+  - A pattern for the self-closed form alone called a document that writes
+    `<w:evenAndOddHeaders w:val="1"></w:evenAndOddHeaders>` one that does not state even and odd
+    pages, which is the answer that lets a check of the even pages' own header pass without
+    running. This backend writes the self-closed form, so no test was reading the wrong answer.
+  - The reading goes to the part rather than to POI's accessor, which returns whether the element
+    is there and not whether it says yes.
 - **The editing protocol reads both thresholds it judges a drawing by off the grid Word's own
   readings land on, and reads a cell's text as reaching to that cell's edges rather than past them
   — so neither the verdict nor the set it is taken over turns on the last digit of a float, and

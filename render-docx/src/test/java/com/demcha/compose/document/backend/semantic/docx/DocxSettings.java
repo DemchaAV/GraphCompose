@@ -36,6 +36,11 @@ final class DocxSettings {
     }
 
     /**
+     * Whether the document states different even and odd pages: the element written, and not
+     * written off. {@code ST_OnOff} spells off as {@code false}, {@code 0} or {@code off}, and the
+     * element with no value at all means on, so anything else is read as on — a reading that errs
+     * towards running the check of the even pages' own header rather than skipping it.
+     *
      * @param document an exported document
      * @return whether it states different even and odd pages
      */

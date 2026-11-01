@@ -8,17 +8,14 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import org.apache.poi.util.Units;
-import org.apache.poi.xwpf.model.XWPFHeaderFooterPolicy;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFHeader;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.junit.jupiter.api.Test;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -38,12 +35,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * only once Word or LibreOffice lays the grown document out, and CI runs neither. So these tests
  * assert the record a page is painted from — the fills in the header of the one section the
  * document has, nothing of them in the body, and no page of that section taking a header without
- * them — and not a picture of page two. The picture is not in the tree at all: it was measured by
- * hand in Word 16.0.20527 on a one-page sidebar export grown this way, in the change that moved
- * the fills into the header (#987), where page two held the appended text and was white end to
- * end before and carries the column after. That reading is checkable only in that change's own
- * record, so a reader asking whether Word paints the page has to go there; what is checkable here
- * is the writing Word paints it from.</p>
+ * them — and not a picture of page two. The picture is not in the tree at all: it was taken in
+ * Word 16.0.20527 on a throwaway probe of a one-page sidebar export grown this way, in the change
+ * that moved the fills into the header (#987), where page two held the appended text and was white
+ * at every point sampled down its left column before, and carries the column on pages two and
+ * three after. That reading is checkable only in that change's own record, so a reader asking
+ * whether Word paints the page has to go there; what is checkable here is the writing Word paints
+ * it from.</p>
  *
  * <p>{@link DocxPageBackgroundTest} holds what a fresh export writes. This holds what survives an
  * edit, which is where the defect showed, so it reads the document back after an editor has
@@ -67,8 +65,9 @@ class DocxPageBackgroundAfterAnEditTest {
      * How many paragraphs the editor appends: enough that the grown document is longer than the
      * section's one page, which
      * {@link #theSameParagraphsAppendedPastThePageTakeMoreThanOnePageToSet} measures with the
-     * engine's own lines. The editor sets its lines itself and sets them taller here, so it needs
-     * at least as many pages for them.
+     * engine's own lines. The editor sets its lines itself, so that measurement does not settle
+     * what Word does with them; the reading that does is #987's, where Word put the appended text
+     * on pages two and three.
      */
     private static final int APPENDED = 80;
 
@@ -76,17 +75,20 @@ class DocxPageBackgroundAfterAnEditTest {
     void theFixtureIsASectionOfOnePageWithNoChromeOfItsOwn() throws Exception {
         // The configuration the defect needs, and the one that used to take the body route: one
         // page of content, and no zone of the document's own in a header or a footer. Read from
-        // the written file, so a zone added to the fixture shows here as the text or the footer
-        // part it writes.
+        // the written file, so a zone added to the fixture shows here as the footer part, the
+        // paragraph text or the table it writes.
         try (DocumentSession session = sidebarSession()) {
             assertThat(session.pageIndex().totalPages()).as("a section of one page").isEqualTo(1);
 
             try (XWPFDocument document = new XWPFDocument(
                     new ByteArrayInputStream(session.export(new DocxSemanticBackend())))) {
                 assertThat(document.getFooterList()).as("no footer of the document's own").isEmpty();
-                assertThat(document.getHeaderList()).hasSize(1);
-                assertThat(document.getHeaderList().get(0).getText().trim())
+                XWPFHeader header = onlyHeaderOf(document);
+                assertThat(header.getText().trim())
                         .as("the one header is the export's own, holding no text of the document")
+                        .isEmpty();
+                assertThat(header.getTables())
+                        .as("nor a table of it, which its text would not show")
                         .isEmpty();
             }
         }
@@ -107,12 +109,22 @@ class DocxPageBackgroundAfterAnEditTest {
                     .as("the editor's paragraphs are in the document that was read back")
                     .isEqualTo(APPENDED);
 
-            assertThat(headerTypesThatPaintThePagesOf(grown, section))
-                    .as("the default header, which every page of the section takes")
-                    .containsExactly(STHdrFtr.DEFAULT);
-            assertThat(grown.getHeaderList()).hasSize(1);
-            assertThat(onlyHeader(grown))
+            // Which header a page of the section takes: the first page's where the section states
+            // one, the even pages' where the document states different even and odd pages, the
+            // default otherwise. This section states neither, so every one of its pages takes the
+            // default header, and the fills are in it. DocxPageBackgroundTest holds the sections
+            // that do state them, each of their headers carrying the fills too.
+            assertThat(section.isSetTitlePg())
+                    .as("no first page of its own for page one to take a header of")
+                    .isFalse();
+            assertThat(DocxSettings.evenAndOddPages(grown))
+                    .as("no even pages of their own")
+                    .isFalse();
+            String header = onlyHeaderOf(grown)._getHdrFtr().xmlText();
+
+            assertThat(header)
                     .as("behind the text, placed from the page, and not the body's to move")
+                    .contains("name=\"Page background 1\"")
                     .contains("val=\"2B2F36\"")
                     .contains("behindDoc=\"1\"")
                     .contains("relativeFrom=\"page\"")
@@ -120,7 +132,7 @@ class DocxPageBackgroundAfterAnEditTest {
                     .as("the column the page paints, not a fill of no extent")
                     .contains("cx=\"" + Units.toEMU(0.35 * PAGE_WIDTH) + "\"")
                     .contains("cy=\"" + Units.toEMU(PAGE_HEIGHT) + "\"");
-            assertThat(occurrencesOf(onlyHeader(grown), "<w:drawing"))
+            assertThat(occurrencesOf(header, "<w:drawing"))
                     .as("one drawing for the one fill")
                     .isEqualTo(1);
         }
@@ -159,8 +171,13 @@ class DocxPageBackgroundAfterAnEditTest {
                 .pageSize(PAGE_WIDTH, PAGE_HEIGHT)
                 .margin(DocumentInsets.of(24))
                 .create();
-        session.pageBackgrounds(List.of(PageBackgroundFill.leftColumn(0.35, CHARCOAL)));
-        session.pageFlow(content);
+        try {
+            session.pageBackgrounds(List.of(PageBackgroundFill.leftColumn(0.35, CHARCOAL)));
+            session.pageFlow(content);
+        } catch (RuntimeException | Error failure) {
+            session.close();
+            throw failure;
+        }
         return session;
     }
 
@@ -193,38 +210,10 @@ class DocxPageBackgroundAfterAnEditTest {
                 .count();
     }
 
-    /**
-     * The header kinds a page of the section can be painted by: the default always, the first
-     * page's where the section states one, and the even pages' where the document states
-     * different even and odd pages. A kind a page takes and the fills do not reach is a page
-     * painted white.
-     */
-    private static List<STHdrFtr.Enum> headerTypesThatPaintThePagesOf(XWPFDocument document,
-                                                                      CTSectPr section)
-            throws Exception {
-        XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(document, section);
-        List<STHdrFtr.Enum> painted = new ArrayList<>(3);
-        add(painted, STHdrFtr.DEFAULT, policy.getDefaultHeader());
-        if (section.isSetTitlePg()) {
-            add(painted, STHdrFtr.FIRST, policy.getFirstPageHeader());
-        }
-        if (DocxSettings.evenAndOddPages(document)) {
-            add(painted, STHdrFtr.EVEN, policy.getEvenPageHeader());
-        }
-        return painted;
-    }
-
-    private static void add(List<STHdrFtr.Enum> painted, STHdrFtr.Enum type, XWPFHeader header) {
-        assertThat(header).as("a header of kind %s to carry the fills", type).isNotNull();
-        assertThat(header._getHdrFtr().xmlText())
-                .as("the fills in the header of kind %s", type)
-                .contains("name=\"Page background 1\"");
-        painted.add(type);
-    }
-
-    private static String onlyHeader(XWPFDocument document) {
+    /** The one header the document writes, which is then the one its pages take. */
+    private static XWPFHeader onlyHeaderOf(XWPFDocument document) {
         assertThat(document.getHeaderList()).hasSize(1);
-        return document.getHeaderList().get(0)._getHdrFtr().xmlText();
+        return document.getHeaderList().get(0);
     }
 
     private static int occurrencesOf(String xml, String part) {

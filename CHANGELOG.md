@@ -8,6 +8,39 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export names the drawings that a painted panel standing beside them covers, rather than
+  losing them in silence.**
+  - A panel is written as a shaded cell, and a cell's fill belongs to the text layer, which both
+    editors paint over everything drawn behind that layer — a drawing on a layer *above* the panel
+    included. A layer stack's z-index therefore does not lift a drawing clear of a painted
+    neighbour, and the drawing is not seen wherever the two boxes meet.
+  - Measured at 300 dpi in Word 16.0.20527 and LibreOffice 24.2 on the one document of the
+    71-document fidelity corpus that holds the case, an 18pt icon laid over a card's corner: the
+    engine's PDF draws 4308 pixels of the icon's own ink, Word's draws none and LibreOffice's
+    draws none, the icon's whole box coming back the card's colour in both. With the card
+    unpainted — the one difference — Word draws every pixel the engine does.
+  - The report now carries an `APPROXIMATED` note naming such a drawing and one panel that covers
+    it. The panels are taken where the export writes their fill rather than read off the node
+    tree: whether a section, a container or a row that paints becomes a cell with shading is
+    decided as it is written, so a panel bearing borders alone is not named and a row written as a
+    panel is. A drawing and a panel are only ever judged against each other within one section,
+    whose pages are counted from its own first and whose page height is its own, and a document
+    of several sections names the section each loss is in.
+  - What it does not name is written out in the recipe and in the guard rather than left to be
+    discovered: a panel the layout breaks across pages, whose box is the one its first page gave
+    it — the guard holds those four by name, so a fifth is seen; a panel composed in an authored
+    table cell, which the layout gives no box of its own; a table cell's own shading, which
+    belongs to a cell rather than to a node; a cell's paint the table draws itself; and the
+    second panel over a drawing that lies over two, one note naming one panel.
+  - No document of the corpus changes: the note states what the bytes already were.
+  - A drawing standing *inside* a painted panel is a different case with a note of its own, and
+    the export already puts such a drawing in front wherever it frames no text of the flow.
+    Measured the same way, that case has no instance in the corpus at all — its branch is taken 55
+    times over 14 documents and goes in front every one of them.
+  - `DocxNeighbourFillGuardTest` holds the corpus to the one drawing that is known, judging by the
+    boxes the layout gave the nodes and not by `behindDoc`, which is set on drawings the reader
+    plainly sees as well: the same fixture with its panel unpainted keeps its anchor's
+    `behindDoc="1"` while showing all 3237 pixels of its shape in Word.
 - **A DOCX export asks the same order of a composed cell's paragraphs as of a block's, so a drawing
   a table's cell draws is anchored in the paragraph of that cell which places it nearest rather than
   in the first one the cell writes.**

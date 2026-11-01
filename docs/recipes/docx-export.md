@@ -1255,6 +1255,20 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   draws every one behind under every one in front, and on a painted panel a
   layer framing text stays behind while one that does not stands in front,
   whatever their z-index.
+  A panel's shading is part of the text layer, so it is painted over every
+  drawing behind that layer — including one that belongs to a *neighbour* of
+  the panel rather than to the panel itself. A drawing on a layer above a
+  painted layer beside it, an icon laid over a card's corner among them, is
+  covered by that card wherever the two boxes meet, in Word and in
+  LibreOffice alike, however the page stacks them: measured at 300 dpi, an
+  18pt icon over a card draws 4308 pixels of its ink in the engine's PDF and
+  none at all in either editor's. Until a stack's order is carried into the
+  document, the report names such a drawing and one panel that covers it, so
+  the loss is stated rather than silent. Three it does not name: a drawing
+  under a panel the layout breaks across pages, whose box is the one its
+  first page gave it; one no node of the tree paints, such as a timeline's
+  rail; and a drawing covered by a table cell's own shading, which belongs
+  to a cell rather than to a node with a box.
   The report names the clip — a shape container's, and a layer
   stack's that clips to its bounds — wherever it cuts what the layers paint:
   a square tile's corners in a disc, a label run past its chip, an ornament

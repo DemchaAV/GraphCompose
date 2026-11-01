@@ -325,6 +325,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // is drawn white by the engine, and inside a filled panel has to say so rather than let the
     // panel's colour through.
     private DocumentColor surfaceBehind;
+    // Every shape queued behind the text, with the box it is drawn in, and every panel whose cell
+    // the export gave a fill, with the box the layout gave it. At the end of the export the shapes
+    // a panel beside them covers are named (nameTheDrawingsAPaintedPanelCovers). Both carry the
+    // section they belong to: a section's pages are counted from its own first, and a page's
+    // height is its section's.
+    private final List<DrawnBehind> drawnBehind = new ArrayList<>();
+    private final List<ShadedPanel> shadedPanels = new ArrayList<>();
     // How many overlays — layer stacks, canvases, shape containers — the node being written sits in.
     private int overlayDepth;
     // How many of those overlays are written as bands (see writeOverlayBand).
@@ -1207,6 +1214,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         cutsDecided.clear();
         slotDepth = 0;
         surfaceBehind = null;
+        drawnBehind.clear();
+        shadedPanels.clear();
         overlayDepth = 0;
         bandDepth = 0;
         overTheFlowDepth = 0;
@@ -1400,6 +1409,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             hideTheClosingMark(document);
             hideTheCellClosingMarks(document.getTables());
             letTheOneRowTablesKeptWithTheNextBreak(document.getTables());
+            nameTheDrawingsAPaintedPanelCovers();
             nameTheExactLines(document);
             DocxTextControls.dropFrom(document);
             if (textFillsWritten) {
@@ -5242,6 +5252,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // what lies behind the text: in front of it, the shape shows.
             shapes = shapes.stream().map(DocxDrawings.Shape::inFront).toList();
         }
+        rememberDrawnBehind(shapes);
         DrawingCell cell = drawingCell;
         if (cell != null && !shapes.isEmpty() && shapes.stream().allMatch(cell::holds)) {
             anchors.anchorInCell(cell.carrier(), anchors.ordered(shapes, painted), cell.origin());
@@ -5250,6 +5261,153 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         anchors.queue(shapes, painted, drawingFor);
         return !shapes.isEmpty();
+    }
+
+    /**
+     * One shape queued behind the text, in the box the page draws it in: measured down from the
+     * page's top, as {@link DocxDrawings} writes a shape's place.
+     *
+     * <p>One record per shape, not one box round a node's shapes: a box drawn as its top border
+     * alone is a line, and a box round it would be the whole empty rectangle, which a panel
+     * standing in the middle of it would then be said to cover.</p>
+     *
+     * @param subject what it is, for the report
+     * @param path    the path of the node that paints it, or null where no node of the tree does
+     * @param section the section it belongs to, whose pages are counted from its own first
+     * @param page    the page of that section it is drawn on
+     */
+    private record DrawnBehind(String subject, String path, int section, int page,
+                               double x, double top, double width, double height) {
+    }
+
+    /**
+     * A panel whose cell the export gave a fill, in the box the layout gave it, measured down from
+     * the page's top so that it stands in the frame a drawing's place is written in.
+     *
+     * <p>Taken where the fill is written rather than from the tree: whether a section, a container
+     * or a row that paints becomes a cell with shading is decided as it is written — a row's paint
+     * goes unwritten where its panel cannot hold it, and a container's where it is a band's layer
+     * or a stack's column — so the tree cannot be asked, and a panel bearing borders alone writes
+     * no shading at all.</p>
+     *
+     * @param lastPage the last page of its section the panel reaches, its first where it is
+     *                 whole on one page
+     */
+    private record ShadedPanel(String path, int section, int page, int lastPage,
+                               double x, double top, double width, double height) {
+    }
+
+    /** Keeps the box of a panel whose cell has just been given its fill. */
+    private void rememberShadedPanel(DocumentNode node) {
+        com.demcha.compose.document.layout.PlacedNode box = layout.placement(node);
+        String path = layout.pathOf(node);
+        if (box == null || path == null || Double.isNaN(canvasHeight)) {
+            return;
+        }
+        shadedPanels.add(new ShadedPanel(path, sectionIndex, box.startPage(), box.endPage(),
+                box.placementX(), canvasHeight - box.placementY() - box.placementHeight(),
+                box.placementWidth(), box.placementHeight()));
+    }
+
+    /**
+     * Keeps the box of the shapes of a set that are queued behind the text, one box per page they
+     * fall on.
+     *
+     * <p>Each shape is asked for itself rather than the call being trusted: a badge holding its
+     * initials is handed over as already in front and queued with {@code front} false, so a
+     * caller's word for it would have named a badge standing over a painted neighbour as hidden
+     * by it when the reader sees it plainly.</p>
+     */
+    private void rememberDrawnBehind(List<DocxDrawings.Shape> shapes) {
+        String subject = drawingFor == null ? "drawing" : drawingFor.subject();
+        String path = drawingFor == null ? null : drawingFor.path();
+        for (DocxDrawings.Shape shape : shapes) {
+            if (shape.front()) {
+                continue;
+            }
+            drawnBehind.add(new DrawnBehind(subject, path, sectionIndex, shape.page(),
+                    shape.x(), shape.top(), shape.width(), shape.height()));
+        }
+    }
+
+    /**
+     * Names every drawing that a painted panel standing beside it covers.
+     *
+     * <p>A shaded cell's fill is part of the text layer in both editors, and both paint it over
+     * whatever is drawn behind that layer. A drawing queued behind the text and lying in the box
+     * of a panel it does not stand inside is therefore not seen at all, however the page stacks
+     * the two. Measured on the corpus in Word 16.0.20527 and LibreOffice 24.2: the one document
+     * that holds the case, an 18pt icon laid over a card's corner through a layer stack, draws
+     * 4308 pixels of the icon's own ink at 300 dpi in the engine's PDF and none at all in either
+     * editor's — not one pixel anywhere on the page.</p>
+     *
+     * <p>A drawing standing inside the panel is another case and not this one: there the export
+     * already puts it in front where it frames no text, and says so where it does not
+     * ({@code queueDrawing}).</p>
+     *
+     * <p>Four things it does not name, each held by {@code DocxNeighbourFillGuardTest} over the
+     * corpus so that a change which widens one is seen rather than quietly shrinking what is
+     * judged. A panel the layout broke across pages, whose box is the one its first page gave it.
+     * A drawing no node of the tree paints, which has no path to place among the panels. A table
+     * cell's own shading, which belongs to a cell and not to a node with a box. And the second
+     * panel over a drawing that lies over two: one note names one panel, the drawing being just
+     * as unseen either way.</p>
+     *
+     * <p>A drawing anchored in a table cell is judged where the page draws it, which is where the
+     * export asks the editors to draw it, not where a row that has grown may carry it.</p>
+     */
+    private void nameTheDrawingsAPaintedPanelCovers() {
+        if (drawnBehind.isEmpty() || shadedPanels.isEmpty()) {
+            return;
+        }
+        // One note per drawing, whatever the shapes it is drawn from and the pages it reaches.
+        java.util.Set<String> named = new java.util.HashSet<>();
+        for (DrawnBehind shape : drawnBehind) {
+            if (shape.path() == null || named.contains(shape.path())) {
+                continue;
+            }
+            for (ShadedPanel panel : shadedPanels) {
+                if (standsInsideOrHolds(shape.path(), panel.path()) || !covers(panel, shape)) {
+                    continue;
+                }
+                named.add(shape.path());
+                report.add(DocxExportReport.Severity.APPROXIMATED, shape.subject(), shape.path(),
+                        "drawn behind the text and lying in the box of " + panel.path()
+                        + ", a panel painted beside it: both editors paint a panel's shading over "
+                        + "what is drawn behind the text, so where the two meet the drawing is "
+                        + "not seen");
+                break;
+            }
+        }
+    }
+
+    /**
+     * Whether either path is the other, or stands inside it — and so whether the drawing is the
+     * panel's own rather than a neighbour's.
+     *
+     * <p>A drawing no node of the tree paints — a pass of the layout's own, a timeline's rail —
+     * has no path to place among the panels, and is answered true: it is never judged.</p>
+     */
+    private static boolean standsInsideOrHolds(String path, String panel) {
+        return path == null || path.equals(panel)
+               || path.startsWith(panel + "/") || panel.startsWith(path + "/");
+    }
+
+    /**
+     * Whether a panel's box and a shape's share a section, a page and any area.
+     *
+     * <p>A panel the layout broke across pages is answered false: its box is the one its first
+     * page gave it, and where the rest of it lies is not something the layout says.</p>
+     */
+    private static boolean covers(ShadedPanel panel, DrawnBehind shape) {
+        if (panel.section() != shape.section() || panel.page() != panel.lastPage()
+            || shape.page() != panel.page()) {
+            return false;
+        }
+        return panel.x() < shape.x() + shape.width()
+               && shape.x() < panel.x() + panel.width()
+               && panel.top() < shape.top() + shape.height()
+               && shape.top() < panel.top() + panel.height();
     }
 
     /**
@@ -7966,6 +8124,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         java.awt.Color under = translucentFill || translucentSides ? colourUnder(node) : java.awt.Color.WHITE;
         DocumentColor fill = DocxTranslucency.flattenedFill(paint.fill(), under);
         applyCellPaint(cell, fill, null);
+        if (first && fill != null) {
+            rememberShadedPanel(node);
+        }
         // The page draws the borders over the panel's fill, centred on its edge: against the fill
         // where the panel has one, the side of them the panel holds.
         paintCellSides(cell, DocxTranslucency.flattenedBorders(paint.borders(), fill != null ? fill.color() : under));

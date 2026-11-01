@@ -117,7 +117,8 @@ class DocxComposedCellHolderTest {
 
         assertThat(report.notes()).filteredOn(note -> "cell drawing".equals(note.subject()))
                 .singleElement().extracting(DocxExportReport.Note::detail).asString()
-                .contains("anchored in the first paragraph able to carry it of the cell whose box holds it")
+                .contains("anchored in the paragraph of the cell whose box holds it that places it at the "
+                          + "smallest offset, the paragraphs whose line it stands level with or below taken first")
                 .contains("moves with that cell's row when the text above is edited");
     }
 

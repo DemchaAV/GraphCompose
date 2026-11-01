@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -41,12 +42,12 @@ import java.util.function.Supplier;
  * a timeline's rail — or whose holders write no paragraph on its page goes to the paragraph
  * nearest it there. What a table's composed cell draws has no node of its own — such a cell's
  * content is laid out under its table — so the cell found by the box the layout placed it in
- * stands for the block holding it: it goes to the first paragraph of that cell that can place it
- * ({@link #placeInItsCell}). One no cell's box holds, or whose cell's paragraphs cannot place it,
- * goes to the paragraph whose text is nearest, within {@link #REACH}, when the shape rises above
- * its top by its own height at most — in a table cell by a stroke's width at most — or else to the
- * page. The shapes wait for the section's end, since the paragraph carrying a shape may be written
- * after it.</p>
+ * stands for the block holding it: it goes to the paragraph of that cell which places it nearest
+ * and can place it, ordered as a holder's paragraphs are ({@link #placeInItsCell}). One no cell's
+ * box holds, or whose cell's paragraphs cannot place it, goes to the paragraph whose text is
+ * nearest, within {@link #REACH}, when the shape rises above its top by its own height at most —
+ * in a table cell by a stroke's width at most — or else to the page. The shapes wait for the
+ * section's end, since the paragraph carrying a shape may be written after it.</p>
  *
  * <p>A shape no paragraph on its page can carry is positioned from the page's edges, so any
  * paragraph on its page carries it to the right place — but only one on that page: an anchor
@@ -579,7 +580,7 @@ final class DocxDrawingAnchors {
     private Place placeInItsHolder(DocxDrawings.Shape shape, List<String> holders) {
         List<Seat> onItsPage = seats.getOrDefault(shape.page(), List.of());
         for (String holder : holders) {
-            for (Seat seat : asTheShapeStandsTo(shape, onItsPage, holder)) {
+            for (Seat seat : asTheShapeStandsTo(shape, onItsPage, seat -> seat.isWithin(holder))) {
                 Place place = placeHeld(seat, shape);
                 if (place != null) {
                     return place;
@@ -590,9 +591,14 @@ final class DocxDrawingAnchors {
     }
 
     /**
-     * A holder's paragraphs on a shape's page, ordered as the shape stands to them: the ones whose
-     * line it stands level with or below first, then the ones whose line is below it, and within
-     * each the one that would place it at the smallest offset.
+     * The paragraphs of a block on a shape's page, ordered as the shape stands to them: the ones
+     * whose line it stands level with or below first, then the ones whose line is below it, and
+     * within each the one that would place it at the smallest offset.
+     *
+     * <p>Which paragraphs those are is the caller's: a holder's, matched by path
+     * ({@link #placeInItsHolder}), or a composed cell's, matched by the cell holding them
+     * ({@link #placeInItsCell}). The order is the same question for both — which paragraph the
+     * shape moves with, and how far the anchor has to reach — so both ask it here.</p>
      *
      * <p>Which line the shape stands below divides them, because that is what moving with the
      * paragraph means: anchored in one written below it, a shape laid over a block's top left that
@@ -600,14 +606,14 @@ final class DocxDrawingAnchors {
      * is what the file carries and what an edit breaking the page between the two has to span. The
      * line is not what orders them: a paragraph whose line stands nearer can still place the shape
      * from further off, the top Word places from being the paragraph's and not its line's
-     * ({@link Seat#paragraphTop}), and ordering by the line placed six drawings of the fidelity
-     * corpus from 6 to 14pt further off than before. Nor is how far the shape stands across the
-     * page from the paragraph's text ({@link #distance}): a paragraph's text box is its own, not its
-     * column's, so a narrow line in the shape's own column stands further across than a wide one in
-     * the next — adding that term moved two more drawings of the corpus into another cell than
-     * leaving it out, and brought those six back.</p>
+     * ({@link Seat#paragraphTop}), and ordering by the line placed six drawings a node paints in the
+     * fidelity corpus from 6 to 14pt further off than before. Nor is how far the shape stands across
+     * the page from the paragraph's text ({@link #distance}): a paragraph's text box is its own, not
+     * its column's, so a narrow line in the shape's own column stands further across than a wide one
+     * in the next — adding that term moved two more of those drawings into another cell than leaving
+     * it out, and brought those six back.</p>
      *
-     * <p>The paragraph may therefore be one of a neighbouring cell of the same holder, which places
+     * <p>The paragraph may therefore be one of a neighbouring cell of the same block, which places
      * the shape out of that cell's column ({@link Seat#placeHeld}): its own cell takes it only from
      * the paragraph that opens that cell ({@link Seat#inTheRow}). Over the corpus that is what
      * carries a shape to the text it stands beside — a timeline's rail dots left an empty paragraph
@@ -616,13 +622,19 @@ final class DocxDrawingAnchors {
      * every one of them where they drew it before.</p>
      *
      * <p>Only readings are weighed against each other, so no reading is measured against a number.
-     * The sort is stable, so paragraphs offering the same offset keep the order the holder writes
+     * The sort is stable, so paragraphs offering the same offset keep the order the block writes
      * them in. A paragraph whose top is not known places nothing ({@link Seat#placeHeld}).</p>
+     *
+     * <p>The corpus readings above were all taken on the shapes a node paints, which is where the
+     * order first had to hold; the shapes a composed cell paints ask it too, and the corpus turns
+     * on it for none of them ({@link #placeInItsCell}). A change to this order therefore has to be
+     * measured on both, since nothing in the corpus would go red for the second.</p>
      */
-    private List<Seat> asTheShapeStandsTo(DocxDrawings.Shape shape, List<Seat> onItsPage, String holder) {
+    private List<Seat> asTheShapeStandsTo(DocxDrawings.Shape shape, List<Seat> onItsPage,
+                                          Predicate<Seat> ofTheBlock) {
         List<Seat> its = new ArrayList<>();
         for (Seat seat : onItsPage) {
-            if (seat.isWithin(holder)) {
+            if (ofTheBlock.test(seat)) {
                 its.add(seat);
             }
         }
@@ -637,9 +649,9 @@ final class DocxDrawingAnchors {
     }
 
     /**
-     * Where a shape a table's composed cell draws is anchored: in the first paragraph on its page
-     * of what the cell whose box holds it is composed of that it can be placed from, or else
-     * beside the text it stands nearest ({@link #placeBeside}).
+     * Where a shape a table's composed cell draws is anchored: in the paragraph on its page of
+     * what the cell whose box holds it is composed of that places it nearest and that it can be
+     * placed from, or else beside the text it stands nearest ({@link #placeBeside}).
      *
      * <p>Such a shape has no node of its own — a composed cell's content is laid out under its
      * table, its drawings among the table's own fragments — so the cell is found by the box the
@@ -649,15 +661,25 @@ final class DocxDrawingAnchors {
      * LibreOffice 24.2 sets a cell carrying a drawing, and the cell holding its table, from — hands
      * it back to the text nearest it, as before.</p>
      *
+     * <p>Which of the cell's paragraphs is the same question it is for a block holding a shape a
+     * node draws, and is ordered the same way ({@link #asTheShapeStandsTo}). No document of the
+     * fidelity corpus turns on it: of the 190 shapes a composed cell draws there, 165 are placed
+     * from a paragraph of their cell and each of those 165 has exactly one paragraph of its cell it
+     * can be placed from — the rest of them are set from the middle, which carries no drawing — so
+     * every one of the 165 stands within 4.39pt of the paragraph carrying it, and the order
+     * decides nothing. It decides where a cell offers two: a tile standing below the lines of both
+     * of two top-set rows composed in one cell was anchored 220pt up, in the first row's
+     * paragraph, and is anchored 20pt up, in the paragraph of the row it stands in
+     * ({@code DocxComposedCellAnchorsTest}).</p>
+     *
      * @param cell the cell holding it, or {@code null} where no cell's box holds it
      */
     private Place placeInItsCell(DocxDrawings.Shape shape, HoldingCell cell) {
         if (cell != null) {
-            for (Seat seat : seats.getOrDefault(shape.page(), List.of())) {
-                Place place = cell.holds(seat.paragraph())
-                        ? seat.placeHeld(shape, tops.computeIfAbsent(seat, taken -> taken.paragraphTop(lines)),
-                                cell.filled())
-                        : null;
+            for (Seat seat : asTheShapeStandsTo(shape, seats.getOrDefault(shape.page(), List.of()),
+                    seat -> cell.holds(seat.paragraph()))) {
+                Place place = seat.placeHeld(shape,
+                        tops.computeIfAbsent(seat, taken -> taken.paragraphTop(lines)), cell.filled());
                 if (place != null) {
                     return place;
                 }

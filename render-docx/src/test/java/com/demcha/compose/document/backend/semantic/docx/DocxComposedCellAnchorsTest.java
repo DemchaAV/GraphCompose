@@ -281,6 +281,81 @@ class DocxComposedCellAnchorsTest {
         assertThat(offsetDown(drawingsIn(composed.tileCell()).get(0))).isCloseTo(-0.31, within(0.01));
     }
 
+    @Test
+    void aDrawingBelowBothRowsLinesIsCarriedByTheRowItStandsIn() {
+        // Two service lines composed in one cell, 200pt apart, and a tile standing below both:
+        // the row it stands in carries it, 20pt down, not the first row 220pt above it. Walked in
+        // the order the cell writes its paragraphs the first row took it, and an edit above the
+        // second line then moved the line and left the tile 200pt out of it.
+        Rows rows = composedRows(new XWPFDocument());
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, rows.outside(), true);
+        anchors.seat(0, rows.first(), TABLE + "/row[0]", rows.first(), 20, 300, 100, 110);
+        anchors.seat(0, rows.second(), TABLE + "/row[1]", rows.second(), 20, 300, 300, 310);
+
+        queue(anchors, List.of(tile(2, 320)), new DocxDrawingAnchors.HoldingCell(rows.cell(), true));
+        anchors.endSection(0, null, rows.document()::createParagraph);
+
+        assertThat(drawingsIn(rows.first())).as("the row 220pt above it").isEmpty();
+        assertThat(offsetDown(drawingsIn(rows.second()).get(0))).isCloseTo(20, within(0.01));
+    }
+
+    @Test
+    void aDrawingAboveTheSecondRowsLineIsCarriedByTheFirstEvenSo() {
+        // The same two lines, the tile 1pt above the second's line: which line it stands below
+        // divides the cell's paragraphs before any of them is weighed for how near it stands, so
+        // the first row carries it, 199pt down, although the second stands 1pt away. Anchored in a
+        // line written below it the tile would move with that line, and an edit between the two
+        // would carry both away from the text the tile was drawn over — which is what the division
+        // is for.
+        Rows rows = composedRows(new XWPFDocument());
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, rows.outside(), true);
+        anchors.seat(0, rows.first(), TABLE + "/row[0]", rows.first(), 20, 300, 100, 110);
+        anchors.seat(0, rows.second(), TABLE + "/row[1]", rows.second(), 20, 300, 300, 310);
+
+        queue(anchors, List.of(tile(2, 299)), new DocxDrawingAnchors.HoldingCell(rows.cell(), true));
+        anchors.endSection(0, null, rows.document()::createParagraph);
+
+        assertThat(drawingsIn(rows.second())).as("the line it stands above").isEmpty();
+        assertThat(offsetDown(drawingsIn(rows.first()).get(0))).isCloseTo(199, within(0.01));
+    }
+
+    /**
+     * A table of one cell holding a nested table of two rows, each set to its top and holding a
+     * line's text: one composed cell offering two paragraphs a drawing can be placed from.
+     *
+     * @param document the document
+     * @param outside  a paragraph of the body, which carries what nothing else does
+     * @param first    the first row's paragraph
+     * @param second   the second row's paragraph
+     * @param cell     the composed cell itself, which holds them both
+     */
+    private record Rows(XWPFDocument document, XWPFParagraph outside, XWPFParagraph first,
+                        XWPFParagraph second, XWPFTableCell cell) {
+    }
+
+    private static Rows composedRows(XWPFDocument document) {
+        XWPFParagraph outside = text(document, "Before");
+        XWPFTable outer = document.createTable(1, 1);
+        XWPFTableCell composed = outer.getRow(0).getCell(0);
+        width(composed, 300);
+        margin(composed, 0);
+        XWPFTable inner = new XWPFTable(composed.getCTTc().addNewTbl(), composed, 2, 1);
+        composed.insertTable(composed.getTables().size(), inner);
+        XWPFTableCell first = inner.getRow(0).getCell(0);
+        XWPFTableCell second = inner.getRow(1).getCell(0);
+        width(first, 300);
+        margin(first, 0);
+        width(second, 300);
+        margin(second, 0);
+        XWPFParagraph top = first.getParagraphs().get(0);
+        top.createRun().setText("Compute Instances");
+        XWPFParagraph low = second.getParagraphs().get(0);
+        low.createRun().setText("Object Storage");
+        return new Rows(document, outside, top, low, composed);
+    }
+
     /**
      * A table of one cell holding a row of two — a tile's cell and a text cell, both set to the
      * middle, as an invoice's service lines are written — and a paragraph of the body beside it.

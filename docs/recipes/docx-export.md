@@ -99,12 +99,12 @@ body: a page an editor adds past it — Word setting the document on a line more
 typing — is painted by the header, where fills anchored in the body paint the first page alone
 and leave a sidebar CV's white text on a white page. The seven sidebar CVs of the fidelity
 corpus pay for that page with the LibreOffice shift: their lines stand 2.77 to 3.08pt low by
-the median and 3.99pt at the furthest, measured in LibreOffice 24.2, and the LibreOffice
-baselines record it. Word sets them where it set them before: no line of the seven moves by
+the median and 3.99pt at the furthest, measured in LibreOffice 24.2, and the Linux LibreOffice
+baseline records it. Word sets them where it set them before: no line of the seven moves by
 more than 0.12pt, one step of the grid Word rounds a line to, where two documents the change
 leaves byte for byte the same moved by 0.12 and 0.36pt between two runs of the same Word.
-An empty footer against the page's foot writes a bottom margin narrower than its point the
-same way. A two-column
+An empty footer against the page's foot has the bottom margin narrower than its point written
+negative in the same way the header's does. A two-column
 layout still flows its columns one after the other in Word, so a column fill can stand
 beside text that is not its column's.
 

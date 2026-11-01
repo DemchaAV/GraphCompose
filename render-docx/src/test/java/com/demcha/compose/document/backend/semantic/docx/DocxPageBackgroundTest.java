@@ -241,7 +241,27 @@ class DocxPageBackgroundTest {
             assertThat(cell).as("nothing of them in the cell").doesNotContain("Page background");
             assertThat(onlyHeader(document)._getHdrFtr().xmlText())
                     .contains("name=\"Page background 1\"").contains("layoutInCell=\"1\"")
+                    .as("the fill is the header's to place, not the body's to move")
+                    .contains("locked=\"1\"")
                     .contains("relativeFrom=\"page\"");
+        }
+    }
+
+    @Test
+    void aPageOfOneTableWhoseDrawingsItsCellsCarryIsNotOpenedWithAHairline() throws Exception {
+        // The hairline a drawing no paragraph carries would be given is not opened for one a
+        // cell's paragraph carries: a row as tall as the page has no room for it, and
+        // LibreOffice set such a row on a second page under one (see openBefore).
+        try (XWPFDocument document = export(DocumentInsets.zero(), session -> session.pageBackgrounds(List.of(
+                        PageBackgroundFill.leftColumn(0.3, CHARCOAL))),
+                page -> page.addRow("Columns", row -> row
+                        .addSection("Side", side -> side.addParagraph("Side")
+                                .addEllipse(dot -> dot.name("Dot").circle(6).fillColor(CHARCOAL)))
+                        .addSection("Main", main -> main.addParagraph("Main"))))) {
+            assertThat(document.getBodyElements().get(0)).as("the table still opens the page")
+                    .isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFTable.class);
+            assertThat(document.getTables().get(0).getRow(0).getCell(0).getCTTc().xmlText())
+                    .as("the cell's own paragraph carries the drawing").contains("<w:drawing");
         }
     }
 

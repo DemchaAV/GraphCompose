@@ -2807,8 +2807,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * own however little it holds and sets the body that much lower, so the fidelity corpus's
      * seven sidebar CVs stand 2.77 to 3.08pt low there by the median, 3.99pt at the furthest
      * line, measured in LibreOffice 24.2; that is the price of the page the editor adds, and the
-     * LibreOffice baselines and the capability matrix record it. Word moves no line of them by
-     * more than one step of its own grid.</p>
+     * Linux LibreOffice baseline and the capability matrix record it. Word moves no line of them
+     * by more than one step of its own grid.</p>
      *
      * @return whether the section now has headers carrying its backgrounds
      */
@@ -5347,10 +5347,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * the body paragraph a page laid out entirely in a table otherwise lacks.
      *
      * <p>It is opened only for a drawing no paragraph of the page carries, and not sooner: a row
-     * as tall as the page has no room for even a hairline over it, and LibreOffice set
-     * {@code MidnightNavy}'s row on a second page under one (measured 2026-10-03). No document of
-     * the fidelity corpus asks for one on such a page; a one-page section whose table fills the
-     * page and whose drawings a paragraph of it does not carry would, and would spill there.</p>
+     * as tall as the page has no room for even a hairline over it, and LibreOffice for Windows
+     * set {@code MidnightNavy}'s row on a second page under one (measured 2026-10-03, not taken
+     * again since). No document of the fidelity corpus asks for one on such a page; a one-page
+     * section whose table fills the page and whose drawings a paragraph of it does not carry
+     * would, and would spill there.</p>
      */
     private static XWPFParagraph openBefore(XWPFDocument document, XWPFTable table) {
         try (org.apache.xmlbeans.XmlCursor cursor = table.getCTTbl().newCursor()) {

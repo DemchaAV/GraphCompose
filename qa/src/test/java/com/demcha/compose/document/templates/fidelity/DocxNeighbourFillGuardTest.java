@@ -84,8 +84,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * nothing. An entry coming back is a drawing the export has gone back to losing under a
  * neighbour's fill, and this test then fails until either the export or the ledger is put right.
  * What keeps a drawing behind the text on purpose — a painted layer the page lays over it in turn,
- * a box holding a line of the flow — the export names, and the corpus holds no instance of either
- * (so the fixtures below carry the positive signal that it still can).</p>
+ * a box holding a line of the flow, another drawing of the stack that one of those keeps there —
+ * the export names, and the corpus holds no instance of the first two (so the fixtures below carry
+ * the positive signal that it still can).</p>
+ *
+ * <p>What this corpus can and cannot say is written down in numbers rather than left to a reader of
+ * empty lists: it lifts one drawing ({@link #LIFTED_IN_THE_CORPUS}) and offers no pair at all to
+ * judge the two lists of {@link #PAIRS_THE_CORPUS_OFFERS} over. Those rules are held by the
+ * fixtures of {@code DocxDrawingUnderANeighboursFillTest}, and what is held here is that the
+ * corpus has not started asking something new.</p>
  *
  * @author Artem Demchyshyn
  */
@@ -153,31 +160,57 @@ class DocxNeighbourFillGuardTest {
     /** What a drawing's note says when the export put it in front of the text. */
     private static final String IN_FRONT = "in front of the text";
 
-    /** What it says when the reason is a painted layer the page paints under the drawing. */
+    /** What it says when the reason is a layer the page paints under the drawing carrying a fill. */
     private static final String LIFTED_OVER_A_NEIGHBOUR =
-            "in front of the text, since the shading of a panel the page paints under it";
+            "in front of the text, since a layer the page paints under it carries a fill";
 
     /**
      * Drawings the export lifted in front of the text whose box lies in a painted panel the page
-     * paints <em>after</em> them. Empty: there being in front is the same loss the other way round
-     * — the drawing would be painted over that panel's shading — so the export keeps such a
-     * drawing behind, and this is where a change that stopped doing so would show.
+     * paints <em>after</em> them. Empty, and empty for want of a pair rather than for want of a
+     * fault: see {@link #PAIRS_THE_CORPUS_OFFERS}.
      */
     private static final List<String> LIFTED_UNDER_A_LATER_PANEL = List.of();
 
     /**
-     * Drawings the export lifted in front whose place in the paint order this test cannot read,
-     * the page painting no fragment under their own path. Empty today.
+     * Drawings the export lifted in front, and panels, whose place in the paint order this test
+     * cannot read, the page painting no fragment under their own path. Empty today: a pair that
+     * cannot be judged would otherwise be a pair quietly not judged.
      */
-    private static final List<String> LIFTED_UNPLACEABLE = List.of();
+    private static final List<String> UNPLACEABLE = List.of();
+
+    /**
+     * Drawings the export lifted in front of the text that lie over a drawing left behind which
+     * the page paints after them — where the file would invert the two, Word drawing every shape
+     * in front over every shape behind. Empty, and empty for want of a pair rather than for want
+     * of a fault: see {@link #PAIRS_THE_CORPUS_OFFERS}.
+     */
+    private static final List<String> LIFTED_OVER_A_LATER_DRAWING = List.of();
+
+    /**
+     * How many (lifted drawing, later panel or drawing) pairs the two lists above are judged over.
+     *
+     * <p><strong>Zero.</strong> Measured, and said out loud rather than left for a reader to take
+     * the two empty lists for a clean corpus: of the drawings the export lifts here, not one has a
+     * painted panel or a drawing left behind that the page paints after it, so neither list can
+     * have anything in it whatever the export does. The rules those lists stand for are held by
+     * the unit fixtures written for them in {@code DocxDrawingUnderANeighboursFillTest}; the
+     * number is asserted exactly so that a corpus which starts offering a pair is seen here
+     * instead of quietly making the lists mean something new.</p>
+     */
+    private static final int PAIRS_THE_CORPUS_OFFERS = 0;
 
     /**
      * The drawings of the corpus the export lifts in front of the text over a painted layer under
-     * them — 38 today, in two documents. A floor, and well under it, so that an export which
-     * stopped lifting them is seen here rather than leaving a corpus with nothing to judge and
-     * every list above still empty.
+     * them.
+     *
+     * <p><strong>One:</strong> the icon over the card, the case this was measured on. Asserted
+     * exactly rather than as a floor, so that a corpus which starts lifting more — or stops
+     * lifting this one — is seen here. The seventy other documents lift nothing: thirty-seven
+     * drawings of {@code cv-sidebar_portrait} stand over its painted sidebar, but one of them
+     * frames the photo it rings, and the stack's order is taken whole or not at all, so none of
+     * them is lifted and that document is byte for byte what the export wrote before.</p>
      */
-    private static final int AT_LEAST_THIS_MANY_LIFTED = 30;
+    private static final int LIFTED_IN_THE_CORPUS = 1;
 
     @Test
     void everyDrawingUnderANeighboursFillIsLedgered() throws Exception {
@@ -189,10 +222,12 @@ class DocxNeighbourFillGuardTest {
         List<String> unjudged = new ArrayList<>();
         List<String> acrossPages = new ArrayList<>();
         List<String> liftedUnderALater = new ArrayList<>();
-        List<String> liftedUnplaceable = new ArrayList<>();
+        List<String> liftedOverALater = new ArrayList<>();
+        List<String> unplaceable = new ArrayList<>();
         List<String> stems = new ArrayList<>();
         int drawings = 0;
         int lifted = 0;
+        int pairs = 0;
         for (DocxCorpusDocument document : DocxFidelityCorpusTest.corpus()) {
             AtomicReference<DocxExportReport> report = new AtomicReference<>();
             Scan scan;
@@ -205,8 +240,10 @@ class DocxNeighbourFillGuardTest {
             stems.add(document.stem());
             drawings += scan.drawings();
             lifted += scan.lifted();
+            pairs += scan.pairs();
             scan.liftedUnderALater().forEach(one -> liftedUnderALater.add(document.stem() + ": " + one));
-            scan.liftedUnplaceable().forEach(one -> liftedUnplaceable.add(document.stem() + ": " + one));
+            scan.liftedOverALater().forEach(one -> liftedOverALater.add(document.stem() + ": " + one));
+            scan.unplaceable().forEach(one -> unplaceable.add(document.stem() + ": " + one));
             scan.panelsAcrossPages().forEach(panel -> acrossPages.add(document.stem() + ": " + panel));
             scan.unjudged().forEach(path -> unjudged.add(document.stem() + ": " + path));
             scan.unclassified().forEach(note -> unclassified.add(document.stem() + ": " + note));
@@ -265,14 +302,22 @@ class DocxNeighbourFillGuardTest {
                 .isEqualTo(new TreeMap<>(UNDER_A_NEIGHBOURS_FILL));
         assertThat(lifted).as("the drawings the export lifts in front over a painted layer under "
                              + "them, which the two lists below are judged over")
-                .isGreaterThanOrEqualTo(AT_LEAST_THIS_MANY_LIFTED);
-        assertThat(liftedUnplaceable)
-                .as("every lifted drawing has a place in the page's paint order to judge by")
-                .isEqualTo(LIFTED_UNPLACEABLE);
+                .isEqualTo(LIFTED_IN_THE_CORPUS);
+        assertThat(unplaceable.stream().distinct().sorted().toList())
+                .as("every lifted drawing, and everything judged against one, has a place in the "
+                    + "page's paint order to judge by")
+                .isEqualTo(UNPLACEABLE);
+        assertThat(pairs).as("the pairs the two lists below are judged over: nothing found means "
+                             + "nothing only where something was looked at, and here nothing is")
+                .isEqualTo(PAIRS_THE_CORPUS_OFFERS);
         assertThat(liftedUnderALater.stream().sorted().toList())
                 .as("no drawing is lifted in front of a painted panel the page paints after it, "
                     + "where in front is the same loss the other way round")
                 .isEqualTo(LIFTED_UNDER_A_LATER_PANEL);
+        assertThat(liftedOverALater.stream().sorted().toList())
+                .as("no drawing is lifted over a drawing left behind that the page paints after "
+                    + "it, which the file would invert")
+                .isEqualTo(LIFTED_OVER_A_LATER_DRAWING);
     }
 
     @Test
@@ -332,11 +377,10 @@ class DocxNeighbourFillGuardTest {
                 .as("nothing covers the pin, so nothing is named for it")
                 .noneMatch(note -> note.detail() != null && note.detail().contains(COVERED));
         assertThat(report.get().notes())
-                .as("and the export says it stands in front because of the panel under it")
+                .as("and the export says it stands in front because of the layer under it")
                 .anyMatch(note -> note.path() != null && note.path().contains("Pin")
                                   && note.detail() != null
-                                  && note.detail().contains("in front of the text, since the shading of "
-                                                            + "a panel the page paints under it"));
+                                  && note.detail().contains(LIFTED_OVER_A_NEIGHBOUR));
     }
 
     /**
@@ -347,13 +391,19 @@ class DocxNeighbourFillGuardTest {
      * @param liftedUnderALater the ones of those whose box lies in a painted panel the page paints
      *                         <em>after</em> them, where being in front is the loss the other way
      *                         round
-     * @param liftedUnplaceable the ones the page paints no fragment of under their own path, so
-     *                         that their place in the paint order cannot be read
+     * @param liftedOverALater  the ones lying over a drawing left behind that the page paints
+     *                         after them, where the file inverts the two
+     * @param unplaceable      the drawings and panels the page paints no fragment of under their
+     *                         own path, so that their place in the paint order cannot be read
+     * @param pairs            how many (lifted, later thing) pairs the two lists above were
+     *                         judged over: nothing found means nothing only if something was
+     *                         looked at
      */
     private record Scan(int drawings, List<String> panelsAcrossPages, List<String> covered,
                         List<String> unjudged, List<String> unclassified,
                         Map<String, PlacedNode> placed, List<String> panels,
-                        int lifted, List<String> liftedUnderALater, List<String> liftedUnplaceable) {
+                        int lifted, List<String> liftedUnderALater, List<String> liftedOverALater,
+                        List<String> unplaceable, int pairs) {
     }
 
     /** Whether a path's box lies in the box of a painted panel it does not stand inside. */
@@ -461,31 +511,56 @@ class DocxNeighbourFillGuardTest {
                 }
             }
         }
-        // The other way round. A drawing the export lifted in front is painted over everything of
-        // the text layer, a panel's shading included, so a painted panel the page paints AFTER it
-        // must not lie under it: there the page covers the drawing, and in front the drawing
-        // covers the panel. Judged on the page's own paint order and this test's own geometry.
+        // The other way round, twice. A drawing the export lifted in front is painted over
+        // everything of the text layer and over every drawing left behind it, so two things must
+        // not lie under it: a painted panel the page paints AFTER it, whose shading the drawing
+        // would cover instead of being covered by, and a drawing left behind that the page paints
+        // after it, whose place over it the file would invert. Judged on the page's own paint
+        // order and this test's own geometry, pair by pair, with the pairs counted so that
+        // "nothing found" cannot mean "nothing looked at".
         List<String> liftedUnderALater = new ArrayList<>();
-        List<String> liftedUnplaceable = new ArrayList<>();
+        List<String> liftedOverALater = new ArrayList<>();
+        List<String> unplaceable = new ArrayList<>();
+        int pairs = 0;
         for (String drawing : lifted) {
             Integer drawnAt = paintedAt.get(drawing);
             if (drawnAt == null) {
-                liftedUnplaceable.add(drawing);
+                unplaceable.add("lifted " + drawing);
                 continue;
             }
             for (String panel : panels) {
                 Integer panelAt = paintedAt.get(panel);
-                if (panelAt == null || panelAt <= drawnAt || panel.startsWith(drawing + "/")) {
+                if (panelAt == null) {
+                    unplaceable.add("panel " + panel);
                     continue;
                 }
+                if (panelAt <= drawnAt || panel.startsWith(drawing + "/")
+                    || drawing.startsWith(panel + "/")) {
+                    continue;
+                }
+                pairs++;
                 if (overlaps(placed.get(drawing), placed.get(panel))) {
                     liftedUnderALater.add(drawing + " under " + panel);
-                    break;
+                }
+            }
+            for (String other : behind) {
+                Integer otherAt = paintedAt.get(other);
+                if (otherAt == null) {
+                    unplaceable.add("behind " + other);
+                    continue;
+                }
+                if (otherAt <= drawnAt || other.startsWith(drawing + "/")
+                    || drawing.startsWith(other + "/")) {
+                    continue;
+                }
+                pairs++;
+                if (overlaps(placed.get(drawing), placed.get(other))) {
+                    liftedOverALater.add(drawing + " over " + other);
                 }
             }
         }
         return new Scan(asShapes.size(), acrossPages, covered, unjudged, unclassified, placed, panels,
-                lifted.size(), liftedUnderALater, liftedUnplaceable);
+                lifted.size(), liftedUnderALater, liftedOverALater, unplaceable, pairs);
     }
 
     /** Whether two boxes stand on one page and share any area. */

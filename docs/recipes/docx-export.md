@@ -1257,36 +1257,44 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   whatever their z-index.
   A panel's shading is part of the text layer, so it is painted over every
   drawing behind that layer — including one that belongs to a *neighbour* of
-  the panel rather than to the panel itself. A drawing on a layer above a
-  painted layer beside it, an icon laid over a card's corner among them, is
-  covered by that card wherever the two boxes meet, in Word and in
-  LibreOffice alike, however the page stacks them: measured at 300 dpi, an
-  18pt icon over a card draws 4308 pixels of its ink in the engine's PDF and
-  none at all in either editor's. So the stack's order is carried into the
+  the panel rather than to the panel itself. A drawing left behind the text
+  on a layer above a painted layer beside it, an icon laid over a card's
+  corner among them, was covered by that card wherever the two boxes met,
+  in Word and in LibreOffice alike, however the page stacked them: measured
+  at 300 dpi, an 18pt icon over a card drew 4308 pixels of its ink in the
+  engine's PDF and none at all in either editor's. So the stack's order is
+  carried into the
   document: a shape a node paints itself, standing on a layer the page
   paints after a painted layer of an overlay it stands in — by z-index, the
   layers sharing one in the order they were given — is drawn in front of
   the text, where no shading reaches it. The order is the tree's, not the
   geometry's: such a shape stands in front whether the two boxes meet or
   not. A neighbour counts as painted where it, or anything it holds,
-  carries a fill in the tree. That is wider than what the export actually
-  shades — whether a node that paints becomes a cell with shading is
-  decided as it is written, and the tree cannot be asked — and wider is
-  the safe way round, a neighbour that writes no shading only lifting a
-  shape nothing would have covered. A node bearing borders alone carries no
-  fill and is not counted; a shape container's own fill is not either,
-  being a drawing rather than a cell, though a fill inside it is.
-  Three things leave such a drawing behind the text, and the report names
-  what the neighbour's shading then takes of it. A painted layer the page
-  lays over the drawing in turn: there the drawing belongs under that
+  carries a fill in the tree — wider than what the export shades in one
+  direction and narrower in another, both deliberately. Wider, because
+  whether a node that paints becomes a cell with shading is decided as it
+  is written and the tree cannot be asked: a neighbour counted that writes
+  no shading only lifts a shape nothing would have covered. Narrower,
+  because a shape container's own fill is not counted, being usually drawn
+  rather than written as a cell — where one is written as a cell, holding
+  text, a shape above it is still covered, and named. A node bearing
+  borders alone carries no fill and is not counted at all; a fill inside
+  either of those is.
+  Four things leave such a drawing behind the text. A painted layer the
+  page lays over the drawing in turn: there the drawing belongs under that
   layer's shading, and in front it would cover the shading instead — the
   same loss the other way round. A drawing whose box holds a line of the
   flow or a picture, which in front it would cover, as inside a painted
-  panel. And a drawing that is not a shape a node paints itself: a picture
+  panel. Another drawing over the same painted layer that has to stay
+  behind for either of those reasons: the stack's order is kept whole, or
+  not taken at all, since Word draws every shape in front over every shape
+  behind, and lifting one of them alone would put the lower of two over the
+  higher. And a drawing that is not a shape a node paints itself: a picture
   drawn where the page puts it and a pass of the layout's own, a timeline's
-  rail, are not asked the question, so over a painted neighbour they stay
-  behind and are named there. The note names the drawing and one panel that
-  covers it, and in a document of several sections the section the loss is
+  rail, are not asked the question at all.
+  The report names a drawing left behind wherever a panel it wrote a fill
+  for lies under it, naming the drawing and one such panel, and in a
+  document of several sections the section the loss is
   in. Five cases it names nothing for: a drawing under a panel the layout
   breaks across pages, whose box is the one its first page gave it; one
   under a panel composed in an authored table cell, which the layout gives

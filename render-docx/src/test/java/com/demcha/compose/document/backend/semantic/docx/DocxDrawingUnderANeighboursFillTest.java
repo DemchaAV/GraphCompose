@@ -72,8 +72,8 @@ class DocxDrawingUnderANeighboursFillTest {
                 .as("nothing to name: the pin is not behind the text at all")
                 .isEmpty();
         assertThat(detailsOf(export.report(), "/Pin"))
-                .anySatisfy(detail -> assertThat(detail).contains("in front of the text, since the shading of "
-                                                                 + "a panel the page paints under it"));
+                .anySatisfy(detail -> assertThat(detail).contains(
+                        "in front of the text, since a layer the page paints under it carries a fill"));
     }
 
     @Test
@@ -174,6 +174,96 @@ class DocxDrawingUnderANeighboursFillTest {
         assertThat(pinAnchor(export)).contains("behindDoc=\"1\"");
         assertThat(covered(export.report())).singleElement().asString()
                 .contains("Pin").contains("Band[0]").contains(COVERED);
+    }
+
+    @Test
+    void aStackWhoseUpperShapeMustStayBehindKeepsEveryShapeOfItThere() throws Exception {
+        // Two shapes over one painted band: the lower clear of the band's line of text, the upper
+        // holding it. Word draws every shape in front over every shape behind, so lifting the
+        // lower one alone would draw it over the upper one, which the page draws over it — the
+        // loss this rule fixes, made worse. The stack's order is kept whole: neither is lifted,
+        // and the panel beside them is named for both.
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Stack")
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .position(new ShapeBuilder().name("Pin").size(30, 14).fillColor(ACCENT).build(),
+                                150, 2, LayerAlign.TOP_LEFT, 1)
+                        .position(new ShapeBuilder().name("Over").size(190, 30).fillColor(OVER).build(),
+                                2, 0, LayerAlign.TOP_LEFT, 2)
+                        .build())));
+
+        assertThat(pinAnchor(export))
+                .as("the lower shape stays behind with the upper one, not over it")
+                .contains("behindDoc=\"1\"");
+        assertThat(covered(export.report()))
+                .as("both named as covered by the band, since both are behind the text")
+                .hasSize(2);
+    }
+
+    @Test
+    void aShapeDeclaredBeforeAPaintedLayerOfTheSameZIndexStaysBehindIt() throws Exception {
+        // Layers sharing a z-index are painted in the order they were given, so the band declared
+        // after the pin is painted over it: the page covers the pin, and in front the pin would
+        // cover the band's shading instead.
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Stack")
+                        .position(new ShapeBuilder().name("Pin").size(30, 14).fillColor(ACCENT).build(),
+                                150, 2, LayerAlign.TOP_LEFT, 0)
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .build())));
+
+        assertThat(pinAnchor(export)).contains("behindDoc=\"1\"");
+        assertThat(covered(export.report())).singleElement().asString()
+                .contains("Pin").contains("Band").contains(COVERED);
+    }
+
+    @Test
+    void aShapeDeclaredAfterAPaintedLayerOfTheSameZIndexStandsInFrontOfIt() throws Exception {
+        // The same two layers the other way round, both still at z-index 0: the band is painted
+        // first, so the pin stands over it and goes in front. This and the test above are the pair
+        // that pins the tie — the sort is stable, and which way it falls is the order given.
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Stack")
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .position(new ShapeBuilder().name("Pin").size(30, 14).fillColor(ACCENT).build(),
+                                150, 2, LayerAlign.TOP_LEFT, 0)
+                        .build())));
+
+        assertThat(pinAnchor(export)).contains("behindDoc=\"0\"");
+        assertThat(covered(export.report())).isEmpty();
+    }
+
+    @Test
+    void aPictureOverAPaintedNeighbourStaysBehindItAndIsNamed() throws Exception {
+        // A picture drawn where the page puts it is not asked the question — only the shapes a
+        // node paints itself are — so over a painted neighbour it is still covered. Not silently:
+        // the naming pass names it where it stands. Written down as a test rather than as a
+        // sentence in the docs, which is all it was.
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Stack")
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .position(new ShapeContainerBuilder().name("Frame").circle(40)
+                                        .fillColor(ACCENT)
+                                        .center(new com.demcha.compose.document.dsl.ImageBuilder()
+                                                .name("Photo").source(pngBytes()).size(36, 36).build())
+                                        .build(),
+                                150, 2, LayerAlign.TOP_LEFT, 1)
+                        .build())));
+
+        assertThat(detailsOf(export.report(), "/Photo"))
+                .as("the picture is drawn where the page puts it, which is the path in question")
+                .isNotEmpty();
+        assertThat(covered(export.report()))
+                .as("the picture over the band, named as covered by it")
+                .anySatisfy(named -> assertThat(named).contains("Photo").contains("Band[0]"));
     }
 
     @Test
@@ -346,6 +436,17 @@ class DocxDrawingUnderANeighboursFillTest {
 
     /** What one export gives: the file, to read the anchors out of, and the report. */
     private record Export(byte[] bytes, DocxExportReport report) {
+    }
+
+    private static byte[] pngBytes() {
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(
+                    new java.awt.image.BufferedImage(40, 40, java.awt.image.BufferedImage.TYPE_INT_RGB),
+                    "png", out);
+            return out.toByteArray();
+        } catch (Exception failure) {
+            throw new IllegalStateException(failure);
+        }
     }
 
     private static Export export(Consumer<DocumentSession> content) throws Exception {

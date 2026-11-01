@@ -24,24 +24,29 @@ follow semantic versioning; release dates are ISO 8601.
     overlay it stands in, now stands in front of the text, where no shading reaches it. The order is
     the tree's — by z-index, the layers sharing one in the order they were given — and not the
     geometry's: such a shape stands in front whether the two boxes meet or not. A neighbour counts
-    as painted where it, or anything it holds, carries a fill in the tree. That is wider than what
-    the export actually shades, since whether a node that paints becomes a cell with shading is
-    decided as it is written and the tree cannot be asked, and wider is the safe way round: a
-    neighbour counted that writes no shading only lifts a shape nothing would have covered. A node
-    bearing borders alone carries no fill and is not counted, and a shape container's own fill is
-    not either, being a drawing rather than a cell — though a fill inside it is.
-  - Three things leave such a drawing behind the text, and the report carries an `APPROXIMATED` note
-    naming it and one panel that covers it. A painted layer the page lays over the drawing in turn:
-    there it belongs under that layer's shading, and in front it would cover the shading instead —
-    the same loss the other way round. A drawing whose box holds a line of the flow or a picture,
-    which in front it would cover, as inside a painted panel. And a drawing that is no shape of a
-    node's own: a picture drawn where the page puts it, and a pass of the layout's own such as a
-    timeline's rail, are not asked the question, and over a painted neighbour they stay behind and
-    are named there — the corpus holds no instance of either. The panels the note is taken from are
-    those the export writes a fill for, not the tree's, so a row written as a panel is named and a
-    panel bearing borders alone is not; a drawing and a panel are only ever judged against each
-    other within one section, whose pages are counted from its own first and whose page height is
-    its own, and a document of several sections names the section each loss is in.
+    as painted where it, or anything it holds, carries a fill in the tree — wider than what the
+    export shades in one direction and narrower in another, both deliberately. Wider, because
+    whether a node that paints becomes a cell with shading is decided as it is written and the tree
+    cannot be asked: a neighbour counted that writes no shading only lifts a shape nothing would
+    have covered. Narrower, because a shape container's own fill is not counted, being usually drawn
+    rather than written as a cell — where one is written as a cell, holding text, a shape above it
+    is still covered, and named. A node bearing borders alone carries no fill and is not counted at
+    all; a fill inside either of those is.
+  - Four things leave such a drawing behind the text. A painted layer the page lays over the drawing
+    in turn: there it belongs under that layer's shading, and in front it would cover the shading
+    instead — the same loss the other way round. A drawing whose box holds a line of the flow or a
+    picture, which in front it would cover, as inside a painted panel. Another drawing over the same
+    painted layer that has to stay behind for either of those reasons: the stack's order is kept
+    whole or not taken at all, since Word draws every shape in front over every shape behind, and
+    lifting one of them alone would put the lower of two over the higher. And a drawing that is no
+    shape of a node's own: a picture drawn where the page puts it, and a pass of the layout's own
+    such as a timeline's rail, are not asked the question at all.
+  - The report carries an `APPROXIMATED` note for a drawing left behind wherever a panel it wrote a
+    fill for lies under it, naming the drawing and one such panel. The panels are those the export
+    writes a fill for, not the tree's, so a row written as a panel is named and a panel bearing
+    borders alone is not; a drawing and a panel are only ever judged against each other within one
+    section, whose pages are counted from its own first and whose page height is its own, and a
+    document of several sections names the section each loss is in.
   - What it does not name is written out in the recipe and in the guard rather than left to be
     discovered: a panel the layout breaks across pages, whose box is the one its first page gave
     it — the guard holds those four by name, so a fifth is seen; a panel composed in an authored
@@ -57,6 +62,21 @@ follow semantic versioning; release dates are ISO 8601.
     plainly sees as well: the same fixture with its panel unpainted keeps its anchor's
     `behindDoc="1"` while showing all 3237 pixels of its shape in Word. It fails closed on two
     fixtures of its own, one that must come back named and one that must come back in front.
+  - Taking the order whole has a price, and it is worth knowing where it falls: a stack in which one
+    drawing has to stay behind keeps all of them there, so the order is not carried for it at all.
+    Of the 71-document fidelity corpus, one document changes — the one that holds the case — and the
+    other seventy are byte for byte what the export wrote before. `cv-sidebar_portrait` is among
+    them: thirty-seven of its drawings stand over its painted sidebar, one of them frames the photo
+    it rings, and so none is lifted. Word and LibreOffice draw that page identically either way, 0
+    of 3,868,706 pixels differing at 200 dpi in each, but that is a measurement of that preset and
+    not a promise about the rule. Over the changed corpus `drawings-follow-text` re-measures in Word
+    16.0.20527 at 309 of 325 drawings following their text, 95.08% — the same two counts as before.
+  - In LibreOffice 24.2 a shape anchored in a table cell stands the cell's left padding to the right
+    of where Word and the page put it, so the icon that was drawn nowhere at all is now drawn whole
+    and that far across: measured 14.16pt on the lifted icon, and 14.40pt right with 13.92pt low on
+    the same icon left behind the text by a bordered rather than filled card, Word being within
+    0.24pt of the page in both. The fidelity gate reads lines of text, so this is recorded here and
+    in the capability matrix rather than caught by it.
 - **A DOCX export asks the same order of a composed cell's paragraphs as of a block's, so a drawing
   a table's cell draws is anchored in the paragraph of that cell which places it nearest rather than
   in the first one the cell writes.**

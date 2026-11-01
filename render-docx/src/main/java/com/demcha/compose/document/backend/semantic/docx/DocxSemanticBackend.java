@@ -5345,13 +5345,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * already puts it in front where it frames no text, and says so where it does not
      * ({@code queueDrawing}).</p>
      *
-     * <p>Four things it does not name, each held by {@code DocxNeighbourFillGuardTest} over the
-     * corpus so that a change which widens one is seen rather than quietly shrinking what is
-     * judged. A panel the layout broke across pages, whose box is the one its first page gave it.
-     * A drawing no node of the tree paints, which has no path to place among the panels. A table
-     * cell's own shading, which belongs to a cell and not to a node with a box. And the second
-     * panel over a drawing that lies over two: one note names one panel, the drawing being just
-     * as unseen either way.</p>
+     * <p>Five things it does not name. A panel the layout broke across pages, whose box is the
+     * one its first page gave it — {@code DocxNeighbourFillGuardTest} holds those by name, so
+     * that a change which breaks another is seen rather than quietly shrinking what is judged.
+     * A panel composed in an authored table cell, which the layout gives no box of its own
+     * ({@code rememberShadedPanel} returns on that), and a table cell's own shading, which
+     * belongs to a cell and not to a node at all. A cell's paint that the table draws itself
+     * ({@code drawCellDrawing}), which goes to the anchors without passing this way. And the
+     * second panel over a drawing that lies over two: one note names one panel, the drawing
+     * being just as unseen either way.</p>
      *
      * <p>A drawing anchored in a table cell is judged where the page draws it, which is where the
      * export asks the editors to draw it, not where a row that has grown may carry it.</p>
@@ -5360,19 +5362,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (drawnBehind.isEmpty() || shadedPanels.isEmpty()) {
             return;
         }
-        // One note per drawing, whatever the shapes it is drawn from and the pages it reaches.
+        // One note per drawing of a section, whatever the shapes it is drawn from and the pages
+        // it reaches. Keyed on the section as well as the path: each section's paths are built
+        // from its own roots, so two sections of the same preset give their drawings one path,
+        // and keying on the path alone would name the first section's loss and hide the rest.
         java.util.Set<String> named = new java.util.HashSet<>();
         for (DrawnBehind shape : drawnBehind) {
-            if (shape.path() == null || named.contains(shape.path())) {
+            String already = shape.section() + " " + shape.path();
+            if (shape.path() == null || named.contains(already)) {
                 continue;
             }
             for (ShadedPanel panel : shadedPanels) {
                 if (standsInsideOrHolds(shape.path(), panel.path()) || !covers(panel, shape)) {
                     continue;
                 }
-                named.add(shape.path());
+                named.add(already);
+                String where = sectioned ? " of section " + (shape.section() + 1) : "";
                 report.add(DocxExportReport.Severity.APPROXIMATED, shape.subject(), shape.path(),
-                        "drawn behind the text and lying in the box of " + panel.path()
+                        "drawn behind the text and lying in the box of " + panel.path() + where
                         + ", a panel painted beside it: both editors paint a panel's shading over "
                         + "what is drawn behind the text, so where the two meet the drawing is "
                         + "not seen");
@@ -5385,8 +5392,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Whether either path is the other, or stands inside it — and so whether the drawing is the
      * panel's own rather than a neighbour's.
      *
-     * <p>A drawing no node of the tree paints — a pass of the layout's own, a timeline's rail —
-     * has no path to place among the panels, and is answered true: it is never judged.</p>
+     * <p>A drawing whose path the tree does not give at all is answered true, and so is never
+     * judged: with no path there is nothing to place among the panels. A pass of the layout's
+     * own is not that — a timeline's rail is drawn under the path the pass carries, and is
+     * judged against the panels like any other drawing.</p>
      */
     private static boolean standsInsideOrHolds(String path, String panel) {
         return path == null || path.equals(panel)

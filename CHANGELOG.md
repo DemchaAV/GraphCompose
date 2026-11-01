@@ -8,8 +8,8 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
-- **A DOCX export names every drawing that a painted panel standing beside it covers, rather than
-  losing it in silence.**
+- **A DOCX export names the drawings that a painted panel standing beside them covers, rather than
+  losing them in silence.**
   - A panel is written as a shaded cell, and a cell's fill belongs to the text layer, which both
     editors paint over everything drawn behind that layer — a drawing on a layer *above* the panel
     included. A layer stack's z-index therefore does not lift a drawing clear of a painted
@@ -24,11 +24,15 @@ follow semantic versioning; release dates are ISO 8601.
     tree: whether a section, a container or a row that paints becomes a cell with shading is
     decided as it is written, so a panel bearing borders alone is not named and a row written as a
     panel is. A drawing and a panel are only ever judged against each other within one section,
-    whose pages are counted from its own first and whose page height is its own. Three cases are
-    not named, and the guard holds each of them so that none is a silence: a panel the layout
-    breaks across pages, whose box is the one its first page gave it; a drawing no node of the
-    tree paints; and a table cell's own shading, which belongs to a cell rather than to a node
-    with a box. No document of the corpus changes: the note states what the bytes already were.
+    whose pages are counted from its own first and whose page height is its own, and a document
+    of several sections names the section each loss is in.
+  - What it does not name is written out in the recipe and in the guard rather than left to be
+    discovered: a panel the layout breaks across pages, whose box is the one its first page gave
+    it — the guard holds those four by name, so a fifth is seen; a panel composed in an authored
+    table cell, which the layout gives no box of its own; a table cell's own shading, which
+    belongs to a cell rather than to a node; a cell's paint the table draws itself; and the
+    second panel over a drawing that lies over two, one note naming one panel.
+  - No document of the corpus changes: the note states what the bytes already were.
   - A drawing standing *inside* a painted panel is a different case with a note of its own, and
     the export already puts such a drawing in front wherever it frames no text of the flow.
     Measured the same way, that case has no instance in the corpus at all — its branch is taken 55

@@ -1264,11 +1264,14 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   18pt icon over a card draws 4308 pixels of its ink in the engine's PDF and
   none at all in either editor's. Until a stack's order is carried into the
   document, the report names such a drawing and one panel that covers it, so
-  the loss is stated rather than silent. Three it does not name: a drawing
-  under a panel the layout breaks across pages, whose box is the one its
-  first page gave it; one no node of the tree paints, such as a timeline's
-  rail; and a drawing covered by a table cell's own shading, which belongs
-  to a cell rather than to a node with a box.
+  the loss is stated rather than silent, and in a document of several
+  sections it names the section the loss is in. Five it does not name: a
+  drawing under a panel the layout breaks across pages, whose box is the one
+  its first page gave it; one under a panel composed in an authored table
+  cell, which the layout gives no box of its own; one under a table cell's
+  own shading, which belongs to a cell rather than to a node; a cell's paint
+  the table draws itself; and the second panel over a drawing lying over
+  two, one note naming one panel.
   The report names the clip — a shape container's, and a layer
   stack's that clips to its bounds — wherever it cuts what the layers paint:
   a square tile's corners in a disc, a label run past its chip, an ornament

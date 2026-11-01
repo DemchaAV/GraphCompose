@@ -173,6 +173,25 @@ class DocxDrawingUnderANeighboursFillTest {
                 .anySatisfy(named -> assertThat(named).contains("Pin two").contains("Band two"));
     }
 
+    @Test
+    void twoSectionsOfOnePresetAreEachNamed() throws Exception {
+        // Each section's paths are built from its own roots, so two sections of the same preset
+        // give their drawing one and the same path. Named once per section, not once per path:
+        // the second section's loss is as real as the first's, and a reader of the report is
+        // told which section each is in.
+        List<DocxExportReport.Note> notes = exportSections(
+                page -> page.add(stack("Band", "Pin")),
+                page -> page.add(stack("Band", "Pin")));
+
+        List<String> covered = notes.stream()
+                .filter(note -> note.detail() != null && note.detail().contains(COVERED))
+                .map(DocxExportReport.Note::detail).toList();
+        assertThat(covered).as("one note for each section, each naming its own")
+                .hasSize(2)
+                .anySatisfy(detail -> assertThat(detail).contains("of section 1"))
+                .anySatisfy(detail -> assertThat(detail).contains("of section 2"));
+    }
+
     /** A band painted on the lower layer with a pin set over it on the layer above. */
     private static com.demcha.compose.document.node.DocumentNode stack(String band, String pin) {
         return new LayerStackBuilder().name("Stack")

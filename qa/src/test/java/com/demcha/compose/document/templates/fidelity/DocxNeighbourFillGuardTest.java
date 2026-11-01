@@ -48,13 +48,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * decides is whether a painted box lies over the drawing's, so that is what this test computes,
  * from the boxes the layout gave the nodes.</p>
  *
- * <p>It then holds the export's report to the same answer, in the one direction where the two are
- * bound to agree. The export judges the box of the ink it writes; this test judges the box the
- * layout gave the node that paints it, which holds that ink. So everything the export names this
- * test must find, and {@link #everyDrawingUnderANeighboursFillIsLedgered} asserts exactly that. The
- * other way round is not an identity but a difference worth seeing — a node whose box is larger
- * than its ink, a stroke that reaches past it — so what this test finds and the export does not is
- * held in a list of its own ({@link #SEEN_BY_THE_SCAN_ALONE}), empty today.</p>
+ * <p>It then holds the export's report to the same answer, each drawing checked on its own. The
+ * export judges the box of the ink it writes; this test judges the box the layout gave the node
+ * that paints it, which holds that ink. So a drawing the export names must come back, in this
+ * test's own geometry, lying under some painted panel it does not stand inside — and where this
+ * test cannot place it at all, it says so in {@link #NAMED_BUT_UNPLACEABLE} rather than calling it
+ * a disagreement. The other way round is not an identity but a difference worth seeing — a node
+ * whose box is larger than its ink, a stroke that reaches past it — so what this test finds and
+ * the export does not is held in {@link #SEEN_BY_THE_SCAN_ALONE}, empty today.</p>
  *
  * <p>It fails closed, on positive signals rather than on the absence of a complaint. A fixture
  * built for the case must come back named, so a detector that stops seeing its target fails here
@@ -62,15 +63,19 @@ import static org.assertj.core.api.Assertions.assertThat;
  * corpus must come back with its documents laid out and with the hundreds of drawings it paints.
  * A note that says a shape was drawn and that this test cannot classify is a failure rather than a
  * silence: the export has four notes whose wording begins that way and only two of them are a
- * drawing's, so a fifth would otherwise be read as a drawing behind the text and judged as one.
- * And a painted panel the layout broke across pages is named rather than skipped in silence: its
- * box is the one its first page gave it, so no overlap can be judged against it, and a change that
- * starts breaking panels across pages would otherwise shrink what is judged while this test stayed
- * green.</p>
+ * drawing's, so a fifth would otherwise narrow the scan without a word. And a painted panel the
+ * layout broke across pages is named rather than skipped in silence: its box is the one its first
+ * page gave it, so no overlap can be judged against it, and a change that starts breaking panels
+ * across pages would otherwise shrink what is judged while this test stayed green.</p>
  *
- * <p>Two things neither the export nor this test judges, both named here so that neither is a
- * silence: a table cell's own shading, which belongs to a cell rather than to a node with a box of
- * its own, and the second panel over a drawing that lies over two, the export naming one.</p>
+ * <p>What neither the export nor this test judges, written out so that none of it is a silence,
+ * and none of it held by an assertion — these are the edges of what is checked, not invariants.
+ * A panel composed in an authored table cell, which the layout gives no box of its own. A table
+ * cell's own shading, which belongs to a cell rather than to a node. A cell's paint the table
+ * draws itself, which never passes the export's queue. The second panel over a drawing lying over
+ * two, the export naming one. And the drawings this test's own scan does not know by their note —
+ * a rail drawn as a line, a picture drawn over the badge holding it — which the export judges and
+ * this test checks one by one instead ({@link #NAMED_BUT_UNPLACEABLE}).</p>
  *
  * <p>The list is a ledger of work still to do, not a licence: the export has no drawing it is
  * content to leave under a neighbour's fill. The entry goes when the stack's order is carried into
@@ -107,10 +112,21 @@ class DocxNeighbourFillGuardTest {
     private static final Map<String, List<String>> SEEN_BY_THE_SCAN_ALONE = Map.of();
 
     /**
-     * Painted panels the layout broke across pages. A panel's box is the one its first page gave
-     * it, so no overlap can be judged against it, and these four are the corpus's blind spot:
-     * named, not counted, so that a change which starts breaking a different panel across pages
-     * is seen here instead of quietly shrinking what is judged.
+     * Drawings the export names that this test cannot place, and so cannot check. A drawing is
+     * drawn under the path of the node that paints it, but a pass of the layout's own — a
+     * timeline's rail — is drawn under the pass's path, which no node of the graph carries, so
+     * this test has no box for it. Empty today: no rail of the corpus comes to rest in a painted
+     * panel's box. One that did would be a real loss, named by the export and unchecked here, and
+     * this list is where that would have to be said out loud.
+     */
+    private static final List<String> NAMED_BUT_UNPLACEABLE = List.of();
+
+    /**
+     * Candidate panels — nodes carrying a fill, which the export may or may not have shaded —
+     * that the layout broke across pages. A panel's box is the one its first page gave it, so no
+     * overlap can be judged against it, and these four are where this test stops looking: named,
+     * not counted, so that a change which starts breaking a different one across pages is seen
+     * here instead of quietly shrinking what is judged.
      */
     private static final List<String> PANELS_ACROSS_PAGES = List.of(
             "invoice-obsidian_long: ObsidianInvoice[0]/LineItemsCard[3]",
@@ -118,7 +134,12 @@ class DocxNeighbourFillGuardTest {
             "synthetic-break_in_panel: ContainerNode[0]/SectionNode[1]/SectionNode[4]",
             "synthetic-card_over_pages: ContainerNode[0]/SectionNode[1]");
 
-    /** What the corpus paints today, so a reader that stops seeing drawings fails here. */
+    /**
+     * The nodes of the corpus whose notes this test classifies as a drawing's, in front of the
+     * text and behind it alike — 503 today, counted once per node however many shapes it is drawn
+     * from. A floor rather than the number, and well under it, so that it catches a reader that
+     * has stopped seeing drawings rather than a document gained or lost.
+     */
     private static final int AT_LEAST_THIS_MANY_DRAWINGS = 450;
 
     private static final String COVERED = "a panel painted beside it";
@@ -134,7 +155,8 @@ class DocxNeighbourFillGuardTest {
     void everyDrawingUnderANeighboursFillIsLedgered() throws Exception {
         Map<String, List<String>> found = new TreeMap<>();
         Map<String, List<String>> scanOnly = new TreeMap<>();
-        List<String> missedByTheScan = new ArrayList<>();
+        List<String> namedButUnplaceable = new ArrayList<>();
+        List<String> namedButNotCovered = new ArrayList<>();
         List<String> unclassified = new ArrayList<>();
         List<String> unjudged = new ArrayList<>();
         List<String> acrossPages = new ArrayList<>();
@@ -159,8 +181,18 @@ class DocxNeighbourFillGuardTest {
                     .filter(note -> note.detail() != null && note.detail().contains(COVERED))
                     .map(DocxExportReport.Note::path).sorted().toList();
             List<String> seen = scan.covered().stream().sorted().toList();
-            named.stream().filter(path -> !seen.contains(path))
-                    .forEach(path -> missedByTheScan.add(document.stem() + ": " + path));
+            // Every drawing the export names is checked against this test's own geometry, one by
+            // one. Not through the scan: the scan knows a drawing by the wording of its note, and
+            // the export names drawings whose notes it does not know — a rail is drawn as a line,
+            // a picture over a badge says so instead. Those land in namedButUnplaceable rather
+            // than being read as a disagreement.
+            for (String path : named) {
+                if (!scan.placed().containsKey(path)) {
+                    namedButUnplaceable.add(document.stem() + ": " + path);
+                } else if (!coveredByAPanel(path, scan)) {
+                    namedButNotCovered.add(document.stem() + ": " + path);
+                }
+            }
             List<String> only = seen.stream().filter(path -> !named.contains(path)).toList();
             if (!only.isEmpty()) {
                 scanOnly.put(document.stem(), only);
@@ -173,17 +205,22 @@ class DocxNeighbourFillGuardTest {
         assertThat(drawings).as("the drawings the corpus paints, read")
                 .isGreaterThanOrEqualTo(AT_LEAST_THIS_MANY_DRAWINGS);
         assertThat(unclassified).as("every note that says a shape was drawn is one this test knows: "
-                                    + "an unknown one would be read as a drawing behind the text")
+                                    + "one it does not know is a drawing it would not scan, and so "
+                                    + "one it could not find under a panel")
                 .isEmpty();
         assertThat(unjudged).as("every drawing of the corpus given a box to judge").isEmpty();
         assertThat(acrossPages.stream().sorted().toList())
-                .as("painted panels broken across pages, which no overlap is judged against: when "
-                    + "this list grows, what is judged has shrunk")
+                .as("candidate panels broken across pages, which no overlap is judged against: "
+                    + "when this list grows, what is judged has shrunk")
                 .isEqualTo(PANELS_ACROSS_PAGES);
-        assertThat(missedByTheScan)
-                .as("the export names a drawing under a neighbour's fill that this test's own "
-                    + "geometry does not find: the ink it judged lies in the box this test judged, "
-                    + "so this cannot happen while both read the same layout")
+        assertThat(namedButUnplaceable)
+                .as("drawings the export names that this test cannot place, and so cannot check: "
+                    + "a drawing drawn under a path of the layout's own rather than a node's")
+                .isEqualTo(NAMED_BUT_UNPLACEABLE);
+        assertThat(namedButNotCovered)
+                .as("the export names a drawing as covered that this test can place and finds "
+                    + "under no painted panel: the ink the export judged lies in the box this "
+                    + "test judged, so the two cannot disagree while both read one layout")
                 .isEmpty();
         assertThat(scanOnly).as("drawings this test finds under a neighbour's fill that the export "
                                 + "does not name")
@@ -198,6 +235,9 @@ class DocxNeighbourFillGuardTest {
     void aDrawingOverAPaintedNeighbourIsAlwaysNamed() throws Exception {
         // The positive signal the corpus pass is held to: were the export to stop seeing this
         // case, the corpus would come back clean and the ledger would be the only thing failing.
+        // Deliberately the same document as the unit test of the same case in render-docx, so
+        // that the two modules are held to one answer: it is a copy on purpose, not a duplicate
+        // to be tidied away.
         AtomicReference<DocxExportReport> report = new AtomicReference<>();
         try (DocumentSession session = GraphCompose.document().pageSize(400, 400)
                 .margin(DocumentInsets.of(20)).create()) {
@@ -219,7 +259,21 @@ class DocxNeighbourFillGuardTest {
 
     /** What one document's scan found. */
     private record Scan(int drawings, List<String> panelsAcrossPages, List<String> covered,
-                        List<String> unjudged, List<String> unclassified) {
+                        List<String> unjudged, List<String> unclassified,
+                        Map<String, PlacedNode> placed, List<String> panels) {
+    }
+
+    /** Whether a path's box lies in the box of a painted panel it does not stand inside. */
+    private static boolean coveredByAPanel(String path, Scan scan) {
+        for (String panel : scan.panels()) {
+            if (path.equals(panel) || path.startsWith(panel + "/") || panel.startsWith(path + "/")) {
+                continue;
+            }
+            if (overlaps(scan.placed().get(path), scan.placed().get(panel))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -252,7 +306,9 @@ class DocxNeighbourFillGuardTest {
             }
             if (!detail.contains(DRAWN_IN_ITS_BLOCK) && !detail.contains(DRAWN_IN_ITS_CELL)) {
                 // A row whose paint went unwritten says a shape was drawn too, and is no drawing
-                // of the flow. Named rather than taken for one.
+                // of the flow. Held rather than passed over: the scan would be narrower than the
+                // export by exactly this note, and a drawing it stopped seeing is one it could
+                // no longer find under a panel.
                 unclassified.add(note.subject() + " " + note.path());
                 continue;
             }
@@ -299,7 +355,7 @@ class DocxNeighbourFillGuardTest {
                 }
             }
         }
-        return new Scan(asShapes.size(), acrossPages, covered, unjudged, unclassified);
+        return new Scan(asShapes.size(), acrossPages, covered, unjudged, unclassified, placed, panels);
     }
 
     /** Whether two boxes stand on one page and share any area. */

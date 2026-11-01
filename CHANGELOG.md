@@ -8,6 +8,34 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export anchors a drawing in the paragraph of its block that places it at the smallest
+  offset, not in the first one the block writes, so an edit that breaks the page between the two no
+  longer leaves the drawing behind.**
+  - A block writing a list writes its heading first, and every drawing of the list hung off that
+    heading: the whole list's height went into the offsets of its last bars. Across the fidelity
+    corpus 142 of 728 carried drawings stood further than 50pt from where they are drawn, out to
+    577pt; 119 do now, and of the 44 whose offset changed, all 44 are nearer and none further —
+    `cv-timeline_minimal`'s last two bars from 491 and 498pt to 42 and 49pt. Eleven of the 71
+    documents change, in 43 paragraphs, and the export's report says the same of all of them.
+  - The paragraphs of the block are divided by the line the drawing stands level with or below,
+    and ordered within that by the offset each would place it at: the line decides which
+    paragraph the drawing moves with, and the offset how far the anchor reaches. The first
+    paragraph is still the one a drawing laid over the block's top stands below, so an icon on a
+    card's corner stays on it when an edit inside the card moves the text under it; one laid over
+    the block's foot now moves with the text above it, as the foot does. Nothing is weighed
+    against a number: a paragraph's line against the drawing's top, then an offset against an
+    offset, with paragraphs offering the same offset keeping the order the block writes them in.
+  - Where the block writes two columns the paragraph may be one of the other column's, which
+    places the drawing out of that column, since a cell takes a drawing into its own column only
+    from the paragraph that opens it. Over the corpus that is what carries a drawing to the text
+    it stands beside: 28 drawings change the cell they are anchored in, and they are a timeline's
+    rail dots leaving an empty paragraph of the rail's own column for the entries that carry them,
+    and an invoice's icons leaving the company name for the address lines beside them.
+  - Neither editor moves anything for it. Word 16.0.20527 sets every document of the fidelity
+    corpus where its baseline holds it, line for line, with no baseline rewritten, and no cell of
+    the corpus changes the alignment its content is set from; LibreOffice draws every rectangle of
+    every changed document — the bars, rules and tiles the drawings are — at exactly the place it
+    drew it before, none of them a different size.
 - **A DOCX export measures the space round a stack of overlapping layers to the box of the panel
   holding its text, not through that panel's padding, so a card under an icon laid over its corner
   stands where the page sets it.**

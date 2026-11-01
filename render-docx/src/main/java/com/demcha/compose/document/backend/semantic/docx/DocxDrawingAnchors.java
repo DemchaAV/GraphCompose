@@ -31,12 +31,12 @@ import java.util.function.Supplier;
  *
  * <p>A shape a node draws belongs to that node and to the blocks holding it: an icon laid over a
  * card's corner to the card's stack, a skill's bar to its row, a portrait to its sidebar. It is
- * anchored in the first paragraph the nearest of them writes on its page that can place it, and
- * placed from that paragraph's top ({@link #seat}), so Word moves it with that block wherever an
- * edit above takes it; where it stands gives only its offset, however far from the paragraph's
- * text that is. Placed from the page's edges, it stayed where the page had put it while the text
- * moved away from it. In a table cell, the cell of the paragraph's row that holds the shape
- * across takes it — a timeline's dot stands in a column of its own beside its entry's text —
+ * anchored in the paragraph of those the nearest of them writes on its page that can place it at
+ * the smallest offset, and placed from that paragraph's top ({@link #seat}), so Word moves it
+ * with that block wherever an edit above takes it; where it stands gives only its offset, however
+ * far from the paragraph's text that is. Placed from the page's edges, it stayed where the page
+ * had put it while the text moved away from it. In a table cell, the cell of the paragraph's row
+ * that holds the shape across takes it — a timeline's dot in a column of its own beside its entry —
  * placed from that cell's first paragraph (see {@link Seat#placeHeld}). A shape no node draws —
  * a timeline's rail — or whose holders write no paragraph on its page goes to the paragraph
  * nearest it there. What a table's composed cell draws has no node of its own — such a cell's
@@ -549,32 +549,91 @@ final class DocxDrawingAnchors {
     }
 
     /**
-     * Where a shape a node draws is anchored: in the first paragraph on its page of the nearest
-     * of its holders that writes one there it can be placed from, or else in the paragraph
-     * nearest it on its page; {@code null} where no paragraph on its page can carry it.
+     * Where a shape a node draws is anchored: in the paragraph of those the nearest of its holders
+     * writes on its page that can place it at the smallest offset, or else in the paragraph nearest
+     * it on its page; {@code null} where no paragraph on its page can carry it.
      *
      * <p>Its holders — the node drawing it, then each block holding that node — are what it
      * belongs to: an icon laid over a card's corner is the card's stack's, a skill's bar its
-     * row's, a portrait its sidebar's. Anchored in the first paragraph one of them writes on its
-     * page, it moves with that block wherever an edit above takes it, however far from the
-     * paragraph's text it stands: where it stands gives only its offset. A holder that writes no
-     * paragraph there, or only ones that cannot place it, passes it on to the next one up. A shape
-     * no holder carries — a timeline's rail, which no node draws, or one whose holders' text is a
-     * list or a table — goes to the paragraph nearest it.</p>
+     * row's, a portrait its sidebar's. Anchored in a paragraph one of them writes on its page, it
+     * moves with that block wherever an edit above takes it, however far from the paragraph's text
+     * it stands: where it stands gives only its offset. A holder that writes no paragraph there,
+     * or only ones that cannot place it, passes it on to the next one up. A shape no holder
+     * carries — a timeline's rail, which no node draws, or one whose holders' text is a list or a
+     * table — goes to the paragraph nearest it.</p>
+     *
+     * <p>Which of a holder's paragraphs is only the offset, so the shape is placed out of the one
+     * whose offset is the smallest of those it stands below ({@link #asTheShapeStandsTo}) — usually
+     * the last of them. Anchoring every shape in the first paragraph the holder writes put a
+     * list's whole height into the offsets of its bars: 142 of 728 carried drawings in the fidelity
+     * corpus stood further than 50pt from where they are drawn, out to 577pt, and an edit breaking
+     * the page between a heading and its bar left the bar behind. The first paragraph is still the
+     * one a shape laid over the holder's top stands below, which keeps an icon on a card's corner
+     * where an edit inside the card leaves the corner; one laid over its foot now moves with the
+     * text above it, as the foot does. A holder writing one paragraph carries its shape however far
+     * off, and a shape standing above every paragraph the holder writes is placed out of the one
+     * whose offset is the smallest, which is a rise rather than a drop.</p>
      *
      * @param holders the paths of the node drawing it and of the blocks holding it, nearest first
      */
     private Place placeInItsHolder(DocxDrawings.Shape shape, List<String> holders) {
         List<Seat> onItsPage = seats.getOrDefault(shape.page(), List.of());
         for (String holder : holders) {
-            for (Seat seat : onItsPage) {
-                Place place = seat.isWithin(holder) ? placeHeld(seat, shape) : null;
+            for (Seat seat : asTheShapeStandsTo(shape, onItsPage, holder)) {
+                Place place = placeHeld(seat, shape);
                 if (place != null) {
                     return place;
                 }
             }
         }
         return placeBesideTheNearest(shape, onItsPage);
+    }
+
+    /**
+     * A holder's paragraphs on a shape's page, ordered as the shape stands to them: the ones whose
+     * line it stands level with or below first, then the ones whose line is below it, and within
+     * each the one that would place it at the smallest offset.
+     *
+     * <p>Which line the shape stands below divides them, because that is what moving with the
+     * paragraph means: anchored in one written below it, a shape laid over a block's top left that
+     * top when an edit inside the block moved the text under it. The offset orders them, because it
+     * is what the file carries and what an edit breaking the page between the two has to span. The
+     * line is not what orders them: a paragraph whose line stands nearer can still place the shape
+     * from further off, the top Word places from being the paragraph's and not its line's
+     * ({@link Seat#paragraphTop}), and ordering by the line placed six drawings of the fidelity
+     * corpus from 6 to 14pt further off than before. Nor is how far the shape stands across the
+     * page from the paragraph's text ({@link #distance}): a paragraph's text box is its own, not its
+     * column's, so a narrow line in the shape's own column stands further across than a wide one in
+     * the next — adding that term moved two more drawings of the corpus into another cell than
+     * leaving it out, and brought those six back.</p>
+     *
+     * <p>The paragraph may therefore be one of a neighbouring cell of the same holder, which places
+     * the shape out of that cell's column ({@link Seat#placeHeld}): its own cell takes it only from
+     * the paragraph that opens that cell ({@link Seat#inTheRow}). Over the corpus that is what
+     * carries a shape to the text it stands beside — a timeline's rail dots left an empty paragraph
+     * of the rail's own column for the entries that carry them, 164pt across, and an invoice's
+     * icons left the company name for the address lines beside them. Word and LibreOffice draw
+     * every one of them where they drew it before.</p>
+     *
+     * <p>Only readings are weighed against each other, so no reading is measured against a number.
+     * The sort is stable, so paragraphs offering the same offset keep the order the holder writes
+     * them in. A paragraph whose top is not known places nothing ({@link Seat#placeHeld}).</p>
+     */
+    private List<Seat> asTheShapeStandsTo(DocxDrawings.Shape shape, List<Seat> onItsPage, String holder) {
+        List<Seat> its = new ArrayList<>();
+        for (Seat seat : onItsPage) {
+            if (seat.isWithin(holder)) {
+                its.add(seat);
+            }
+        }
+        its.sort(java.util.Comparator.comparingInt((Seat seat) -> seat.top() > shape.top() ? 1 : 0)
+                .thenComparingDouble(seat -> Math.abs(offsetIn(shape, seat))));
+        return its;
+    }
+
+    /** How far below the top a paragraph places from a shape stands; negative where it stands above. */
+    private double offsetIn(DocxDrawings.Shape shape, Seat seat) {
+        return shape.top() - tops.computeIfAbsent(seat, taken -> taken.paragraphTop(lines));
     }
 
     /**

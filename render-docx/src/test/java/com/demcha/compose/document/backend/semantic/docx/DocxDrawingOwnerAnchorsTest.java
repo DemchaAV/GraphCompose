@@ -21,9 +21,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /**
- * A shape a node draws is anchored in the first paragraph the nearest block holding it writes on
- * its page, and placed from there however far off it stands; one no block carries goes to the
- * paragraph nearest it.
+ * A shape a node draws is anchored in a paragraph the nearest block holding it writes on its page
+ * — the one it stands below that places it at the smallest offset — and placed from there however
+ * far off it stands; one no block carries goes to the paragraph nearest it.
  *
  * <p>Chosen by where it stood, an icon laid over a card's corner stood 14pt above the card's
  * text and was left to the page, as was every skill bar of a sidebar's rows and its portrait:
@@ -38,7 +38,7 @@ class DocxDrawingOwnerAnchorsTest {
     private static final String ICON = STACK + "/Icon[1]";
 
     @Test
-    void aShapeIsAnchoredInTheFirstParagraphItsHolderWritesNotTheOneNearestIt() {
+    void aShapeIsAnchoredInAParagraphItsHolderWritesNotTheOneNearestItOnThePage() {
         // The paragraph above the stack stands 6pt from the icon; the card's text, the stack's
         // first paragraph, 14pt below it.
         XWPFDocument document = new XWPFDocument();
@@ -176,6 +176,87 @@ class DocxDrawingOwnerAnchorsTest {
 
         assertThat(drawingsIn(more)).isEmpty();
         assertThat(offsetDown(drawingsIn(card).get(0))).isCloseTo(14, within(0.01));
+    }
+
+    @Test
+    void theParagraphPlacingItAtTheSmallestOffsetTakesItNotTheOneWhoseLineIsNearest() {
+        // Both paragraphs of the card stand above the dot: the second's line 10pt above it, the
+        // first's 50pt. The second is written 60pt of space below the first, so Word places out of
+        // it from 70pt above the dot, and out of the first from 50pt — and the offset is what the
+        // file carries.
+        XWPFDocument document = new XWPFDocument();
+        XWPFParagraph card = text(document, "Card");
+        XWPFParagraph spaced = text(document, "Spaced");
+        spaced.setSpacingBefore(60 * 20);
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, card, true);
+        anchors.seat(0, card, STACK + "/Card[0]/Text[0]", card, 54, 300, 150, 160);
+        anchors.seat(0, spaced, STACK + "/Card[0]/Spaced[1]", spaced, 54, 300, 190, 200);
+
+        queue(anchors, ICON, List.of(dot(290, 200)));
+        anchors.endSection(0, null, document::createParagraph);
+
+        assertThat(drawingsIn(spaced)).as("its line is nearer, and it places from further off").isEmpty();
+        assertThat(offsetDown(drawingsIn(card).get(0))).isCloseTo(50, within(0.01));
+    }
+
+    @Test
+    void aParagraphOfAnotherCellOfTheRowTakesItWhereItPlacesItNearest() {
+        // The holder writes both cells of the row. The right cell's own text stands 60pt above the
+        // dot; the left cell's second paragraph, 4pt above it, takes it and places it out of the
+        // left cell's column — the right cell takes a shape into its column only from the
+        // paragraph that opens it. The offset and the column carry where the page puts the dot.
+        XWPFDocument document = new XWPFDocument();
+        XWPFTable table = document.createTable(1, 2);
+        XWPFTableCell left = table.getRow(0).getCell(0);
+        XWPFTableCell right = table.getRow(0).getCell(1);
+        width(left, 200);
+        width(right, 100);
+        margin(left, 0);
+        margin(right, 0);
+        XWPFParagraph opens = left.getParagraphs().get(0);
+        opens.createRun().setText("Opens the left cell");
+        XWPFParagraph later = left.addParagraph();
+        later.createRun().setText("Later in the left cell");
+        XWPFParagraph entry = right.getParagraphs().get(0);
+        entry.createRun().setText("In the right cell");
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, text(document, "Body"), true);
+        anchors.seat(0, opens, "Flow[0]/Row[1]/Left[0]/Text[0]", opens, 40, 240, 100, 110);
+        anchors.seat(0, later, "Flow[0]/Row[1]/Left[0]/Text[1]", later, 40, 240, 196, 206);
+        anchors.seat(0, entry, "Flow[0]/Row[1]/Right[1]/Text[0]", entry, 240, 340, 140, 150);
+
+        queue(anchors, "Flow[0]/Row[1]/Rail[2]/Dot[0]", List.of(dot(300, 200)));
+        anchors.endSection(0, null, document::createParagraph);
+
+        assertThat(drawingsIn(opens)).as("the left cell's opening paragraph, 100pt above").isEmpty();
+        assertThat(drawingsIn(entry)).as("the right cell's own text, 60pt above").isEmpty();
+        String drawing = drawingsIn(later).get(0);
+        assertThat(offsetDown(drawing)).as("4pt below the left cell's later line").isCloseTo(4, within(0.01));
+        assertThat(offsetAcross(drawing)).as("out of the left cell's column, where the page puts it")
+                .isCloseTo(260, within(0.01));
+    }
+
+    @Test
+    void aParagraphWhoseLineStandsBelowItDoesNotTakeItThoughItWouldPlaceItNearer() {
+        // The card's second paragraph is written below the dot and 20pt of space under its own
+        // line, so it would place the dot 10pt down against the first paragraph's 50pt. It is
+        // still the first that carries it: a shape laid over a block's top has to move with that
+        // top, and an edit inside the block moves the text under it away.
+        XWPFDocument document = new XWPFDocument();
+        XWPFParagraph card = text(document, "Card");
+        XWPFParagraph below = text(document, "Below");
+        below.setSpacingBefore(20 * 20);
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, card, true);
+        anchors.seat(0, card, STACK + "/Card[0]/Text[0]", card, 54, 300, 150, 160);
+        anchors.seat(0, below, STACK + "/Card[0]/Below[1]", below, 54, 300, 210, 220);
+
+        queue(anchors, ICON, List.of(dot(290, 200)));
+        anchors.endSection(0, null, document::createParagraph);
+
+        assertThat(drawingsIn(below)).as("written below the dot, however near it would place it").isEmpty();
+        assertThat(offsetDown(drawingsIn(card).get(0))).isCloseTo(50, within(0.01));
     }
 
     @Test

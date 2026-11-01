@@ -230,15 +230,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * DocxDrawingAnchors).
      */
     private static final String ANCHORED_IN_ITS_CELL = "anchored in the paragraph of the cell whose box "
-            + "holds it that places it at the smallest offset of those whose line it stands level with or "
-            + "below, so it moves with that cell's row when the text above is "
+            + "holds it that places it at the smallest offset, the paragraphs whose line it stands level "
+            + "with or below taken first, so it moves with that cell's row when the text above is "
             + "edited; " + ANCHORED_BESIDE_ITS_TEXT + " where no cell's box holds it, where that cell has "
             + "no such paragraph on its page, and where it stands in a repeated header row or in a cell "
             + "composed of a node the document places more than once";
     /** How a drawing a node paints is anchored, as the report says it (see DocxDrawingAnchors). */
     private static final String ANCHORED_IN_ITS_BLOCK = "anchored in the paragraph the nearest block "
-            + "holding it writes on its page that places it at the smallest offset of those whose line it "
-            + "stands level with or below, so it moves with that block when the text "
+            + "holding it writes on its page that places it at the smallest offset, the paragraphs whose "
+            + "line it stands level with or below taken first, so it moves with that block when the text "
             + "above is edited; in the paragraph nearest it where no block holding it writes one there, or to "
             + "the page where no paragraph on its page can carry it";
     /** How a drawing no node paints — a timeline's rail — is anchored, as the report says it. */

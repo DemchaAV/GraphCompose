@@ -157,6 +157,14 @@ class DocxNeighbourFillGuardTest {
     private static final String DRAWN_IN_ITS_BLOCK = "drawn as a shape where the layout puts it, ";
     private static final String DRAWN_IN_ITS_CELL = "drawn as a shape anchored in the table cell it fills";
 
+    /**
+     * What a picture drawn where the page puts it says instead. Such a picture is never lifted in
+     * front — the surface it stands on decides, not its neighbours — so it belongs among the
+     * drawings a lifted one is judged against, which it would not reach by the wordings above.
+     */
+    private static final List<String> DRAWN_AS_A_PICTURE = List.of(
+            "drawn over the badge holding it", "drawn beside the text it labels");
+
     /** What a drawing's note says when the export put it in front of the text. */
     private static final String IN_FRONT = "in front of the text";
 
@@ -455,6 +463,16 @@ class DocxNeighbourFillGuardTest {
         List<String> unclassified = new ArrayList<>();
         for (DocxExportReport.Note note : report.notes()) {
             String detail = note.detail() == null ? "" : note.detail();
+            if (DRAWN_AS_A_PICTURE.stream().anyMatch(detail::contains)) {
+                // Drawn where the page puts it and never lifted, so a lifted shape must not come
+                // to rest over it. It is no shape of a node's own, so it is not counted among the
+                // drawings read, and the panels are not asked about it: only the other way round.
+                if (note.path() != null && placed.containsKey(note.path())
+                    && !detail.contains(IN_FRONT)) {
+                    behind.add(note.path());
+                }
+                continue;
+            }
             if (!detail.contains("drawn as a shape")) {
                 continue;
             }

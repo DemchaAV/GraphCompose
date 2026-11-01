@@ -229,6 +229,75 @@ class DocxDrawingUnderANeighboursFillTest {
     }
 
     @Test
+    void anUnpaintedShapeContainerOverThePaintedLayerKeepsNothingBehindIt() throws Exception {
+        // A shape container that paints nothing draws no shape, so it covers nothing and must not
+        // refuse the lift. Its box is asked of nothing: only the fragments a shape is actually
+        // drawn from are, which is what tells this container from the badge of the test above.
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Stack")
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .position(new ShapeContainerBuilder().name("Clear").rectangle(90, 20)
+                                        .center(new ParagraphBuilder().name("Inside").text("Clear").build())
+                                        .build(),
+                                2, 40, LayerAlign.TOP_LEFT, 1)
+                        .position(new ShapeBuilder().name("Pin").size(30, 14).fillColor(ACCENT).build(),
+                                150, 2, LayerAlign.TOP_LEFT, 2)
+                        .build())));
+
+        assertThat(pinAnchor(export)).contains("behindDoc=\"0\"");
+        assertThat(covered(export.report())).isEmpty();
+    }
+
+    @Test
+    void aBadgeHoldingItsInitialsKeepsNothingBehindIt() throws Exception {
+        // A badge holding its initials is handed over in front wherever it stands, so it cannot be
+        // put under anything and must not keep the pin behind: measured, counting its own box
+        // among the things that stay behind left the badge in front and the pin behind it, which
+        // is the inversion the whole-stack rule exists to stop.
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Stack")
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .position(new ShapeContainerBuilder().name("Badge").circle(28).fillColor(OVER)
+                                        .center(new ParagraphBuilder().text("JR").build()).build(),
+                                40, 2, LayerAlign.TOP_LEFT, 1)
+                        .position(new ShapeBuilder().name("Pin").size(30, 14).fillColor(ACCENT).build(),
+                                150, 2, LayerAlign.TOP_LEFT, 2)
+                        .build())));
+
+        assertThat(pinAnchor(export))
+                .as("the pin is lifted with the badge, not left under it")
+                .contains("behindDoc=\"0\"");
+        assertThat(covered(export.report())).isEmpty();
+    }
+
+    @Test
+    void aShapeOverABorderedNeighbourBearingTextIsStillLifted() throws Exception {
+        // A bordered wrapper is written as a cell, never as a drawing, though the layout gives it
+        // a decoration fragment of its own. Counting that fragment among the shapes that stay
+        // behind refused the lift for the whole stack — measured — so only the nodes the export
+        // draws as shapes are asked.
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Stack")
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .position(new SectionBuilder().name("Outlined").fixedWidth(90)
+                                        .stroke(DocumentStroke.of(ACCENT, 1))
+                                        .addParagraph(p -> p.name("Note").text("In a box")).build(),
+                                2, 40, LayerAlign.TOP_LEFT, 1)
+                        .position(new ShapeBuilder().name("Pin").size(30, 14).fillColor(ACCENT).build(),
+                                150, 2, LayerAlign.TOP_LEFT, 2)
+                        .build())));
+
+        assertThat(pinAnchor(export)).contains("behindDoc=\"0\"");
+        assertThat(covered(export.report())).isEmpty();
+    }
+
+    @Test
     void aShapeTheSameInstanceOfWhichStandsTwiceIsNotLifted() throws Exception {
         // One node used as two layers stands at two places, and the layout keeps one path and one
         // box for the instance. What lies under it at one place is not what lies under it at the
@@ -330,10 +399,15 @@ class DocxDrawingUnderANeighboursFillTest {
 
     @Test
     void aPictureOverAPaintedNeighbourStaysBehindItAndIsNamed() throws Exception {
-        // A picture drawn where the page puts it is not asked the question — only the shapes a
-        // node paints itself are — so over a painted neighbour it is still covered. Not silently:
-        // the naming pass names it where it stands. Written down as a test rather than as a
-        // sentence in the docs, which is all it was.
+        // A picture drawn where the page puts it is never lifted — the surface it stands on
+        // decides, not its neighbours — so over a painted neighbour it is still covered. Not
+        // silently: the naming pass names it where it stands.
+        //
+        // And the badge round it stays behind WITH it. Lifting the badge alone would paint its
+        // own fill over the photo it frames, which the page draws over the badge: measured, that
+        // is what happened before the picture was counted among the things that keep a stack
+        // behind — the badge came back behindDoc="0" and the photo behindDoc="1". Both anchors
+        // are read here for that reason, not the note alone.
         Export export = export(session -> session.pageFlow(page -> page
                 .add(new LayerStackBuilder().name("Stack")
                         .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
@@ -350,11 +424,17 @@ class DocxDrawingUnderANeighboursFillTest {
         assertThat(detailsOf(export.report(), "/Photo"))
                 .as("the picture is drawn where the page puts it, which is the path in question")
                 .isNotEmpty();
+        assertThat(anchorsHolding(export, PIN_INK))
+                .as("the badge's own outline, behind the text with the photo it frames")
+                .singleElement().asString().contains("behindDoc=\"1\"");
+        assertThat(anchorsHolding(export, "<pic:pic"))
+                .as("and the photo, behind it too, so the badge is not painted over it")
+                .singleElement().asString().contains("behindDoc=\"1\"");
         assertThat(covered(export.report()))
-                .as("the picture over the band is named as covered by it, and it alone: the frame "
-                    + "round it is a badge whose glyph is drawn over it, so the frame stands in "
-                    + "front and nothing covers it")
-                .singleElement().asString().contains("Photo").contains("Band[0]");
+                .as("both named as covered by the band")
+                .hasSize(2)
+                .anySatisfy(named -> assertThat(named).contains("Photo").contains("Band[0]"))
+                .anySatisfy(named -> assertThat(named).contains("Frame").contains("Band[0]"));
     }
 
     @Test

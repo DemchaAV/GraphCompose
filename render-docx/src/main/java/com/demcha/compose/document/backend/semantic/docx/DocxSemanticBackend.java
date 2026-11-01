@@ -4496,12 +4496,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * not, and over a painted neighbour they stay behind the text and are named there
      * ({@code nameTheDrawingsAPaintedPanelCovers}). The corpus holds no instance of either.</p>
      *
-     * <p>It answers false rather than guessing wherever the tree does not say: a node the layout
-     * did not place — one composed in an authored table cell — ends the climb, a layer it cannot
-     * find among its parent's ends it with a false whatever an inner stack had granted, and a node
-     * one instance of which stands at more than one place is refused outright, its box and its
-     * path being one among those places. A canvas lays its children over one another too but holds
-     * no layers, so it is climbed past rather than read.</p>
+     * <p>So does a picture over that painted layer: a picture is drawn where the page puts it and
+     * is never lifted, so a shape lifted over one would cover it where the page draws it over the
+     * shape. Measured before it was counted: a badge's outline came back in front of the photo it
+     * frames, its own fill over the picture.</p>
+     *
+     * <p>Where the tree does not say, it does not guess. A layer it cannot find among its
+     * parent's ends the climb with a false, whatever an inner stack had granted, and a node one
+     * instance of which stands at more than one place is refused outright, its box and its path
+     * being one among those places. The climb itself ends at a node the layout gives no parent —
+     * the top of the tree, and equally a node composed in an authored table cell — with whatever
+     * the stacks below it answered; that is a defence against guessing at the places it did read,
+     * not a claim about the ones it did not. A canvas lays its children over one another too but
+     * holds no layers, so it is climbed past rather than read. The unfound-layer case is
+     * defence in depth: no shape of this repository's own templates reaches it, and no fixture
+     * drives it.</p>
      */
     private boolean laidOverAPaintedNeighbour(DocumentNode node) {
         if (layout.placedMoreThanOnce(node)) {
@@ -4560,22 +4569,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Whether a node, or anything it holds, paints a shape that has to stay behind the text: one
-     * whose box holds a line of the flow or a picture, which in front it would cover.
+     * Whether a node, or anything it holds, is drawn behind the text and stays there — so that
+     * nothing of its stack may be lifted over it.
      *
-     * <p>Only a fragment a shape is drawn from is asked — the ones {@code queueDrawing} writes,
-     * and the only ones a lift could put over anything. A paragraph's own fragment, and a
-     * picture's, is in the list the test reads from, so asking the test of it would find its own
-     * centre in its own box: every layer bearing text or a picture would refuse the lift for its
-     * whole stack, whatever the geometry, which is a different rule from this one and one no
-     * measurement here supports.</p>
+     * <p>A shape answers yes where its box holds a line of the flow or a picture, which in front
+     * it would cover. Only a node the export draws as shapes is asked, and only the fragments it
+     * draws them from: a paragraph's own fragment, and the decoration fragment a painted or
+     * bordered wrapper is given, are in the list the test reads from, so asking the test of those
+     * would find their own centre in their own box and refuse the lift for every stack bearing
+     * text or a border. A badge holding its initials is not asked either: its shape is handed over
+     * in front wherever it stands, so nothing is lifted past it.</p>
      *
-     * <p>A badge whose glyph is drawn over it stands in front wherever it is, so its own outline
-     * is not asked either: the picture it frames is its own, not the flow's. The glyph itself is
-     * reached by the walk and asked nothing, a picture being drawn from no fragment of its own.</p>
+     * <p>A picture is never lifted — {@code drawWhereThePagePutsIt} asks the surface it stands on,
+     * not its neighbours — so a shape lifted over one would cover a picture the page draws over
+     * the shape. Measured, that happened to a badge's glyph: the badge's outline came back in
+     * front of the photo it frames. It is this test that stops it, the outline framing that
+     * picture, and a picture needs no rule of its own here: of the shapes a picture can take above
+     * a painted layer, the badge's glyph is the one the export draws where the page puts it, and
+     * a picture beside its label in a layer of a stack is written in the flow instead and is
+     * covered by nothing. A rule for the picture itself was written, found to redden no test when
+     * sabotaged, and taken out rather than kept as conservatism nothing drives.</p>
      */
     private boolean staysBehindTheText(DocumentNode node) {
-        if (!Double.isNaN(canvasHeight) && !holdsItsDrawnGlyph(node)) {
+        boolean drawn = isDrawing(node)
+                        || node instanceof ShapeContainerNode badge && textBadgeParagraph(badge) == null;
+        if (drawn && !Double.isNaN(canvasHeight)) {
             for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
                 if (DocxDrawings.of(fragment, canvasHeight).isEmpty()) {
                     continue;

@@ -4480,14 +4480,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * below: there the page covers the node, and a shape in front would cover the panel instead,
      * which is the same loss the other way round.</p>
      *
-     * <p>So does a drawing over that painted layer which has to stay behind the text, the node's
-     * own shapes included ({@code staysBehindTheText}): the stack's order is kept whole, or not
-     * taken at all. Word draws every shape in front over every shape behind, so lifting one
-     * drawing of a stack while another stays there would put the lower of the two over the
-     * higher — the loss this fixes, in the one place it would be made worse. Nothing of the
-     * fidelity corpus asks this: no drawing lifted there has a panel or a drawing painted after
-     * it at all ({@code DocxNeighbourFillGuardTest} counts the pairs, and the count is zero), so
-     * the rule is held by the unit fixtures written for it.</p>
+     * <p>So does anything else of the stack drawn over that painted layer
+     * ({@code drawnOverThatLayer}): a shape is lifted where it is the only drawing over it, and
+     * otherwise none is. Word draws every shape in front over every shape behind, so lifting one
+     * drawing of a stack while another stays there puts the lower of the two over the higher —
+     * the loss this fixes, made worse.</p>
+     *
+     * <p>It asks whether anything else is drawn, not whether that other drawing would stay
+     * behind, and the reason is a measurement: asking the second question was wrong three times
+     * over, at a picture drawn where the page puts it, at a badge handed over already in front,
+     * and at a shape whose node stands at more than one place. Each was a kind of drawing that
+     * stays behind for a reason of its own, and each had to be remembered here. There is nothing
+     * to remember about being alone. The price is that a stack drawing twice over a painted layer
+     * keeps both behind, where lifting both would have been safe; {@code cv-sidebar_portrait}'s
+     * thirty-seven over its sidebar are that case.</p>
      *
      * <p>A node standing inside a painted surface is another case, decided by the surface it is
      * in ({@code surfaceBehind}) rather than by its neighbours. Only the shapes a node paints
@@ -4556,10 +4562,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (paintedBelow < 0) {
                 continue;
             }
-            // Whole, or not at all: a drawing over that painted layer which has to stay behind
-            // the text keeps every drawing over it there too, the node's own shapes included.
+            if (framesTextWithAShape(node)) {
+                return false;
+            }
+            // Alone, or not at all: nothing else of the stack may be drawn over that painted
+            // layer (drawnOverThatLayer).
             for (int i = paintedBelow + 1; i < order.size(); i++) {
-                if (staysBehindTheText(order.get(i).node())) {
+                if (drawnOverThatLayer(order.get(i).node(), node)) {
                     return false;
                 }
             }
@@ -4569,42 +4578,60 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Whether a node, or anything it holds, is drawn behind the text and stays there — so that
-     * nothing of its stack may be lifted over it.
+     * Whether one of a node's own shapes holds a line of the flow or a picture of its page, which
+     * in front it would cover.
      *
-     * <p>A shape answers yes where its box holds a line of the flow or a picture, which in front
-     * it would cover. Only a node the export draws as shapes is asked, and only the fragments it
-     * draws them from: a paragraph's own fragment, and the decoration fragment a painted or
-     * bordered wrapper is given, are in the list the test reads from, so asking the test of those
-     * would find their own centre in their own box and refuse the lift for every stack bearing
-     * text or a border. A badge holding its initials is not asked either: its shape is handed over
-     * in front wherever it stands, so nothing is lifted past it.</p>
-     *
-     * <p>A picture is never lifted — {@code drawWhereThePagePutsIt} asks the surface it stands on,
-     * not its neighbours — so a shape lifted over one would cover a picture the page draws over
-     * the shape. Measured, that happened to a badge's glyph: the badge's outline came back in
-     * front of the photo it frames. It is this test that stops it, the outline framing that
-     * picture, and a picture needs no rule of its own here: of the shapes a picture can take above
-     * a painted layer, the badge's glyph is the one the export draws where the page puts it, and
-     * a picture beside its label in a layer of a stack is written in the flow instead and is
-     * covered by nothing. A rule for the picture itself was written, found to redden no test when
-     * sabotaged, and taken out rather than kept as conservatism nothing drives.</p>
+     * <p>Asked of the node being lifted and of nothing else. Only the fragments a shape is drawn
+     * from are read: a paragraph's own fragment, and the decoration fragment the layout gives a
+     * painted or bordered wrapper, are in the list the test reads from, so asking the test of
+     * those would find their own centre in their own box.</p>
      */
-    private boolean staysBehindTheText(DocumentNode node) {
-        boolean drawn = isDrawing(node)
-                        || node instanceof ShapeContainerNode badge && textBadgeParagraph(badge) == null;
-        if (drawn && !Double.isNaN(canvasHeight)) {
-            for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
-                if (DocxDrawings.of(fragment, canvasHeight).isEmpty()) {
-                    continue;
-                }
-                if (framesText(fragment, layout.textOnPage(fragment.pageIndex()))) {
-                    return true;
-                }
+    private boolean framesTextWithAShape(DocumentNode node) {
+        if (Double.isNaN(canvasHeight)) {
+            return false;
+        }
+        for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
+            if (!DocxDrawings.of(fragment, canvasHeight).isEmpty()
+                && framesText(fragment, layout.textOnPage(fragment.pageIndex()))) {
+                return true;
             }
         }
+        return false;
+    }
+
+    /**
+     * Whether a layer, or anything it holds, draws something that is not {@code lifted} or part
+     * of it.
+     *
+     * <p>Read as widely as the export draws. A fragment a shape is drawn from counts, whosever it
+     * is: that is what the export draws shapes from, so it covers a node kind the export does not
+     * know as well as a shape of its own, and it counts a painted wrapper's decoration too, which
+     * only refuses a lift. And a picture counts, drawn where the page puts it and never lifted —
+     * measured: a shape lifted over one came back painted over the picture the page draws over
+     * it.</p>
+     */
+    private boolean drawnOverThatLayer(DocumentNode node, DocumentNode lifted) {
+        if (node == lifted) {
+            return false;
+        }
+        if (node instanceof ImageNode || drawsAShape(node)) {
+            return true;
+        }
         for (DocumentNode child : node.children()) {
-            if (staysBehindTheText(child)) {
+            if (drawnOverThatLayer(child, lifted)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether the layout gives a node a fragment a shape is drawn from. */
+    private boolean drawsAShape(DocumentNode node) {
+        if (Double.isNaN(canvasHeight)) {
+            return false;
+        }
+        for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
+            if (!DocxDrawings.of(fragment, canvasHeight).isEmpty()) {
                 return true;
             }
         }

@@ -251,11 +251,13 @@ class DocxDrawingUnderANeighboursFillTest {
     }
 
     @Test
-    void aBadgeHoldingItsInitialsKeepsNothingBehindIt() throws Exception {
-        // A badge holding its initials is handed over in front wherever it stands, so it cannot be
-        // put under anything and must not keep the pin behind: measured, counting its own box
-        // among the things that stay behind left the badge in front and the pin behind it, which
-        // is the inversion the whole-stack rule exists to stop.
+    void aStackDrawingABadgeBesideTheShapeLiftsNeither() throws Exception {
+        // Alone, or not at all: the badge is a second drawing of the stack, so the pin is not
+        // lifted. This is the rule's price, and a badge is the shape it is cheapest to see on —
+        // a badge holding its initials is handed over in front wherever it stands, so lifting the
+        // pin would have been safe here. The rule does not ask that, on purpose: asking why the
+        // other drawing stays behind was wrong at a picture, at this badge, and at a node standing
+        // twice, each time by letting the lower of two shapes be drawn over the higher.
         Export export = export(session -> session.pageFlow(page -> page
                 .add(new LayerStackBuilder().name("Stack")
                         .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
@@ -269,17 +271,19 @@ class DocxDrawingUnderANeighboursFillTest {
                         .build())));
 
         assertThat(pinAnchor(export))
-                .as("the pin is lifted with the badge, not left under it")
-                .contains("behindDoc=\"0\"");
-        assertThat(covered(export.report())).isEmpty();
+                .as("the pin stays behind, the badge beside it being a drawing of the stack too")
+                .contains("behindDoc=\"1\"");
+        assertThat(covered(export.report()))
+                .as("and the band is named as covering it")
+                .anySatisfy(named -> assertThat(named).contains("Pin").contains("Band[0]"));
     }
 
     @Test
-    void aShapeOverABorderedNeighbourBearingTextIsStillLifted() throws Exception {
-        // A bordered wrapper is written as a cell, never as a drawing, though the layout gives it
-        // a decoration fragment of its own. Counting that fragment among the shapes that stay
-        // behind refused the lift for the whole stack — measured — so only the nodes the export
-        // draws as shapes are asked.
+    void aStackDrawingABorderedNeighbourLiftsNothing() throws Exception {
+        // A bordered wrapper is written as a cell rather than as a drawing, but the layout gives
+        // it a fragment a shape is drawn from, and that is what the rule reads: anything drawn
+        // over the painted layer keeps the stack behind. Counting it costs a lift and can only
+        // cost a lift, which is the side to be wrong on.
         Export export = export(session -> session.pageFlow(page -> page
                 .add(new LayerStackBuilder().name("Stack")
                         .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
@@ -293,8 +297,47 @@ class DocxDrawingUnderANeighboursFillTest {
                                 150, 2, LayerAlign.TOP_LEFT, 2)
                         .build())));
 
-        assertThat(pinAnchor(export)).contains("behindDoc=\"0\"");
-        assertThat(covered(export.report())).isEmpty();
+        assertThat(pinAnchor(export)).contains("behindDoc=\"1\"");
+        assertThat(covered(export.report()))
+                .anySatisfy(named -> assertThat(named).contains("Pin").contains("Band[0]"));
+    }
+
+    @Test
+    void aStackDrawingAPictureBesideItsLabelLiftsNothing() throws Exception {
+        // A picture drawn beside the text it labels, in a nested layer of the stack, nowhere near
+        // the pin. The picture is never lifted — the surface it stands on decides, not its
+        // neighbours — so lifting the pin would paint the pin over a picture the page draws over
+        // it. Measured on exactly this shape: the pin came back behindDoc="0" and the picture
+        // behindDoc="1", and they overlap.
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Stack")
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .position(new ShapeBuilder().name("Pin").size(30, 14).fillColor(ACCENT).build(),
+                                140, 2, LayerAlign.TOP_LEFT, 1)
+                        .position(new LayerStackBuilder().name("Fact")
+                                        .layer(new com.demcha.compose.document.dsl.ImageBuilder()
+                                                        .name("Icon").source(pngBytes()).size(10, 10).build(),
+                                                LayerAlign.CENTER_LEFT)
+                                        .position(new ParagraphBuilder().name("Label").text("Label").build(),
+                                                14, 0, LayerAlign.CENTER_LEFT, 1)
+                                        .build(),
+                                168, 0, LayerAlign.TOP_LEFT, 2)
+                        .build())));
+
+        // The icon's centre stands past the pin's right edge, so the pin does not frame it and
+        // it is not that test keeping the pin behind — the boxes still overlap by two points,
+        // which is where the file would have drawn the pin over the picture.
+        assertThat(detailsOf(export.report(), "/Icon"))
+                .as("the picture is drawn where the page puts it, which is why it cannot be lifted")
+                .anySatisfy(detail -> assertThat(detail).contains("drawn beside the text it labels"));
+        assertThat(pinAnchor(export))
+                .as("the pin stays behind, the picture above it never being lifted")
+                .contains("behindDoc=\"1\"");
+        assertThat(covered(export.report()))
+                .as("and the band is named as covering the pin, so the pin was judged at all")
+                .anySatisfy(named -> assertThat(named).contains("Pin").contains("Band[0]"));
     }
 
     @Test
@@ -318,6 +361,31 @@ class DocxDrawingUnderANeighboursFillTest {
                 .as("both places behind the text, neither answered from the other's")
                 .isNotEmpty()
                 .allSatisfy(anchor -> assertThat(anchor).contains("behindDoc=\"1\""));
+    }
+
+    @Test
+    void aShapeBesideOneStandingTwiceIsNotLiftedOverIt() throws Exception {
+        // The refusal above is asked of the node being lifted, so on its own it would let a
+        // neighbour be lifted over the places it refuses — measured: the lone shape came back
+        // behindDoc="0" and both of the repeated instance's places behindDoc="1", the lower of
+        // them drawn over the higher. Being alone is what answers here: the repeated instance is
+        // a second drawing of the stack.
+        com.demcha.compose.document.node.DocumentNode shared =
+                new ShapeBuilder().name("Shared").size(40, 10).fillColor(OVER).build();
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Stack")
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .position(new ShapeBuilder().name("Pin").size(30, 14).fillColor(ACCENT).build(),
+                                150, 2, LayerAlign.TOP_LEFT, 1)
+                        .position(shared, 140, 8, LayerAlign.TOP_LEFT, 2)
+                        .position(shared, 140, 24, LayerAlign.TOP_LEFT, 3)
+                        .build())));
+
+        assertThat(pinAnchor(export))
+                .as("the lone shape stays behind with the places it would have been drawn over")
+                .contains("behindDoc=\"1\"");
     }
 
     @Test

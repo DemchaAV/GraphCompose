@@ -8,6 +8,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export asks the same order of a composed cell's paragraphs as of a block's, so a drawing
+  a table's cell draws is anchored in the paragraph of that cell which places it nearest rather than
+  in the first one the cell writes.**
+  - The cell whose box holds such a drawing stands for the block holding it, and its paragraphs are
+    now divided by the line the drawing stands level with or below and ordered within that by the
+    offset each would place it at — the order a block's own paragraphs are already asked for. Both
+    paths ask it in one place, so neither can drift from the other.
+  - No document of the fidelity corpus changes. Of the 190 drawings a composed cell draws there,
+    none stands further than 50pt from the paragraph it is anchored in and none has a nearer
+    paragraph in its own cell: each of the 165 that a paragraph of their cell carries has exactly
+    one it can be placed from, and all 165 stand within 4.39pt of it. The export's documents are
+    byte for byte the ones it wrote before, so neither editor is asked to draw anything differently.
+    Where a cell does offer two, which the corpus never asks of it, a built case measured in both
+    directions has a tile standing below the lines of both of two rows composed in one cell
+    anchored 220pt up, in the first row's paragraph, before, and 20pt up, in the paragraph of the
+    row it stands in, after.
+  - The export's report states that order for a drawing a composed cell paints and for one a node
+    paints, in place of "the first paragraph able to carry it", which both notes still named.
 - **A DOCX export anchors a drawing in the paragraph of its block that places it at the smallest
   offset, not in the first one the block writes, so an edit that breaks the page between the two no
   longer leaves the drawing behind.**

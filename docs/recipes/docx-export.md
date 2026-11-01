@@ -1573,9 +1573,10 @@ only as a table's cells goes to the paragraph nearest it.
 What a table's composed cell draws has no node of its own: a composed cell's content is laid out
 under its table, and its drawings stand among the table's own fragments. The cell whose box the
 layout placed such a drawing in stands for the block holding it, found by geometry, and the
-drawing is anchored in the first paragraph of that cell able to carry it, placed from that cell's
-text column and the paragraph's top, by the rules above; the paragraph is found by the cell that
-holds it rather than by a path, since the layout names a node standing in two cells once. A cell
+drawing is anchored in the paragraph of that cell able to carry it which places it nearest,
+ordered as a block's paragraphs are above, and placed from that cell's text column and the
+paragraph's top, by the rules above; the paragraph is found by the cell that holds it rather than
+by a path, since the layout names a node standing in two cells once. A cell
 set to the middle or the bottom takes one only where the page fills its box — where what the
 layout placed in it reaches within a stroke's width of the room its margins leave, above and
 below, so that an editor setting the cell's content from its top has nothing to move — and the

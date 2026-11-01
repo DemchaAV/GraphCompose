@@ -55,11 +55,28 @@ class DocxDrawingAnchorGuardTest {
      * Drawings of a table's composed cell: the walk from the cell whose box holds the drawing to a
      * paragraph of that cell finds none it can be placed from, and the drawing stays on the sheet.
      *
-     * <p>Which step of the walk gives up has not been pinned down. A cell set to the middle of a
-     * nested row stands in the way in these three invoices, and was taken for the cause, but a
-     * composed cell holding text and a drawing leaves the drawing on the sheet with no nested row
-     * anywhere near it, so that is at most one way in. The reason here is therefore the outcome,
-     * not a mechanism.</p>
+     * <p>Both steps give up, and the second for two reasons rather than the one a nested row set
+     * to the middle was taken for. Measured over the corpus: of the 190 drawings a composed cell
+     * draws, these twenty-five are the ones whose holding cell offers no paragraph they can be
+     * placed from at all, where each of the other 165 cells offers exactly one. They then fall
+     * back to the text nearest them, and the paragraph nearest refuses every one of the
+     * twenty-five — nineteen because that paragraph's own cell is set from the middle, which
+     * carries no drawing, and six because the drawing rises above that paragraph's top by more
+     * than the stroke's width a cell allows. Nineteen stand in {@code invoice-merchant} (four),
+     * {@code invoice-workspace} (eight) and {@code invoice-payments} (seven); the six are
+     * {@code invoice-payments} as well.</p>
+     *
+     * <p>So the sheet is the outcome of two measured constraints, not of a step left undone, and
+     * neither constraint is the reach of the fall-back. {@code DocxDrawingAnchors.REACH} refuses
+     * none of the twenty-five: each has a paragraph 9.69 to 21.32pt away, 15.14pt at the median,
+     * so widening it places nothing. Trying the paragraphs further off in turn, as the walk for a
+     * drawing a node paints does, places three; doing both places all twenty-five, at 34.75 to
+     * 215.58pt, 125.77pt at the median, in a paragraph of another row — none of the twenty-five
+     * has one that can carry it and belongs to its own row. That would trade a drawing nailed to
+     * the sheet for one that follows another row's text, the defect the order
+     * {@code DocxDrawingAnchors.asTheShapeStandsTo} asks for was written to close. Nineteen of the
+     * entry go when a cell set from the middle can carry a drawing, and the other six when one
+     * rising further above a paragraph's top than a stroke's width can; neither before.</p>
      */
     private static final String COMPOSED_CELL_WALK_STOPS =
             "a composed cell's drawing, which the walk from its holding cell found no paragraph for,"

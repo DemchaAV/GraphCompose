@@ -153,8 +153,9 @@ class DocxParagraphReportTest {
                            + "written before its first line; " + room);
         // A text box over the flow.
         String boxed = "laid over the flow, which gives it no room: set in a text box where the page sets it, "
-                       + "anchored in the first paragraph able to carry it that the nearest block holding it writes "
-                       + "on its page, so it moves with that block when the text above is edited; in the paragraph "
+                       + "anchored in the paragraph the nearest block holding it writes on its page that places "
+                       + "it at the smallest offset of those whose line it stands level with or below, so it "
+                       + "moves with that block when the text above is edited; in the paragraph "
                        + "nearest it where no block holding it writes one there, or to the page where no paragraph "
                        + "on its page can carry it";
         assertThat(paragraphNotes(page -> page.add(sidebar(new ParagraphBuilder().name("Monogram").text("L")

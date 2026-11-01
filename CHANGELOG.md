@@ -2837,20 +2837,6 @@ follow semantic versioning; release dates are ISO 8601.
   Lines more than 2pt off across fall from 175 to 136 in Word, from 130 to 102 in LibreOffice
   on Windows and from 427 to 388 on Linux. `ListBuilder.hangingIndent` and `markerGap` say what
   DOCX now keeps.
-- **A page of its own draws its backgrounds from the body in DOCX, so LibreOffice no longer
-  sets it lower.** LibreOffice gives a header a height of its own however little it holds, and
-  the header carrying a page's backgrounds set every line of the seven sidebar CVs
-  (`SlateOrange`, `CharcoalGold`, `MidnightNavy`, `NavySidebar`, `ProfessionalSidebar`,
-  `SidebarPortrait`, `MonogramSidebar`) 2.6 to 3.3pt low. A section of one page with no header
-  or footer now writes no header: its fills are anchored to the page in the body, under every
-  other shape, and a page that opens with a table carries them and its other shapes in its
-  first cell's paragraph rather than a hairline over the table, which pushed a row as tall as
-  the page onto a second page. A section with a footer keeps them in a header, as Word paints
-  the body's shapes over a footer's text. In LibreOffice those CVs' medians fall from 2.6–3.3pt
-  to 0.1–0.4pt, and lines more than 2pt off across the corpus from 606 to 127; in Word their
-  lines stand 0.04–0.17pt higher without the hairline, their mean distance from the page 0.28pt
-  before and 0.29pt after. The fills are on that one page: a page an editor's text runs onto
-  has none.
 - **A centred or right-aligned line that fills its box keeps to one line in Word.** Word sets
   a size in half points, so a 6.8pt line is set at 7pt, 2.9% wider, and no longer fits a box it
   fills. A flush-left paragraph was already given that much more measure; a centred or
@@ -3766,9 +3752,19 @@ follow semantic versioning; release dates are ISO 8601.
   Word draws a header's shapes on every page that header is shown on, and the rectangle is
   in each header the section has. A section without a header gets an empty one against the
   page edge to carry them, and the section after it gets an empty one of its own, so it does
-  not show the fills of the section before. Measured in LibreOffice, not in Word: on the
-  `CharcoalGold` CV the charcoal column is back behind the sidebar on every page. On a page
-  with no top margin the empty header pushes the first line down about 3pt. A two-column
+  not show the fills of the section before. A section of one page is given that header too,
+  though its fills would fit in the body: Word sets a document on a line more than the engine
+  did, and a reader types, and the page that appears then is painted like the first one, where
+  fills anchored in the body would paint the first page alone and leave the sidebar's white text
+  on a white page. Measured in Word 16.0.20527 on a one-page sidebar export with eighty
+  paragraphs appended to it, the page the editor adds carries the column; on the `CharcoalGold`
+  CV in LibreOffice the charcoal column is behind the sidebar on every page. The price is paid
+  in LibreOffice, which gives a header a height of its own however little it holds and sets the
+  body that much lower: measured in LibreOffice 24.2, the seven sidebar CVs of the fidelity
+  corpus stand 2.77 to 3.08pt below the engine by the median, 3.99pt at the furthest line, with
+  every line the measurement matches more than 2pt down, so those seven are outside the set the
+  fidelity report calls set as the page sets them. Word sets them where the page does. The Linux
+  LibreOffice baseline and the capability matrix record the shift. A two-column
   preset still flows its columns one after the other in Word, so a column fill can stand
   beside text that is not its column's.
 
@@ -4607,12 +4603,12 @@ follow semantic versioning; release dates are ISO 8601.
     `DocxDrawingAnchorGuardTest`, whose ledger names every drawing of the corpus still placed from
     the page and fails when one is added to it or taken off.
   - What a drawing is placed down from is read from Word, per drawing. Measured over the corpus
-    both ways round: the files hold 774 `wp:anchor` in the body and Word names 774 shapes there,
+    both ways round: the files hold 760 `wp:anchor` in the body and Word names 760 shapes there,
     and `wp:positionV relativeFrom` agrees with Word's `RelativeVerticalPosition` on every one —
-    46 from the page, 14 of them page fills, and 728 from their paragraph, with no third answer and
-    no name carried twice. The 32 drawings left are the 32 the guard's ledger names, document for
-    document and name for name; the 18 further anchors the files hold outside the body are page
-    fills in headers, which the main story does not reach.
+    32 from the page and 728 from their paragraph, with no third answer and no name carried
+    twice. Those 32 are the 32 the guard's ledger names, document for document and name for
+    name; the 32 further anchors the files hold outside the body are the page fills, which live
+    in the headers and which the main story does not reach.
   - Over the corpus, **305 of the 320 drawings a paragraph carries that stand beside text the edit
     moved follow it**, and 400 of the 408 beside text it leaves standing stand still too. The 32
     nailed to the sheet are measured the same way and reported apart: 13 stood beside text that

@@ -667,12 +667,12 @@ function Find-ShapeRectangle {
 #
 # What a drawing is placed down from is read from Word rather than from the file, and it is the
 # same thing the file says. Measured over the 71 documents of the corpus, both ways round: the
-# files hold 774 `wp:anchor` in the body and Word names 774 shapes there, with no anchor the one
+# files hold 760 `wp:anchor` in the body and Word names 760 shapes there, with no anchor the one
 # reading has and the other has not, and `wp:positionV relativeFrom` agrees with Word's
-# RelativeVerticalPosition on every one — 46 from the page, 14 of them page fills, and 728 from
-# their paragraph, with no third answer and no name carried twice. The 32 drawings left are the 32
-# DocxDrawingAnchorGuardTest holds a named ledger of, document for document and name for name. The
-# 18 further anchors the files hold outside the body are page fills in headers, which belong to the
+# RelativeVerticalPosition on every one — 32 from the page and 728 from their paragraph, with no
+# third answer and no name carried twice. Those 32 are the 32 DocxDrawingAnchorGuardTest holds a
+# named ledger of, document for document and name for name. The 32 further anchors the files hold
+# outside the body are page fills in headers, every page fill the corpus has, which belong to the
 # sheet and which this reading, being of the main story, does not reach.
 function Get-DrawingPlaces {
     param($Doc, $Geometry)

@@ -66,7 +66,6 @@ class DocxPageBackgroundTest {
         // and all: the body pages took the cover's navy behind their dark text.
         DocumentSession cover = GraphCompose.document().pageSize(300, 440).margin(DocumentInsets.of(24)).create();
         cover.pageBackground(DocumentColor.rgb(28, 39, 64));
-        // Two pages: a cover of one draws its colour from its page, with no header to inherit.
         cover.pageFlow(page -> page.addParagraph("Cover").addPageBreak(b -> { }).addParagraph("Inside cover"));
         DocumentSession body = GraphCompose.document().pageSize(300, 440).margin(DocumentInsets.of(24)).create();
         body.pageFlow(page -> page.addParagraph("Body"));
@@ -83,6 +82,33 @@ class DocxPageBackgroundTest {
             assertThat(bodyHeader._getHdrFtr().xmlText()).doesNotContain("<w:drawing");
             assertThat(document.getHeaderList())
                     .as("the cover's header carries its colour")
+                    .anyMatch(header -> header._getHdrFtr().xmlText().contains("1C2740"));
+        }
+    }
+
+    @Test
+    void aCoverOfOnePageDoesNotShowItsColourBehindTheSectionAfterIt() throws Exception {
+        // A cover of one page used to draw its colour from the body, so there was no header for
+        // the section after it to inherit and nothing to shield it from. Now that it writes one,
+        // the section after it needs the empty header of its own that a longer cover already
+        // gave it.
+        DocumentSession cover = GraphCompose.document().pageSize(300, 440).margin(DocumentInsets.of(24)).create();
+        cover.pageBackground(DocumentColor.rgb(28, 39, 64));
+        cover.pageFlow(page -> page.addParagraph("Cover"));
+        DocumentSession body = GraphCompose.document().pageSize(300, 440).margin(DocumentInsets.of(24)).create();
+        body.pageFlow(page -> page.addParagraph("Body"));
+        byte[] docx;
+        try (var sections = GraphCompose.documents().section(cover).section(body).create()) {
+            docx = sections.toDocxBytes();
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            XWPFHeader bodyHeader = new org.apache.poi.xwpf.model.XWPFHeaderFooterPolicy(document,
+                    document.getDocument().getBody().getSectPr()).getDefaultHeader();
+            assertThat(bodyHeader).as("a header of the body's own, not the cover's").isNotNull();
+            assertThat(bodyHeader._getHdrFtr().xmlText()).doesNotContain("<w:drawing");
+            assertThat(document.getHeaderList())
+                    .as("the cover of one page carries its colour in a header")
                     .anyMatch(header -> header._getHdrFtr().xmlText().contains("1C2740"));
         }
     }
@@ -164,25 +190,45 @@ class DocxPageBackgroundTest {
     }
 
     @Test
-    void aPageOfItsOwnDrawsItsBackgroundsFromTheBodyWithNoHeader() throws Exception {
-        // LibreOffice gives a header a height of its own however little it holds, and set every
-        // line of a sidebar CV that much lower.
+    void aPageOfItsOwnCarriesItsBackgroundsInAHeaderLikeAnyOtherSection() throws Exception {
+        // A section of one page drew them from the body instead, to spare the 3pt LibreOffice
+        // sets a body down by under a header of any height. A page an editor adds past that one
+        // — Word setting the document on a line more, or a user typing — then had no fills, and
+        // a sidebar CV's white text stood on a white page. The header paints that page too.
         try (XWPFDocument document = export(DocumentInsets.zero(), session -> session.pageBackgrounds(List.of(
                 PageBackgroundFill.leftColumn(0.3, CHARCOAL))), page -> page.addParagraph("Body text."))) {
             String body = document.getDocument().getBody().xmlText();
 
-            assertThat(document.getHeaderList()).as("no header to give a height").isEmpty();
-            assertThat(body).contains("name=\"Page background 1\"").contains("val=\"2B2F36\"")
+            assertThat(onlyHeader(document)._getHdrFtr().xmlText())
+                    .contains("name=\"Page background 1\"").contains("val=\"2B2F36\"")
                     .contains("behindDoc=\"1\"").contains("relativeFrom=\"page\"");
+            assertThat(body).as("nothing of them left in the body").doesNotContain("Page background");
             assertThat(DocxTwips.of(document.getDocument().getBody().getSectPr().getPgMar().getTop()))
-                    .as("the page's margin, no header to hold the body against").isZero();
+                    .as("the header this section newly has holds its body at the margin too")
+                    .isEqualTo(-1L);
         }
     }
 
     @Test
-    void aPageOfOneTableCarriesItsBackgroundsInItsFirstCellWithNoHairlineOverIt() throws Exception {
-        // A row the page's height has no room for a hairline over it: LibreOffice moved
-        // MidnightNavy's onto a second page under one.
+    void aSectionOfOnePageIsGivenTheSameBackgroundAnchorAsOneOfTwo() throws Exception {
+        // How many pages the section has decides nothing about the fills: the anchor, the
+        // identifier it carries and the header holding it are written the same way for both.
+        try (XWPFDocument onePage = export(DocumentInsets.of(20), session -> session.pageBackgrounds(List.of(
+                PageBackgroundFill.leftColumn(0.3, CHARCOAL))), page -> page.addParagraph("Body text."));
+             XWPFDocument twoPages = export(session -> session.pageBackgrounds(List.of(
+                PageBackgroundFill.leftColumn(0.3, CHARCOAL))))) {
+            assertThat(onlyHeader(onePage)._getHdrFtr().xmlText())
+                    .isEqualTo(onlyHeader(twoPages)._getHdrFtr().xmlText());
+        }
+    }
+
+    @Test
+    void aPageOfOneTableCarriesItsBackgroundsInAHeaderWithNoHairlineOverTheTable() throws Exception {
+        // They were anchored in the first cell's paragraph, to keep a hairline paragraph off a
+        // row as tall as the page: LibreOffice moved MidnightNavy's row onto a second page under
+        // one. The header carries them instead, and the table still opens the page — the
+        // hairline is opened for a drawing no paragraph of the page carries, and the fills are
+        // no longer such a drawing.
         try (XWPFDocument document = export(DocumentInsets.zero(), session -> session.pageBackgrounds(List.of(
                         PageBackgroundFill.leftColumn(0.3, CHARCOAL))),
                 page -> page.addRow("Columns", row -> row
@@ -192,14 +238,38 @@ class DocxPageBackgroundTest {
             String cell = document.getTables().get(0).getRow(0).getCell(0).getCTTc().xmlText();
 
             assertThat(body.get(0)).as("the table opens the page").isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFTable.class);
-            assertThat(cell).contains("name=\"Page background 1\"").contains("layoutInCell=\"0\"")
+            assertThat(cell).as("nothing of them in the cell").doesNotContain("Page background");
+            assertThat(onlyHeader(document)._getHdrFtr().xmlText())
+                    .contains("name=\"Page background 1\"").contains("layoutInCell=\"1\"")
+                    .as("the fill is the header's to place, not the body's to move")
+                    .contains("locked=\"1\"")
                     .contains("relativeFrom=\"page\"");
         }
     }
 
     @Test
-    void aPageOfItsOwnUnderAFooterKeepsItsBackgroundsInAHeader() throws Exception {
-        // Word paints the body's shapes over a footer's text: MeteredInvoice's band hid it.
+    void aPageOfOneTableWhoseDrawingsItsCellsCarryIsNotOpenedWithAHairline() throws Exception {
+        // The hairline a drawing no paragraph carries would be given is not opened for one a
+        // cell's paragraph carries: a row as tall as the page has no room for it, and
+        // LibreOffice set such a row on a second page under one (see openBefore).
+        try (XWPFDocument document = export(DocumentInsets.zero(), session -> session.pageBackgrounds(List.of(
+                        PageBackgroundFill.leftColumn(0.3, CHARCOAL))),
+                page -> page.addRow("Columns", row -> row
+                        .addSection("Side", side -> side.addParagraph("Side")
+                                .addEllipse(dot -> dot.name("Dot").circle(6).fillColor(CHARCOAL)))
+                        .addSection("Main", main -> main.addParagraph("Main"))))) {
+            assertThat(document.getBodyElements().get(0)).as("the table still opens the page")
+                    .isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFTable.class);
+            assertThat(document.getTables().get(0).getRow(0).getCell(0).getCTTc().xmlText())
+                    .as("the cell's own paragraph carries the drawing").contains("<w:drawing");
+        }
+    }
+
+    @Test
+    void aSectionWithAFooterCarriesItsBackgroundsInItsHeaderAndNotInTheFooter() throws Exception {
+        // The fills go into the header of a section that has only a footer, not into the footer
+        // it does have: Word paints a page's shapes over a footer's text, and MeteredInvoice's
+        // band hid its footer when they were drawn from the body of such a section.
         try (XWPFDocument document = export(DocumentInsets.of(20), session -> {
             session.pageBackgrounds(List.of(PageBackgroundFill.bandPoints(540, 40, 600, CHARCOAL)));
             session.chrome().zone(com.demcha.compose.document.output.DocumentPageZone.footer(30,
@@ -207,6 +277,10 @@ class DocxPageBackgroundTest {
         }, page -> page.addParagraph("Body text."))) {
             assertThat(onlyHeader(document)._getHdrFtr().xmlText()).contains("2B2F36");
             assertThat(document.getDocument().getBody().xmlText()).doesNotContain("Page background");
+            assertThat(document.getFooterList()).as("a footer of its own, carrying no fill").hasSize(1);
+            assertThat(document.getFooterList().get(0)._getHdrFtr().xmlText())
+                    .as("the fills are not in the footer Word would paint them over")
+                    .doesNotContain("Page background").contains("Footer");
         }
     }
 

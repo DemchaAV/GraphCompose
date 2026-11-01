@@ -94,15 +94,17 @@ header gets an empty one, against the page edge, to carry them. That header is a
 tall, and on a page whose top margin is narrower than that the margin is written negative,
 so Word holds the body at it rather than moving it down under the header; LibreOffice still
 moves the first line down about 3pt, since it gives a header a height of its own however
-little it holds. So a section of one page with no header or footer writes no header at all:
-its fills are anchored to the page in the body, behind the text and under every other shape,
-and a page that opens with a table carries them, and its other shapes, in the first cell's
-paragraph, laid out from the page — a hairline paragraph over a row as tall as the page would
-push the row onto a second page in LibreOffice. A section with a footer keeps them in its
-header: Word paints the body's shapes over a footer's text. Drawn from the body, the fills are
-on that page alone: text an editor adds that runs onto a second page leaves that page without
-them, where a header would have painted it. An empty footer against the
-page's foot writes a bottom margin narrower than its point the same way. A two-column
+little it holds. A section of one page gets that header too, though its fills would fit in the
+body: a page an editor adds past it — Word setting the document on a line more, or a user
+typing — is painted by the header, where fills anchored in the body paint the first page alone
+and leave a sidebar CV's white text on a white page. The seven sidebar CVs of the fidelity
+corpus pay for that page with the LibreOffice shift: their lines stand 2.77 to 3.08pt low by
+the median and 3.99pt at the furthest, measured in LibreOffice 24.2, and the Linux LibreOffice
+baseline records it. Word sets them where it set them before: no line of the seven moves by
+more than 0.12pt, one step of the grid Word rounds a line to, where two documents the change
+leaves byte for byte the same moved by 0.12 and 0.36pt between two runs of the same Word.
+An empty footer against the page's foot has the bottom margin narrower than its point written
+negative in the same way the header's does. A two-column
 layout still flows its columns one after the other in Word, so a column fill can stand
 beside text that is not its column's.
 

@@ -481,7 +481,8 @@ class DocxDrawingsTest {
                     .addEllipse(e -> e.name("First").circle(10).fillColor(ACCENT))
                     .addEllipse(e -> e.name("Second").circle(10).fillColor(ACCENT)));
         })) {
-            // A page of its own draws its background from the body too (DocxPageBackgroundTest).
+            // Every section's backgrounds are in its header (DocxPageBackgroundTest), so the
+            // headers' paragraphs are read along with the body's to find them wherever they sit.
             List<org.apache.poi.xwpf.usermodel.XWPFParagraph> paragraphs = new ArrayList<>(document.getParagraphs());
             for (XWPFHeader part : document.getHeaderList()) {
                 paragraphs.addAll(part.getParagraphs());

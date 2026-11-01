@@ -4496,13 +4496,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * not, and over a painted neighbour they stay behind the text and are named there
      * ({@code nameTheDrawingsAPaintedPanelCovers}). The corpus holds no instance of either.</p>
      *
-     * <p>It answers false rather than guessing wherever the tree does not say: the climb is over
-     * the layout's parents, so it ends at a node the layout did not place — one composed in an
-     * authored table cell — and a layer it cannot find among its parent's, which is the answer
-     * that leaves the export as it was. A canvas lays its children over one another too but holds
+     * <p>It answers false rather than guessing wherever the tree does not say: a node the layout
+     * did not place — one composed in an authored table cell — ends the climb, a layer it cannot
+     * find among its parent's ends it with a false whatever an inner stack had granted, and a node
+     * one instance of which stands at more than one place is refused outright, its box and its
+     * path being one among those places. A canvas lays its children over one another too but holds
      * no layers, so it is climbed past rather than read.</p>
      */
     private boolean laidOverAPaintedNeighbour(DocumentNode node) {
+        if (layout.placedMoreThanOnce(node)) {
+            // One instance standing at more than one place has one path and one box among them,
+            // so what lies under it at one place is not what lies under it at another, and the
+            // answer would be given for all of them from whichever the index kept.
+            return false;
+        }
         boolean over = false;
         DocumentNode child = node;
         for (DocumentNode parent = layout.parentOf(child); parent != null;
@@ -4521,7 +4528,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
             }
             if (itsPlace < 0) {
-                continue;
+                // The layout's parent is an overlay whose layers do not hold this child: the tree
+                // does not say where in the stack it is, so neither does this — and a lift an
+                // inner stack had granted goes with it, that outer stack's own painted layers
+                // never having been read.
+                return false;
             }
             int paintedBelow = -1;
             for (int i = 0; i < order.size(); i++) {
@@ -4552,14 +4563,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Whether a node, or anything it holds, paints a shape that has to stay behind the text: one
      * whose box holds a line of the flow or a picture, which in front it would cover.
      *
-     * <p>The same test the shape itself is given when it is drawn
-     * ({@code drawAndNameOwnFragments}), asked here of a neighbour instead, so that the two
-     * answers cannot differ. A badge whose glyph is drawn over it stands in front wherever it is
-     * and is not one of these.</p>
+     * <p>Only a fragment a shape is drawn from is asked — the ones {@code queueDrawing} writes,
+     * and the only ones a lift could put over anything. A paragraph's own fragment, and a
+     * picture's, is in the list the test reads from, so asking the test of it would find its own
+     * centre in its own box: every layer bearing text or a picture would refuse the lift for its
+     * whole stack, whatever the geometry, which is a different rule from this one and one no
+     * measurement here supports.</p>
+     *
+     * <p>A badge whose glyph is drawn over it stands in front wherever it is, so its own outline
+     * is not asked either: the picture it frames is its own, not the flow's. The glyph itself is
+     * reached by the walk and asked nothing, a picture being drawn from no fragment of its own.</p>
      */
     private boolean staysBehindTheText(DocumentNode node) {
-        if (!holdsItsDrawnGlyph(node)) {
+        if (!Double.isNaN(canvasHeight) && !holdsItsDrawnGlyph(node)) {
             for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
+                if (DocxDrawings.of(fragment, canvasHeight).isEmpty()) {
+                    continue;
+                }
                 if (framesText(fragment, layout.textOnPage(fragment.pageIndex()))) {
                     return true;
                 }

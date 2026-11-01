@@ -62,15 +62,16 @@ follow semantic versioning; release dates are ISO 8601.
     plainly sees as well: the same fixture with its panel unpainted keeps its anchor's
     `behindDoc="1"` while showing all 3237 pixels of its shape in Word. It fails closed on two
     fixtures of its own, one that must come back named and one that must come back in front.
-  - Taking the order whole has a price, and it is worth knowing where it falls: a stack in which one
-    drawing has to stay behind keeps all of them there, so the order is not carried for it at all.
-    Of the 71-document fidelity corpus, one document changes — the one that holds the case — and the
-    other seventy are byte for byte what the export wrote before. `cv-sidebar_portrait` is among
-    them: thirty-seven of its drawings stand over its painted sidebar, one of them frames the photo
-    it rings, and so none is lifted. Word and LibreOffice draw that page identically either way, 0
-    of 3,868,706 pixels differing at 200 dpi in each, but that is a measurement of that preset and
-    not a promise about the rule. Over the changed corpus `drawings-follow-text` re-measures in Word
-    16.0.20527 at 309 of 325 drawings following their text, 95.08% — the same two counts as before.
+  - Taking the order whole has a price — a stack in which one drawing has to stay behind keeps all
+    of them there, so the order is not carried for it at all — and it is worth saying where that
+    price falls: nowhere in the fidelity corpus. Two of its 71 documents change, by 38 anchors: the
+    one that holds the case, and `cv-sidebar_portrait`, 37 of whose drawings stand over its painted
+    sidebar. Word and LibreOffice draw that preset's page exactly as they drew it before, 0 of
+    3,868,706 pixels differing at 200 dpi in each, nothing having been painted over those 37 to
+    begin with. No document of the corpus holds a stack the rule refuses, so what it costs is
+    measured only on a built case. Over the changed corpus `drawings-follow-text` re-measures in
+    Word 16.0.20527 at 309 of 325 drawings following their text, 95.08% — the same two counts as
+    before.
   - In LibreOffice 24.2 a shape anchored in a table cell stands the cell's left padding to the right
     of where Word and the page put it, so the icon that was drawn nowhere at all is now drawn whole
     and that far across: measured 14.16pt on the lifted icon, and 14.40pt right with 13.92pt low on

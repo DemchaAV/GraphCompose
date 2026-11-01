@@ -203,14 +203,14 @@ class DocxNeighbourFillGuardTest {
      * The drawings of the corpus the export lifts in front of the text over a painted layer under
      * them.
      *
-     * <p><strong>One:</strong> the icon over the card, the case this was measured on. Asserted
-     * exactly rather than as a floor, so that a corpus which starts lifting more — or stops
-     * lifting this one — is seen here. The seventy other documents lift nothing: thirty-seven
-     * drawings of {@code cv-sidebar_portrait} stand over its painted sidebar, but one of them
-     * frames the photo it rings, and the stack's order is taken whole or not at all, so none of
-     * them is lifted and that document is byte for byte what the export wrote before.</p>
+     * <p><strong>Thirty-eight</strong>, in two documents: the icon over the card, which is the
+     * case this was measured on, and thirty-seven of {@code cv-sidebar_portrait}'s over its
+     * painted sidebar. Word and LibreOffice draw that preset's page exactly as they drew it before
+     * — 0 of 3,868,706 pixels differing at 200 dpi in each — nothing having been painted over
+     * those thirty-seven to begin with. Asserted exactly rather than as a floor, so that a corpus
+     * which starts lifting more, or stops lifting these, is seen here.</p>
      */
-    private static final int LIFTED_IN_THE_CORPUS = 1;
+    private static final int LIFTED_IN_THE_CORPUS = 38;
 
     @Test
     void everyDrawingUnderANeighboursFillIsLedgered() throws Exception {

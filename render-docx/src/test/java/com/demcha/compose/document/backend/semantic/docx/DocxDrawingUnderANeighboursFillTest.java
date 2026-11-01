@@ -203,6 +203,95 @@ class DocxDrawingUnderANeighboursFillTest {
     }
 
     @Test
+    void aLayerBearingTextOverThePaintedOneDoesNotKeepTheShapeBehind() throws Exception {
+        // What keeps a stack's shapes behind is a SHAPE of it that has to stay there, not any
+        // layer that happens to carry text. A layer of words over the band, nowhere near the pin,
+        // used to refuse the lift for the whole stack: the test of whether a box holds a line of
+        // the flow was asked of the words' own fragment, which holds its own line, so every
+        // text-bearing layer answered yes whatever the geometry. `[painted background, text,
+        // icons]` is the ordinary layer stack, so that answer was nearly every stack there is.
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Stack")
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .position(new SectionBuilder().name("Words").fixedWidth(90)
+                                        .addParagraph(p -> p.name("Note").text("A line of words")).build(),
+                                2, 40, LayerAlign.TOP_LEFT, 1)
+                        .position(new ShapeBuilder().name("Pin").size(30, 14).fillColor(ACCENT).build(),
+                                150, 2, LayerAlign.TOP_LEFT, 2)
+                        .build())));
+
+        assertThat(pinAnchor(export))
+                .as("the words carry no shape, so they keep nothing behind")
+                .contains("behindDoc=\"0\"");
+        assertThat(covered(export.report())).isEmpty();
+    }
+
+    @Test
+    void aShapeTheSameInstanceOfWhichStandsTwiceIsNotLifted() throws Exception {
+        // One node used as two layers stands at two places, and the layout keeps one path and one
+        // box for the instance. What lies under it at one place is not what lies under it at the
+        // other, so an answer taken from whichever place the index kept would be given for both:
+        // it is refused instead.
+        com.demcha.compose.document.node.DocumentNode pin =
+                new ShapeBuilder().name("Pin").size(30, 14).fillColor(ACCENT).build();
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Stack")
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .position(pin, 150, 2, LayerAlign.TOP_LEFT, 1)
+                        .position(pin, 150, 30, LayerAlign.TOP_LEFT, 2)
+                        .build())));
+
+        assertThat(anchorsHolding(export, PIN_INK))
+                .as("both places behind the text, neither answered from the other's")
+                .isNotEmpty()
+                .allSatisfy(anchor -> assertThat(anchor).contains("behindDoc=\"1\""));
+    }
+
+    @Test
+    void twoPaintedLayersUnderAShapeStillLiftIt() throws Exception {
+        // The topmost painted layer is the one the shapes above it are judged from; a second
+        // painted layer below it changes nothing, the page covering it with the first.
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Stack")
+                        .layer(new SectionBuilder().name("Under").fillColor(OVER).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Deep").text("Under it all")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
+                                LayerAlign.TOP_LEFT, 1)
+                        .position(new ShapeBuilder().name("Pin").size(30, 14).fillColor(ACCENT).build(),
+                                150, 2, LayerAlign.TOP_LEFT, 2)
+                        .build())));
+
+        assertThat(pinAnchor(export)).contains("behindDoc=\"0\"");
+        assertThat(covered(export.report())).isEmpty();
+    }
+
+    @Test
+    void aShapeInAStackNestedOverAPaintedLayerStandsInFrontOfIt() throws Exception {
+        // The climb reads every stack the shape stands in, not only the nearest: the pin is a
+        // layer of an inner stack which is itself a layer over the painted band.
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Stack")
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .position(new LayerStackBuilder().name("Inner")
+                                        .position(new ShapeBuilder().name("Pin").size(30, 14)
+                                                .fillColor(ACCENT).build(), 0, 0, LayerAlign.TOP_LEFT, 0)
+                                        .build(),
+                                150, 2, LayerAlign.TOP_LEFT, 1)
+                        .build())));
+
+        assertThat(pinAnchor(export)).contains("behindDoc=\"0\"");
+        assertThat(covered(export.report())).isEmpty();
+    }
+
+    @Test
     void aShapeDeclaredBeforeAPaintedLayerOfTheSameZIndexStaysBehindIt() throws Exception {
         // Layers sharing a z-index are painted in the order they were given, so the band declared
         // after the pin is painted over it: the page covers the pin, and in front the pin would
@@ -262,8 +351,10 @@ class DocxDrawingUnderANeighboursFillTest {
                 .as("the picture is drawn where the page puts it, which is the path in question")
                 .isNotEmpty();
         assertThat(covered(export.report()))
-                .as("the picture over the band, named as covered by it")
-                .anySatisfy(named -> assertThat(named).contains("Photo").contains("Band[0]"));
+                .as("the picture over the band is named as covered by it, and it alone: the frame "
+                    + "round it is a badge whose glyph is drawn over it, so the frame stands in "
+                    + "front and nothing covers it")
+                .singleElement().asString().contains("Photo").contains("Band[0]");
     }
 
     @Test
@@ -420,17 +511,23 @@ class DocxDrawingUnderANeighboursFillTest {
 
     /** The one anchor holding the pin's ink. */
     private static String pinAnchor(Export export) throws Exception {
+        List<String> pins = anchorsHolding(export, PIN_INK);
+        assertThat(pins).as("one anchor drawn in the pin's ink").hasSize(1);
+        return pins.get(0);
+    }
+
+    /** Every anchor drawn in one ink. */
+    private static List<String> anchorsHolding(Export export, String ink) throws Exception {
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(export.bytes()))) {
-            List<String> pins = new ArrayList<>();
+            List<String> found = new ArrayList<>();
             Matcher matcher = Pattern.compile("<wp:anchor.*?</wp:anchor>", Pattern.DOTALL)
                     .matcher(document.getDocument().xmlText());
             while (matcher.find()) {
-                if (matcher.group().contains(PIN_INK)) {
-                    pins.add(matcher.group());
+                if (matcher.group().contains(ink)) {
+                    found.add(matcher.group());
                 }
             }
-            assertThat(pins).as("one anchor drawn in the pin's ink").hasSize(1);
-            return pins.get(0);
+            return found;
         }
     }
 

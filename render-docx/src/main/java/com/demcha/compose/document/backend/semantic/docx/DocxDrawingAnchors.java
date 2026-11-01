@@ -412,24 +412,6 @@ final class DocxDrawingAnchors {
     }
 
     /**
-     * The first body paragraph written on a page of the section, or {@code null}.
-     *
-     * @param page the page, counted within the section
-     */
-    XWPFParagraph bodyParagraphOn(int page) {
-        return bodyParagraph.get(page);
-    }
-
-    /**
-     * The first table-cell paragraph written on a page of the section, or {@code null}.
-     *
-     * @param page the page, counted within the section
-     */
-    XWPFParagraph cellParagraphOn(int page) {
-        return cellParagraph.get(page);
-    }
-
-    /**
      * Ends a section, anchoring the shapes no body paragraph on their page carried: on the
      * section's first page in {@code opening}, on its last in {@code closing}, on any other in
      * the first cell paragraph written on the page, or else in the paragraph of the page break

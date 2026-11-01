@@ -4434,17 +4434,119 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * a node laid over the flow writes its text boxes in this order too.
      */
     private static List<DocumentNode> inPaintOrder(DocumentNode node) {
-        List<com.demcha.compose.document.node.LayerStackNode.Layer> layers =
-                node instanceof com.demcha.compose.document.node.LayerStackNode stack ? stack.layers()
-                : node instanceof ShapeContainerNode container ? container.layers()
-                : null;
+        List<com.demcha.compose.document.node.LayerStackNode.Layer> layers = layersOf(node);
         if (layers == null) {
             return node.children();
         }
-        return layers.stream()
-                .sorted(java.util.Comparator.comparingInt(com.demcha.compose.document.node.LayerStackNode.Layer::zIndex))
+        return layersInPaintOrder(layers).stream()
                 .map(com.demcha.compose.document.node.LayerStackNode.Layer::node)
                 .toList();
+    }
+
+    /** The layers a stack or a container lays over one another, or {@code null} for any other node. */
+    private static List<com.demcha.compose.document.node.LayerStackNode.Layer> layersOf(DocumentNode node) {
+        return node instanceof com.demcha.compose.document.node.LayerStackNode stack ? stack.layers()
+                : node instanceof ShapeContainerNode container ? container.layers()
+                : null;
+    }
+
+    /**
+     * Layers in the order the page paints them: by z-index, the ones sharing one in the order they
+     * were given, which {@link java.util.stream.Stream#sorted} keeps.
+     */
+    private static List<com.demcha.compose.document.node.LayerStackNode.Layer> layersInPaintOrder(
+            List<com.demcha.compose.document.node.LayerStackNode.Layer> layers) {
+        return layers.stream()
+                .sorted(java.util.Comparator.comparingInt(com.demcha.compose.document.node.LayerStackNode.Layer::zIndex))
+                .toList();
+    }
+
+    /**
+     * Whether the page lays a node over a painted neighbour, and over nothing painted above it:
+     * the node stands in a layer, of any overlay it stands in, that the page paints after a layer
+     * of that overlay carrying a fill in the tree, and before none.
+     *
+     * <p>A panel is written as a shaded cell, and a cell's fill belongs to the text layer, which
+     * both editors paint over everything drawn behind that layer. A shape drawn behind the text
+     * under such a neighbour is therefore not seen at all, however the page stacks the two:
+     * measured at 300 dpi on the one document of the fidelity corpus that holds the case, an 18pt
+     * icon laid over a card's corner through a layer stack, the engine's PDF draws 4308 pixels of
+     * the icon's own ink and Word 16.0.20527 and LibreOffice 24.2 draw none — not one pixel
+     * anywhere on the page. With the card unpainted, the one difference, Word draws every pixel
+     * the engine does. So the order is taken from the tree: a layer the page paints after a
+     * painted one stands in front of the text.</p>
+     *
+     * <p>A painted layer the page paints <em>after</em> the node answers false, whatever lies
+     * below: there the page covers the node, and a shape in front would cover the panel instead,
+     * which is the same loss the other way round.</p>
+     *
+     * <p>A node standing inside a painted surface is another case, decided by the surface it is
+     * in ({@code surfaceBehind}) rather than by its neighbours. Only the shapes a node paints
+     * itself are asked this ({@code drawAndNameOwnFragments}): a picture drawn where the page puts
+     * it ({@code drawWhereThePagePutsIt}) and a pass of the layout's own, a timeline's rail, are
+     * not, and over a painted neighbour they stay behind the text and are named there
+     * ({@code nameTheDrawingsAPaintedPanelCovers}). The corpus holds no instance of either.</p>
+     */
+    private boolean laidOverAPaintedNeighbour(DocumentNode node) {
+        boolean over = false;
+        DocumentNode child = node;
+        for (DocumentNode parent = layout.parentOf(child); parent != null;
+                child = parent, parent = layout.parentOf(child)) {
+            List<com.demcha.compose.document.node.LayerStackNode.Layer> layers = layersOf(parent);
+            if (layers == null) {
+                continue;
+            }
+            List<com.demcha.compose.document.node.LayerStackNode.Layer> order = layersInPaintOrder(layers);
+            int itsPlace = -1;
+            for (int i = 0; i < order.size(); i++) {
+                // By identity: two layers holding equal nodes are two layers.
+                if (order.get(i).node() == child) {
+                    itsPlace = i;
+                    break;
+                }
+            }
+            if (itsPlace < 0) {
+                continue;
+            }
+            for (int i = 0; i < order.size(); i++) {
+                if (i == itsPlace || !paintsAFill(order.get(i).node())) {
+                    continue;
+                }
+                if (i > itsPlace) {
+                    return false;
+                }
+                over = true;
+            }
+        }
+        return over;
+    }
+
+    /**
+     * Whether a node, or anything it holds, carries a fill — the paint a cell written for it puts
+     * in the text layer, over what is drawn behind it.
+     *
+     * <p>Read off the tree, as the neighbour's place in the stack is, and so wider than what the
+     * export actually shades: whether a section, a container or a row that paints becomes a cell
+     * with shading is decided as it is written — a row's paint goes unwritten where its panel
+     * cannot hold it, a container's where it is a band's layer or a stack's column — and the tree
+     * cannot be asked that ({@code rememberShadedPanel}, which the naming pass uses, is the side
+     * that knows). Wider is the safe way round here: a neighbour counted that writes no shading
+     * only lifts a drawing that nothing would have covered. A node bearing borders alone writes no
+     * shading and is not counted at all; a shape container's own fill is not, being a drawing
+     * rather than a cell, though a fill inside it is; and a table cell's own shading belongs to a
+     * cell and not to a node.</p>
+     */
+    private static boolean paintsAFill(DocumentNode node) {
+        if ((node instanceof SectionNode || node instanceof ContainerNode || node instanceof RowNode)
+            && paintOf(node).fill() != null) {
+            return true;
+        }
+        for (DocumentNode child : node.children()) {
+            if (paintsAFill(child)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** How far a line set in a text box over the flow may run past its box before Word breaks it. */
@@ -5086,6 +5188,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private boolean drawAndNameOwnFragments(DocumentNode node) {
         boolean overlayFront = drawsInFront();
+        // Beside a panel the page paints under it, not inside one: its shading covers what is
+        // drawn behind the text just the same (laidOverAPaintedNeighbour).
+        boolean overAPaintedNeighbour = surfaceBehind == null && laidOverAPaintedNeighbour(node);
         boolean front = false;
         boolean drew = false;
         // Whether a box it drew rounds its corners by radii that differ.
@@ -5102,14 +5207,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 unequalCorners |= !shapes.isEmpty() && roundsCornersUnequally(fragment);
                 continue;
             }
-            // On a painted surface — a panel, or a filled cell — whose shading both editors paint
-            // over what lies behind the text, a shape stands in front unless it frames a line of
-            // text or a picture on its page: a template sets an icon beside its heading through a
-            // stack of one layer, which kept every payment panel's heading icon behind its
-            // shading. Elsewhere the overlays it sits in decide (drawsInFront). A badge whose
-            // glyph is drawn over it in front (drawnOverItsBadge) stands in front too: the
-            // picture it frames is its own, not the flow's.
-            boolean inFront = surfaceBehind != null && !Double.isNaN(canvasHeight)
+            // Under a fill both editors paint over what lies behind the text — the surface the
+            // shape stands on, or a neighbour the page paints under it — a shape stands in front
+            // unless it frames a line of text or a picture on its page: a template sets an icon
+            // beside its heading through a stack of one layer, which kept every payment panel's
+            // heading icon behind its shading. Elsewhere the overlays it sits in decide
+            // (drawsInFront). A badge whose glyph is drawn over it in front (drawnOverItsBadge)
+            // stands in front too: the picture it frames is its own, not the flow's.
+            boolean inFront = (surfaceBehind != null || overAPaintedNeighbour) && !Double.isNaN(canvasHeight)
                     ? holdsItsDrawnGlyph(node) || !framesText(fragment, layout.textOnPage(fragment.pageIndex()))
                     : overlayFront;
             if (queueDrawing(fragment, inFront)) {
@@ -5126,8 +5231,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (badgeText != null) {
                 message.append("; its text is held in the shape, which stands in front of the text");
             } else if (front) {
-                message.append("; in front of the text, since the panel's shading is painted over "
-                        + "shapes behind it");
+                message.append("; in front of the text, since the shading of ")
+                        .append(surfaceBehind != null ? "the panel it stands in"
+                                : "a panel the page paints under it")
+                        .append(" is painted over shapes behind it");
             } else if (surfaceBehind != null) {
                 message.append("; behind the text it frames, where the panel's shading hides it");
             }

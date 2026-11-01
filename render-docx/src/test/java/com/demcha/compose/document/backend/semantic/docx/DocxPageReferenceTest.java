@@ -12,8 +12,6 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
-import org.apache.poi.openxml4j.opc.PackagePart;
-import org.apache.poi.openxml4j.opc.PackagingURIHelper;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
@@ -23,8 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBookmark;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -208,16 +204,9 @@ class DocxPageReferenceTest {
     @Test
     void theDocumentDoesNotAskToUpdateItsFieldsOnOpen() throws Exception {
         try (XWPFDocument document = export(threeChapters())) {
-            PackagePart settings = document.getPackage()
-                    .getPart(PackagingURIHelper.createPartName("/word/settings.xml"));
-            String xml;
-            try (InputStream input = settings.getInputStream()) {
-                xml = new String(input.readAllBytes(), StandardCharsets.UTF_8);
-            }
-
             // The fields open reading the layout's numbers; w:updateFields would only add a
             // prompt asking the reader to recompute what is already right.
-            assertThat(xml).doesNotContain("updateFields");
+            assertThat(DocxSettings.xmlOf(document)).doesNotContain("updateFields");
         }
     }
 

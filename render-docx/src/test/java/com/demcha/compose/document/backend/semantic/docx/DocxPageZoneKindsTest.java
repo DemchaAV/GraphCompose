@@ -17,12 +17,7 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTHdrFtrRef;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr;
 
-import org.apache.poi.openxml4j.opc.PackagePart;
-import org.apache.poi.openxml4j.opc.PackagingURIHelper;
-
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -63,7 +58,7 @@ class DocxPageZoneKindsTest {
             assertThat(section.isSetTitlePg()).isTrue();
             assertThat(footerText(document, section, STHdrFtr.DEFAULT)).isEqualTo("Body");
             assertThat(footerText(document, section, STHdrFtr.FIRST)).isBlank();
-            assertThat(evenAndOddPages(document)).isFalse();
+            assertThat(DocxSettings.evenAndOddPages(document)).isFalse();
         }
     }
 
@@ -72,7 +67,7 @@ class DocxPageZoneKindsTest {
         try (XWPFDocument document = export(twoPages(footer("Verso", page -> page.number() % 2 == 0)))) {
             CTSectPr section = bodySection(document);
 
-            assertThat(evenAndOddPages(document)).isTrue();
+            assertThat(DocxSettings.evenAndOddPages(document)).isTrue();
             assertThat(footerText(document, section, STHdrFtr.EVEN)).isEqualTo("Verso");
             assertThat(footerText(document, section, STHdrFtr.DEFAULT)).isBlank();
             assertThat(section.isSetTitlePg()).isFalse();
@@ -85,7 +80,7 @@ class DocxPageZoneKindsTest {
             CTSectPr section = bodySection(document);
 
             assertThat(section.isSetTitlePg()).isFalse();
-            assertThat(evenAndOddPages(document)).isFalse();
+            assertThat(DocxSettings.evenAndOddPages(document)).isFalse();
             assertThat(section.getFooterReferenceList()).hasSize(1);
             assertThat(footerText(document, section, STHdrFtr.DEFAULT)).isEqualTo("Always");
         }
@@ -175,7 +170,7 @@ class DocxPageZoneKindsTest {
             assertThat(footerText(document, section, STHdrFtr.DEFAULT))
                     .as("the footer of the later odd pages, which a document of two pages has none of")
                     .isEqualTo("Longer");
-            assertThat(evenAndOddPages(document)).isTrue();
+            assertThat(DocxSettings.evenAndOddPages(document)).isTrue();
         }
     }
 
@@ -256,28 +251,6 @@ class DocxPageZoneKindsTest {
             docx = session.toDocxBytes();
         }
         return new XWPFDocument(new ByteArrayInputStream(docx));
-    }
-
-    /**
-     * Whether the document states different even and odd pages. Read from the settings part
-     * rather than {@code getEvenAndOddHeadings()}, which answers whether the element is there
-     * and not whether it says yes.
-     */
-    private static boolean evenAndOddPages(XWPFDocument document) throws Exception {
-        PackagePart settings = document.getPackage()
-                .getPart(PackagingURIHelper.createPartName("/word/settings.xml"));
-        String xml;
-        try (InputStream input = settings.getInputStream()) {
-            xml = new String(input.readAllBytes(), StandardCharsets.UTF_8);
-        }
-        java.util.regex.Matcher element =
-                java.util.regex.Pattern.compile("<w:evenAndOddHeaders([^>]*)/>").matcher(xml);
-        if (!element.find()) {
-            return false;
-        }
-        String attributes = element.group(1);
-        return !attributes.contains("\"false\"") && !attributes.contains("\"0\"")
-               && !attributes.contains("\"off\"");
     }
 
     private static CTSectPr bodySection(XWPFDocument document) {

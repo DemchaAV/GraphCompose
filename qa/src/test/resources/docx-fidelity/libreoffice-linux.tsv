@@ -1,30 +1,31 @@
 # libreoffice build 420(Build:2) on linux
 # rows of synthetic-icon_over_card: its card stood 13.98pt and the paragraph under it 27.98pt below the page while the band round it measured its space through the card's padding; measured to the card's box, both stand -0.02pt. Every row from CI run 41189036705. Six rows came with that run that this change did not move - invoice-luma_studio's five by 0.10 to 0.35pt and invoice-metered_long's one by 0.10pt, none past the half point the gate reads as rounding and no page count among them - whose DOCX this change leaves byte-identical: LibreOffice on CI measuring the same files again, not a move to attribute here
-# every row from CI run 40844463596, the run of the change that made this gate two-sided. Not shot whole since #898, the file had gone stale in 1778 of its 5149 rows, since the one-sided gate of that time wrote back only the rows it went red on. Of those, 230 stood more than half a point from where it held them — 226 across and 4 down, in 8 documents — and every one of the 230 stood nearer the engine's PDF, not one further; the rest had moved within the half point the gate reads as rounding
+# rows of cv-charcoal_gold, cv-midnight_navy, cv-monogram_sidebar, cv-navy_sidebar, cv-professional_sidebar, cv-sidebar_portrait and cv-slate_orange: from CI run 41303510400, the run of the change that gives a section of one page a header to carry its page backgrounds. LibreOffice gives a header a height of its own however little it holds, so all 487 lines it matches in those seven stand more than 2pt lower than they did, 2.77 to 3.08pt by the median and 3.99pt at the furthest; Word moves none of them by more than 0.12pt. Their rows here are the price of the page an editor adds, which a fill in the body leaves unpainted
+# every other row from CI run 40844463596, the run of the change that made this gate two-sided. Not shot whole since #898, the file had gone stale in 1778 of its 5149 rows, since the one-sided gate of that time wrote back only the rows it went red on. Of those, 230 stood more than half a point from where it held them — 226 across and 4 down, in 8 documents — and every one of the 230 stood nearer the engine's PDF, not one further; the rest had moved within the half point the gate reads as rounding
 # rows of cv-teal_pulse: its email line, set in a cell set to the middle, stood +0.08pt while the contact separator was anchored in that cell, LibreOffice 24.2 then setting the cell from its top; the separator now goes elsewhere, as a cell set to the middle carries no drawing, and LibreOffice centres the cell as its neighbours: +0.93pt, Word +1.14pt
 document	engine_pages	editor_pages	lines	matched	median	p90	over2
 cv-blue_banner	2	2	54	52	0.05	0.22	0
 cv-boxed_sections	2	2	58	58	0.14	0.17	0
 cv-centered_headline	2	2	58	56	0.09	0.36	0
-cv-charcoal_gold	1	1	85	83	0.09	0.24	0
+cv-charcoal_gold	1	1	85	83	2.77	2.91	83
 cv-classic_serif	2	2	57	54	0.06	0.13	0
 cv-compact_mono	1	1	58	58	0.06	0.15	0
 cv-editorial_blue	2	2	82	82	0.12	0.19	0
 cv-engineering_resume	1	1	57	57	0.04	0.12	0
 cv-executive	2	2	60	60	0.04	0.08	0
-cv-midnight_navy	1	1	86	84	0.17	0.38	0
+cv-midnight_navy	1	1	86	84	2.78	3.08	84
 cv-minimal_underlined	2	2	59	59	0.26	0.44	0
 cv-mint_editorial	2	2	59	59	0.07	0.30	0
 cv-modern_professional	2	2	61	59	0.08	0.10	0
-cv-monogram_sidebar	1	1	53	50	0.05	0.11	0
-cv-navy_sidebar	1	1	71	71	0.06	0.20	0
+cv-monogram_sidebar	1	1	53	50	2.89	2.95	50
+cv-navy_sidebar	1	1	71	71	2.88	2.92	71
 cv-nordic_clean	1	1	63	58	0.03	0.13	0
 cv-orange_ops	1	1	108	106	0.18	0.26	0
 cv-panel	1	1	79	74	0.29	0.41	0
-cv-professional_sidebar	1	1	68	64	0.05	0.18	0
+cv-professional_sidebar	1	1	68	64	2.81	2.87	64
 cv-serif_headline	1	1	103	103	0.26	0.83	0
-cv-sidebar_portrait	1	1	49	49	0.08	0.19	0
-cv-slate_orange	1	1	87	86	0.23	1.01	0
+cv-sidebar_portrait	1	1	49	49	2.92	3.04	49
+cv-slate_orange	1	1	87	86	3.08	3.86	86
 cv-teal_pulse	1	1	57	57	0.12	0.25	0
 cv-terracotta_rail	1	1	102	102	0.09	0.35	0
 cv-timeline_minimal	2	2	89	87	0.05	0.10	0

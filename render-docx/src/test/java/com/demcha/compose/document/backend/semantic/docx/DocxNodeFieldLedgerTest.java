@@ -496,7 +496,8 @@ class DocxNodeFieldLedgerTest {
                 + "draws, or composed in a table cell with nowhere to draw it, dropped",
                 "layers:GAP:" + DRAWING_OVER_TEXT + "; written inline one after another in source order where it "
                 + "writes them in the "
-                + "flow; drawn where the page puts them, unreported, where they are all drawing, stacked as the "
+                + "flow; drawn where the page puts them, the shape named as written as drawing alone, where they "
+                + "are all drawing, stacked as the "
                 + "page paints them among those behind the text and among those in front of it; a panel's in its "
                 + "cell, at its first written layer's height, held across to its box — a paragraph's, and in the "
                 + "body any layer set away from the shape's left or of a width of its own — and named where "

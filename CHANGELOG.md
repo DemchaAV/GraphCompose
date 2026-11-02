@@ -8,6 +8,51 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export names what a node was written as where that is not the kind of thing the node
+  is, rather than saying it only when the node happened to lose something else as well.**
+  - Which Word object a node becomes is settled as the node is written, in the guards of
+    `DocxSemanticBackend` that choose it. The writers had a name for what they wrote — "written as
+    a paragraph border", "written as a column of its layer stack" — but the report kept it only as
+    the lead-in to a list of what the node went without: a link, an outline entry. A rewrite that
+    lost nothing else said nothing, and where the name sat on the children a node wrote, on its
+    own drawing, or nowhere at all, the node whose form a heuristic had chosen never said so.
+    Nothing in the caller's own tree shows any of it.
+  - Measured over the 71-document fidelity corpus, with a probe at every guard of that cascade.
+    Of 375 drawings written as a paragraph border, 367 are a `LineNode` and 8 a filled
+    `ShapeNode`; all eight were silent — `MeteredInvoice`'s two dividers, in two documents, and
+    `SubscriptionInvoice`'s four brand-strip segments. Of the layer stacks and shape containers,
+    12 are written as the columns of a table (none named), 66 as one line two paragraphs share
+    (62 silent), 91 as their layers one after another (83 of them shape containers, named by
+    their own writer, and 8 stacks silent), 50 as drawing alone (33 silent) and 20 as a badge
+    (all named by the shape drawn for them); 4 nodes are written over the flow, silent. A painted
+    row written as a one-cell panel has no instance in the corpus at all.
+  - Each of those now carries an `APPROXIMATED` note at the node's own path, said whether or not
+    the node loses anything else: a filled box written as a paragraph border, a stack written as
+    columns or as a band of its layers, a stack or a shape container written as a line two
+    paragraphs share, a box of nothing but drawing written as drawing alone, and a node written
+    over the flow. That is 148 notes across
+    the corpus, one for each instance of the six, and nothing else changes — not a byte of any
+    document, since each note states what the files already were. On 21 of those nodes the new
+    note stands beside the note on the drawing itself, which says where the drawing is anchored
+    while the new one says the node has no place in the flow; 114 nodes of the corpus carried
+    more than one note before this.
+  - Not named for their form, with the reason in the recipe: a node written as the kind of thing
+    it is — 3501 paragraphs, 147 Word tables, 8 inline pictures, and 2482 boxes written as their
+    contents or as a panel (1776 sections, 427 layer stacks, 79 containers and 200 alignment,
+    anchor, canvas and band wrappers), a container having no Word object of its own either way —
+    and a `LineNode` written as a paragraph border, which is a line either way. What any of them
+    loses is named as before. Three more branches of the same cascade keep the old gate, each for
+    its own reason: a row written as a one-cell panel, which the corpus holds no instance of at
+    all; a layer written as a column of its layer stack, and a box inside a node laid over the
+    flow — in both of those the node whose form was chosen is the stack or the overlay above it,
+    which now says so, and what the layer or the box becomes follows from that.
+  - `addDivider` builds a `ShapeNode` whose `thickness` is its height, carrying a fill and no
+    stroke, so the DSL's own divider and a colour swatch of that height are one node and the
+    report has nothing to tell them apart by. Said in the recipe, and held by a test.
+  - `DocxRewrittenFormReportTest` holds each rewrite and each exclusion. Nine sabotages, one per
+    rule, were each caught by the fixture written for it; seven of the nine turned exactly that
+    fixture red and nothing else, which is what shows a fixture reaches the branch it is for.
+
 - **A DOCX export names the drawings that a painted panel standing beside them covers, rather than
   losing them in silence.**
   - A panel is written as a shaded cell, and a cell's fill belongs to the text layer, which both

@@ -4182,6 +4182,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         if (laidOverTheFlow(node)) {
+            reportRewritten(node, "written over the flow, which gives it no room: its drawings stand "
+                    + "where the page draws them and each of its paragraphs in a text box where the "
+                    + "page sets it, and nothing of it is written in the flow");
             writeOverTheFlow(document, node);
             return;
         }
@@ -4203,6 +4206,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     this::drawnOverTheColumns, this::contentInset);
             if (columns != null) {
                 // Side by side, nothing in the stack overlaps: it is not an overlay.
+                reportRewritten(stack, "written as the columns of a table: its layers stand side by "
+                        + "side, a cell each, as the page places them, rather than one over another");
                 writeLayerColumns(document, stack, columns);
                 return;
             }
@@ -4524,6 +4529,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             DocxLinePair.Pair pair = DocxLinePair.of(node, layout);
             if (pair != null) {
                 // A pill's outline round its title and dates is drawn as writeShapeContainer draws it.
+                reportRewritten(node, "written as one line that two paragraphs share, its layers set "
+                        + "at either end of it, rather than one over another");
                 drawOutlineOf(node);
                 writeLinePair(document, node, pair);
                 return;
@@ -4542,8 +4549,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     DocxSemanticBackend::paintsAPanel, this::contentInset);
             if (band != null) {
                 if (node instanceof ShapeContainerNode container) {
+                    // Its own writer names the layers it writes in the flow
+                    // (reportLayersWrittenInline).
                     writeShapeContainer(document, container, band);
                 } else {
+                    reportRewritten(node, "written as its layers one after another, as the page places "
+                            + "their content: Word writes one block under another, and none of the "
+                            + "stack's layers is laid over another in the file");
                     writeOverlayBand(document, node, band);
                 }
                 return;
@@ -4560,6 +4572,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             && (overlayDepth == 0 || overlayDepth == oneLayerDepth && layout.followedInItsParent(node))
             && holdTheSpaceOf(node)) {
             // Its drawing is drawn and takes no room: the space held above is its room.
+            reportRewritten(node, "written as drawing alone, nothing of it in the flow: everything "
+                    + "under it is drawn where the page draws it, and the room it took on the page is "
+                    + "owed as space to the next block written");
             drawOutlineOf(node);
             ShapeContainerNode outerClip = clipContainer;
             if (node instanceof ShapeContainerNode badge
@@ -4904,12 +4919,39 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * wrote it left out.
      */
     private void reportWrittenWithout(DocumentNode node, String writtenAs, List<String> alsoLost) {
+        reportWrittenWithout(node, writtenAs, alsoLost, false);
+    }
+
+    /**
+     * Names what a node was written as where that is not the kind of thing the node is — a filled
+     * box written as a line, layers written side by side or one after another, a box written as
+     * drawing alone — whether or not the node goes without anything else as well.
+     *
+     * <p>Which Word object a node becomes is settled as it is written, in the guards of
+     * {@link #writeNodeContent}, {@link #writeNodeContentOf} and {@link #dispatchNode}. Where what
+     * it becomes is the same kind of thing the node is — a paragraph written as a paragraph, a
+     * table as a table — the writer's name for it is only the lead-in to what the node lost, and
+     * is said when there is something to say ({@link #reportWrittenWithout}). Where it is not, the
+     * caller the report is for cannot see from its own tree what it is about to send, so the name
+     * is the note, said at the guard that chose it.</p>
+     */
+    private void reportRewritten(DocumentNode node, String writtenAs) {
+        reportWrittenWithout(node, writtenAs, List.of(), true);
+    }
+
+    /**
+     * @param rewritten whether {@code writtenAs} is a kind of thing the node is not, which is
+     *                  named whether or not anything else is lost (see {@link #reportRewritten})
+     */
+    private void reportWrittenWithout(DocumentNode node, String writtenAs, List<String> alsoLost,
+                                      boolean rewritten) {
         List<String> lost = new ArrayList<>(carriedWithout(node, false));
         lost.addAll(alsoLost);
-        if (!lost.isEmpty()) {
-            report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
-                    writtenAs + "; " + String.join("; ", lost));
+        if (lost.isEmpty() && !rewritten) {
+            return;
         }
+        report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
+                lost.isEmpty() ? writtenAs : writtenAs + "; " + String.join("; ", lost));
     }
 
     /**
@@ -16007,8 +16049,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     + "the pattern's lengths");
         }
         // A line's link is the rule link above; a filled bar's, and either's outline entry, here.
-        reportWrittenWithout(node, "written as a paragraph border");
+        if (node instanceof com.demcha.compose.document.node.ShapeNode) {
+            reportRewritten(node, A_FILLED_BOX_AS_A_RULE);
+        } else {
+            reportWrittenWithout(node, "written as a paragraph border");
+        }
     }
+
+    /**
+     * What a note says of a filled box written as a rule: a shape in the tree and a line in the
+     * file, which {@link #reportRewritten} names whether or not the shape loses anything else.
+     *
+     * <p>A {@link com.demcha.compose.document.node.LineNode} written as one is a line either way
+     * and is not named for its form; what it loses is ({@link #reportWrittenWithout}). The height
+     * the note speaks of is the guard's, {@link DocxRules#MAX_RULE_POINTS}. The note does not say
+     * whether the box keeps its width, its place and its colour: the indents are set from the
+     * rule's own ends and the border's width from the box's height, and how Word and LibreOffice
+     * then draw a box of more than a hairline is not measured.</p>
+     *
+     * <p>It does not say the words a drawing's note says of itself — "drawn as a shape" — and must
+     * not: {@code DocxNeighbourFillGuardTest} holds every note carrying them to its own ledger of
+     * the drawings it can place under a panel, and this box is written rather than drawn.</p>
+     */
+    private static final String A_FILLED_BOX_AS_A_RULE =
+            "written as a paragraph border rather than as a drawing: a box of a plain fill, no "
+            + "taller than Word's thickest border, is written as Word's own rule — a paragraph of "
+            + "its own, bordered below where the fill shows — which flows with the text and which a "
+            + "reader moves or deletes as a line of the document";
 
     /**
      * How far one of a rule's indents is taken in for what Word draws its border past it, in

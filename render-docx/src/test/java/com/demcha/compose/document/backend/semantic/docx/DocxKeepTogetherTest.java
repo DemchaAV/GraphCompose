@@ -130,11 +130,19 @@ class DocxKeepTogetherTest {
      * <p>A plain cell is a paragraph per line, not one paragraph of several lines, when its style
      * sets a line spacing and it holds more than one line — the row is sized with that spacing
      * between them, and Word holds no space inside one paragraph ({@code paragraphPerLine} in
-     * {@code writeCellLines}, pinned by {@code DocxCellSeatTest}). So this is the shape on an
-     * authored table for which {@code w:cantSplit} is load-bearing: the chain writes
+     * {@code writeCellLines}, pinned by {@code DocxCellSeatTest}). So this is the shape for which
+     * {@code w:cantSplit} is load-bearing <em>inside a kept block</em> — outside one no chain is
+     * written at all and it is load-bearing for every row: the chain writes
      * {@code w:keepLines} on each of the row's paragraphs, which holds each one's own lines, and
      * {@code w:keepNext} only where the row is not the block's last unit — neither of which stops
      * Word ending a page between two paragraphs of the same row.</p>
+     *
+     * <p>The block is kept <em>together</em> on purpose. Measured on this same document with
+     * {@code keepWithNext()} instead: the row's paragraphs then carry {@code w:keepNext} as well,
+     * which makes it a table {@code letTheOneRowTablesKeptWithTheNextBreak} frees, and
+     * {@code w:cantSplit} is taken off it — leaving the two paragraphs of that row
+     * held by nothing at all. No document of the corpus has that shape (no block asking only to
+     * be kept with the next holds a table), so it is left as it is rather than fixed here.</p>
      */
     @Test
     void aRowOfSeveralParagraphsIsHeldWholeByItsRow() throws Exception {
@@ -151,10 +159,17 @@ class DocxKeepTogetherTest {
             assertThat(row.getCell(0).getParagraphs())
                     .as("the premise: a line spacing makes the cell a paragraph a line")
                     .hasSize(2);
-            assertThat(keepsLines(row.getCell(0).getParagraphs().get(0))).isTrue();
-            assertThat(keepsNext(row.getCell(0).getParagraphs().get(0)))
-                    .as("the row is the block's last unit, so the chain ties it to nothing after it")
-                    .isFalse();
+            assertThat(keepsNext(paragraph(document, "Totals")))
+                    .as("the premise: the chain ran, and ran in the body")
+                    .isTrue();
+            for (XWPFParagraph paragraph : row.getCell(0).getParagraphs()) {
+                assertThat(keepsLines(paragraph))
+                        .as("each of the row's paragraphs has its own lines held")
+                        .isTrue();
+                assertThat(keepsNext(paragraph))
+                        .as("the row is the block's last unit, so the chain ties it to nothing after it")
+                        .isFalse();
+            }
             assertThat(row.isCantSplitRow())
                     .as("so only the row itself keeps its two paragraphs on one page")
                     .isTrue();

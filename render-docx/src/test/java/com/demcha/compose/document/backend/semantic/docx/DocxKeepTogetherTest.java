@@ -144,14 +144,8 @@ class DocxKeepTogetherTest {
      * not the block's last unit — neither of which stops Word ending a page between two
      * paragraphs of the same row.</p>
      *
-     * <p>The block is kept <em>together</em> on purpose. Measured on this same document with
-     * {@code keepWithNext()} instead: the row's paragraphs then carry {@code w:keepNext} as well,
-     * which makes it a table {@code letTheOneRowTablesKeptWithTheNextBreak} frees, and
-     * {@code w:cantSplit} is taken off it — leaving the two paragraphs of that row
-     * held by nothing at all. No document of the corpus has that shape: of its twenty blocks that
-     * hold a table, the three in the body all ask to be kept together, and the other seventeen
-     * are in a cell, which that pass never reaches — it reads the body's tables alone. So it is
-     * left as it is rather than fixed here.</p>
+     * <p>The block is kept <em>together</em> on purpose: kept with the next instead, the same row
+     * is held by nothing, which {@link #theSameRowKeptWithTheNextIsHeldByNothing} records.</p>
      */
     @Test
     void aRowOfSeveralParagraphsIsHeldWholeByItsRow() throws Exception {
@@ -182,6 +176,49 @@ class DocxKeepTogetherTest {
             assertThat(row.isCantSplitRow())
                     .as("so only the row itself keeps its two paragraphs on one page")
                     .isTrue();
+        }
+    }
+
+    /**
+     * The same row, in a block kept with the next instead, is held by nothing.
+     *
+     * <p>Kept with the next, the block's last unit takes {@code w:keepNext} too, which makes its
+     * table one {@code letTheOneRowTablesKeptWithTheNextBreak} frees — one row, cells of
+     * paragraphs, every paragraph kept with the next — so {@code w:cantSplit} comes off the row
+     * that was the only thing holding its two paragraphs together. {@code w:keepLines} holds each
+     * paragraph's own lines and nothing between them.</p>
+     *
+     * <p>No document of the corpus reaches it: of the twenty blocks that hold a table, the three
+     * in the body all ask to be kept together, and the other seventeen are in a cell, which that
+     * pass never reads. So this fixture records the shape rather than guarding a fix — it is the
+     * one place the loss is written down as a test rather than a sentence.</p>
+     */
+    @Test
+    void theSameRowKeptWithTheNextIsHeldByNothing() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addSection(s -> s.keepWithNext()
+                        .addParagraph(p -> p.text("Totals"))
+                        .addTable(t -> t.autoColumns(2).rowCells(
+                                DocumentTableCell.lines("Net", "of which goods")
+                                        .withStyle(DocumentTableStyle.builder().lineSpacing(2).build()),
+                                DocumentTableCell.text("100"))))
+                .addParagraph(p -> p.text("After")))) {
+            XWPFTableRow row = document.getTables().get(0).getRow(0);
+
+            assertThat(row.getCell(0).getParagraphs())
+                    .as("the premise: the same two paragraphs as the fixture above")
+                    .hasSize(2);
+            for (XWPFParagraph paragraph : row.getCell(0).getParagraphs()) {
+                assertThat(keepsNext(paragraph))
+                        .as("kept with the next, the last unit is tied forward too")
+                        .isTrue();
+                assertThat(keepsLines(paragraph))
+                        .as("each paragraph's own lines are still held")
+                        .isTrue();
+            }
+            assertThat(row.isCantSplitRow())
+                    .as("and that is what frees the row, leaving the two paragraphs held by nothing")
+                    .isFalse();
         }
     }
 

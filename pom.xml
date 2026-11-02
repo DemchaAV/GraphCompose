@@ -53,7 +53,7 @@
             coverage (qa) and aggregate it (coverage). Keep in lockstep with the
             standalone engine pom's jacoco.plugin.version.
         -->
-        <jacoco.plugin.version>0.8.15</jacoco.plugin.version>
+        <jacoco.plugin.version>0.8.16</jacoco.plugin.version>
     </properties>
 
     <!--

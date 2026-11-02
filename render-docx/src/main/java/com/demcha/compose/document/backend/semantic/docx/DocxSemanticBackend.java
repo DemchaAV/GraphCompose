@@ -4519,10 +4519,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * being one among those places. The climb itself ends at a node the layout gives no parent —
      * the top of the tree, and equally a node composed in an authored table cell — with whatever
      * the stacks below it answered; that is a defence against guessing at the places it did read,
-     * not a claim about the ones it did not. A canvas lays its children over one another too but
-     * holds no layers, so it is climbed past rather than read. The unfound-layer case is
-     * defence in depth: no shape of this repository's own templates reaches it, and no fixture
-     * drives it.</p>
+     * not a claim about the ones it did not. The unfound-layer case is defence in depth: no shape
+     * of this repository's own templates reaches it, and no fixture drives it.</p>
+     *
+     * <p>Every overlay is read, however it says what it lays over what: a stack's and a
+     * container's layers by z-index, and a canvas's children in the order it was given them. A
+     * canvas was climbed past once, on the grounds that it holds no layers, which read as a
+     * harmless gap and was not. Climbing past is safe for finding a painted layer below, where it
+     * only costs a lift, and unsafe for finding what is drawn after the shape, where it grants
+     * one: measured, a canvas holding a shape and a picture over a painted band had the shape
+     * lifted over the picture the page draws over it.</p>
      */
     private boolean laidOverAPaintedNeighbour(DocumentNode node) {
         if (layout.placedMoreThanOnce(node)) {
@@ -4541,21 +4547,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         DocumentNode child = node;
         for (DocumentNode parent = layout.parentOf(child); parent != null;
                 child = parent, parent = layout.parentOf(child)) {
-            List<com.demcha.compose.document.node.LayerStackNode.Layer> layers = layersOf(parent);
-            if (layers == null) {
+            if (!isOverlay(parent)) {
                 continue;
             }
-            List<com.demcha.compose.document.node.LayerStackNode.Layer> order = layersInPaintOrder(layers);
+            // A stack's and a container's layers by z-index, a canvas's children in the order it
+            // was given them: what the parent lays over what, however it says so.
+            List<DocumentNode> order = inPaintOrder(parent);
             int itsPlace = -1;
             for (int i = 0; i < order.size(); i++) {
                 // By identity: two layers holding equal nodes are two layers.
-                if (order.get(i).node() == child) {
+                if (order.get(i) == child) {
                     itsPlace = i;
                     break;
                 }
             }
             if (itsPlace < 0) {
-                // The layout's parent is an overlay whose layers do not hold this child: the tree
+                // The layout's parent is an overlay that does not lay out this child: the tree
                 // does not say where in the stack it is, so neither does this — and a lift an
                 // inner stack had granted goes with it, that outer stack's own painted layers
                 // never having been read.
@@ -4563,7 +4570,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             int paintedBelow = -1;
             for (int i = 0; i < itsPlace; i++) {
-                if (paintsAFill(order.get(i).node())) {
+                if (paintsAFill(order.get(i))) {
                     paintedBelow = i;
                 }
             }
@@ -4572,7 +4579,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // is painted after the inner stack whole, and lifting a shape of that inner stack
             // would draw it over the sibling the page draws over it.
             for (int i = itsPlace + 1; i < order.size(); i++) {
-                if (drawnOverThatLayer(order.get(i).node())) {
+                if (drawnOverThatLayer(order.get(i))) {
                     return false;
                 }
             }

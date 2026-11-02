@@ -299,6 +299,42 @@ class DocxDrawingUnderANeighboursFillTest {
     }
 
     @Test
+    void aShapeOnACanvasUnderThatCanvasPictureIsNotLifted() throws Exception {
+        // A canvas lays its children over one another as a stack does, but says so with their
+        // order rather than with z-indices. Climbed past for want of layers, it granted this
+        // lift: measured, the pin came back behindDoc="0" and the picture the canvas places after
+        // it behindDoc="1", their boxes overlapping by 4pt, so Word drew the pin over a picture
+        // the page draws over it. The band is narrower than the pin reaches, so nothing names it
+        // either.
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Stack")
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(160)
+                                        .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .layer(new com.demcha.compose.document.dsl.CanvasLayerBuilder(200, 40)
+                                        .name("Plate")
+                                        .position(new ShapeBuilder().name("Pin").size(30, 14)
+                                                .fillColor(ACCENT).build(), 150, 2)
+                                        .position(new LayerStackBuilder().name("Fact")
+                                                        .layer(new com.demcha.compose.document.dsl.ImageBuilder()
+                                                                        .name("Icon").source(pngBytes())
+                                                                        .size(10, 10).build(),
+                                                                LayerAlign.CENTER_LEFT)
+                                                        .position(new ParagraphBuilder().name("Label")
+                                                                        .text("Label").build(),
+                                                                14, 0, LayerAlign.CENTER_LEFT, 1)
+                                                        .build(),
+                                                176, 0)
+                                        .build(),
+                                LayerAlign.TOP_LEFT, 1)
+                        .build())));
+
+        assertThat(pinAnchor(export))
+                .as("the pin stays behind the picture the canvas places after it")
+                .contains("behindDoc=\"1\"");
+    }
+
+    @Test
     void aShapeStandingInTwoStacksAtOnceIsNotLifted() throws Exception {
         // One instance used in two stacks: the layout keeps one path and one box for it, so an
         // answer taken at one of its places is given at both. Here the first place is alone over

@@ -103,11 +103,15 @@ class DocxKeepTogetherTest {
             assertThat(rowKeepsNext(table.getRow(1)))
                     .as("the table's last row ends the block")
                     .isFalse();
-            // Two writers hold such a table, and it needs both: the chain above keeps each row on
-            // the page of the row under it, and the table writer gives every row the layout placed
-            // w:cantSplit, which keeps a row of several paragraphs from breaking mid-line
-            // (breakRowsWhereTheLayoutDoes, blind to the keep flags). Asked for here on the
-            // keepTogether path as DocxOneRowTableKeptWithTheNextTest asks it on keepWithNext.
+            // Two writers hold such a table. The chain keeps each row with the row under it and
+            // each paragraph's own lines together; the table writer gives every row the layout
+            // placed w:cantSplit (breakRowsWhereTheLayoutDoes, blind to the keep flags), which
+            // holds a row whole where the chain cannot reach inside it — a cell of more than one
+            // paragraph or of a table, which only a composed cell can hold, and any table outside
+            // a kept block, where no chain is written at all. Asked for here on the keepTogether
+            // path as DocxOneRowTableKeptWithTheNextTest asks it on keepWithNext. Not
+            // unconditional: letTheOneRowTablesKeptWithTheNextBreak takes it back off a one-row
+            // body table kept with what follows, which that test's own fixtures hold.
             assertThat(table.getRows()).hasSize(2);
             for (XWPFTableRow row : table.getRows()) {
                 assertThat(row.isCantSplitRow())
@@ -123,7 +127,9 @@ class DocxKeepTogetherTest {
      * <p>Neither writer reaches it. The chain reads a cell's own paragraphs, which are not a
      * table's in that cell, so its paragraphs are told nothing; and the layout places no row for
      * a table composed in a cell, so the table writer gives its rows no {@code w:cantSplit}
-     * either. What holds it is the row it stands in, which carries {@code w:cantSplit} where the
+     * either. ({@code DocxOneRowTableKeptWithTheNextTest} asserts the same silence of a table
+     * nested in a cell of a kept row; here the table is composed into the cell by the author.)
+     * What holds it is the row it stands in, which carries {@code w:cantSplit} where the
      * layout placed that row: measured at the foot of a page in Word 16.0.20527 and LibreOffice
      * 24.2, the block stood whole in both, for a block that fits there and for one the layout
      * moved to the next page whole.</p>

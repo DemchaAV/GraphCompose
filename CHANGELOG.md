@@ -4554,12 +4554,16 @@ follow semantic versioning; release dates are ISO 8601.
   reaches it. And a kept block's table is asked for both of those writers on the `keepTogether`
   path, where only one half of the pair was asked for before.**
   - A table in a kept block is held twice over: the keep chain puts `w:keepNext` on its rows'
-    paragraphs, every row but the last, which keeps each row on the page of the row under it; and
-    the table writer gives every row the layout placed `w:cantSplit`, which keeps a row of several
-    paragraphs from breaking across the page mid-line. Neither alone is enough, and neither writer
-    knows about the other. The `keepWithNext` path was already held to the pair
+    paragraphs, every row but the last — the last too where the block is kept with the next, and
+    none of it inside a table cell — which keeps each row on the page of the row under it; and the
+    table writer gives every row the layout placed `w:cantSplit`, which holds a row whole where
+    the chain cannot reach inside it, the chain reaching only a cell's own paragraphs. Neither
+    writer knows about the other. The `keepWithNext` path was already held to the pair
     (`DocxOneRowTableKeptWithTheNextTest`); on the `keepTogether` path
-    `aTableInsideAKeptBlockIsChainedRowByRow` asked only for the chain, and now asks for both.
+    `aTableInsideAKeptBlockIsChainedRowByRow` asked only for the chain, and now asks for both. It
+    is not unconditional either way: `letTheOneRowTablesKeptWithTheNextBreak` takes `w:cantSplit`
+    back off a one-row body table kept with what follows, and a panel asking only to be kept with
+    the next never gets it — 56 one-row tables of the corpus carry keeps without it.
   - A table composed in a cell is reached by neither writer: the chain reads a cell's own
     paragraphs, which are not those of a table in that cell, and the layout places no row for such
     a table, so the table writer gives its rows no `w:cantSplit` either. What holds it is the row
@@ -4570,14 +4574,14 @@ follow semantic versioning; release dates are ISO 8601.
     paragraphs before.
   - Measured at the foot of a page in Word 16.0.20527 and LibreOffice 24.2, for a block that fits
     there and for one the layout moved to the next page whole: nine shapes over eighteen documents
-    — a block kept together holding a table, a one-row table of several paragraphs, a table
-    composed in a cell, a painted panel holding a table, a band, a shape container, a stack
+    — a block kept together holding a table, a kept block holding one row of several lines, a
+    table composed in a cell, a painted panel holding a table, a band, a shape container, a stack
     holding a table, a block kept with the next, a painted panel kept with the next — each stood
     whole in both editors, with no group and no row broken. Where the editors differ it is which
-    page holds the whole block, never whether it is broken: LibreOffice sets rows taller (a
-    three-row table's rows 33.9pt apart against the page's 21.0), so a block that fits at the very
-    foot of a page there moves to the next one whole, which it did for seven of the nine; Word did
-    the same for the band of two layers.
+    page holds the whole block, never whether it is broken: LibreOffice sets a three-row table's
+    rows 33.9pt apart against the page's 21.0, so a table block that only just fits at the foot of
+    a page there moves to the next one whole, which six of the nine did; the band of two layers
+    moved in both editors, from a cause not measured.
   - Counted over the 71-document fidelity corpus, with every node of every document classified and
     none left unclassified: 1116 blocks are held on one page — 214 in the body, 902 in a cell or a
     row's column, layer stacks and shape containers among them as well as the two keep flags — of

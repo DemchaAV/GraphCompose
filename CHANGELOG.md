@@ -4561,17 +4561,21 @@ follow semantic versioning; release dates are ISO 8601.
     paragraphs. Neither writer knows about the other. The `keepWithNext` path was already held to
     the pair (`DocxOneRowTableKeptWithTheNextTest`); on the `keepTogether` path
     `aTableInsideAKeptBlockIsChainedRowByRow` asked only for the chain, and now asks for both, and
-    `aRowOfSeveralParagraphsIsHeldWholeByItsRow` pins the shape for which, inside a kept block,
-    `w:cantSplit` is the only thing holding the row — a cell of several paragraphs, which a plain
-    cell is where its style sets a line spacing and it holds more than one line.
-  - No one rule says which rows carry `w:cantSplit`: four writers decide it between them.
-    `breakRowsWhereTheLayoutDoes` gives it to each row of a table the layout placed, `writeRow` to
-    a row written as a table where the layout placed that row, and `writePanelPiece` to a block
-    written as a panel on its own row where the layout put the block on one page and it either
-    asks to be kept together or is a row or a shape container; then
+    `aRowOfSeveralParagraphsIsHeldWholeByItsRow` pins the shape a plain table reaches for which,
+    inside a kept block, `w:cantSplit` is the only thing holding the row — a cell of several
+    paragraphs, which a plain cell is where its style sets a line spacing and it holds more than
+    one line. (The other such shape is a cell holding a table, which the fixture below covers.)
+  - No one rule says which rows carry `w:cantSplit`: four writers decide which rows are given it.
+    `breakRowsWhereTheLayoutDoes` gives it to each row of a table where the layout placed that row,
+    `writeRow` to a row written as a table where the layout placed that row, and `writePanelPiece`
+    to a block written as a panel on its own row where the layout put the block on one page and it
+    either asks to be kept together or is a row or a shape container; then
     `letTheOneRowTablesKeptWithTheNextBreak` takes it off a one-row body table of paragraphs all
-    kept with the next, whichever of the three put it there. 56 one-row tables of the corpus carry
-    keeps without it; the count was not apportioned between the four.
+    kept with the next, whichever of the three put it there. A panel the layout breaks over pages
+    is copied whole after that, rows and flags together (`DocxTableSplit.splitInItsPanel`), so the
+    second part's rows carry what the first part's were given, judged by no gate of their own. 56
+    one-row tables of the corpus carry keeps without `w:cantSplit`; the count was not apportioned
+    between the causes.
   - A table composed in a cell is reached by neither writer: the chain reads a cell's own
     paragraphs, which are not those of a table in that cell, and the layout places no row for such
     a table, so the table writer gives its rows no `w:cantSplit` either. What holds it is the row

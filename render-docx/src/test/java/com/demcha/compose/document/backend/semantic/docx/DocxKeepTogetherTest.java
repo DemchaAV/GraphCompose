@@ -108,8 +108,10 @@ class DocxKeepTogetherTest {
             // each paragraph's own lines together; the table writer gives every row the layout
             // placed w:cantSplit (breakRowsWhereTheLayoutDoes, blind to the keep flags), which
             // holds a row whole where the chain cannot reach inside it — a cell of more than one
-            // paragraph, or of a table, or any table outside a kept block, where no chain is
-            // written at all. Documented here at the call site; the pair is also asserted on the
+            // paragraph, or of a table, or any table outside a kept block, where keepOnOnePage
+            // writes nothing at all (a repeated header row's own w:keepNext aside, which
+            // breakRowsWhereTheLayoutDoes writes itself).
+            // Documented here at the call site; the pair is also asserted on the
             // keepWithNext path by DocxOneRowTableKeptWithTheNextTest, and w:cantSplit alone by
             // DocxTablePaginationTest, so this loop is not the only thing holding it. Not
             // unconditional: letTheOneRowTablesKeptWithTheNextBreak takes it back off a one-row
@@ -130,9 +132,11 @@ class DocxKeepTogetherTest {
      * <p>A plain cell is a paragraph per line, not one paragraph of several lines, when its style
      * sets a line spacing and it holds more than one line — the row is sized with that spacing
      * between them, and Word holds no space inside one paragraph ({@code paragraphPerLine} in
-     * {@code writeCellContent}, pinned by {@code DocxCellSeatTest}). So this is the shape for which
-     * {@code w:cantSplit} is load-bearing <em>inside a kept block</em> — outside one no chain is
-     * written at all and it is load-bearing for every row: the chain writes
+     * {@code writeCellContent}, pinned by {@code DocxCellSeatTest}). So this is the shape a
+     * <em>plain</em> table reaches for which {@code w:cantSplit} is load-bearing inside a kept
+     * block — the other is a cell holding a table, which the fixture below covers, and outside a
+     * kept block {@code keepOnOnePage} writes nothing at all, so there it holds every row. The
+     * chain writes
      * {@code w:keepLines} on each of the row's paragraphs, which holds each one's own lines, and
      * {@code w:keepNext} only where the row is not the block's last unit — neither of which stops
      * Word ending a page between two paragraphs of the same row.</p>
@@ -190,8 +194,9 @@ class DocxKeepTogetherTest {
      * moved to the next page whole.</p>
      *
      * <p>So the gap costs nothing while the row round it may not split. It would begin to cost
-     * something where that row may — a row the layout did not place, as in a table too tall to
-     * lay out ({@code DocxTablePaginationTest#aTableTooTallToLayOutIsLeftFreeToBreak}) — which is
+     * something where that row may — a row the layout did not place, as in a document it refused
+     * to lay out, where no row is placed at all
+     * ({@code DocxTablePaginationTest#aTableTooTallToLayOutIsLeftFreeToBreak}) — which is
      * why the row is asserted here beside the two absences, rather than the absences alone.</p>
      */
     @Test
@@ -206,6 +211,11 @@ class DocxKeepTogetherTest {
             XWPFTable outer = document.getTables().get(0);
             XWPFTable composed = outer.getRow(0).getCell(0).getTables().get(0);
 
+            // The outer row's cantSplit comes from layout.placedRow, not from the chain, so it
+            // does not show that keepOnOnePage ran: the absences below need their own premise.
+            assertThat(keepsNext(paragraph(document, "Totals")))
+                    .as("the premise: the chain ran, and ran in the body")
+                    .isTrue();
             assertThat(outer.getRow(0).isCantSplitRow())
                     .as("the row the composed table stands in may not split, and holds it")
                     .isTrue();

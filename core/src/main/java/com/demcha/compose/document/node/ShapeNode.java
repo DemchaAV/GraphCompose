@@ -30,8 +30,9 @@ import java.awt.*;
  *                        top-left, or {@code null} for none
  * @param divider         whether the box was authored as a divider — a rule across
  *                        the flow, which the DSL's divider builder
- *                        ({@link com.demcha.compose.document.dsl.DividerBuilder})
- *                        builds — rather than as a box of a colour placed where the
+ *                        ({@link com.demcha.compose.document.dsl.DividerBuilder}),
+ *                        and the templates module's {@code Divider} widget, build —
+ *                        rather than as a box of a colour placed where the
  *                        page puts it. Nothing is drawn differently for it: on the
  *                        page both are a filled box, and layout, measurement and
  *                        pagination do not read it. It is there for a backend that

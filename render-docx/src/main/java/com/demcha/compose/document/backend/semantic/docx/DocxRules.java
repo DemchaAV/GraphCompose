@@ -23,9 +23,9 @@ import java.util.List;
  *       thicker than Word's thickest border — a 20pt bar written as a border came out 12pt, and
  *       what followed stood 8pt high, over it; and</li>
  *   <li>a {@link ShapeNode} the author asked to be a divider ({@link ShapeNode#divider()},
- *       which the DSL's divider builder sets) that is only a fill — a colour or a solid
- *       paint; no stroke, no rounded corners, no gradient, no transform — and no taller
- *       than Word's thickest border.</li>
+ *       which the DSL's divider builder sets, as does the templates module's own divider
+ *       widget) that is only a fill — a colour or a solid paint; no stroke, no rounded
+ *       corners, no gradient, no transform — and no taller than Word's thickest border.</li>
  * </ul>
  *
  * <p>Anything else drawn — a vertical or slanted line, a box, a circle — is not a rule, and

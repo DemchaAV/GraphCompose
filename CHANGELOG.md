@@ -41,10 +41,21 @@ follow semantic versioning; release dates are ISO 8601.
     draw at all — no layout behind it, a page zone, painted only with a gradient or with nothing —
     is dropped and named, as any other drawing is.
   - **Migration.** Code that relied on a thin `addShape` box becoming Word's editable rule asks
-    `addDivider` (or `ModuleBuilder.divider` / `DocumentDsl.divider`) for it instead; the box keeps
-    its geometry either way, and only which Word object it becomes changes. The templates module's
-    `Divider` widget already asks; `AccentStrip` is chrome and deliberately does not, its
-    horizontal `top`/`bottom` included.
+    `addDivider` (or `ModuleBuilder.divider` / `DocumentDsl.divider`) for it instead. The box keeps
+    its geometry either way, and what else changes is what a rule carries and a drawing does not:
+    such a box with an `anchor` held its bookmark on the rule's paragraph and, drawn, holds none —
+    reported, as a drawing's lost bookmark always is. So that the migration can carry it,
+    `DividerBuilder` now passes an `anchor`, a link and an outline entry (`bookmark(...)`) through
+    to the node it builds, where it used to drop all three silently; a corner radius, a paint fill and a transform stay
+    dropped, each of them being a reason the box would not be a rule at all. The templates module's
+    `Divider` widget already asks for the signal; `AccentStrip` is chrome and deliberately does
+    not, its horizontal `top`/`bottom` included.
+  - One case the signal does not reach, named rather than fixed: a divider sharing a composed
+    table cell with a box of the same thickness that is **not** a divider. The rule is chosen by
+    the signal, while the cell's drawings are still matched to it by their height, so the export
+    cannot tell which of the two drawings belongs to the rule and keeps both, reporting that the
+    rule stands twice in Word. No template in the corpus has such a cell. Carrying the signal into
+    the layout's shape fragments would close it at the root.
 
 - **A DOCX export names what a node was written as where that is not the kind of thing the node
   is, rather than saying it only when the node happened to lose something else as well.**

@@ -512,9 +512,9 @@ class DocxRuleTest {
         // keeps its own place on the page instead of becoming a bordered paragraph.
         try (XWPFDocument document = export(page -> page
                 .addShape(s -> s.name("Plate").size(100, 2).fillColor(ACCENT)))) {
-            assertThat(document.getParagraphs().get(0).getCTP().getPPr())
-                    .as("no paragraph carries a border for it")
-                    .matches(properties -> properties == null || properties.getPBdr() == null);
+            assertThat(document.getParagraphs()).as("no paragraph carries a border for it")
+                    .allSatisfy(paragraph -> assertThat(paragraph.getCTP().getPPr())
+                            .matches(properties -> properties == null || properties.getPBdr() == null));
             assertThat(document.getDocument().xmlText())
                     .as("it is drawn where the page puts it").contains("<wp:anchor");
         }
@@ -527,9 +527,24 @@ class DocxRuleTest {
         try (XWPFDocument document = export(page -> page
                 .addDivider(d -> d.name("Band").width(200).thickness(DocxRules.MAX_RULE_POINTS + 1)
                         .color(ACCENT)))) {
-            assertThat(document.getParagraphs().get(0).getCTP().getPPr())
-                    .matches(properties -> properties == null || properties.getPBdr() == null);
+            assertThat(document.getParagraphs()).allSatisfy(paragraph ->
+                    assertThat(paragraph.getCTP().getPPr())
+                            .matches(properties -> properties == null || properties.getPBdr() == null));
             assertThat(document.getDocument().xmlText()).contains("<wp:anchor");
+        }
+    }
+
+    @Test
+    void aDividerBuiltByTheDslCarriesItsAnchorsBookmark() throws Exception {
+        // Only a drawing that reaches Word as a rule has a paragraph to hold a bookmark
+        // (blockAnchorOf), so the builder has to carry the anchor for a link or a page reference to
+        // have anything to point at — it used to drop it, and a thin addShape box was the only
+        // way to get a bookmarked rule.
+        try (XWPFDocument document = export(page -> page
+                .addDivider(d -> d.name("Seam").width(200).thickness(2).color(ACCENT).anchor("seam")))) {
+            assertThat(document.getParagraphs().get(0).getCTP().getBookmarkStartList())
+                    .extracting(CTBookmark::getName)
+                    .containsExactly("seam");
         }
     }
 
@@ -541,8 +556,9 @@ class DocxRuleTest {
             d.name("Edged").width(200).thickness(2).color(ACCENT);
             d.stroke(DocumentStroke.of(DocumentColor.rgb(0, 0, 0), 1));
         }))) {
-            assertThat(document.getParagraphs().get(0).getCTP().getPPr())
-                    .matches(properties -> properties == null || properties.getPBdr() == null);
+            assertThat(document.getParagraphs()).allSatisfy(paragraph ->
+                    assertThat(paragraph.getCTP().getPPr())
+                            .matches(properties -> properties == null || properties.getPBdr() == null));
             assertThat(document.getDocument().xmlText()).contains("<wp:anchor");
         }
     }
@@ -584,8 +600,9 @@ class DocxRuleTest {
         try (XWPFDocument document = export(page -> page.add(
                 new com.demcha.compose.document.dsl.ShapeBuilder().name("Plate").size(100, 2)
                         .fill(com.demcha.compose.document.style.DocumentPaint.solid(ACCENT)).build()))) {
-            assertThat(document.getParagraphs().get(0).getCTP().getPPr())
-                    .matches(properties -> properties == null || properties.getPBdr() == null);
+            assertThat(document.getParagraphs()).allSatisfy(paragraph ->
+                    assertThat(paragraph.getCTP().getPPr())
+                            .matches(properties -> properties == null || properties.getPBdr() == null));
             assertThat(document.getDocument().xmlText()).contains("<wp:anchor");
         }
     }

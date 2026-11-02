@@ -96,7 +96,10 @@ class DocxRewrittenFormReportTest {
                 .size(200, 1).fillColor(INK));
 
         assertThat(notesOn(reportOf(content), "ShapeNode"))
-                .noneMatch(detail -> detail.startsWith(AS_A_RULE));
+                .as("the swatch is named, by its drawing's own note and not the rule's")
+                .isNotEmpty()
+                .noneMatch(detail -> detail.startsWith(AS_A_RULE))
+                .anyMatch(detail -> detail.startsWith("drawn as a shape"));
         // The absence of the note is held to the file, not taken on trust: the swatch really is
         // a drawing there, and no paragraph carries a border for it.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, content)) {

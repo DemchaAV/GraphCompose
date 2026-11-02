@@ -54,6 +54,32 @@ class DividerBuilderTest {
     }
 
     @Test
+    void aDividerCarriesWhatARuleCanHoldAndDropsWhatWouldStopItBeingOne() {
+        // A rule written as Word's own is a bordered paragraph, and a paragraph holds a bookmark,
+        // so an anchor, a link and a bookmark reach the node and have something to point at. A
+        // corner radius, a paint fill and a transform are each a reason the box would not be a
+        // rule at all, so the builder drops them rather than quietly turning its divider into a
+        // drawing.
+        ShapeNode divider = (ShapeNode) new SectionBuilder()
+                .addDivider(d -> {
+                    d.name("Seam").width(200).thickness(2).color(INK);
+                    d.anchor("seam");
+                    d.linkTo("elsewhere");
+                    d.cornerRadius(DocumentCornerRadius.of(3));
+                    d.transform(DocumentTransform.rotate(10));
+                })
+                .build().children().get(0);
+
+        assertThat(divider.divider()).isTrue();
+        assertThat(divider.anchor()).isEqualTo("seam");
+        assertThat(divider.linkTarget()).isNotNull();
+        assertThat(divider.cornerRadius()).as("dropped: a rounded box is no rule")
+                .isEqualTo(DocumentCornerRadius.ZERO);
+        assertThat(divider.transform()).as("dropped: a transformed box is no rule")
+                .isEqualTo(DocumentTransform.NONE);
+    }
+
+    @Test
     void aBoxOfAColourOfTheSameShapeCarriesNoSignal() {
         ShapeNode swatch = new ShapeBuilder().name("Swatch").size(200, 2).fillColor(INK).build();
 

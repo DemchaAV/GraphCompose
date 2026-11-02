@@ -17,6 +17,14 @@ import java.util.Objects;
  * preset, which knows its column or page width); thickness, colour, and
  * style are chosen via the factory methods.</p>
  *
+ * <p>Every one of them carries the node's divider signal
+ * ({@link ShapeNode#divider()}), which says the box is a rule and not a
+ * plate of its colour. A backend with a rule of its own reads it — the
+ * DOCX export writes such a box, of a thickness Word's border can hold,
+ * as Word's own horizontal rule, flowing with the text — and no geometry
+ * of the box would tell it from {@link AccentStrip}'s chrome, which
+ * deliberately carries no signal.</p>
+ *
  * <p>Five named styles cover the common cases:</p>
  *
  * <ul>

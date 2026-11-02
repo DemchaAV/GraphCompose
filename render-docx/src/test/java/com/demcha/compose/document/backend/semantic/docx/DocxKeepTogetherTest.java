@@ -109,14 +109,16 @@ class DocxKeepTogetherTest {
             // placed w:cantSplit (breakRowsWhereTheLayoutDoes, blind to the keep flags), which
             // holds a row whole where the chain cannot reach inside it — a cell of more than one
             // paragraph, or of a table, or any table outside a kept block, where keepOnOnePage
-            // writes nothing at all (a repeated header row's own w:keepNext aside, which
-            // breakRowsWhereTheLayoutDoes writes itself).
-            // Documented here at the call site; the pair is also asserted on the
-            // keepWithNext path by DocxOneRowTableKeptWithTheNextTest, and w:cantSplit alone by
-            // DocxTablePaginationTest, so this loop is not the only thing holding it. Not
-            // unconditional: letTheOneRowTablesKeptWithTheNextBreak takes it back off a one-row
-            // body table kept with what follows.
-            assertThat(table.getRows()).hasSize(2);
+            // writes nothing at all — breakRowsWhereTheLayoutDoes writing a repeated header row's
+            // own w:keepNext itself, where the table has body rows under its header. Documented
+            // here at the call site; the pair is also asserted on the keepWithNext path by
+            // DocxOneRowTableKeptWithTheNextTest, and w:cantSplit alone by DocxTablePaginationTest,
+            // so this loop is not the only thing holding it. Not unconditional either:
+            // letTheOneRowTablesKeptWithTheNextBreak takes it back off a one-row body table of
+            // paragraphs all kept with the next.
+            assertThat(table.getRows())
+                    .as("the premise: both rows are there to be held")
+                    .hasSize(2);
             for (XWPFTableRow row : table.getRows()) {
                 assertThat(row.isCantSplitRow())
                         .as("a row of the kept block's table may not break across a page")
@@ -134,12 +136,13 @@ class DocxKeepTogetherTest {
      * between them, and Word holds no space inside one paragraph ({@code paragraphPerLine} in
      * {@code writeCellContent}, pinned by {@code DocxCellSeatTest}). So this is the shape a
      * <em>plain</em> table reaches for which {@code w:cantSplit} is load-bearing inside a kept
-     * block — the other is a cell holding a table, which the fixture below covers, and outside a
-     * kept block {@code keepOnOnePage} writes nothing at all, so there it holds every row. The
-     * chain writes
-     * {@code w:keepLines} on each of the row's paragraphs, which holds each one's own lines, and
-     * {@code w:keepNext} only where the row is not the block's last unit — neither of which stops
-     * Word ending a page between two paragraphs of the same row.</p>
+     * block — the other is a cell holding a table, which the fixture below covers, a composed cell
+     * holding whatever it is given. Outside a kept block {@code keepOnOnePage} writes nothing at
+     * all, so there {@code w:cantSplit} holds every row the layout placed, a repeated header row's
+     * own {@code w:keepNext} aside. The chain writes {@code w:keepLines} on each of the row's
+     * paragraphs, which holds each one's own lines, and {@code w:keepNext} only where the row is
+     * not the block's last unit — neither of which stops Word ending a page between two
+     * paragraphs of the same row.</p>
      *
      * <p>The block is kept <em>together</em> on purpose. Measured on this same document with
      * {@code keepWithNext()} instead: the row's paragraphs then carry {@code w:keepNext} as well,
@@ -196,8 +199,8 @@ class DocxKeepTogetherTest {
      * <p>So the gap costs nothing while the row round it may not split. It would begin to cost
      * something where that row may — a row the layout did not place, as in a document it refused
      * to lay out, where no row is placed at all
-     * ({@code DocxTablePaginationTest#aTableTooTallToLayOutIsLeftFreeToBreak}) — which is
-     * why the row is asserted here beside the two absences, rather than the absences alone.</p>
+     * ({@code DocxTablePaginationTest.aTableTooTallToLayOutIsLeftFreeToBreak}) — which is why the
+     * row is asserted here beside the two absences, rather than the absences alone.</p>
      */
     @Test
     void aTableComposedInACellIsHeldByTheRowRoundIt() throws Exception {

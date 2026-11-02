@@ -6,6 +6,7 @@ import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ShapeBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
+import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentDashPattern;
@@ -92,11 +93,18 @@ class DocxCarriedWithoutReportTest {
     }
 
     @Test
-    void aFilledBarWrittenAsARuleNamesItsLinkAndOutlineEntry() throws Exception {
+    void aDividerWrittenAsARuleNamesItsLinkAndOutlineEntry() throws Exception {
+        // Only a divider is written as a rule (DocxRules), and the DSL's divider builder states no
+        // link, bookmark or anchor: the node is copied from a bar that does, with the signal set,
+        // so what the rule loses is read on the one path that can carry it there.
+        ShapeNode bar = new ShapeBuilder().size(200, 2).fillColor(INK).linkTo("target")
+                .bookmark(OUTLINE).anchor("bar").build();
         DocxExportReport report = reportOf(page -> page
                 .addParagraph(p -> p.text("Target").anchor("target"))
-                .addShape(shape -> shape.size(200, 2).fillColor(INK).linkTo("target").bookmark(OUTLINE)
-                        .anchor("bar")));
+                .add(new ShapeNode(bar.name(), bar.width(), bar.height(), bar.fillColor(),
+                        bar.stroke(), bar.cornerRadius(), bar.linkTarget(), bar.bookmarkOptions(),
+                        bar.padding(), bar.margin(), bar.transform(), bar.fillPaint(), bar.anchor(),
+                        true)));
 
         assertThat(detailOf(report, "ShapeNode")).startsWith("written as a paragraph border")
                 .contains("its link is not carried").contains("its outline entry is not written")

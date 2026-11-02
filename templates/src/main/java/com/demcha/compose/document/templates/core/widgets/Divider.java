@@ -140,6 +140,11 @@ public final class Divider {
                 /* bookmark     */ null,
                 /* padding      */ DocumentInsets.zero(),
                 /* margin       */ DocumentInsets.zero(),
-                /* transform    */ DocumentTransform.NONE);
+                /* transform    */ DocumentTransform.NONE,
+                /* fillPaint    */ null,
+                /* anchor       */ null,
+                // A rule, not a plate: what the box is for is known here and nowhere below, and
+                // a backend with a rule of its own has no geometry to tell the two apart.
+                /* divider      */ true);
     }
 }

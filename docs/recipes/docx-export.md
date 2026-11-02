@@ -285,7 +285,7 @@ that keeps its fill and loses its rounded corners. Neither is an error: an expor
 cannot proceed throws, and the report is not how you find that out.
 
 A note also names what a node was written as where that is not the kind of thing the node is,
-since nothing in your own tree shows it: a box of a plain fill written as a paragraph border
+since nothing in your own tree shows it: a divider written as a paragraph border
 (see "What falls back"); a layer stack written as the columns of a table or as a band of its
 layers; a stack or a shape container written as one line two paragraphs share; a box of
 nothing but drawing written as
@@ -1463,8 +1463,8 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
 ## What is skipped
 
 A horizontal rule is not skipped. A horizontal line stroked no thicker than 12pt,
-Word's thickest border, or a filled bar no taller than that — what `addDivider`
-draws — is Word's own rule: an empty paragraph
+Word's thickest border, or a divider no taller than that — what `addDivider`
+draws, and the `Divider` widget of the templates module — is Word's own rule: an empty paragraph
 whose bottom border is the stroke, in its colour and thickness, from where the
 line starts to where it ends, with the space above and below the stroke kept.
 A rule the layout moves to a new page in the flow keeps the space the layout leaves above it
@@ -1530,11 +1530,18 @@ twice. Three limits:
   the flow, and is drawn as a shape like other drawing. A layer stack of one layer lays
   nothing over anything, and a line among the text in it is a rule; its other shapes, and
   a line in a stack that holds nothing but drawing, stay drawing.
-- A filled box written as a rule is named in the report, at its own path, since a box in
-  the tree is a line in the file: `addDivider` builds such a box — a `ShapeNode` whose
-  `thickness` is its height and which carries a fill and no stroke — and so does a colour
-  swatch or a bar of the same height, so nothing in the tree tells a divider from a swatch.
-  A `LineNode` written as a rule is not named for its form.
+- Of filled boxes, only a divider is written as a rule (a horizontal line is one too, above).
+  `addDivider` builds a `ShapeNode` whose `thickness`
+  is its height, carrying a fill and no stroke, and a colour swatch or a brand strip's
+  segment of the same height is that same node: no geometry of the box tells the two apart,
+  so the node carries the divider signal itself (`ShapeNode.divider()`, which `addDivider` and
+  the templates module's `Divider` widget set, nothing else in the library does, and the
+  canonical constructor states for a node you build yourself). A box of a colour
+  that did not ask to be a divider is drawn where the page puts it, however thin it is, so a
+  plate, a swatch and a brand strip's segment keep their own place on the page instead of
+  becoming a paragraph a reader moves or deletes as a line of text. A divider written as a
+  rule is named in the report, at its own path, since a box in the tree is a line in the
+  file; a `LineNode` written as a rule is not named for its form.
 - A rule in a page zone is not written, as a zone takes paragraphs, fields, spacers
   and pictures.
 - Word draws one border for consecutive paragraphs whose borders and indents are

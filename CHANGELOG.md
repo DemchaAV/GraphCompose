@@ -8,6 +8,32 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export writes only a divider, of all boxes of a colour, as Word's horizontal rule; any
+  other box is drawn where the page puts it.** (A horizontal `LineNode` is written as that rule
+  too, unchanged, and is still chosen by its geometry — a line is one either way.)
+  - The rule the export chose by was the box's size: a `ShapeNode` of a plain fill, no stroke and
+    no more than 12pt tall — Word's thickest border — became an empty paragraph bordered below.
+    `addDivider` builds exactly such a box, and so does a swatch, a plate and a brand strip's
+    segment, and nothing in the tree tells them apart: the `DividerBuilder`
+    knows what the box is for, the node it hands on did not. A box of a colour therefore became a
+    paragraph a reader moves or deletes as a line of text, and the geometry Word drew it with was
+    the border's, not the box's.
+  - `ShapeNode` now carries that purpose itself, as a `divider` component, which `addDivider` and
+    the templates module's `Divider` widget set and no other builder does; `DocxRules` asks for
+    it, and the canonical constructor states it for a node you build yourself. The
+    component is additive — the constructor that states no signal builds no divider, so every
+    caller written before it keeps the box it built — and nothing is drawn differently for it:
+    layout, measurement, pagination and every other backend see the box they always saw.
+  - Measured against the engine's own page, before and after, in Word 16.0.20527 and LibreOffice
+    24.2, on the one corpus document this moves — `SubscriptionInvoice`'s four-segment brand
+    strip, 3.39pt tall and the full width of the paper. Drawn rather than bordered, it stands
+    within 0.08pt in Word, where the border stood within 0.15pt and left a 0.12pt gap between the
+    first two segments, and within 0.18pt in LibreOffice 24.2, where the border stood within
+    0.43pt — 0.4pt wide of each segment and over its neighbour; the four colours are exact either
+    way. `MeteredInvoice`'s two dividers are byte-identical, and stay the rule they were.
+  - A divider written as a rule is still named in the export report at its own path. A box that is
+    not one is named by its drawing's own note, so neither form is silent.
+
 - **A DOCX export names what a node was written as where that is not the kind of thing the node
   is, rather than saying it only when the node happened to lose something else as well.**
   - Which Word object a node becomes is settled as the node is written, in the guards of

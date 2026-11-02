@@ -497,11 +497,59 @@ class DocxRuleTest {
     }
 
     @Test
-    void aSolidPaintedBarIsARuleToo() throws Exception {
-        try (XWPFDocument document = export(page -> page
-                .addShape(s -> s.size(100, 2).fill(com.demcha.compose.document.style.DocumentPaint.solid(ACCENT))))) {
+    void aSolidPaintedDividerIsARuleToo() throws Exception {
+        // A paint the layout turns into the same flat fill is a rule's colour (solidFillOf). The
+        // DSL's divider builder sets no paint, so the node is built as the backend receives it.
+        try (XWPFDocument document = export(page -> page.add(paintedDivider(
+                com.demcha.compose.document.style.DocumentPaint.solid(ACCENT))))) {
             assertThat(hex(bottomOf(document, 0).getColor())).isEqualTo("1A5694");
         }
+    }
+
+    @Test
+    void aBoxOfAColourThatIsNoDividerIsDrawnRatherThanWrittenAsARule() throws Exception {
+        // The signal is the whole difference: the same geometry, the same flat fill, and the box
+        // keeps its own place on the page instead of becoming a bordered paragraph.
+        try (XWPFDocument document = export(page -> page
+                .addShape(s -> s.name("Plate").size(100, 2).fillColor(ACCENT)))) {
+            assertThat(document.getParagraphs().get(0).getCTP().getPPr())
+                    .as("no paragraph carries a border for it")
+                    .matches(properties -> properties == null || properties.getPBdr() == null);
+            assertThat(document.getDocument().xmlText())
+                    .as("it is drawn where the page puts it").contains("<wp:anchor");
+        }
+    }
+
+    @Test
+    void aDividerTallerThanWordsThickestBorderIsNotARule() throws Exception {
+        // The signal does not lift the height cap: Word's border stops at 12pt, so a divider
+        // thicker than that is drawn at its own thickness rather than written 12pt thin.
+        try (XWPFDocument document = export(page -> page
+                .addDivider(d -> d.name("Band").width(200).thickness(DocxRules.MAX_RULE_POINTS + 1)
+                        .color(ACCENT)))) {
+            assertThat(document.getParagraphs().get(0).getCTP().getPPr())
+                    .matches(properties -> properties == null || properties.getPBdr() == null);
+            assertThat(document.getDocument().xmlText()).contains("<wp:anchor");
+        }
+    }
+
+    @Test
+    void aPaintedBoxThatIsNoDividerIsDrawnToo() throws Exception {
+        try (XWPFDocument document = export(page -> page.add(
+                new com.demcha.compose.document.dsl.ShapeBuilder().name("Plate").size(100, 2)
+                        .fill(com.demcha.compose.document.style.DocumentPaint.solid(ACCENT)).build()))) {
+            assertThat(document.getParagraphs().get(0).getCTP().getPPr())
+                    .matches(properties -> properties == null || properties.getPBdr() == null);
+            assertThat(document.getDocument().xmlText()).contains("<wp:anchor");
+        }
+    }
+
+    /** A divider of a paint, which no builder states: the signal is the canonical constructor's. */
+    private static com.demcha.compose.document.node.ShapeNode paintedDivider(
+            com.demcha.compose.document.style.DocumentPaint paint) {
+        return new com.demcha.compose.document.node.ShapeNode("Divider", 100, 2, null, null,
+                DocumentCornerRadius.ZERO, null, null, DocumentInsets.zero(), DocumentInsets.zero(),
+                com.demcha.compose.document.style.DocumentTransform.NONE, paint, null, true);
     }
 
     @Test

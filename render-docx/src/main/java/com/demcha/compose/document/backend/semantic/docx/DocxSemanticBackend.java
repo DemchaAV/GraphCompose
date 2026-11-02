@@ -16064,33 +16064,36 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     "drawn in Word's own dash for a border, which keeps the rule dashed but not "
                     + "the pattern's lengths");
         }
-        // A line's link is the rule link above; a filled bar's, and either's outline entry, here.
+        // A line's link is the rule link above; a divider's, and either's outline entry, here.
         if (node instanceof com.demcha.compose.document.node.ShapeNode) {
-            reportRewritten(node, A_FILLED_BOX_AS_A_RULE);
+            reportRewritten(node, A_DIVIDER_AS_A_RULE);
         } else {
             reportWrittenWithout(node, "written as a paragraph border");
         }
     }
 
     /**
-     * What a note says of a filled box written as a rule: a shape in the tree and a line in the
+     * What a note says of a divider written as a rule: a shape in the tree and a line in the
      * file, which {@link #reportRewritten} names whether or not the shape loses anything else.
      *
-     * <p>A {@link com.demcha.compose.document.node.LineNode} written as one is a line either way
-     * and is not named for its form; what it loses is ({@link #reportWrittenWithout}). The height
-     * the note speaks of is the guard's, {@link DocxRules#MAX_RULE_POINTS}. The note does not say
-     * whether the box keeps its width, its place and its colour: the indents are set from the
-     * rule's own ends and the border's width from the box's height, and how Word and LibreOffice
-     * then draw a box of more than a hairline is not measured.</p>
+     * <p>Only a box carrying the divider signal ({@code ShapeNode.divider()}, which
+     * {@code addDivider} sets) is written as a rule; any other box of the same size is drawn,
+     * and its drawing's own notes say so. A
+     * {@link com.demcha.compose.document.node.LineNode} written as a rule is a line either way
+     * and is not named for its form; what it loses is ({@link #reportWrittenWithout}). The
+     * height the note speaks of is the guard's, {@link DocxRules#MAX_RULE_POINTS}. The note
+     * says the paragraph is bordered where the fill shows, and nothing about the box keeping
+     * its width, its place and its colour, which is measured elsewhere and not promised
+     * here.</p>
      *
      * <p>It does not say the words a drawing's note says of itself — "drawn as a shape" — and must
      * not: {@code DocxNeighbourFillGuardTest} holds every note carrying them to its own ledger of
      * the drawings it can place under a panel, and this box is written rather than drawn.</p>
      */
-    private static final String A_FILLED_BOX_AS_A_RULE =
-            "written as a paragraph border rather than as a drawing: a box of a plain fill, no "
-            + "taller than Word's thickest border, is written as Word's own rule — a paragraph of "
-            + "its own, bordered below where the fill shows — which flows with the text and which a "
+    private static final String A_DIVIDER_AS_A_RULE =
+            "written as a paragraph border rather than as a drawing: a divider, no taller than "
+            + "Word's thickest border, is written as Word's own rule — a paragraph of its own, "
+            + "bordered below where the fill shows — which flows with the text and which a "
             + "reader moves or deletes as a line of the document";
 
     /**

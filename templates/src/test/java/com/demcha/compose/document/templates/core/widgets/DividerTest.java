@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
 class DividerTest {
 
@@ -22,6 +23,27 @@ class DividerTest {
         assertThat(shape.height()).isEqualTo(Divider.THIN_THICKNESS).isEqualTo(0.5);
         assertThat(shape.fillColor()).isEqualTo(GRAY);
         assertThat(shape.name()).isEqualTo("Divider.thin");
+    }
+
+    @Test
+    void everyRuleCarriesTheDividerSignalAndAStripOfTheSameShapeDoesNot() {
+        // What the box is for is known here and nowhere below it: a backend with a rule of its
+        // own has no geometry to tell a rule from a plate of the same thickness, and the DOCX
+        // export writes only a divider as Word's rule.
+        assertThat(Divider.thin(GRAY, 200.0)).asInstanceOf(type(ShapeNode.class))
+                .matches(ShapeNode::divider);
+        assertThat(Divider.thick(GRAY, 200.0)).asInstanceOf(type(ShapeNode.class))
+                .matches(ShapeNode::divider);
+        assertThat(Divider.dashed(GRAY, 200.0)).asInstanceOf(type(ShapeNode.class))
+                .matches(ShapeNode::divider);
+        assertThat(Divider.dottedAccent(GRAY, 200.0)).asInstanceOf(type(ShapeNode.class))
+                .matches(ShapeNode::divider);
+        assertThat(Divider.custom(GRAY, 200.0, 3.0)).asInstanceOf(type(ShapeNode.class))
+                .matches(ShapeNode::divider);
+
+        assertThat(AccentStrip.rect(GRAY, 200.0, 1.5)).asInstanceOf(type(ShapeNode.class))
+                .as("a strip of a divider's thickness is a plate, and keeps its place on the page")
+                .matches(strip -> !strip.divider());
     }
 
     @Test

@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * What a node was written as, where that is not the kind of thing the node is, is in the report.
  *
  * <p>Which Word object a node becomes is settled as it is written, and the writer's phrase for it
- * reached the report only as the lead-in to a list of what the node went without — so a filled bar
+ * reached the report only as the lead-in to a list of what the node went without — so a divider
  * written as a line, layers written side by side or one after another, a box written as drawing
  * alone, each said nothing at all unless the same node also lost a link or an outline entry. The
  * caller the report is for cannot see any of it in its own tree.</p>
@@ -48,11 +48,14 @@ class DocxRewrittenFormReportTest {
     private static final String AS_A_RULE = "written as a paragraph border rather than as a drawing";
 
     @Test
-    void aFilledBarIsNamedForTheRuleItBecomesThoughItLosesNothingElse() throws Exception {
-        DocxExportReport report = reportOf(page -> page.addShape(shape -> shape.name("Bar")
-                .size(200, 2).fillColor(INK)));
+    void aDividerIsNamedForTheRuleItBecomesThoughItLosesNothingElse() throws Exception {
+        Consumer<PageFlowBuilder> content = page -> page.addDivider(divider -> divider.name("Bar")
+                .width(200).thickness(2).color(INK));
+        DocxExportReport report = reportOf(content);
 
         assertThat(detailOf(report, "ShapeNode")).startsWith(AS_A_RULE)
+                .as("what the note names is the divider, the one box written as a rule")
+                .contains("a divider, no taller than Word's thickest border")
                 .contains("flows with the text")
                 .as("no loss is appended where there is none").doesNotContain("; its")
                 .as("not the words a drawing's note says of itself: DocxNeighbourFillGuardTest "
@@ -62,29 +65,46 @@ class DocxRewrittenFormReportTest {
                 .isEqualTo("ContainerNode[0]/Bar[0]");
         assertThat(noteOn(report, "ShapeNode").severity())
                 .isEqualTo(DocxExportReport.Severity.APPROXIMATED);
+        // The note's own claim, read off the file: a bordered paragraph and no drawing.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, content)) {
+            assertThat(document.getParagraphs().get(0).getCTP().getPPr().getPBdr().getBottom())
+                    .as("a paragraph of its own, bordered below").isNotNull()
+                    .matches(border -> border.isSetSz() && border.isSetColor());
+            assertThat(document.getDocument().xmlText()).doesNotContain("<wp:anchor");
+        }
     }
 
     @Test
-    void aBoxWhoseFillShowsNothingIsNamedWithoutPromisingABorder() throws Exception {
+    void aDividerWhoseFillShowsNothingIsNamedWithoutPromisingABorder() throws Exception {
         // A border is painted only where the fill shows (writeRule), and a plain fill of no
         // opacity is a rule all the same: the paragraph is written, and the note says the border
         // is there where the fill shows rather than promising one.
-        DocxExportReport report = reportOf(page -> page.addShape(shape -> shape.name("Clear")
-                .size(200, 2).fillColor(DocumentColor.rgba(26, 86, 148, 0))));
+        DocxExportReport report = reportOf(page -> page.addDivider(divider -> divider.name("Clear")
+                .width(200).thickness(2).color(DocumentColor.rgba(26, 86, 148, 0))));
 
         assertThat(detailOf(report, "ShapeNode")).startsWith(AS_A_RULE)
                 .contains("bordered below where the fill shows");
     }
 
     @Test
-    void aDividerBuiltByTheDslIsNamedAsAnyOtherFilledBoxIs() throws Exception {
-        // addDivider builds a ShapeNode whose thickness is its height, with a fill and no stroke
-        // (DividerBuilder), so the DSL's own divider and a colour swatch of the same height are one
-        // node: the report names both, having nothing to tell them apart by.
-        DocxExportReport report = reportOf(page -> page
-                .addDivider(divider -> divider.name("Divider").width(200).thickness(1).color(INK)));
+    void aBoxOfAColourIsNotNamedAsARuleBecauseItIsNotWrittenAsOne() throws Exception {
+        // addDivider and addShape build the same ShapeNode but for one signal (DividerBuilder):
+        // the same thickness, the same fill, no stroke. Only the divider is written as Word's
+        // rule, so only the divider is named for that form; the swatch is drawn, and its
+        // drawing's own notes say what a drawing says.
+        Consumer<PageFlowBuilder> content = page -> page.addShape(shape -> shape.name("Swatch")
+                .size(200, 1).fillColor(INK));
 
-        assertThat(detailOf(report, "ShapeNode")).startsWith(AS_A_RULE);
+        assertThat(notesOn(reportOf(content), "ShapeNode"))
+                .noneMatch(detail -> detail.startsWith(AS_A_RULE));
+        // The absence of the note is held to the file, not taken on trust: the swatch really is
+        // a drawing there, and no paragraph carries a border for it.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, content)) {
+            assertThat(document.getDocument().xmlText()).contains("<wp:anchor");
+            assertThat(document.getParagraphs()).allSatisfy(paragraph ->
+                    assertThat(paragraph.getCTP().getPPr())
+                            .matches(properties -> properties == null || properties.getPBdr() == null));
+        }
     }
 
     @Test

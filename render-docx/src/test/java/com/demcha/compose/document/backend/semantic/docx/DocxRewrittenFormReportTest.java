@@ -12,6 +12,9 @@ import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.table.DocumentTableColumn;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.junit.jupiter.api.Test;
 
 import javax.imageio.ImageIO;
@@ -96,29 +99,99 @@ class DocxRewrittenFormReportTest {
 
     @Test
     void layersSideBySideAreNamedAsTheColumnsTheyBecome() throws Exception {
-        DocxExportReport report = reportOf(page -> page.addLayerStack(stack -> stack.name("Grid")
+        Consumer<PageFlowBuilder> content = page -> page.addLayerStack(stack -> stack.name("Grid")
                 .layer(new SectionBuilder().name("Left").margin(new DocumentInsets(0, 220, 0, 0))
                         .addParagraph("Left column").build(), LayerAlign.TOP_LEFT)
                 .layer(new SectionBuilder().name("Right").margin(new DocumentInsets(0, 0, 0, 200))
-                        .addParagraph("Right column").build(), LayerAlign.TOP_LEFT)));
+                        .addParagraph("Right column").build(), LayerAlign.TOP_LEFT));
+        DocxExportReport report = reportOf(content);
 
         assertThat(detailOf(report, "LayerStackNode"))
-                .isEqualTo("written as the columns of a table: its layers stand side by side, a cell "
-                           + "each, as the page places them, rather than one over another");
+                .startsWith("written as the columns of a table: the layers the page sets side by side "
+                            + "stand in a cell each");
         assertThat(pathOf(report, "LayerStackNode")).isEqualTo("ContainerNode[0]/Grid[0]");
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, content)) {
+            assertThat(document.getTables()).hasSize(1);
+            assertThat(document.getTables().get(0).getRow(0).getTableCells())
+                    .as("a cell each, as the note says").extracting(XWPFTableCell::getText)
+                    .containsExactly("Left column", "Right column");
+        }
+    }
+
+    @Test
+    void layersThePageGivesOneBandToAreNamedAsFollowingOneAnotherInItsCell() throws Exception {
+        // Two layers in the right-hand band: DocxLayerColumns puts both in that column, so "a cell
+        // each" is not the whole truth and the note says what the file holds.
+        Consumer<PageFlowBuilder> content = page -> page.addLayerStack(stack -> stack.name("Grid")
+                .layer(new SectionBuilder().name("Left").margin(new DocumentInsets(0, 220, 0, 0))
+                        .addParagraph("Left column").build(), LayerAlign.TOP_LEFT)
+                .layer(new SectionBuilder().name("RightTop").margin(new DocumentInsets(0, 0, 0, 200))
+                        .addParagraph("Name").build(), LayerAlign.TOP_LEFT)
+                .layer(new SectionBuilder().name("RightUnder").margin(new DocumentInsets(0, 0, 0, 200))
+                        .addParagraph("Role").build(), LayerAlign.TOP_LEFT));
+        DocxExportReport report = reportOf(content);
+
+        assertThat(detailOf(report, "LayerStackNode"))
+                .contains("those the page gives one band to follow one another in its cell");
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, content)) {
+            List<XWPFTableCell> cells = document.getTables().get(0).getRow(0).getTableCells();
+            assertThat(cells).as("three layers, two cells").hasSize(2);
+            assertThat(cells.get(1).getParagraphs()).extracting(XWPFParagraph::getText)
+                    .as("the band's two layers one after another in its cell")
+                    .containsExactly("Name", "Role");
+        }
+    }
+
+    @Test
+    void aLayerOfNothingButDrawingOverTheColumnsIsNamedAsStandingOverThem() throws Exception {
+        // A mark laid across the boundary of two cards forms no column of its own: it is drawn
+        // over them, which is why the note cannot say nothing stands over anything.
+        Consumer<PageFlowBuilder> content = page -> page.addLayerStack(stack -> stack.name("Cards")
+                .layer(new SectionBuilder().name("First").margin(new DocumentInsets(0, 200, 0, 0))
+                        .addParagraph("AWS Certified").build(), LayerAlign.TOP_LEFT)
+                .layer(new SectionBuilder().name("Second").margin(new DocumentInsets(0, 0, 0, 180))
+                        .addParagraph("Docker Certified").build(), LayerAlign.TOP_LEFT)
+                .layer(new SectionBuilder().name("Mark").margin(new DocumentInsets(0, 160, 0, 170))
+                        .add(new ShapeBuilder().name("Medal").size(16, 16).fillColor(INK).build())
+                        .build(), LayerAlign.TOP_LEFT));
+        DocxExportReport report = reportOf(content);
+
+        assertThat(detailOf(report, "LayerStackNode"))
+                .contains("a layer of nothing but drawing may have no cell at all and be drawn over "
+                          + "them, where the page draws it");
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, content)) {
+            assertThat(document.getTables().get(0).getRow(0).getTableCells())
+                    .as("three layers, two cells: the mark has none")
+                    .extracting(XWPFTableCell::getText)
+                    .containsExactly("AWS Certified", "Docker Certified");
+            assertThat(document.getDocument().xmlText())
+                    .as("and it is drawn where the page draws it, not written in a cell")
+                    .contains("<wp:anchor");
+        }
     }
 
     @Test
     void layersOneAfterAnotherAreNamedAsTheBandTheyBecome() throws Exception {
-        DocxExportReport report = reportOf(page -> page.addLayerStack(stack -> stack.name("Band")
-                .back(new ShapeBuilder().name("Backdrop").size(200, 160).build())
+        // A backdrop behind two paragraph layers: what the band writes goes one after another, and
+        // the backdrop is drawn behind it — which is why the note cannot claim nothing in the stack
+        // is laid over anything.
+        Consumer<PageFlowBuilder> content = page -> page.addLayerStack(stack -> stack.name("Band")
+                .back(new ShapeBuilder().name("Backdrop").size(200, 160).fillColor(SURFACE).build())
                 .layer(new ParagraphBuilder().name("First").text("First").build(), LayerAlign.TOP_LEFT)
-                .layer(new ParagraphBuilder().name("Second").text("Second").build(), LayerAlign.BOTTOM_LEFT)));
+                .layer(new ParagraphBuilder().name("Second").text("Second").build(), LayerAlign.BOTTOM_LEFT));
+        DocxExportReport report = reportOf(content);
 
         assertThat(detailOf(report, "LayerStackNode"))
-                .startsWith("written as its layers one after another")
-                .contains("none of the stack's layers is laid over another in the file");
+                .startsWith("written as a band of its layers: what they write goes one after another")
+                .contains("a layer of nothing but drawing is drawn where the page draws it rather "
+                          + "than written in the flow");
         assertThat(pathOf(report, "LayerStackNode")).isEqualTo("ContainerNode[0]/Band[0]");
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, content)) {
+            assertThat(document.getParagraphs()).extracting(XWPFParagraph::getText)
+                    .as("what the layers write, one after another").contains("First", "Second");
+            assertThat(document.getDocument().xmlText())
+                    .as("and the backdrop drawn, not written in the flow").contains("<wp:anchor");
+        }
     }
 
     @Test
@@ -188,6 +261,26 @@ class DocxRewrittenFormReportTest {
     }
 
     @Test
+    void aBadgeIsNamedAsTheShapeItsLettersAreSetIn() throws Exception {
+        // A container of a few letters is drawn as one shape carrying them, and holds its room the
+        // way a box of nothing but drawing does — its guard one branch earlier (writeTextBadge).
+        DocxExportReport report = reportOf(page -> page
+                .add(new ShapeContainerBuilder().name("Monogram")
+                        .roundedRect(40, 40, com.demcha.compose.document.style.DocumentCornerRadius.of(20))
+                        .fillColor(INK)
+                        .center(new ParagraphBuilder().name("Initials").text("AD").build())
+                        .build())
+                .addParagraph("Below"));
+
+        assertThat(notesOn(report, "ShapeContainerNode"))
+                .filteredOn(detail -> detail.startsWith("written as one drawn shape holding its text"))
+                .singleElement().asString()
+                .contains("its letters are set in the shape rather than written as a paragraph of "
+                          + "the flow")
+                .contains("the room it took on the page is owed as space to the next block written");
+    }
+
+    @Test
     void aShapeContainerWhoseLayersAreWrittenInTheFlowIsNamedOnceByItsOwnWriter() throws Exception {
         // Its own writer says it (reportLayersWrittenInline), so where such a container is written
         // as a band of its layers nothing adds a second note of the same thing — in the fidelity
@@ -204,7 +297,7 @@ class DocxRewrittenFormReportTest {
                 .containsExactly("its layers are written inline, one after another in source order");
         assertThat(notesOn(report, "ShapeContainerNode"))
                 .as("not named a second time for the same thing")
-                .noneMatch(detail -> detail.startsWith("written as its layers one after another"));
+                .noneMatch(detail -> detail.startsWith("written as a band of its layers"));
     }
 
     @Test

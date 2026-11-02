@@ -445,8 +445,7 @@ class DocxCarriedWithoutReportTest {
                 .addTable(table -> table.columns(DocumentTableColumn.fixed(200)).row("Cell"))
                 .addSection(section -> section.addParagraph("Inside")));
 
-        assertThat(report.bySubject())
-                .doesNotContainKeys("ImageNode", "TableNode", "SectionNode", "ShapeNode");
+        assertThat(report.bySubject()).doesNotContainKeys("ImageNode", "TableNode", "SectionNode");
     }
 
     /** A sidebar laid over the flow, holding the given layer (see {@link DocxExports}). */

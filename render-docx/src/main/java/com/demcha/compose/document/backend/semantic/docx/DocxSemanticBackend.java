@@ -4206,8 +4206,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     this::drawnOverTheColumns, this::contentInset);
             if (columns != null) {
                 // Side by side, nothing in the stack overlaps: it is not an overlay.
-                reportRewritten(stack, "written as the columns of a table: its layers stand side by "
-                        + "side, a cell each, as the page places them, rather than one over another");
+                reportRewritten(stack, "written as the columns of a table: the layers the page sets "
+                        + "side by side stand in a cell each, those the page gives one band to follow "
+                        + "one another in its cell, and a layer of nothing but drawing may have no "
+                        + "cell at all and be drawn over them, where the page draws it");
                 writeLayerColumns(document, stack, columns);
                 return;
             }
@@ -4553,9 +4555,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     // (reportLayersWrittenInline).
                     writeShapeContainer(document, container, band);
                 } else {
-                    reportRewritten(node, "written as its layers one after another, as the page places "
-                            + "their content: Word writes one block under another, and none of the "
-                            + "stack's layers is laid over another in the file");
+                    reportRewritten(node, "written as a band of its layers: what they write goes one "
+                            + "after another, as the page places their content, since Word writes one "
+                            + "block under another, and a layer of nothing but drawing is drawn where "
+                            + "the page draws it rather than written in the flow");
                     writeOverlayBand(document, node, band);
                 }
                 return;
@@ -15720,8 +15723,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * off the shape's middle by the page's seat ({@link #seatShift}).
      */
     private void writeTextBadge(XWPFDocument document, ShapeContainerNode badge, ParagraphNode initials) {
+        boolean heldItsRoom = false;
         if (overlayDepth == 0) {
-            holdTheSpaceOf(badge);
+            heldItsRoom = holdTheSpaceOf(badge);
         } else if (bandDepth > 0) {
             // A band measures its room above and below the text it writes, the initials among it:
             // a line as tall as theirs stands in their place, or the band came out that line short.
@@ -15731,6 +15735,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 applyLineHeight(standIn, java.util.OptionalDouble.of(line.placementHeight()));
             }
         }
+        // A container of a few letters becomes one drawn shape carrying them: its own guard, one
+        // branch before the box of nothing but drawing (writeNodeContent), and the same held room.
+        reportRewritten(badge, "written as one drawn shape holding its text: its letters are set in "
+                + "the shape rather than written as a paragraph of the flow"
+                + (heldItsRoom ? ", and the room it took on the page is owed as space to the next "
+                                 + "block written" : ""));
         badgeText = badgeParagraphXml(document, initials);
         badgeRise = seatShift(initials);
         badgeLine = layout.lines(initials).get(0).textLineHeight();

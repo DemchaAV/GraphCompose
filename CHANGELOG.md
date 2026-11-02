@@ -23,29 +23,34 @@ follow semantic versioning; release dates are ISO 8601.
     `SubscriptionInvoice`'s four brand-strip segments. Of the layer stacks and shape containers,
     12 are written as the columns of a table (none named), 66 as one line two paragraphs share
     (62 silent), 91 as their layers one after another (83 of them shape containers, named by
-    their own writer, and 8 stacks silent), 50 as drawing alone (33 silent) and 20 as a badge
-    (all named by the shape drawn for them); 4 nodes are written over the flow, silent. A painted
-    row written as a one-cell panel has no instance in the corpus at all.
+    their own writer, and 8 stacks silent), 50 as drawing alone (33 silent) and 20 as a badge,
+    which holds its room the same way and had only the note on its drawing; 4 nodes are written
+    over the flow, silent. A painted row written as a one-cell panel has no instance in the
+    corpus at all.
   - Each of those now carries an `APPROXIMATED` note at the node's own path, said whether or not
     the node loses anything else: a filled box written as a paragraph border, a stack written as
     columns or as a band of its layers, a stack or a shape container written as a line two
-    paragraphs share, a box of nothing but drawing written as drawing alone, and a node written
-    over the flow. That is 148 notes across
-    the corpus, one for each instance of the six, and nothing else changes — not a byte of any
-    document, since each note states what the files already were. On 21 of those nodes the new
-    note stands beside the note on the drawing itself, which says where the drawing is anchored
-    while the new one says the node has no place in the flow; 114 nodes of the corpus carried
-    more than one note before this.
+    paragraphs share, a box of nothing but drawing written as drawing alone, a container of a few
+    letters written as one drawn shape holding them, and a node written
+    over the flow. That is 168 notes across
+    the corpus, one for each instance named, and nothing else changes — not a byte of any
+    document, since each note states what the files already were. Where a node's drawing is named
+    too, the new note stands beside that one: the drawing's says where it is anchored, and so what
+    editing the text above moves, while the new one says the node has no place in the flow. 114
+    nodes of the corpus carried more than one note before this. The note on a filled box that does
+    lose something now opens with the longer sentence as well, where it read "written as a
+    paragraph border" alone.
   - Not named for their form, with the reason in the recipe: a node written as the kind of thing
     it is — 3501 paragraphs, 147 Word tables, 8 inline pictures, and 2482 boxes written as their
     contents or as a panel (1776 sections, 427 layer stacks, 79 containers and 200 alignment,
     anchor, canvas and band wrappers), a container having no Word object of its own either way —
-    and a `LineNode` written as a paragraph border, which is a line either way. What any of them
-    loses is named as before. Three more branches of the same cascade keep the old gate, each for
-    its own reason: a row written as a one-cell panel, which the corpus holds no instance of at
-    all; a layer written as a column of its layer stack, and a box inside a node laid over the
-    flow — in both of those the node whose form was chosen is the stack or the overlay above it,
-    which now says so, and what the layer or the box becomes follows from that.
+    a `LineNode` written as a paragraph border, which is a line either way; and a `RowNode`
+    written as the one-row table with a hidden grid that is the only thing Word has to set its
+    children side by side. What any of them loses is named as before. Other branches of the same
+    cascade keep the old gate because the node whose form was chosen stands above them and now
+    says so, and what they become follows from it: a layer written as a column of its stack, a box
+    inside a node laid over the flow, each half of a line two layers share. A painted row written
+    as a one-cell panel keeps it too, and the corpus holds no instance of that branch at all.
   - `addDivider` builds a `ShapeNode` whose `thickness` is its height, carrying a fill and no
     stroke, so the DSL's own divider and a colour swatch of that height are one node and the
     report has nothing to tell them apart by. Said in the recipe, and held by a test.

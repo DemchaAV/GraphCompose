@@ -4476,24 +4476,30 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * the engine does. So the order is taken from the tree: a layer the page paints after a
      * painted one stands in front of the text.</p>
      *
-     * <p>A painted layer the page paints <em>after</em> the node answers false, whatever lies
-     * below: there the page covers the node, and a shape in front would cover the panel instead,
-     * which is the same loss the other way round.</p>
+     * <p>A painted layer the page paints <em>after</em> the node needs no clause of its own: a
+     * layer that paints is drawn, so the test below catches it along with everything else painted
+     * after the node. It was written as its own check first and removed when breaking it reddened
+     * no test — there the page covers the node, and a shape in front would cover that layer's
+     * shading instead, which is the same loss the other way round and the same answer.</p>
      *
-     * <p>So does anything else of the stack drawn over that painted layer
-     * ({@code drawnOverThatLayer}): a shape is lifted where it is the only drawing over it, and
-     * otherwise none is. Word draws every shape in front over every shape behind, so lifting one
-     * drawing of a stack while another stays there puts the lower of the two over the higher —
-     * the loss this fixes, made worse.</p>
+     * <p>So does anything of any overlay it stands in that the page paints <em>after</em> it
+     * ({@code drawnOverThatLayer}): a shape is lifted where nothing is drawn over it, and
+     * otherwise not. Word draws every shape in front over every shape behind, so lifting a shape
+     * the page covers with another drawing puts the lower of the two over the higher — the loss
+     * this fixes, made worse. Asked at every overlay of the climb, painted or not: a sibling in
+     * an outer stack is painted after the inner stack whole, so an inner stack's shape lifted
+     * without asking it would be drawn over the sibling the page draws over the shape. A drawing
+     * the page paints <em>before</em> the node is not asked about — the file keeps it below, as
+     * the page does.</p>
      *
      * <p>It asks whether anything else is drawn, not whether that other drawing would stay
      * behind, and the reason is a measurement: asking the second question was wrong three times
      * over, at a picture drawn where the page puts it, at a badge handed over already in front,
      * and at a shape whose node stands at more than one place. Each was a kind of drawing that
      * stays behind for a reason of its own, and each had to be remembered here. There is nothing
-     * to remember about being alone. The price is that a stack drawing twice over a painted layer
-     * keeps both behind, where lifting both would have been safe; {@code cv-sidebar_portrait}'s
-     * thirty-seven over its sidebar are that case.</p>
+     * to remember about being alone above. The price is that a stack drawing anything over the
+     * shape keeps the shape behind, where lifting it would sometimes have been safe — over a
+     * badge handed to the file in front, for one.</p>
      *
      * <p>A node standing inside a painted surface is another case, decided by the surface it is
      * in ({@code surfaceBehind}) rather than by its neighbours. Only the shapes a node paints
@@ -4523,6 +4529,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // One instance standing at more than one place has one path and one box among them,
             // so what lies under it at one place is not what lies under it at another, and the
             // answer would be given for all of them from whichever the index kept.
+            //
+            // No fixture drives this: which of the places the index keeps is not something a test
+            // can choose, so a stack built to need the refusal is as likely to be answered from
+            // the place that refuses anyway. It is kept because it can only refuse a lift, and
+            // because a shared instance did produce an inversion once, before the rule below took
+            // its own shape.
             return false;
         }
         boolean over = false;
@@ -4550,31 +4562,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 return false;
             }
             int paintedBelow = -1;
-            for (int i = 0; i < order.size(); i++) {
-                if (i == itsPlace || !paintsAFill(order.get(i).node())) {
-                    continue;
+            for (int i = 0; i < itsPlace; i++) {
+                if (paintsAFill(order.get(i).node())) {
+                    paintedBelow = i;
                 }
-                if (i > itsPlace) {
-                    return false;
-                }
-                paintedBelow = Math.max(paintedBelow, i);
             }
-            if (paintedBelow < 0) {
-                continue;
-            }
-            if (framesTextWithAShape(node)) {
-                return false;
-            }
-            // Alone, or not at all: nothing else of the stack may be drawn over that painted
-            // layer (drawnOverThatLayer).
-            for (int i = paintedBelow + 1; i < order.size(); i++) {
-                if (drawnOverThatLayer(order.get(i).node(), node)) {
+            // Alone above, or not at all: nothing of this overlay may be drawn after the node.
+            // Asked at every overlay it stands in, painted or not — a sibling in an outer stack
+            // is painted after the inner stack whole, and lifting a shape of that inner stack
+            // would draw it over the sibling the page draws over it.
+            for (int i = itsPlace + 1; i < order.size(); i++) {
+                if (drawnOverThatLayer(order.get(i).node())) {
                     return false;
                 }
             }
-            over = true;
+            if (paintedBelow >= 0) {
+                over = true;
+            }
         }
-        return over;
+        return over && !framesTextWithAShape(node);
     }
 
     /**
@@ -4600,25 +4606,32 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Whether a layer, or anything it holds, draws something that is not {@code lifted} or part
-     * of it.
+     * Whether a layer, or anything it holds, draws anything.
      *
-     * <p>Read as widely as the export draws. A fragment a shape is drawn from counts, whosever it
-     * is: that is what the export draws shapes from, so it covers a node kind the export does not
-     * know as well as a shape of its own, and it counts a painted wrapper's decoration too, which
-     * only refuses a lift. And a picture counts, drawn where the page puts it and never lifted —
-     * measured: a shape lifted over one came back painted over the picture the page draws over
-     * it.</p>
+     * <p>Asked only of layers the page paints after the one being lifted, so the shape being
+     * lifted is never among them and needs no excluding.</p>
+     *
+     * <p>A fragment a shape is drawn from counts, whosever it is: that is what the export draws
+     * node shapes from, so it covers a node kind the export does not know as well as a shape of
+     * its own, and it counts a painted wrapper's decoration too, which only refuses a lift. And a
+     * picture counts, drawn where the page puts it and never lifted — measured: a shape lifted
+     * over one came back painted over the picture the page draws over it.</p>
+     *
+     * <p>Two things it cannot see, both of which would leave a drawing behind a lifted shape. A
+     * pass of the layout's own — a timeline's rail — is drawn from a fragment no node owns, so it
+     * is in neither walk; no case where that bites could be built, every rail tried bringing a
+     * marker or a line of text that refused the lift anyway. And the walk is over
+     * {@code children()}, which a table, a chart, a list and a paragraph do not implement, so what
+     * they compose is not reached — there the node's own fragments carry the drawing instead and
+     * are seen, which is why a composed cell's drawing and a chart both refuse a lift when
+     * measured.</p>
      */
-    private boolean drawnOverThatLayer(DocumentNode node, DocumentNode lifted) {
-        if (node == lifted) {
-            return false;
-        }
+    private boolean drawnOverThatLayer(DocumentNode node) {
         if (node instanceof ImageNode || drawsAShape(node)) {
             return true;
         }
         for (DocumentNode child : node.children()) {
-            if (drawnOverThatLayer(child, lifted)) {
+            if (drawnOverThatLayer(child)) {
                 return true;
             }
         }
@@ -4655,7 +4668,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * cell, so where one <em>is</em> written as a cell — holding text — a drawing above it is
      * still covered, and the naming pass names it. A node bearing borders alone writes no shading
      * and is not counted at all; a table cell's own shading belongs to a cell and not to a node.
-     * A fill inside any of those is counted, the walk being over everything the node holds.</p>
+     * A fill inside any of those is counted as far as the walk reaches, which is
+     * {@code children()}: a table, a chart, a list and a paragraph do not implement it, so a fill
+     * composed inside one of them is not seen. That errs toward fewer lifts.</p>
      *
      * <p>Not to be confused with {@code paintsAPanel}, which asks whether a node paints anything
      * at all, borders included, or {@code paintsAPanelOfItsOwn}, which asks whether a row's paint

@@ -1280,23 +1280,22 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   text, a shape above it is still covered, and named. A node bearing
   borders alone carries no fill and is not counted at all; a fill inside
   either of those is.
-  Three things leave such a drawing behind the text. A painted layer the
-  page lays over the drawing in turn: there the drawing belongs under that
-  layer's shading, and in front it would cover the shading instead — the
-  same loss the other way round. A box holding a line of the flow or a
-  picture, which in front it would cover, as inside a painted panel. And
-  anything else of the stack drawn over that painted layer: a shape is
-  lifted only where it is the only drawing over it, since Word draws every
-  shape in front over every shape behind and lifting one of two would put
-  the lower over the higher. That last one asks whether another drawing is
-  there, not whether it would have stayed behind — asking the second
-  question was wrong at a picture drawn where the page puts it, at a badge
-  handed over already in front, and at a shape whose node stands at more
-  than one place. Its price is that a stack drawing twice over a painted
-  layer carries no order at all, which `cv-sidebar_portrait` and its
-  thirty-seven drawings over its sidebar pay. A drawing that is not a shape
-  a node paints itself — a picture drawn where the page puts it, a pass of
-  the layout's own such as a timeline's rail — is never lifted, so over a
+  Two things leave such a drawing behind the text. A box holding a line of
+  the flow or a picture, which in front it would cover, as inside a painted
+  panel. And anything drawn after it, in any overlay it stands in, since
+  Word draws every shape in front over every shape behind and lifting a
+  shape the page covers with another drawing puts the lower of the two over
+  the higher; a drawing the page paints before the shape is not asked
+  about, the file keeping it below as the page does. That rule asks whether
+  something is drawn over the shape, not whether it would have stayed
+  behind — asking the second question was wrong at a picture drawn where
+  the page puts it, at a badge handed over already in front, and at a shape
+  whose node stands at more than one place. Its price is that a shape with
+  anything drawn over it carries no order at all, which
+  `cv-sidebar_portrait` pays: it draws thirty-seven times over its painted
+  sidebar, so nothing of it is lifted. A drawing that is not a shape a node
+  paints itself — a picture drawn where the page puts it, a pass of the
+  layout's own such as a timeline's rail — is never lifted, so over a
   painted neighbour it stays covered.
   The report names a drawing left behind wherever a panel it wrote a fill
   for lies under it, naming the drawing and one such panel, and in a

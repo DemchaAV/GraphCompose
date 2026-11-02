@@ -204,26 +204,26 @@ class DocxDrawingUnderANeighboursFillTest {
 
     @Test
     void aLayerBearingTextOverThePaintedOneDoesNotKeepTheShapeBehind() throws Exception {
-        // What keeps a stack's shapes behind is a SHAPE of it that has to stay there, not any
-        // layer that happens to carry text. A layer of words over the band, nowhere near the pin,
-        // used to refuse the lift for the whole stack: the test of whether a box holds a line of
-        // the flow was asked of the words' own fragment, which holds its own line, so every
-        // text-bearing layer answered yes whatever the geometry. `[painted background, text,
-        // icons]` is the ordinary layer stack, so that answer was nearly every stack there is.
+        // What keeps a shape behind is another DRAWING painted over it, not any layer that
+        // happens to carry text. The words are a layer above the pin, so they are asked — and
+        // they draw nothing, so they cover nothing. Counting their own fragment as one a shape is
+        // drawn from refused the lift for stacks of the shape `[painted background, text, icons]`,
+        // which is the ordinary layer stack, so the rule fired almost nowhere.
         Export export = export(session -> session.pageFlow(page -> page
                 .add(new LayerStackBuilder().name("Stack")
                         .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
                                         .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
                                 LayerAlign.TOP_LEFT, 0)
+                        .position(new ShapeBuilder().name("Pin").size(30, 14).fillColor(ACCENT).build(),
+                                150, 2, LayerAlign.TOP_LEFT, 1)
                         .position(new SectionBuilder().name("Words").fixedWidth(90)
                                         .addParagraph(p -> p.name("Note").text("A line of words")).build(),
-                                2, 40, LayerAlign.TOP_LEFT, 1)
-                        .position(new ShapeBuilder().name("Pin").size(30, 14).fillColor(ACCENT).build(),
-                                150, 2, LayerAlign.TOP_LEFT, 2)
+                                2, 40, LayerAlign.TOP_LEFT, 2)
                         .build())));
 
         assertThat(pinAnchor(export))
-                .as("the words carry no shape, so they keep nothing behind")
+                .as("the words are painted over the pin but draw nothing, so they cover nothing "
+                    + "and keep it behind nothing")
                 .contains("behindDoc=\"0\"");
         assertThat(covered(export.report())).isEmpty();
     }
@@ -251,13 +251,11 @@ class DocxDrawingUnderANeighboursFillTest {
     }
 
     @Test
-    void aStackDrawingABadgeBesideTheShapeLiftsNeither() throws Exception {
-        // Alone, or not at all: the badge is a second drawing of the stack, so the pin is not
-        // lifted. This is the rule's price, and a badge is the shape it is cheapest to see on —
-        // a badge holding its initials is handed over in front wherever it stands, so lifting the
-        // pin would have been safe here. The rule does not ask that, on purpose: asking why the
-        // other drawing stays behind was wrong at a picture, at this badge, and at a node standing
-        // twice, each time by letting the lower of two shapes be drawn over the higher.
+    void aShapeOverABadgeAndAPaintedLayerIsStillLifted() throws Exception {
+        // What the rule asks is whether anything is drawn OVER the shape, not whether anything is
+        // drawn at all. The badge is painted before the pin, so the file keeps the pin above it
+        // just as the page does, and the lift is safe whatever the badge's own place turns out to
+        // be.
         Export export = export(session -> session.pageFlow(page -> page
                 .add(new LayerStackBuilder().name("Stack")
                         .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
@@ -271,19 +269,18 @@ class DocxDrawingUnderANeighboursFillTest {
                         .build())));
 
         assertThat(pinAnchor(export))
-                .as("the pin stays behind, the badge beside it being a drawing of the stack too")
-                .contains("behindDoc=\"1\"");
+                .as("the pin is lifted, the badge standing under it on the page and in the file")
+                .contains("behindDoc=\"0\"");
         assertThat(covered(export.report()))
-                .as("and the band is named as covering it")
-                .anySatisfy(named -> assertThat(named).contains("Pin").contains("Band[0]"));
+                .as("nothing covers the pin, so nothing is named for it")
+                .noneMatch(named -> named.contains("/Pin"));
     }
 
     @Test
-    void aStackDrawingABorderedNeighbourLiftsNothing() throws Exception {
-        // A bordered wrapper is written as a cell rather than as a drawing, but the layout gives
-        // it a fragment a shape is drawn from, and that is what the rule reads: anything drawn
-        // over the painted layer keeps the stack behind. Counting it costs a lift and can only
-        // cost a lift, which is the side to be wrong on.
+    void aShapeOverABorderedNeighbourAndAPaintedLayerIsStillLifted() throws Exception {
+        // The bordered wrapper draws — the layout gives it a fragment a shape is drawn from — but
+        // it is painted before the pin, so it is not something drawn over the pin and the lift
+        // stands.
         Export export = export(session -> session.pageFlow(page -> page
                 .add(new LayerStackBuilder().name("Stack")
                         .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
@@ -297,8 +294,68 @@ class DocxDrawingUnderANeighboursFillTest {
                                 150, 2, LayerAlign.TOP_LEFT, 2)
                         .build())));
 
-        assertThat(pinAnchor(export)).contains("behindDoc=\"1\"");
+        assertThat(pinAnchor(export)).contains("behindDoc=\"0\"");
+        assertThat(covered(export.report())).noneMatch(named -> named.contains("/Pin"));
+    }
+
+    @Test
+    void aShapeStandingInTwoStacksAtOnceIsNotLifted() throws Exception {
+        // One instance used in two stacks: the layout keeps one path and one box for it, so an
+        // answer taken at one of its places is given at both. Here the first place is alone over
+        // a painted band, where a lift would be right, and the second is under a hood that the
+        // page paints over it, where the same lift draws the shape over the hood.
+        com.demcha.compose.document.node.DocumentNode shared =
+                new ShapeBuilder().name("Pin").size(30, 14).fillColor(ACCENT).build();
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Painted")
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Stage").text("Stage two")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .position(shared, 150, 2, LayerAlign.TOP_LEFT, 1)
+                        .build())
+                .add(new LayerStackBuilder().name("Hooded")
+                        .layer(new SectionBuilder().name("Band two").fillColor(BAND).fixedWidth(200)
+                                        .addParagraph(p -> p.name("Other").text("Stage three")).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .position(shared, 150, 2, LayerAlign.TOP_LEFT, 1)
+                        .position(new ShapeBuilder().name("Hood").size(40, 20).fillColor(OVER).build(),
+                                145, 0, LayerAlign.TOP_LEFT, 2)
+                        .build())));
+
+        assertThat(anchorsHolding(export, PIN_INK))
+                .as("both places behind the text, neither answered from the other's")
+                .hasSizeGreaterThan(1)
+                .allSatisfy(anchor -> assertThat(anchor).contains("behindDoc=\"1\""));
+    }
+
+    @Test
+    void aShapeOfANestedStackUnderAnOuterStacksDrawingIsNotLifted() throws Exception {
+        // The painted layer is in the inner stack, and the drawing that would be inverted is a
+        // layer of the OUTER one — painted after the inner stack whole. Asking only the overlay
+        // that holds the painted layer left this lifted: measured, the pin came back
+        // behindDoc="0" with relativeHeight below the hood's, so Word drew the pin over a hood
+        // the page draws over it.
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Outer")
+                        .layer(new LayerStackBuilder().name("Inner")
+                                        .layer(new SectionBuilder().name("Band").fillColor(BAND)
+                                                        .fixedWidth(200)
+                                                        .addParagraph(p -> p.name("Stage").text("Stage two"))
+                                                        .build(),
+                                                LayerAlign.TOP_LEFT, 0)
+                                        .position(new ShapeBuilder().name("Pin").size(120, 30)
+                                                .fillColor(ACCENT).build(), 60, 2, LayerAlign.TOP_LEFT, 1)
+                                        .build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .position(new ShapeBuilder().name("Hood").size(70, 30).fillColor(OVER).build(),
+                                0, 0, LayerAlign.TOP_LEFT, 1)
+                        .build())));
+
+        assertThat(pinAnchor(export))
+                .as("the pin stays behind the hood the outer stack paints over it")
+                .contains("behindDoc=\"1\"");
         assertThat(covered(export.report()))
+                .as("and the band is named as covering it, so the pin was judged at all")
                 .anySatisfy(named -> assertThat(named).contains("Pin").contains("Band[0]"));
     }
 

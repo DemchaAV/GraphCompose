@@ -458,6 +458,7 @@ class DocxNeighbourFillGuardTest {
 
         List<String> behind = new ArrayList<>();
         List<String> lifted = new ArrayList<>();
+        List<String> unplaceable = new ArrayList<>();
         Set<String> asShapes = new HashSet<>();
         List<String> unjudged = new ArrayList<>();
         List<String> unclassified = new ArrayList<>();
@@ -467,9 +468,13 @@ class DocxNeighbourFillGuardTest {
                 // Drawn where the page puts it and never lifted, so a lifted shape must not come
                 // to rest over it. It is no shape of a node's own, so it is not counted among the
                 // drawings read, and the panels are not asked about it: only the other way round.
-                if (note.path() != null && placed.containsKey(note.path())
-                    && !detail.contains(IN_FRONT)) {
-                    behind.add(note.path());
+                if (note.path() != null && !detail.contains(IN_FRONT)) {
+                    if (placed.containsKey(note.path())) {
+                        behind.add(note.path());
+                    } else {
+                        // Judged against nothing, and said so rather than dropped.
+                        unplaceable.add("picture " + note.path());
+                    }
                 }
                 continue;
             }
@@ -538,7 +543,6 @@ class DocxNeighbourFillGuardTest {
         // "nothing found" cannot mean "nothing looked at".
         List<String> liftedUnderALater = new ArrayList<>();
         List<String> liftedOverALater = new ArrayList<>();
-        List<String> unplaceable = new ArrayList<>();
         int pairs = 0;
         for (String drawing : lifted) {
             Integer drawnAt = paintedAt.get(drawing);

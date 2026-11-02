@@ -32,17 +32,16 @@ follow semantic versioning; release dates are ISO 8601.
     rather than written as a cell — where one is written as a cell, holding text, a shape above it
     is still covered, and named. A node bearing borders alone carries no fill and is not counted at
     all; a fill inside either of those is.
-  - Three things leave such a drawing behind the text. A painted layer the page lays over the
-    drawing in turn: there it belongs under that layer's shading, and in front it would cover the
-    shading instead — the same loss the other way round. A box holding a line of the flow or a
-    picture, which in front it would cover, as inside a painted panel. And **anything else of the
-    stack drawn over that painted layer**: a shape is lifted only where it is the only drawing over
-    it, because Word draws every shape in front over every shape behind and lifting one of two
-    would put the lower over the higher. That last one is deliberately blunt — it asks whether
-    another drawing is there, not whether that drawing would have stayed behind. Asking the second
-    question was wrong three times over, at a picture drawn where the page puts it, at a badge
-    handed over already in front, and at a shape whose node stands at more than one place, each
-    time by letting the lower of two shapes be drawn over the higher.
+  - Two things leave such a drawing behind the text. A box holding a line of the flow or a picture,
+    which in front it would cover, as inside a painted panel. And **anything drawn after it**, in
+    any overlay it stands in: Word draws every shape in front over every shape behind, so lifting a
+    shape the page covers with another drawing puts the lower of the two over the higher. A drawing
+    the page paints *before* the shape is not asked about — the file keeps it below, as the page
+    does. That rule is deliberately blunt: it asks whether something is drawn over the shape, not
+    whether that drawing would have stayed behind. Asking the second question was wrong three times
+    over, at a picture drawn where the page puts it, at a badge handed over already in front, and at
+    a shape whose node stands at more than one place, each time by letting the lower of two shapes
+    be drawn over the higher.
   - So a drawing that is no shape of a node's own is never lifted either — a picture drawn where the
     page puts it, a pass of the layout's own such as a timeline's rail — and over a painted
     neighbour it stays covered, which the report names where it stands.
@@ -67,14 +66,14 @@ follow semantic versioning; release dates are ISO 8601.
     plainly sees as well: the same fixture with its panel unpainted keeps its anchor's
     `behindDoc="1"` while showing all 3237 pixels of its shape in Word. It fails closed on two
     fixtures of its own, one that must come back named and one that must come back in front.
-  - Lifting only a lone drawing has a price, and it falls on real documents: a stack that draws
-    twice over a painted layer carries no order at all, even where lifting both would have been
-    safe. **One** of the fidelity corpus's 71 documents changes — the one that holds the case — by
-    **one** anchor; the other seventy are byte for byte what the export wrote before.
+  - That has a price, and it falls on real documents: a shape with anything drawn over it carries no
+    order at all, even where lifting it would have been safe — over a badge the file already holds
+    in front, for one. **One** of the fidelity corpus's 71 documents changes — the one that holds
+    the case — by **one** anchor; the other seventy are byte for byte what the export wrote before.
     `cv-sidebar_portrait` is among them, and it is the price: it draws 37 times over its painted
-    sidebar, so none of those is lifted. Over the changed corpus `drawings-follow-text` re-measures
-    in Word 16.0.20527 at 309 of 325 drawings following their text, 95.08% — the same two counts as
-    before.
+    sidebar, so nothing of it is lifted and the z-order is not carried there at all. Over the
+    changed corpus `drawings-follow-text` re-measures in Word 16.0.20527 at 309 of 325 drawings
+    following their text, 95.08% — the same two counts as before.
   - In LibreOffice 24.2 a shape anchored in a table cell stands the cell's left padding to the right
     of where Word and the page put it, so the icon that was drawn nowhere at all is now drawn whole
     and that far across: measured 14.16pt on the lifted icon, and 14.40pt right with 13.92pt low on

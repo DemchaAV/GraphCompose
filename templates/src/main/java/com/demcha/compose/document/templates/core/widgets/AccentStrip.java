@@ -19,6 +19,13 @@ import java.util.Objects;
  * no stroke — so a preset can keep its visual chrome consistent across
  * sections.</p>
  *
+ * <p>A strip is chrome, not a rule, and carries no divider signal — the
+ * horizontal {@link #top} and {@link #bottom} included, however thin they
+ * are made. In the DOCX export that means a strip keeps its own place on
+ * the page as a drawing, where {@link Divider}'s rules are written as
+ * Word's horizontal rule and flow with the text. A preset that wants the
+ * flowing kind asks {@link Divider} for it.</p>
+ *
  * <p>This class is a stateless utility — all factories are static and
  * the produced {@link ShapeNode} is immutable.</p>
  */

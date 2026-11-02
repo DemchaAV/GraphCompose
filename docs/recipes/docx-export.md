@@ -1534,12 +1534,16 @@ twice. Three limits:
   `addDivider` builds a `ShapeNode` whose `thickness`
   is its height, carrying a fill and no stroke, and a colour swatch or a brand strip's
   segment of the same height is that same node: no geometry of the box tells the two apart,
-  so the node carries the divider signal itself (`ShapeNode.divider()`, which `addDivider` and
-  the templates module's `Divider` widget set, nothing else in the library does, and the
+  so the node carries the divider signal itself (`ShapeNode.divider()`, which the DSL's divider
+  builder sets — `addDivider`, `ModuleBuilder.divider`, `DocumentDsl.divider` — as does the
+  templates module's `Divider` widget, nothing else in the library does, and the
   canonical constructor states for a node you build yourself). A box of a colour
-  that did not ask to be a divider is drawn where the page puts it, however thin it is, so a
+  that did not ask to be a divider goes to the drawing path however thin it is — drawn where
+  the page puts it, or dropped with a note where the export cannot draw it — so a
   plate, a swatch and a brand strip's segment keep their own place on the page instead of
-  becoming a paragraph a reader moves or deletes as a line of text. A divider written as a
+  becoming a paragraph a reader moves or deletes as a line of text. A divider laid over another
+  layer of a stack is drawn too, as any other drawing there is, and one of no fill at all is
+  dropped. A divider written as a
   rule is named in the report, at its own path, since a box in the tree is a line in the
   file; a `LineNode` written as a rule is not named for its form.
 - A rule in a page zone is not written, as a zone takes paragraphs, fields, spacers

@@ -36,10 +36,11 @@ import java.awt.*;
  *                        page both are a filled box, and layout, measurement and
  *                        pagination do not read it. It is there for a backend that
  *                        has a rule of its own and must know which box asked to be
- *                        one — the DOCX export writes a divider as Word's
- *                        horizontal rule, a bordered paragraph that flows with the
- *                        text, and any other box of the same size as a drawing,
- *                        which no geometry of the box distinguishes. Defaults to
+ *                        one — the DOCX export writes a divider in the flow as
+ *                        Word's horizontal rule, a bordered paragraph that flows
+ *                        with the text, and leaves any other box of the same size
+ *                        to be drawn where the page puts it, which no geometry of
+ *                        the box distinguishes. Defaults to
  *                        {@code false}. ({@code @since 2.5.0})
  * @author Artem Demchyshyn
  */

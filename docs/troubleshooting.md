@@ -36,10 +36,11 @@ paint is **dropped** — logged once per kind and named in the export report —
 `DocumentTransform` rotation + scale fall back to inline content with a
 one-time capability warning. A `barcode` is not dropped: it is written as a
 picture of the symbol, which scans but whose data is not editable in Word. Nor
-is a horizontal line, or a box built as a divider (`addDivider`) and no taller
-than Word's thickest border: it is written as Word's own rule, a paragraph's
-bottom border. Any other filled box, however thin, is drawn where the page
-puts it.
+is a horizontal line, or a box built by the DSL's divider builder (`addDivider`,
+`ModuleBuilder.divider`, `DocumentDsl.divider`) and no taller than Word's
+thickest border: it is written as Word's own rule, a paragraph's bottom border.
+Any other filled box, however thin, goes the way every drawing goes — drawn
+where the page puts it, or dropped with a note where the export cannot draw it.
 
 **Fix.** Export those documents to **PDF** (the full-fidelity backend).
 Use DOCX only for paragraph / list / table / image / section content.

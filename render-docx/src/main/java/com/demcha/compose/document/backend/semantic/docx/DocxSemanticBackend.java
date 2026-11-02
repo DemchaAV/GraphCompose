@@ -16076,15 +16076,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * What a note says of a divider written as a rule: a shape in the tree and a line in the
      * file, which {@link #reportRewritten} names whether or not the shape loses anything else.
      *
-     * <p>Only a box carrying the divider signal ({@code ShapeNode.divider()}, which
-     * {@code addDivider} sets) is written as a rule; any other box of the same size is drawn,
-     * and its drawing's own notes say so. A
+     * <p>Only a box carrying the divider signal ({@code ShapeNode.divider()}, which the DSL's
+     * divider builder sets) is written as a rule; any other box of the same size goes to the
+     * drawing path instead, and its own notes say what became of it there. A
      * {@link com.demcha.compose.document.node.LineNode} written as a rule is a line either way
      * and is not named for its form; what it loses is ({@link #reportWrittenWithout}). The
      * height the note speaks of is the guard's, {@link DocxRules#MAX_RULE_POINTS}. The note
      * says the paragraph is bordered where the fill shows, and nothing about the box keeping
-     * its width, its place and its colour, which is measured elsewhere and not promised
-     * here.</p>
+     * its width, its place and its colour: the indents are set from the rule's own ends and the
+     * border's width from the box's height, and how Word and LibreOffice then draw a box of more
+     * than a hairline is not measured here.</p>
      *
      * <p>It does not say the words a drawing's note says of itself — "drawn as a shape" — and must
      * not: {@code DocxNeighbourFillGuardTest} holds every note carrying them to its own ledger of

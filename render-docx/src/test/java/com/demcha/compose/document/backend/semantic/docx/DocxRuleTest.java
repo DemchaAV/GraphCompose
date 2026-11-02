@@ -534,7 +534,53 @@ class DocxRuleTest {
     }
 
     @Test
+    void aDividerGivenAStrokeIsDrawnRatherThanWrittenAsARule() throws Exception {
+        // Word's rule is a border of one colour with no stroke of its own, so a stroked divider
+        // cannot be written as one (DividerBuilder's javadoc says so, and this holds it).
+        try (XWPFDocument document = export(page -> page.addDivider(d -> {
+            d.name("Edged").width(200).thickness(2).color(ACCENT);
+            d.stroke(DocumentStroke.of(DocumentColor.rgb(0, 0, 0), 1));
+        }))) {
+            assertThat(document.getParagraphs().get(0).getCTP().getPPr())
+                    .matches(properties -> properties == null || properties.getPBdr() == null);
+            assertThat(document.getDocument().xmlText()).contains("<wp:anchor");
+        }
+    }
+
+    @Test
+    void aDividerOverAnotherLayerIsDrawnBecauseItIsNotInTheFlow() throws Exception {
+        // The signal says what the box is for; being in the flow says whether Word's rule can
+        // stand there at all. Over a second layer it cannot, so the divider is drawn.
+        try (XWPFDocument document = export(page -> page.addLayerStack(stack -> stack
+                .layer(new SectionBuilder().name("Under").addParagraph(p -> p.text("Under")).build())
+                .layer(new SectionBuilder().name("Over")
+                        .addDivider(d -> d.name("Over").width(200).thickness(2).color(ACCENT))
+                        .build())))) {
+            assertThat(document.getParagraphs()).allSatisfy(paragraph ->
+                    assertThat(paragraph.getCTP().getPPr())
+                            .matches(properties -> properties == null || properties.getPBdr() == null));
+            assertThat(document.getDocument().xmlText()).contains("<wp:anchor");
+        }
+    }
+
+    @Test
+    void aDividerOfNoFillIsDroppedAndNamed() throws Exception {
+        // DividerBuilder.color passes a null colour straight through, so the box can reach the
+        // export painting nothing: it is neither a rule nor a drawing, and the report says so.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument document = withReport(report, page -> page
+                .addDivider(d -> d.name("Blank").width(200).thickness(2)
+                        .color((DocumentColor) null)))) {
+            assertThat(document.getDocument().xmlText()).doesNotContain("<wp:anchor");
+            assertThat(report.get().bySubject().get("ShapeNode")).isNotNull()
+                    .anySatisfy(note -> assertThat(note.detail()).contains("paints nothing"));
+        }
+    }
+
+    @Test
     void aPaintedBoxThatIsNoDividerIsDrawnToo() throws Exception {
+        // A paint the layout flattens to one colour is a fill like any other, so what decides is
+        // the signal and not how the fill was stated.
         try (XWPFDocument document = export(page -> page.add(
                 new com.demcha.compose.document.dsl.ShapeBuilder().name("Plate").size(100, 2)
                         .fill(com.demcha.compose.document.style.DocumentPaint.solid(ACCENT)).build()))) {

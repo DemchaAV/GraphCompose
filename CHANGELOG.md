@@ -4549,6 +4549,42 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **A table composed in a cell inside a block held on one page is now held to what actually keeps
+  it whole — the row round it, since neither of the two writers that hold an ordinary table
+  reaches it. And a kept block's table is asked for both of those writers on the `keepTogether`
+  path, where only one half of the pair was asked for before.**
+  - A table in a kept block is held twice over: the keep chain puts `w:keepNext` on its rows'
+    paragraphs, every row but the last, which keeps each row on the page of the row under it; and
+    the table writer gives every row the layout placed `w:cantSplit`, which keeps a row of several
+    paragraphs from breaking across the page mid-line. Neither alone is enough, and neither writer
+    knows about the other. The `keepWithNext` path was already held to the pair
+    (`DocxOneRowTableKeptWithTheNextTest`); on the `keepTogether` path
+    `aTableInsideAKeptBlockIsChainedRowByRow` asked only for the chain, and now asks for both.
+  - A table composed in a cell is reached by neither writer: the chain reads a cell's own
+    paragraphs, which are not those of a table in that cell, and the layout places no row for such
+    a table, so the table writer gives its rows no `w:cantSplit` either. What holds it is the row
+    it stands in. `aTableComposedInACellIsHeldByTheRowRoundIt` asserts the two absences together
+    with that row, so the reason the gap costs nothing stands beside the gap, and names where it
+    would begin to cost something: a row the layout did not place, which carries no `w:cantSplit`
+    of its own. Nothing in the backend's tests asserted anything about a composed table's
+    paragraphs before.
+  - Measured at the foot of a page in Word 16.0.20527 and LibreOffice 24.2, for a block that fits
+    there and for one the layout moved to the next page whole: nine shapes over eighteen documents
+    — a block kept together holding a table, a one-row table of several paragraphs, a table
+    composed in a cell, a painted panel holding a table, a band, a shape container, a stack
+    holding a table, a block kept with the next, a painted panel kept with the next — each stood
+    whole in both editors, with no group and no row broken. Where the editors differ it is which
+    page holds the whole block, never whether it is broken: LibreOffice sets rows taller (a
+    three-row table's rows 33.9pt apart against the page's 21.0), so a block that fits at the very
+    foot of a page there moves to the next one whole, which it did for seven of the nine; Word did
+    the same for the band of two layers.
+  - Counted over the 71-document fidelity corpus, with every node of every document classified and
+    none left unclassified: 1116 blocks are held on one page — 214 in the body, 902 in a cell or a
+    row's column, layer stacks and shape containers among them as well as the two keep flags — of
+    which 20 hold a table, 338 hold a band or a container, and none holds a table composed in a
+    cell. Across the whole corpus, all 685 layer stacks and shape containers the layout placed are
+    on one page, and no row a keep chain reaches, in any of the 68 tables of more than one row,
+    lacks `w:cantSplit`.
 - **A fixture holds the record a page an editor adds past a one-page section is painted from: the
   export is grown by eighty appended paragraphs through POI and read back, and the fills are in the
   header of the one section the grown document has.**
@@ -5229,6 +5265,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The recipe and the capability matrix now say what was measured of a kept block at the foot of a
+  page, and finish the half-sentence they carried about a table inside one.** Both said that the
+  keep chains a cell's own paragraphs and not the rows of a table in it, and left it there — not
+  saying that the table writer holds those rows instead, that a table composed in a cell is
+  therefore held by the row it stands in rather than by either writer, or that any of it had ever
+  been put to the two editors. They now carry the rest of the mechanism and the measurement — nine
+  shapes at the foot of a page, eighteen documents, each whole in Word 16.0.20527 and LibreOffice
+  24.2, the editors differing only over which page holds the whole block — together with the
+  corpus counts behind it, so the next reader is not left to measure it again.
 - **A card of a preset shows the code that draws that preset.** The catalogue carries one
   compiled block per family — the CVs' builds `BoxedSections`, the invoices' `ModernInvoice` —
   and every other card of the family was shown it under a caption saying it came from the

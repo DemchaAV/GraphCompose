@@ -1,7 +1,9 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.table.DocumentTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
@@ -101,6 +103,68 @@ class DocxKeepTogetherTest {
             assertThat(rowKeepsNext(table.getRow(1)))
                     .as("the table's last row ends the block")
                     .isFalse();
+            // Two writers hold such a table, and it needs both: the chain above keeps each row on
+            // the page of the row under it, and the table writer gives every row the layout placed
+            // w:cantSplit, which keeps a row of several paragraphs from breaking mid-line
+            // (breakRowsWhereTheLayoutDoes, blind to the keep flags). Asked for here on the
+            // keepTogether path as DocxOneRowTableKeptWithTheNextTest asks it on keepWithNext.
+            assertThat(table.getRows()).hasSize(2);
+            for (XWPFTableRow row : table.getRows()) {
+                assertThat(row.isCantSplitRow())
+                        .as("a row of the kept block's table may not break across a page")
+                        .isTrue();
+            }
+        }
+    }
+
+    /**
+     * A table composed in a cell is held by the row round it, having nothing of its own.
+     *
+     * <p>Neither writer reaches it. The chain reads a cell's own paragraphs, which are not a
+     * table's in that cell, so its paragraphs are told nothing; and the layout places no row for
+     * a table composed in a cell, so the table writer gives its rows no {@code w:cantSplit}
+     * either. What holds it is the row it stands in, which carries {@code w:cantSplit} where the
+     * layout placed that row: measured at the foot of a page in Word 16.0.20527 and LibreOffice
+     * 24.2, the block stood whole in both, for a block that fits there and for one the layout
+     * moved to the next page whole.</p>
+     *
+     * <p>So the gap costs nothing while the row round it may not split. It would begin to cost
+     * something where that row may — a row the layout did not place, as in a table too tall to
+     * lay out ({@code DocxTablePaginationTest#aTableTooTallToLayOutIsLeftFreeToBreak}) — which is
+     * why the row is asserted here beside the two absences, rather than the absences alone.</p>
+     */
+    @Test
+    void aTableComposedInACellIsHeldByTheRowRoundIt() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addSection(s -> s.keepTogether()
+                        .addParagraph(p -> p.text("Totals"))
+                        .addTable(t -> t.autoColumns(2).rowCells(
+                                DocumentTableCell.node(new TableBuilder().autoColumns(1)
+                                        .row("Net").row("Tax").build()),
+                                DocumentTableCell.text("Beside")))))) {
+            XWPFTable outer = document.getTables().get(0);
+            XWPFTable composed = outer.getRow(0).getCell(0).getTables().get(0);
+
+            assertThat(outer.getRow(0).isCantSplitRow())
+                    .as("the row the composed table stands in may not split, and holds it")
+                    .isTrue();
+            assertThat(composed.getRows()).hasSize(2);
+            for (XWPFTableRow row : composed.getRows()) {
+                assertThat(row.isCantSplitRow())
+                        .as("the layout places no row for a table composed in a cell, so the "
+                            + "table writer holds none of its rows whole")
+                        .isFalse();
+                for (XWPFTableCell cell : row.getTableCells()) {
+                    assertThat(cell.getParagraphs())
+                            .as("the composed table writes the paragraphs this absence is read off")
+                            .isNotEmpty();
+                    for (XWPFParagraph paragraph : cell.getParagraphs()) {
+                        assertThat(keepsLines(paragraph) || keepsNext(paragraph))
+                                .as("the chain reads the cell's own paragraphs, not a table's in it")
+                                .isFalse();
+                    }
+                }
+            }
         }
     }
 

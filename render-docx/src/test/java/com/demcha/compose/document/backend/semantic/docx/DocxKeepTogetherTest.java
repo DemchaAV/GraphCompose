@@ -1,7 +1,10 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.table.DocumentTableCell;
+import com.demcha.compose.document.table.DocumentTableStyle;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
@@ -101,6 +104,178 @@ class DocxKeepTogetherTest {
             assertThat(rowKeepsNext(table.getRow(1)))
                     .as("the table's last row ends the block")
                     .isFalse();
+            // Two writers hold such a table. The chain keeps each row with the row under it and
+            // each paragraph's own lines together; the table writer gives every row the layout
+            // placed w:cantSplit (breakRowsWhereTheLayoutDoes, blind to the keep flags), which
+            // holds a row whole where the chain cannot reach inside it — a cell of more than one
+            // paragraph, or of a table, or any table outside a kept block, where keepOnOnePage
+            // writes nothing at all — breakRowsWhereTheLayoutDoes writing a repeated header row's
+            // own w:keepNext itself, where the table has body rows under its header. Documented
+            // here at the call site; the pair is also asserted on the keepWithNext path by
+            // DocxOneRowTableKeptWithTheNextTest, and w:cantSplit alone by DocxTablePaginationTest,
+            // so this loop is not the only thing holding it. Not unconditional either:
+            // letTheOneRowTablesKeptWithTheNextBreak takes it back off a one-row body table of
+            // paragraphs all kept with the next.
+            assertThat(table.getRows())
+                    .as("the premise: both rows are there to be held")
+                    .hasSize(2);
+            for (XWPFTableRow row : table.getRows()) {
+                assertThat(row.isCantSplitRow())
+                        .as("a row of the kept block's table may not break across a page")
+                        .isTrue();
+            }
+        }
+    }
+
+    /**
+     * A row of several paragraphs is held whole by {@code w:cantSplit} alone, the chain reaching
+     * only as far as each paragraph's own lines.
+     *
+     * <p>A plain cell is a paragraph per line, not one paragraph of several lines, when its style
+     * sets a line spacing and it holds more than one line — the row is sized with that spacing
+     * between them, and Word holds no space inside one paragraph ({@code paragraphPerLine} in
+     * {@code writeCellContent}, pinned by {@code DocxCellSeatTest}). So this is the shape a
+     * <em>plain</em> table reaches for which {@code w:cantSplit} is load-bearing inside a kept
+     * block — the other is a cell holding a table, which the fixture below covers, a composed cell
+     * holding whatever it is given. Outside a kept block {@code keepOnOnePage} writes nothing at
+     * all, so there {@code w:cantSplit} holds every row the layout placed, a repeated header row's
+     * own {@code w:keepNext} aside. The chain writes {@code w:keepLines} on each of the row's
+     * paragraphs, which holds each one's own lines, and {@code w:keepNext} only where the row is
+     * not the block's last unit — neither of which stops Word ending a page between two
+     * paragraphs of the same row.</p>
+     *
+     * <p>The block is kept <em>together</em> on purpose: kept with the next instead, the same row
+     * is held by nothing, which {@link #theSameRowKeptWithTheNextIsHeldByNothing} records.</p>
+     */
+    @Test
+    void aRowOfSeveralParagraphsIsHeldWholeByItsRow() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addSection(s -> s.keepTogether()
+                        .addParagraph(p -> p.text("Totals"))
+                        .addTable(t -> t.autoColumns(2).rowCells(
+                                DocumentTableCell.lines("Net", "of which goods")
+                                        .withStyle(DocumentTableStyle.builder().lineSpacing(2).build()),
+                                DocumentTableCell.text("100")))))) {
+            XWPFTable table = document.getTables().get(0);
+            XWPFTableRow row = table.getRow(0);
+
+            assertThat(row.getCell(0).getParagraphs())
+                    .as("the premise: a line spacing makes the cell a paragraph a line")
+                    .hasSize(2);
+            assertThat(keepsNext(paragraph(document, "Totals")))
+                    .as("the premise: the chain ran, and ran in the body")
+                    .isTrue();
+            for (XWPFParagraph paragraph : row.getCell(0).getParagraphs()) {
+                assertThat(keepsLines(paragraph))
+                        .as("each of the row's paragraphs has its own lines held")
+                        .isTrue();
+                assertThat(keepsNext(paragraph))
+                        .as("the row is the block's last unit, so the chain ties it to nothing after it")
+                        .isFalse();
+            }
+            assertThat(row.isCantSplitRow())
+                    .as("so only the row itself keeps its two paragraphs on one page")
+                    .isTrue();
+        }
+    }
+
+    /**
+     * The same row, in a block kept with the next instead, is held by nothing.
+     *
+     * <p>Kept with the next, the block's last unit takes {@code w:keepNext} too, which makes its
+     * table one {@code letTheOneRowTablesKeptWithTheNextBreak} frees — one row, cells of
+     * paragraphs, every paragraph kept with the next — so {@code w:cantSplit} comes off the row
+     * that was the only thing holding its two paragraphs together. {@code w:keepLines} holds each
+     * paragraph's own lines and nothing between them.</p>
+     *
+     * <p>No document of the corpus reaches it: of the twenty blocks that hold a table, the three
+     * in the body all ask to be kept together, and the other seventeen are in a cell, which that
+     * pass never reads. So this fixture records the shape rather than guarding a fix — it is the
+     * one place the loss is written down as a test rather than a sentence.</p>
+     */
+    @Test
+    void theSameRowKeptWithTheNextIsHeldByNothing() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addSection(s -> s.keepWithNext()
+                        .addParagraph(p -> p.text("Totals"))
+                        .addTable(t -> t.autoColumns(2).rowCells(
+                                DocumentTableCell.lines("Net", "of which goods")
+                                        .withStyle(DocumentTableStyle.builder().lineSpacing(2).build()),
+                                DocumentTableCell.text("100"))))
+                .addParagraph(p -> p.text("After")))) {
+            XWPFTableRow row = document.getTables().get(0).getRow(0);
+
+            assertThat(row.getCell(0).getParagraphs())
+                    .as("the premise: the same two paragraphs as the fixture above")
+                    .hasSize(2);
+            for (XWPFParagraph paragraph : row.getCell(0).getParagraphs()) {
+                assertThat(keepsNext(paragraph))
+                        .as("kept with the next, the last unit is tied forward too")
+                        .isTrue();
+                assertThat(keepsLines(paragraph))
+                        .as("each paragraph's own lines are still held")
+                        .isTrue();
+            }
+            assertThat(row.isCantSplitRow())
+                    .as("and that is what frees the row, leaving the two paragraphs held by nothing")
+                    .isFalse();
+        }
+    }
+
+    /**
+     * A table composed in a cell is held by the row round it, having nothing of its own.
+     *
+     * <p>Neither writer reaches it. The chain reads a cell's own paragraphs, which are not a
+     * table's in that cell, so its paragraphs are told nothing; and the layout places no row for
+     * a table composed in a cell, so the table writer gives its rows no {@code w:cantSplit}
+     * either. What holds it is the row it stands in, which carries {@code w:cantSplit} where the
+     * layout placed that row: measured at the foot of a page in Word 16.0.20527 and LibreOffice
+     * 24.2, the block stood whole in both, for a block that fits there and for one the layout
+     * moved to the next page whole.</p>
+     *
+     * <p>So the gap costs nothing while the row round it may not split. It would begin to cost
+     * something where that row may — a row the layout did not place, as in a document it refused
+     * to lay out, where no row is placed at all
+     * ({@code DocxTablePaginationTest.aTableTooTallToLayOutIsLeftFreeToBreak}) — which is why the
+     * row is asserted here beside the two absences, rather than the absences alone.</p>
+     */
+    @Test
+    void aTableComposedInACellIsHeldByTheRowRoundIt() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addSection(s -> s.keepTogether()
+                        .addParagraph(p -> p.text("Totals"))
+                        .addTable(t -> t.autoColumns(2).rowCells(
+                                DocumentTableCell.node(new TableBuilder().autoColumns(1)
+                                        .row("Net").row("Tax").build()),
+                                DocumentTableCell.text("Beside")))))) {
+            XWPFTable outer = document.getTables().get(0);
+            XWPFTable composed = outer.getRow(0).getCell(0).getTables().get(0);
+
+            // The outer row's cantSplit comes from layout.placedRow, not from the chain, so it
+            // does not show that keepOnOnePage ran: the absences below need their own premise.
+            assertThat(keepsNext(paragraph(document, "Totals")))
+                    .as("the premise: the chain ran, and ran in the body")
+                    .isTrue();
+            assertThat(outer.getRow(0).isCantSplitRow())
+                    .as("the row the composed table stands in may not split, and holds it")
+                    .isTrue();
+            assertThat(composed.getRows()).hasSize(2);
+            for (XWPFTableRow row : composed.getRows()) {
+                assertThat(row.isCantSplitRow())
+                        .as("the layout places no row for a table composed in a cell, so the "
+                            + "table writer holds none of its rows whole")
+                        .isFalse();
+                for (XWPFTableCell cell : row.getTableCells()) {
+                    assertThat(cell.getParagraphs())
+                            .as("the composed table writes the paragraphs this absence is read off")
+                            .isNotEmpty();
+                    for (XWPFParagraph paragraph : cell.getParagraphs()) {
+                        assertThat(keepsLines(paragraph) || keepsNext(paragraph))
+                                .as("the chain reads the cell's own paragraphs, not a table's in it")
+                                .isFalse();
+                    }
+                }
+            }
         }
     }
 

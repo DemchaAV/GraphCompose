@@ -4549,6 +4549,70 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **A table composed in a cell inside a block held on one page is now held to what actually keeps
+  it whole — the row round it, since neither of the two writers that hold an ordinary table
+  reaches it. And a kept block's table is asked for both of those writers on the `keepTogether`
+  path, where only one half of the pair was asked for before.**
+  - A table in a kept block is held twice over: the keep chain puts `w:keepNext` on its rows'
+    paragraphs, on every unit of the block but its last — the last too where the block is kept
+    with the next, and none of it inside a table cell — which keeps each row on the page of the
+    row under it; and the table writer gives every row the layout placed `w:cantSplit`, which
+    holds a row whole where the chain cannot reach inside it, the chain reaching only a cell's own
+    paragraphs. Neither writer knows about the other. The `keepWithNext` path was already held to
+    the pair (`DocxOneRowTableKeptWithTheNextTest`); on the `keepTogether` path
+    `aTableInsideAKeptBlockIsChainedRowByRow` asked only for the chain, and now asks for both, and
+    `aRowOfSeveralParagraphsIsHeldWholeByItsRow` pins the shape a plain table reaches for which,
+    inside a kept block, `w:cantSplit` is the only thing holding the row — a cell of several
+    paragraphs, which a plain cell is where its style sets a line spacing and it holds more than
+    one line, and a composed cell is whenever it holds them. (The other such shape is a cell
+    holding a table, which the fixture below covers.)
+  - `theSameRowKeptWithTheNextIsHeldByNothing` records the boundary beside it: the same row in a
+    block asking only to be kept with the next takes `w:keepNext` on its last unit too, which makes
+    its table one the removal pass frees, so `w:cantSplit` comes off and the two paragraphs are held
+    by nothing. No document of the corpus reaches it — of the twenty blocks that hold a table the
+    three in the body all ask to be kept together, and the other seventeen are in a cell, which
+    that pass never reads — so the fixture records the shape rather than guarding a fix.
+  - No one rule says which rows carry `w:cantSplit`: four writers decide which rows are given it.
+    `breakRowsWhereTheLayoutDoes` gives it to each row of a table where the layout placed that row,
+    `writeRow` to a row written as a table where the layout placed that row, and `writePanelPiece`
+    to a block written as a panel on its own row where the layout put the block on one page and it
+    either asks to be kept together or is a row or a shape container; then
+    `letTheOneRowTablesKeptWithTheNextBreak` takes it off a one-row body table of paragraphs all
+    kept with the next, whichever of the three put it there. Where the export splits a table
+    (`DocxTableSplit`) — a panel cut at its pages, or a body table cut for a page's own margins —
+    the second part is copied with its rows' flags, so a copied row carries what the original was
+    given rather than anything decided for it. Both cuts run before that pass, which sees each
+    copy: a panel's row it leaves alone, that cell holding a table, and the copied rows of the
+    inner table it never reaches; a body table's copy it judges like any other. 56 one-row tables
+    of the corpus carry keeps without `w:cantSplit`; the count was not apportioned between the
+    causes.
+  - A table composed in a cell is reached by neither writer: the chain reads a cell's own
+    paragraphs, which are not those of a table in that cell, and the layout places no row for such
+    a table, so the table writer gives its rows no `w:cantSplit` either. What holds it is the row
+    it stands in. `aTableComposedInACellIsHeldByTheRowRoundIt` asserts the two absences together
+    with that row, so the reason the gap costs nothing stands beside the gap, and names where it
+    would begin to cost something: a row the layout did not place, which carries no `w:cantSplit`
+    of its own. Nothing in the backend's tests asserted anything about a composed table's keeps
+    before.
+  - Measured at the foot of a page in Word 16.0.20527 and LibreOffice 24.2, for a block that fits
+    there and for one the layout moved to the next page whole: nine shapes over eighteen documents
+    — a block kept together holding a table, a kept block holding one row of several lines, a
+    table composed in a cell, a painted panel holding a table, a band, a shape container, a stack
+    holding a table, a block kept with the next, a painted panel kept with the next holding a
+    table — each stood whole in both editors, with no group and no row broken. Where the editors
+    differ it is which page holds the whole block, never whether it is broken: LibreOffice sets a
+    table's rows taller — a three-row table's 33.9pt apart against the page's 21.0 — so a block
+    whose table only just fits at the foot of a page there moves to the next one whole, which six
+    of the nine did; the band of two layers moved in both editors, from a cause not measured,
+    making seven that LibreOffice moved. The 33.9pt was read off the three-row shape; the other
+    five were not measured apart.
+  - Counted over the 71-document fidelity corpus, with every node of every document classified and
+    none of the 1116 found left unclassified: 1116 blocks are held on one page — 214 in the body,
+    902 in a cell or a row's column, layer stacks and shape containers among them as well as the
+    two keep flags — of which 20 hold a table, 338 hold a band or a container, and none holds a
+    table composed in a cell. Across the whole corpus, all 685 layer stacks and shape containers
+    the layout placed are on one page, and no row a keep chain reaches, in any of the corpus's 68
+    tables of more than one row, lacks `w:cantSplit`.
 - **A fixture holds the record a page an editor adds past a one-page section is painted from: the
   export is grown by eighty appended paragraphs through POI and read back, and the fills are in the
   header of the one section the grown document has.**
@@ -5229,6 +5293,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The recipe and the capability matrix now say what was measured of a kept block at the foot of a
+  page, and finish the half-sentence they carried about a table inside one.** Both said that the
+  keep chains a cell's own paragraphs and not the rows of a table in it, and left it there — not
+  saying that the table writer holds those rows instead, that a table composed in a cell is
+  therefore held by the row it stands in rather than by either writer, or that any of it had ever
+  been put to the two editors. They now carry the rest of the mechanism and the measurement — nine
+  shapes at the foot of a page, eighteen documents, each whole in Word 16.0.20527 and LibreOffice
+  24.2, the editors differing only over which page holds the whole block — together with the
+  corpus counts behind it, so the next reader is not left to measure it again.
 - **A card of a preset shows the code that draws that preset.** The catalogue carries one
   compiled block per family — the CVs' builds `BoxedSections`, the invoices' `ModernInvoice` —
   and every other card of the family was shown it under a caption saying it came from the

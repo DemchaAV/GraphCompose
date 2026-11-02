@@ -302,8 +302,9 @@ thing Word has to set its children side by side — is not named for its form, a
 `LineNode` written as a paragraph border, which is a line either way; what any of them loses is
 still named. Nor is a node whose form follows from one above it that now says so: a layer
 written as a column of its stack, a box inside a node laid over the flow, each half of a line
-two layers share. A shape container whose layers are written in the flow names that itself
-(`shape container`).
+two layers share, a badge's own paragraph written as its letters. A shape container whose layers
+are written in the flow names that itself (`shape container`), and a barcode and a chart have
+named what they become all along.
 
 The sink is called once, after the bytes are complete. The convenience methods
 (`buildDocx`, `writeDocx`, `toDocxBytes`) build their own backend and so have no sink —

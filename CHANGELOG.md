@@ -49,14 +49,19 @@ follow semantic versioning; release dates are ISO 8601.
     children side by side. What any of them loses is named as before. Other branches of the same
     cascade keep the old gate because the node whose form was chosen stands above them and now
     says so, and what they become follows from it: a layer written as a column of its stack, a box
-    inside a node laid over the flow, each half of a line two layers share. A painted row written
-    as a one-cell panel keeps it too, and the corpus holds no instance of that branch at all.
+    inside a node laid over the flow, each half of a line two layers share, a badge's own paragraph
+    written as its letters. A painted row written as a one-cell panel keeps it too, and the corpus
+    holds no instance of that branch at all. A barcode and a chart have named what they become all
+    along.
   - `addDivider` builds a `ShapeNode` whose `thickness` is its height, carrying a fill and no
     stroke, so the DSL's own divider and a colour swatch of that height are one node and the
     report has nothing to tell them apart by. Said in the recipe, and held by a test.
-  - `DocxRewrittenFormReportTest` holds each rewrite and each exclusion. Nine sabotages, one per
-    rule, were each caught by the fixture written for it; seven of the nine turned exactly that
-    fixture red and nothing else, which is what shows a fixture reaches the branch it is for.
+  - `DocxRewrittenFormReportTest` holds each rewrite and each exclusion, and six of its fixtures
+    read the written XML rather than the sentence — the cells of the table against the layers, the
+    drawing's own anchor, the text box's content, the fill of the shape a badge's letters sit in.
+    Eleven sabotages, one per rule, were each caught by the fixture written for it; nine of the
+    eleven turned exactly that fixture red and nothing else, which is what shows a fixture reaches
+    the branch it is for.
 
 - **A DOCX export names the drawings that a painted panel standing beside them covers, rather than
   losing them in silence.**

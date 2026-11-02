@@ -4183,8 +4183,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         if (laidOverTheFlow(node)) {
             reportRewritten(node, "written over the flow, which gives it no room: its drawings stand "
-                    + "where the page draws them and each of its paragraphs in a text box where the "
-                    + "page sets it, and nothing of it is written in the flow");
+                    + "where the page draws them and its text where the page sets it — a paragraph in "
+                    + "a text box, a badge's letters in the shape drawn for them — and nothing of it "
+                    + "is written in the flow");
             writeOverTheFlow(document, node);
             return;
         }
@@ -4207,9 +4208,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (columns != null) {
                 // Side by side, nothing in the stack overlaps: it is not an overlay.
                 reportRewritten(stack, "written as the columns of a table: the layers the page sets "
-                        + "side by side stand in a cell each, those the page gives one band to follow "
-                        + "one another in its cell, and a layer of nothing but drawing may have no "
-                        + "cell at all and be drawn over them, where the page draws it");
+                        + "side by side stand in a cell each, those the page gives one band to share "
+                        + "its cell, and a layer holding only drawing or a picture may have no cell at "
+                        + "all and be drawn over them, where the page draws it");
                 writeLayerColumns(document, stack, columns);
                 return;
             }
@@ -4531,8 +4532,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             DocxLinePair.Pair pair = DocxLinePair.of(node, layout);
             if (pair != null) {
                 // A pill's outline round its title and dates is drawn as writeShapeContainer draws it.
-                reportRewritten(node, "written as one line that two paragraphs share, its layers set "
-                        + "at either end of it, rather than one over another");
+                reportRewritten(node, "written as one line that two paragraphs share, the second set "
+                        + "where the page sets it along the line — at its end, or at a tab where the "
+                        + "page starts it — and whatever else the layers hold drawn round them");
                 drawOutlineOf(node);
                 writeLinePair(document, node, pair);
                 return;
@@ -15735,8 +15737,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 applyLineHeight(standIn, java.util.OptionalDouble.of(line.placementHeight()));
             }
         }
-        // A container of a few letters becomes one drawn shape carrying them: its own guard, one
-        // branch before the box of nothing but drawing (writeNodeContent), and the same held room.
+        // A container of a few letters becomes one drawn shape carrying them: its guard is the
+        // first of writeNodeContent's, before the box of nothing but drawing reached from
+        // writeNodeContentOf, and it holds its room the same way.
         reportRewritten(badge, "written as one drawn shape holding its text: its letters are set in "
                 + "the shape rather than written as a paragraph of the flow"
                 + (heldItsRoom ? ", and the room it took on the page is owed as space to the next "

@@ -132,7 +132,7 @@ class DocxRewrittenFormReportTest {
         DocxExportReport report = reportOf(content);
 
         assertThat(detailOf(report, "LayerStackNode"))
-                .contains("those the page gives one band to follow one another in its cell");
+                .contains("those the page gives one band to share its cell");
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, content)) {
             List<XWPFTableCell> cells = document.getTables().get(0).getRow(0).getTableCells();
             assertThat(cells).as("three layers, two cells").hasSize(2);
@@ -157,8 +157,8 @@ class DocxRewrittenFormReportTest {
         DocxExportReport report = reportOf(content);
 
         assertThat(detailOf(report, "LayerStackNode"))
-                .contains("a layer of nothing but drawing may have no cell at all and be drawn over "
-                          + "them, where the page draws it");
+                .contains("a layer holding only drawing or a picture may have no cell at all and be "
+                          + "drawn over them, where the page draws it");
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, content)) {
             assertThat(document.getTables().get(0).getRow(0).getTableCells())
                     .as("three layers, two cells: the mark has none")
@@ -205,8 +205,9 @@ class DocxRewrittenFormReportTest {
                 .build()));
 
         assertThat(detailOf(report, "ShapeContainerNode"))
-                .isEqualTo("written as one line that two paragraphs share, its layers set at either "
-                           + "end of it, rather than one over another");
+                .isEqualTo("written as one line that two paragraphs share, the second set where the "
+                           + "page sets it along the line — at its end, or at a tab where the page "
+                           + "starts it — and whatever else the layers hold drawn round them");
         assertThat(pathOf(report, "ShapeContainerNode")).isEqualTo("ContainerNode[0]/Head[0]");
     }
 
@@ -244,10 +245,11 @@ class DocxRewrittenFormReportTest {
 
     @Test
     void aNodeLaidOverTheFlowIsNamedAsWrittenOverIt() throws Exception {
-        DocxExportReport report = reportOf(page -> page
+        Consumer<PageFlowBuilder> content = page -> page
                 .add(DocxExports.laidOverTheFlow(
                         new SectionBuilder().name("Studio").addParagraph("Studio").build()))
-                .addParagraph("Masthead"));
+                .addParagraph("Masthead");
+        DocxExportReport report = reportOf(content);
 
         assertThat(report.notes())
                 .filteredOn(note -> note.detail().startsWith("written over the flow"))
@@ -255,9 +257,49 @@ class DocxRewrittenFormReportTest {
                 .satisfies(note -> {
                     assertThat(note.subject()).isEqualTo("ShapeContainerNode");
                     assertThat(note.path()).isEqualTo("ContainerNode[0]/Sidebar[0]");
-                    assertThat(note.detail())
-                            .contains("each of its paragraphs in a text box where the page sets it");
+                    assertThat(note.detail()).contains("a paragraph in a text box");
                 });
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, content)) {
+            assertThat(document.getDocument().xmlText())
+                    .as("its text in a text box, as the note says").contains("txbxContent")
+                    .contains("Studio");
+            assertThat(document.getParagraphs()).extracting(XWPFParagraph::getText)
+                    .as("and nothing of it in the flow").doesNotContain("Studio");
+        }
+    }
+
+    @Test
+    void aBadgeOverTheFlowHasItsLettersInItsShapeRatherThanATextBox() throws Exception {
+        // The badge's guard is the first of writeNodeContent's, so a badge inside a node laid over
+        // the flow never reaches the text-box path: its letters go into the shape drawn for it,
+        // which is why the note cannot promise a text box for every paragraph.
+        Consumer<PageFlowBuilder> content = page -> page
+                .add(DocxExports.laidOverTheFlow(new ShapeContainerBuilder().name("Monogram")
+                        .roundedRect(40, 40, com.demcha.compose.document.style.DocumentCornerRadius.of(20))
+                        .fillColor(INK)
+                        .center(new ParagraphBuilder().name("Initials").text("AD").build())
+                        .build()))
+                .addParagraph("Masthead");
+        DocxExportReport report = reportOf(content);
+
+        assertThat(report.notes())
+                .filteredOn(note -> note.detail().startsWith("written over the flow"))
+                .singleElement().extracting(DocxExportReport.Note::detail).asString()
+                .contains("a badge's letters in the shape drawn for them");
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, content)) {
+            // Both a text box and a badge hold their text in a wps:txbx; what tells them apart is
+            // the shape round it — the badge's carries its own fill, a text box draws nothing.
+            String body = document.getDocument().xmlText();
+            int letters = body.indexOf("AD");
+            assertThat(letters).as("the letters are in the file").isGreaterThan(0);
+            int shape = body.lastIndexOf("<wps:wsp", letters);
+            assertThat(shape).as("inside a drawn shape").isGreaterThan(0);
+            assertThat(body.substring(shape, letters))
+                    .as("the shape drawn for the badge carries them: its own fill is on it")
+                    .containsIgnoringCase("1A5694");
+            assertThat(document.getParagraphs()).extracting(XWPFParagraph::getText)
+                    .as("and nothing of the badge in the flow").doesNotContain("AD");
+        }
     }
 
     @Test

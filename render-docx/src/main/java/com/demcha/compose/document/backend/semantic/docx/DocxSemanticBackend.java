@@ -4209,8 +4209,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // Side by side, nothing in the stack overlaps: it is not an overlay.
                 reportRewritten(stack, "written as the columns of a table: the layers the page sets "
                         + "side by side stand in a cell each, those the page gives one band to share "
-                        + "its cell, and a layer holding only drawing or a picture may have no cell at "
-                        + "all and be drawn over them, where the page draws it");
+                        + "its cell, and a layer holding only drawing or pictures may have no cell at "
+                        + "all and be drawn where the page draws it — behind the columns' text, or in "
+                        + "front of it where it stands on a panel whose shading is painted over "
+                        + "whatever lies behind");
                 writeLayerColumns(document, stack, columns);
                 return;
             }
@@ -4532,9 +4534,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             DocxLinePair.Pair pair = DocxLinePair.of(node, layout);
             if (pair != null) {
                 // A pill's outline round its title and dates is drawn as writeShapeContainer draws it.
-                reportRewritten(node, "written as one line that two paragraphs share, the second set "
-                        + "where the page sets it along the line — at its end, or at a tab where the "
-                        + "page starts it — and whatever else the layers hold drawn round them");
+                reportRewritten(node, "written as one line that two paragraphs share, the one further "
+                        + "along it set where the page sets it — at the line's end, or at a tab where "
+                        + "the page starts it — and whatever else the layers hold drawn where the page "
+                        + "draws it");
                 drawOutlineOf(node);
                 writeLinePair(document, node, pair);
                 return;

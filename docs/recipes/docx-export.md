@@ -291,7 +291,8 @@ layers; a stack or a shape container written as one line two paragraphs share; a
 nothing but drawing written as
 drawing alone, with the room it took owed as space to the block after it; a container of a few
 letters written as one drawn shape holding them; and a node laid over
-the flow, written over it with each of its paragraphs in a text box. Each is `APPROXIMATED` at
+the flow, written over it with its text where the page sets it — a paragraph in a text box, a
+badge's letters in the shape drawn for them. Each is `APPROXIMATED` at
 the node's own path, and is said whether or not the node loses anything else. Before, a box
 written as a border said so only where the same box also lost a link or an outline entry, and
 the other five were not said at the node at all — the words for them sat on the children the

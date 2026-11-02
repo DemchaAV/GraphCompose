@@ -157,16 +157,17 @@ class DocxRewrittenFormReportTest {
         DocxExportReport report = reportOf(content);
 
         assertThat(detailOf(report, "LayerStackNode"))
-                .contains("a layer holding only drawing or a picture may have no cell at all and be "
-                          + "drawn over them, where the page draws it");
+                .contains("a layer holding only drawing or pictures may have no cell at all and be "
+                          + "drawn where the page draws it — behind the columns' text");
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, content)) {
             assertThat(document.getTables().get(0).getRow(0).getTableCells())
                     .as("three layers, two cells: the mark has none")
                     .extracting(XWPFTableCell::getText)
                     .containsExactly("AWS Certified", "Docker Certified");
             assertThat(document.getDocument().xmlText())
-                    .as("and it is drawn where the page draws it, not written in a cell")
-                    .contains("<wp:anchor");
+                    .as("drawn where the page draws it, not written in a cell, and behind the text "
+                        + "as the note says — no panel's shading stands under it here")
+                    .contains("<wp:anchor").contains("behindDoc=\"1\"");
         }
     }
 
@@ -196,19 +197,32 @@ class DocxRewrittenFormReportTest {
 
     @Test
     void aTitleAndItsDatesAtEitherEndAreNamedAsTheLineTheyShare() throws Exception {
-        DocxExportReport report = reportOf(page -> page.add(new ShapeContainerBuilder().name("Head")
+        // A rule under the pair is the "whatever else the layers hold" of the note: it is drawn
+        // where the page draws it, not written as a third line.
+        Consumer<PageFlowBuilder> content = page -> page.add(new ShapeContainerBuilder().name("Head")
                 .rectangle(360, 14).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
                 .position(new ParagraphBuilder().name("Title").text("MARKETING MANAGER")
                         .align(TextAlign.LEFT).build(), 0, 0, LayerAlign.CENTER_LEFT)
                 .position(new ParagraphBuilder().name("Dates").text("Jan 2022 - Present")
                         .align(TextAlign.LEFT).build(), 0, 0, LayerAlign.CENTER_RIGHT)
-                .build()));
+                .position(new ShapeBuilder().name("Pill").size(360, 2).fillColor(SURFACE).build(),
+                        0, 0, LayerAlign.BOTTOM_LEFT)
+                .build());
+        DocxExportReport report = reportOf(content);
 
         assertThat(detailOf(report, "ShapeContainerNode"))
-                .isEqualTo("written as one line that two paragraphs share, the second set where the "
-                           + "page sets it along the line — at its end, or at a tab where the page "
-                           + "starts it — and whatever else the layers hold drawn round them");
+                .isEqualTo("written as one line that two paragraphs share, the one further along it "
+                           + "set where the page sets it — at the line's end, or at a tab where the "
+                           + "page starts it — and whatever else the layers hold drawn where the page "
+                           + "draws it");
         assertThat(pathOf(report, "ShapeContainerNode")).isEqualTo("ContainerNode[0]/Head[0]");
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, content)) {
+            assertThat(document.getParagraphs()).extracting(XWPFParagraph::getText)
+                    .as("one line, both texts on it")
+                    .contains("MARKETING MANAGER\tJan 2022 - Present");
+            assertThat(document.getDocument().xmlText())
+                    .as("and the pill drawn beside it").contains("<wp:anchor");
+        }
     }
 
     @Test
@@ -290,7 +304,7 @@ class DocxRewrittenFormReportTest {
             // Both a text box and a badge hold their text in a wps:txbx; what tells them apart is
             // the shape round it — the badge's carries its own fill, a text box draws nothing.
             String body = document.getDocument().xmlText();
-            int letters = body.indexOf("AD");
+            int letters = body.indexOf(">AD<");
             assertThat(letters).as("the letters are in the file").isGreaterThan(0);
             int shape = body.lastIndexOf("<wps:wsp", letters);
             assertThat(shape).as("inside a drawn shape").isGreaterThan(0);

@@ -437,28 +437,21 @@ class DocxCarriedWithoutReportTest {
 
     @Test
     void nodesThatLoseNoneOfThemAddNoNote() throws Exception {
+        // No filled bar among them: a box written as a line is named for that form whatever it
+        // loses, which DocxRewrittenFormReportTest holds.
         DocxExportReport report = reportOf(page -> page
                 .addParagraph("Plain")
                 .addImage(image -> image.source(DocumentImageData.fromBytes(png())).size(80, 40))
                 .addTable(table -> table.columns(DocumentTableColumn.fixed(200)).row("Cell"))
-                .addSection(section -> section.addParagraph("Inside"))
-                .addShape(shape -> shape.size(200, 2).fillColor(INK)));
+                .addSection(section -> section.addParagraph("Inside")));
 
-        assertThat(report.bySubject()).doesNotContainKeys("ImageNode", "TableNode", "SectionNode", "ShapeNode");
+        assertThat(report.bySubject()).doesNotContainKeys("ImageNode", "TableNode", "SectionNode");
     }
 
-    /**
-     * A sidebar laid over the flow, holding the given layer: an overlay its margins give no room,
-     * pulled up over the page's top margin and handing its height back below.
-     */
+    /** A sidebar laid over the flow, holding the given layer (see {@link DocxExports}). */
     private static com.demcha.compose.document.node.DocumentNode laidOverTheFlow(
             com.demcha.compose.document.node.DocumentNode layer) {
-        double height = 120;
-        return new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Sidebar")
-                .rectangle(100, height).clipPolicy(com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE)
-                .margin(new DocumentInsets(-20, 0, 20 - height, -20))
-                .position(layer, 10, 10, com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
-                .build();
+        return DocxExports.laidOverTheFlow(layer);
     }
 
     /** A dot, all a tile holds: drawing, so the tile round it is drawn too. */

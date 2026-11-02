@@ -284,6 +284,29 @@ it; `APPROXIMATED` means it is in the document as the nearest thing Word owns �
 that keeps its fill and loses its rounded corners. Neither is an error: an export that
 cannot proceed throws, and the report is not how you find that out.
 
+A note also names what a node was written as where that is not the kind of thing the node is,
+since nothing in your own tree shows it: a box of a plain fill written as a paragraph border
+(see "What falls back"); a layer stack written as the columns of a table or as a band of its
+layers; a stack or a shape container written as one line two paragraphs share; a box of
+nothing but drawing written as
+drawing alone, with the room it took owed as space to the block after it; a container of a few
+letters written as one drawn shape holding them; and a node laid over
+the flow, written over it with its text where the page sets it — a paragraph in a text box, a
+badge's letters in the shape drawn for them. Each is `APPROXIMATED` at
+the node's own path, and is said whether or not the node loses anything else. Before, a box
+written as a border said so only where the same box also lost a link or an outline entry, and
+the other five were not said at the node at all — the words for them sat on the children the
+node wrote, on its own drawing, or nowhere. A node written as the kind of thing it
+is — a paragraph as a paragraph, a table as a Word table, an image as an inline picture, a box
+as its contents or as a panel, a row as the one-row table with a hidden grid that is the only
+thing Word has to set its children side by side — is not named for its form, and neither is a
+`LineNode` written as a paragraph border, which is a line either way; what any of them loses is
+still named. Nor is a node whose form follows from one above it that now says so: a layer
+written as a column of its stack, a box inside a node laid over the flow, each half of a line
+two layers share, a badge's own paragraph written as its letters. A shape container whose layers
+are written in the flow names that itself (`shape container`), and a barcode and a chart have
+named what they become all along.
+
 The sink is called once, after the bytes are complete. The convenience methods
 (`buildDocx`, `writeDocx`, `toDocxBytes`) build their own backend and so have no sink —
 use `session.export(...)` when you need the report.
@@ -1507,6 +1530,11 @@ twice. Three limits:
   the flow, and is drawn as a shape like other drawing. A layer stack of one layer lays
   nothing over anything, and a line among the text in it is a rule; its other shapes, and
   a line in a stack that holds nothing but drawing, stay drawing.
+- A filled box written as a rule is named in the report, at its own path, since a box in
+  the tree is a line in the file: `addDivider` builds such a box — a `ShapeNode` whose
+  `thickness` is its height and which carries a fill and no stroke — and so does a colour
+  swatch or a bar of the same height, so nothing in the tree tells a divider from a swatch.
+  A `LineNode` written as a rule is not named for its form.
 - A rule in a page zone is not written, as a zone takes paragraphs, fields, spacers
   and pictures.
 - Word draws one border for consecutive paragraphs whose borders and indents are

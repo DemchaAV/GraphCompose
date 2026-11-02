@@ -139,6 +139,25 @@ final class DocxExports {
         return session;
     }
 
+    /**
+     * A sidebar laid over the flow, holding the given layer: an overlay its margins give no room,
+     * pulled up over the page's top margin and handing its height back below.
+     *
+     * <p>What makes the export write a node over the flow rather than in it is its own
+     * arithmetic, so the shape that meets it is written once here and read by every test of
+     * that path.</p>
+     */
+    static com.demcha.compose.document.node.DocumentNode laidOverTheFlow(
+            com.demcha.compose.document.node.DocumentNode layer) {
+        double height = 120;
+        return new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Sidebar")
+                .rectangle(100, height)
+                .clipPolicy(com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE)
+                .margin(new DocumentInsets(-20, 0, 20 - height, -20))
+                .position(layer, 10, 10, com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
+                .build();
+    }
+
     /** Takes the graph and the canvas the session would hand any backend. */
     private static final class Captured implements SemanticBackend<byte[]> {
 

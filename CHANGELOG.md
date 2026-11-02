@@ -4563,13 +4563,15 @@ follow semantic versioning; release dates are ISO 8601.
     `aTableInsideAKeptBlockIsChainedRowByRow` asked only for the chain, and now asks for both, and
     `aRowOfSeveralParagraphsIsHeldWholeByItsRow` pins the shape for which, inside a kept block,
     `w:cantSplit` is the only thing holding the row — a cell of several paragraphs, which a plain
-    cell is whenever its style sets a line spacing.
-  - No one rule says which rows carry `w:cantSplit`: three writers decide it between them. The
-    table writer gives it to every row it lays out; `writePanelPiece` gives a block written as a
-    panel its own row where it asks to be kept together, or is a row or a shape container the
-    layout put on one page; and `letTheOneRowTablesKeptWithTheNextBreak` then takes it off a
-    one-row body table of paragraphs all kept with the next, whichever writer put it there. 56
-    one-row tables of the corpus carry keeps without it.
+    cell is where its style sets a line spacing and it holds more than one line.
+  - No one rule says which rows carry `w:cantSplit`: four writers decide it between them.
+    `breakRowsWhereTheLayoutDoes` gives it to each row of a table the layout placed, `writeRow` to
+    a row written as a table where the layout placed that row, and `writePanelPiece` to a block
+    written as a panel on its own row where the layout put the block on one page and it either
+    asks to be kept together or is a row or a shape container; then
+    `letTheOneRowTablesKeptWithTheNextBreak` takes it off a one-row body table of paragraphs all
+    kept with the next, whichever of the three put it there. 56 one-row tables of the corpus carry
+    keeps without it; the count was not apportioned between the four.
   - A table composed in a cell is reached by neither writer: the chain reads a cell's own
     paragraphs, which are not those of a table in that cell, and the layout places no row for such
     a table, so the table writer gives its rows no `w:cantSplit` either. What holds it is the row
@@ -4585,17 +4587,18 @@ follow semantic versioning; release dates are ISO 8601.
     holding a table, a block kept with the next, a painted panel kept with the next holding a
     table — each stood whole in both editors, with no group and no row broken. Where the editors
     differ it is which page holds the whole block, never whether it is broken: LibreOffice sets a
-    three-row table's rows 33.9pt apart against the page's 21.0, so a table block that only just
-    fits at the foot of a page there moves to the next one whole, which six of the nine did; the
-    band of two layers moved in both editors, from a cause not measured, making seven that
-    LibreOffice moved.
+    table's rows taller — a three-row table's 33.9pt apart against the page's 21.0 — so a block
+    whose table only just fits at the foot of a page there moves to the next one whole, which six
+    of the nine did; the band of two layers moved in both editors, from a cause not measured,
+    making seven that LibreOffice moved. The 33.9pt was read off the three-row shape; the other
+    five were not measured apart.
   - Counted over the 71-document fidelity corpus, with every node of every document classified and
-    none left unclassified: 1116 blocks are held on one page — 214 in the body, 902 in a cell or a
-    row's column, layer stacks and shape containers among them as well as the two keep flags — of
-    which 20 hold a table, 338 hold a band or a container, and none holds a table composed in a
-    cell. Across the whole corpus, all 685 layer stacks and shape containers the layout placed are
-    on one page, and no row a keep chain reaches, in any of the 68 tables of more than one row,
-    lacks `w:cantSplit`.
+    none of the 1116 found left unclassified: 1116 blocks are held on one page — 214 in the body,
+    902 in a cell or a row's column, layer stacks and shape containers among them as well as the
+    two keep flags — of which 20 hold a table, 338 hold a band or a container, and none holds a
+    table composed in a cell. Across the whole corpus, all 685 layer stacks and shape containers
+    the layout placed are on one page, and no row a keep chain reaches, in any of the 68 tables of
+    more than one row, lacks `w:cantSplit`.
 - **A fixture holds the record a page an editor adds past a one-page section is painted from: the
   export is grown by eighty appended paragraphs through POI and read back, and the fills are in the
   header of the one section the grown document has.**

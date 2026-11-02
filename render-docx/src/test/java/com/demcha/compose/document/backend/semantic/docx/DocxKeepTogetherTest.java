@@ -130,7 +130,7 @@ class DocxKeepTogetherTest {
      * <p>A plain cell is a paragraph per line, not one paragraph of several lines, when its style
      * sets a line spacing and it holds more than one line — the row is sized with that spacing
      * between them, and Word holds no space inside one paragraph ({@code paragraphPerLine} in
-     * {@code writeCellLines}, pinned by {@code DocxCellSeatTest}). So this is the shape for which
+     * {@code writeCellContent}, pinned by {@code DocxCellSeatTest}). So this is the shape for which
      * {@code w:cantSplit} is load-bearing <em>inside a kept block</em> — outside one no chain is
      * written at all and it is load-bearing for every row: the chain writes
      * {@code w:keepLines} on each of the row's paragraphs, which holds each one's own lines, and
@@ -141,8 +141,10 @@ class DocxKeepTogetherTest {
      * {@code keepWithNext()} instead: the row's paragraphs then carry {@code w:keepNext} as well,
      * which makes it a table {@code letTheOneRowTablesKeptWithTheNextBreak} frees, and
      * {@code w:cantSplit} is taken off it — leaving the two paragraphs of that row
-     * held by nothing at all. No document of the corpus has that shape (no block asking only to
-     * be kept with the next holds a table), so it is left as it is rather than fixed here.</p>
+     * held by nothing at all. No document of the corpus has that shape: of its twenty blocks that
+     * hold a table, the three in the body all ask to be kept together, and the other seventeen
+     * are in a cell, which that pass never reaches — it reads the body's tables alone. So it is
+     * left as it is rather than fixed here.</p>
      */
     @Test
     void aRowOfSeveralParagraphsIsHeldWholeByItsRow() throws Exception {

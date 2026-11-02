@@ -4554,29 +4554,32 @@ follow semantic versioning; release dates are ISO 8601.
   reaches it. And a kept block's table is asked for both of those writers on the `keepTogether`
   path, where only one half of the pair was asked for before.**
   - A table in a kept block is held twice over: the keep chain puts `w:keepNext` on its rows'
-    paragraphs, every row but the last — the last too where the block is kept with the next, and
-    none of it inside a table cell — which keeps each row on the page of the row under it; and the
-    table writer gives every row the layout placed `w:cantSplit`, which holds a row whole where
-    the chain cannot reach inside it, the chain reaching only a cell's own paragraphs. Neither
-    writer knows about the other. The `keepWithNext` path was already held to the pair
-    (`DocxOneRowTableKeptWithTheNextTest`); on the `keepTogether` path
-    `aTableInsideAKeptBlockIsChainedRowByRow` asked only for the chain, and now asks for both. It
-    is not unconditional either way: `letTheOneRowTablesKeptWithTheNextBreak` takes `w:cantSplit`
-    back off a one-row body table kept with what follows, and a panel asking only to be kept with
-    the next never gets it — 56 one-row tables of the corpus carry keeps without it.
+    paragraphs, on every unit of the block but its last — the last too where the block is kept
+    with the next, and none of it inside a table cell — which keeps each row on the page of the
+    row under it; and the table writer gives every row the layout placed `w:cantSplit`, which
+    holds a row whole where the chain cannot reach inside it, the chain reaching only a cell's own
+    paragraphs. Neither writer knows about the other. The `keepWithNext` path was already held to
+    the pair (`DocxOneRowTableKeptWithTheNextTest`); on the `keepTogether` path
+    `aTableInsideAKeptBlockIsChainedRowByRow` asked only for the chain, and now asks for both, and
+    `aRowOfSeveralParagraphsIsHeldWholeByItsRow` pins the shape for which `w:cantSplit` is the only
+    thing holding the row — a cell of several paragraphs, which a plain cell is whenever its style
+    sets a line spacing. It is not unconditional either way:
+    `letTheOneRowTablesKeptWithTheNextBreak` takes `w:cantSplit` back off a one-row body table kept
+    with what follows, and a painted section asking only to be kept with the next is the one block
+    whose own row goes without it — 56 one-row tables of the corpus carry keeps without it.
   - A table composed in a cell is reached by neither writer: the chain reads a cell's own
     paragraphs, which are not those of a table in that cell, and the layout places no row for such
     a table, so the table writer gives its rows no `w:cantSplit` either. What holds it is the row
     it stands in. `aTableComposedInACellIsHeldByTheRowRoundIt` asserts the two absences together
     with that row, so the reason the gap costs nothing stands beside the gap, and names where it
     would begin to cost something: a row the layout did not place, which carries no `w:cantSplit`
-    of its own. Nothing in the backend's tests asserted anything about a composed table's
-    paragraphs before.
+    of its own. Nothing in the backend's tests asserted anything about a composed table's keeps
+    before.
   - Measured at the foot of a page in Word 16.0.20527 and LibreOffice 24.2, for a block that fits
     there and for one the layout moved to the next page whole: nine shapes over eighteen documents
     — a block kept together holding a table, a kept block holding one row of several lines, a
     table composed in a cell, a painted panel holding a table, a band, a shape container, a stack
-    holding a table, a block kept with the next, a painted panel kept with the next — each stood
+    holding a table, a block kept with the next, a painted panel kept with the next holding a table — each stood
     whole in both editors, with no group and no row broken. Where the editors differ it is which
     page holds the whole block, never whether it is broken: LibreOffice sets a three-row table's
     rows 33.9pt apart against the page's 21.0, so a table block that only just fits at the foot of

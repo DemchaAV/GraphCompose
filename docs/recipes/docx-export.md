@@ -1886,8 +1886,9 @@ LibreOffice 26.8 set every part within 0.2pt on every page. A row is not held at
 part of it takes more lines than one or the layout does not show one; nor where a part starts
 right where one held at a right or centre stop ends, since Word aligns all the text after such a
 tab, up to the next one, at its stop; nor where the row is sized to its content — a grow
-spacer, an arrangement other than `START` or an `auto()` column — and a page field in it would move another part on a page where the number is wider: a field
-anywhere but last before the row's one grow spacer or first after it. Then, as any other zone's
+spacer, an arrangement other than `START`, or a page field in an `auto()` column — and a page
+field in it would move another part on a page where the number is wider: a field anywhere but
+last before the row's one grow spacer or first after it. Then, as any other zone's
 line, Word sets the parts one after another from the page's left margin, and those after the
 first spacer against its right margin, at the right tab the line holds. The line has one
 baseline, its tallest part's. In a zone of one line, a one-line part the page sets on a
@@ -1902,11 +1903,10 @@ point of the page's in Word. LibreOffice raises a run about a seventh further th
 stands every picture on the line's baseline, a raised one included. Where the page sets a part
 elsewhere than Word — in a line not held at stops, by the zone's padding, a row's columns and
 gap, a paragraph's alignment or a part's own sides; in a row held at stops, where Word cannot
-set it at its stop, the parts before it reaching it, past which where a part stands is not
-measured — lower than the
-line holds, past the page's edge, over more than one line or after a
-prefix, the export report counts it (`page zone`): "1 of its 3 parts stands off where
-the page sets them". A page field's alignment
+set it at its stop, the parts before it reaching it — or sets it lower than the line holds,
+past the page's edge, over more than one line or after a prefix, the export report counts it
+(`page zone`): "1 of its 3 parts stands off where the page sets them". In a row held at stops,
+where the parts after one Word cannot set at its stop stand is not measured. A page field's alignment
 moves its number up to a point: the page sets it in a box a point wider than it. Past a part Word sets
 at another width — after a prefix, auto-sized to a size its lines do not tell, over more
 lines than one — or in a zone whose nodes the page names or nests otherwise than the file, it

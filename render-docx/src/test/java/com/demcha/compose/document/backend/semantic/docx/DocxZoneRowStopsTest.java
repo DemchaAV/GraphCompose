@@ -51,9 +51,31 @@ class DocxZoneRowStopsTest {
     void eachPartIsHeldByItsOwnAlignmentInItsColumn() throws Exception {
         // Right: its end, at the column's end, the right margin. Centre: its middle, at the
         // column's middle, 118 + 110 / 2 = 173pt in.
-        assertThat(footer(twoColumns(TextAlign.RIGHT)).stops()).containsExactly("right@" + twips(228));
-        assertThat(footer(twoColumns(TextAlign.CENTER)).stops()).containsExactly("center@" + twips(173));
-        assertThat(footer(twoColumns(TextAlign.LEFT)).stops()).containsExactly("left@" + twips(118));
+        // Word sets each where the page does, and the report names none of them.
+        for (var held : List.of(java.util.Map.entry(TextAlign.RIGHT, "right@" + twips(228)),
+                java.util.Map.entry(TextAlign.CENTER, "center@" + twips(173)),
+                java.util.Map.entry(TextAlign.LEFT, "left@" + twips(118)))) {
+            Footer footer = footer(twoColumns(held.getKey()));
+            assertThat(footer.stops()).as(held.getKey().name()).containsExactly(held.getValue());
+            assertThat(footer.notes()).as(held.getKey().name()).isEmpty();
+        }
+    }
+
+    @Test
+    void aPartAtARightStopWordSetsWiderThanTheRoomBeforeItIsNamed() throws Exception {
+        // At 8.26pt "Confidential", about 43.6pt long, fits each 44pt column on one line; Word
+        // sets it at 8.5pt, about 44.9pt long. The second, right-aligned, would start 43.1pt in,
+        // before the first ends in Word, 44.9pt in: Word cannot set it at its stop.
+        DocumentTextStyle wider = CHROME.withSize(8.26);
+        Footer footer = footer(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line").spacing(0)
+                .columns(DocumentRowColumn.fixed(44), DocumentRowColumn.fixed(44))
+                .addParagraph(p -> p.text("Confidential").textStyle(wider))
+                .addParagraph(p -> p.text("Confidential").textStyle(wider).align(TextAlign.RIGHT))
+                .build()));
+
+        assertThat(footer.stops()).as("held at stops").containsExactly("right@" + twips(88));
+        assertThat(footer.notes()).containsExactly(
+                "a footer written as one line of Word's footer; 1 of its 2 parts stands off where the page sets them");
     }
 
     @Test
@@ -231,6 +253,13 @@ class DocxZoneRowStopsTest {
                         .build()))) {
             assertThat(footer(zone).stops()).containsExactly("right@" + twips(228));
         }
+        // A field in a weighted column beside an auto one grows inside its own column and moves
+        // nothing: the row is held at stops.
+        assertThat(footer(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line").spacing(4)
+                .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1))
+                .addParagraph(p -> p.text("Confidential").textStyle(CHROME))
+                .add(page.pageNumber(CHROME))
+                .build())).stops()).singleElement().asString().startsWith("left@");
         // Without a field, an auto column is as wide on every page: the row is held at stops.
         assertThat(footer(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line").spacing(4)
                 .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1))

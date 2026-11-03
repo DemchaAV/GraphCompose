@@ -3080,7 +3080,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         try {
             for (DocumentNode part : parts) {
                 if (stops != null && part instanceof SpacerNode) {
-                    // Held at stops, the parts after a spacer have a tab of their own.
+                    // Held at stops, a spacer writes nothing: the part after it stands at a stop
+                    // of its own, or follows the part before it where the page sets it there.
                     continue;
                 }
                 if (stops != null && stops.containsKey(part)) {
@@ -3164,7 +3165,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *                      from the line's to it, in points, lowered where below zero: in the
      *                      half points Word counts a run's position in
      * @param stops         the tab stops a row's parts are carried to where the page sets them
-     *                      ({@link #zoneStops}), none for a part at the left margin; {@code null}
+     *                      ({@link #zoneStops}), none for a part that follows the one before it,
+     *                      the first at the left margin; {@code null}
      *                      where the parts follow one another instead
      */
     private record ZonePlacement(double line, int lines, double distance, double baseline,
@@ -3359,11 +3361,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!(content instanceof RowNode row) || Double.isNaN(canvasLeftMargin)) {
             return null;
         }
-        // A row sized to its content — by its arrangement, a grow spacer or a column as wide as
-        // what it holds — moves a part on a page where a page field is wider; a stop does not
-        // move with it.
+        // A row sized to its content — by its arrangement, a grow spacer, or a page field in a
+        // column as wide as what it holds — moves a part on a page where a page field is wider;
+        // a stop does not move with it.
         boolean sizedToContent = row.arrangement() != RowArrangement.START || hasGrowChild(row)
-                                 || row.columns().stream().anyMatch(column -> column.type() == DocumentRowColumn.Type.AUTO);
+                                 || aFieldInAnAutoColumn(row);
         if (sizedToContent && !fieldsMoveNoPart(row)) {
             return null;
         }
@@ -3417,13 +3419,29 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Whether a page field stands in a column of a row as wide as what it holds: a wider number
+     * widens that column, and moves what stands beside it. A field in a fixed or weighted column
+     * grows inside it and moves nothing.
+     */
+    private static boolean aFieldInAnAutoColumn(RowNode row) {
+        List<DocumentNode> children = row.children();
+        for (int index = 0; index < Math.min(children.size(), row.columns().size()); index++) {
+            if (children.get(index) instanceof PageFieldNode
+                && row.columns().get(index).type() == DocumentRowColumn.Type.AUTO) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Whether no part of a row sized to its content moves as a page field in it is wider on a
      * page: a field is the last part before the row's one grow spacer, which takes up what it
      * grows by, or comes before every other part after it, which the spacer holds at the row's
-     * right end. A row of no grow spacer — sized by its arrangement or by columns as wide as what
-     * they hold — moves what is placed after a wider field, or round it; a row of more grow
-     * spacers than one shares its leftover width out among them, which moves the parts between
-     * them. Any field there moves a part.
+     * right end. A row of no grow spacer — sized by its arrangement, or holding a field in a
+     * column as wide as what it holds — moves what is placed after a wider field, or round it; a
+     * row of more grow spacers than one shares its leftover width out among them, which moves
+     * the parts between them. Any field there moves a part.
      */
     private static boolean fieldsMoveNoPart(RowNode row) {
         boolean anyField = row.children().stream().anyMatch(PageFieldNode.class::isInstance);

@@ -16,7 +16,7 @@ follow semantic versioning; release dates are ISO 8601.
     "Kept blocks1", and "Page", the number, "of" and the total became "Page1of4". Only a spacer
     was written, as the tab to the right margin. Text after a logo lost the row's gap.
   - Where the page sets the row on one line, the line now holds a tab stop for each part that
-    does not start where the part before it ends, and a tab before it. A part is held by its
+    starts past where the part before it ends, and a tab before it; any other follows it. A part is held by its
     alignment in its column — a left stop at its start, a centre stop at its middle, a right stop
     at its end. A picture and a page field are held by their start: the page sets a field in a
     box as wide as its number and a point, and grows that box to the right where the number is
@@ -26,8 +26,8 @@ follow semantic versioning; release dates are ISO 8601.
     margin — where one of its parts takes more lines than one or the layout does not show one;
     where a part starts right where one held at a right or centre stop ends, since Word aligns
     all the text after such a tab, up to the next one, at its stop; and where the row is sized
-    to its content — by its arrangement, a grow spacer or an `auto()` column — and a page field
-    in it would move another part on a page where the number is wider: a field anywhere but last
+    to its content — by its arrangement, a grow spacer or a page field in an `auto()` column —
+    and a page field in it would move another part on a page where the number is wider: a field anywhere but last
     before the row's one grow spacer or first after it. A stop does not move with the page.
   - Measured in Word 16.0.20527, LibreOffice 24.2 and LibreOffice 26.8 on the four documents of
     the fidelity corpus that set a row in a zone: every part of the line, 35 words over 11 pages,

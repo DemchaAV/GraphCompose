@@ -286,7 +286,7 @@ cannot proceed throws, and the report is not how you find that out.
 
 A note also names what a node was written as where that is not the kind of thing the node is,
 since nothing in your own tree shows it: a divider written as a paragraph border
-(see "What falls back"); a layer stack written as the columns of a table or as a band of its
+(see "What is skipped"); a layer stack written as the columns of a table or as a band of its
 layers; a stack or a shape container written as one line two paragraphs share; a box of
 nothing but drawing written as
 drawing alone, with the room it took owed as space to the block after it; a container of a few
@@ -1543,8 +1543,8 @@ twice. Three limits:
   plate, a swatch and a brand strip's segment keep their own place on the page instead of
   becoming a paragraph a reader moves or deletes as a line of text. A divider inside a layer stack —
   one of a single layer too, which lets only a line through —, a canvas or a shape container
-  is drawn too, as any other drawing there is, and one of no fill at all, or painted only
-  with a gradient, is dropped. A divider written as a
+  is drawn too, as any other drawing there is, and one that paints nothing — no fill and no
+  stroke — or only a gradient is dropped. A divider written as a
   rule is named in the report, at its own path, since a box in the tree is a line in the
   file; a `LineNode` written as a rule is not named for its form.
 - A rule in a page zone is not written, as a zone takes paragraphs, fields, spacers

@@ -38,8 +38,9 @@ one-time capability warning. A `barcode` is not dropped: it is written as a
 picture of the symbol, which scans but whose data is not editable in Word. Nor
 is a horizontal line, or a box built by the DSL's divider builder (`addDivider`,
 `ModuleBuilder.divider`, `DocumentDsl.divider`) or the templates module's
-`Divider` widget, in the flow and no taller than Word's thickest border: it is
-written as Word's own rule, a paragraph's bottom border.
+`Divider` widget, in the flow, only a fill with no stroke and no taller than
+Word's thickest border: it is written as Word's own rule, a paragraph's bottom
+border.
 Any other filled box, however thin, goes the way every drawing goes — drawn
 where the page puts it, or dropped with a note where the export cannot draw it.
 

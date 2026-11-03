@@ -59,9 +59,10 @@ class DividerBuilderTest {
     void aDividerCarriesWhatARuleCanHoldAndDropsWhatWouldStopItBeingOne() {
         // A rule written as Word's own is a bordered paragraph, and a paragraph holds a bookmark,
         // so an anchor reaches the node and has something to point at; its link and its outline
-        // entry reach it too. A corner radius, a paint fill and a transform are each a reason the
-        // box would not be a rule at all, so the builder drops them rather than quietly turning
-        // its divider into a drawing.
+        // entry reach it too. A corner radius, a transform and a gradient paint are each a reason
+        // the box would not be a rule at all, so the builder drops them rather than quietly
+        // turning its divider into a drawing; it drops a paint whole, a solid one too, and keeps
+        // the colour color(...) set.
         ShapeNode divider = (ShapeNode) new SectionBuilder()
                 .addDivider(d -> {
                     d.name("Seam").width(200).thickness(2).color(INK);
@@ -69,7 +70,7 @@ class DividerBuilderTest {
                     d.linkTo("elsewhere");
                     d.bookmark(new DocumentBookmarkOptions("Seam"));
                     d.cornerRadius(DocumentCornerRadius.of(3));
-                    d.fill(DocumentPaint.linear(INK, DocumentColor.WHITE));
+                    d.fill(DocumentPaint.linear(DocumentColor.WHITE, INK));
                     d.transform(DocumentTransform.rotate(10));
                 })
                 .build().children().get(0);
@@ -81,6 +82,8 @@ class DividerBuilderTest {
         assertThat(divider.cornerRadius()).as("dropped: a rounded box is no rule")
                 .isEqualTo(DocumentCornerRadius.ZERO);
         assertThat(divider.fillPaint()).as("dropped: a gradient box is no rule").isNull();
+        assertThat(divider.fillColor().color()).as("the colour it was given stands")
+                .isEqualTo(INK.color());
         assertThat(divider.transform()).as("dropped: a transformed box is no rule")
                 .isEqualTo(DocumentTransform.NONE);
     }

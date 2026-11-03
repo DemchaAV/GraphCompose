@@ -46,8 +46,10 @@ follow semantic versioning; release dates are ISO 8601.
     such a box with an `anchor` held its bookmark on the rule's paragraph and, drawn, holds none —
     reported, as a drawing's lost bookmark always is. So that the migration can carry it,
     `DividerBuilder` now passes an `anchor`, a link and an outline entry (`bookmark(...)`) through
-    to the node it builds, where it used to drop all three silently; a corner radius, a paint fill and a transform stay
-    dropped, each of them being a reason the box would not be a rule at all. The templates module's
+    to the node it builds, where it used to drop all three silently. A corner radius, a transform
+    and a paint stay dropped: the first two would stop the box being a rule at all, as a gradient
+    would, and a paint is dropped whole, a solid one too, so a divider's colour is set with
+    `color(...)`. The templates module's
     `Divider` widget already asks for the signal; `AccentStrip` is chrome and deliberately does
     not, its horizontal `top`/`bottom` included.
   - One case the signal does not reach, named rather than fixed: a divider sharing a composed

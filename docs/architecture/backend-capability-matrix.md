@@ -44,7 +44,8 @@ can be asked. Drawing
 nodes are a different case: `ShapeNode`, `LineNode`, `EllipseNode`,
 `PolygonNode` and `PathNode` all reach
 `DocxSemanticBackend.writeNode`. A horizontal `LineNode`, or a `ShapeNode` built as a
-divider and no taller than Word's thickest border, is written as a rule, and a
+divider in the flow that is only a fill, with no stroke, and no taller than Word's
+thickest border, is written as a rule, and a
 `ShapeNode` written so is named in the
 report (a box in the tree is a line in the file) while a `LineNode` is not; any other rectangle, rounded rectangle,
 ellipse, line, polygon or path is drawn from the fragments the layout placed

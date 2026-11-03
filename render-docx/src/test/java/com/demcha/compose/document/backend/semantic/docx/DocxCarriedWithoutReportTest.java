@@ -95,7 +95,7 @@ class DocxCarriedWithoutReportTest {
     void aDividerWrittenAsARuleNamesItsLinkAndOutlineEntry() throws Exception {
         // Only a divider is written as a rule (DocxRules), and the DSL's divider builder carries
         // its link, its outline entry and its anchor to the node, so what the rule loses is read
-        // on the one path that can carry it there.
+        // from what a document built with the DSL would hand it.
         DocxExportReport report = reportOf(page -> page
                 .addParagraph(p -> p.text("Target").anchor("target"))
                 .addDivider(d -> d.width(200).thickness(2).color(INK)

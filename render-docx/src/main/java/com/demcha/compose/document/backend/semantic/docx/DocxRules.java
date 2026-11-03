@@ -33,7 +33,7 @@ import java.util.List;
  * left to the drawing path however thin it is, which draws it where the page puts it or drops
  * it with a note where it cannot: a plate, a swatch and a brand strip's segment are a
  * divider's equal in the tree, and were written as a rule with it until the signal told them
- * apart. The backend asks this of a box only outside every layer stack, canvas and shape
+ * apart. The backend writes a box as a rule only outside every layer stack, canvas and shape
  * container — a stack of one layer, which lays nothing over anything, lets only a line
  * through — so a divider inside one is drawn too.</p>
  */

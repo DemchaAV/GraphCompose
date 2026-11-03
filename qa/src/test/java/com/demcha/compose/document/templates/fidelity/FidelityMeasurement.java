@@ -20,8 +20,11 @@ import java.util.Map;
  * PDF; a line the editor breaks at another word, or puts on another page, is not found. Lines
  * of the same letters on one page — a rota's shifts, a CV's date ranges — are paired each with
  * the editor's nearest, so one lost or moved among them is not hidden behind another. A found
- * line's drift is how far its baseline stands below the page's, above when negative, and its
- * drift across how far its first letter stands right of the page's, left when negative.</p>
+ * line's drift is how far its baseline stands below the page's, above when negative, its
+ * drift across how far its first letter stands right of the page's, left when negative, and how
+ * much wider than the page's its letters run, narrower when negative. The width is what shows a
+ * line set in another face that is too short to break at other words: its first letter and its
+ * baseline can stand where the page's do.</p>
  *
  * @param stem         the document
  * @param enginePages  the pages the engine draws
@@ -31,7 +34,7 @@ import java.util.Map;
  * @param median       the median of the found lines' drift either way, in points
  * @param p90          the drift either way nine in ten found lines stay within, in points
  * @param over2        the found lines drifting more than 2pt either way
- * @param found        each found line's drift, by its line id: its page, a digest of its
+ * @param found        each found line's drift either way and its width, by its line id: its page, a digest of its
  *                     letters, and which of the page's lines of those letters it is, in the
  *                     order the page draws them
  */
@@ -40,10 +43,10 @@ record FidelityMeasurement(String stem, int enginePages, int editorPages, int li
 
     /**
      * A found line: where it is, a few of its letters to name it by, its drift below the page's,
-     * and its drift across — how far right of the page's its first letter stands, left when
-     * negative; {@code NaN} in a baseline written before it was measured.
+     * its drift across — how far right of the page's its first letter stands, left when
+     * negative — and how much wider than the page's its letters run, narrower when negative.
      */
-    record Found(int page, String preview, double drift, double across) {
+    record Found(int page, String preview, double drift, double across, double wider) {
     }
 
     static final String HEADER = "document\tengine_pages\teditor_pages\tlines\tmatched\tmedian\tp90\tover2";
@@ -72,7 +75,8 @@ record FidelityMeasurement(String stem, int enginePages, int editorPages, int li
                     PdfLines.Line line = ours.get(index);
                     double drift = round(theirs[index].baseline() - line.baseline());
                     double across = round(theirs[index].x() - line.x());
-                    found.put(lineId(line, index), new Found(line.page(), preview(line.key()), drift, across));
+                    double wider = round(theirs[index].width() - line.width());
+                    found.put(lineId(line, index), new Found(line.page(), preview(line.key()), drift, across, wider));
                     drifts.add(Math.abs(drift));
                 }
             }
@@ -166,7 +170,8 @@ record FidelityMeasurement(String stem, int enginePages, int editorPages, int li
         List<String> rows = new ArrayList<>();
         found.forEach((id, line) -> rows.add(String.join("\t", stem, id,
                 String.format(Locale.ROOT, "%.2f", line.drift()),
-                String.format(Locale.ROOT, "%.2f", line.across()), line.preview())));
+                String.format(Locale.ROOT, "%.2f", line.across()),
+                String.format(Locale.ROOT, "%.2f", line.wider()), line.preview())));
         return rows;
     }
 
@@ -195,44 +200,32 @@ record FidelityMeasurement(String stem, int enginePages, int editorPages, int li
 
     /**
      * Reads a row of the baseline's line file into its document's lines: document, line, drift,
-     * drift across, letters — or, in a baseline written before lines were measured across,
-     * document, line, drift, letters, which holds no line to its place across.
+     * drift across, how much wider, letters. A row of any other shape is refused: one written
+     * before lines were measured across, or before their width was, would hold its line to less
+     * than the gate measures, and pass it moved the way the row does not hold.
      */
     static void parseLine(String row, Map<String, Map<String, Found>> byDocument) {
-        parseLine(row, byDocument, false);
-    }
-
-    /**
-     * Reads a row of the baseline's line file, refusing one without its drift across in a file
-     * whose lines were measured across — its header says so, or another of its rows holds one:
-     * a row cut short there would otherwise be read as one written before, and hold its line
-     * down alone.
-     */
-    static void parseLine(String row, Map<String, Map<String, Found>> byDocument, boolean acrossExpected) {
-        String[] cells = row.split("\t", 5);
-        if (cells.length < 3 || acrossExpected && cells.length != 5) {
-            throw new IllegalArgumentException("a baseline line row must have " + (acrossExpected ? "5" : "at least 3")
-                                               + " cells: " + row);
+        // Every cell counted: a line's letters hold no tab, so a seventh cell is a column this
+        // reader does not know, not part of the letters.
+        String[] cells = row.split("\t", -1);
+        if (cells.length != 6) {
+            throw new IllegalArgumentException("a baseline line row has 6 cells (document, line, drift, drift "
+                                               + "across, how much wider, letters), not " + cells.length + ": " + row);
         }
         try {
             int page = Integer.parseInt(cells[1].substring(0, cells[1].indexOf(':')));
-            boolean measuredAcross = cells.length == 5;
-            double across = measuredAcross ? Double.parseDouble(cells[3]) : Double.NaN;
-            String preview = measuredAcross ? cells[4] : cells.length > 3 ? cells[3] : "";
             double drift = Double.parseDouble(cells[2]);
-            // A drift that is not a number holds its line to nothing: every comparison against
-            // NaN is false, so the line would pass however far it moved. These files are patched
-            // by hand, so a cell mistyped that way is refused rather than read.
-            if (!Double.isFinite(drift)) {
-                throw new IllegalArgumentException("a baseline line row holds a drift that is not a "
-                                                   + "number, which would hold its line to nothing: " + row);
-            }
-            if (measuredAcross && !Double.isFinite(across)) {
-                throw new IllegalArgumentException("a baseline line row holds a place across that is not a "
-                                                   + "number, which would hold its line to nothing: " + row);
+            double across = Double.parseDouble(cells[3]);
+            double wider = Double.parseDouble(cells[4]);
+            // A number that is not one holds its line to nothing: every comparison against NaN is
+            // false, so the line would pass however far it moved. These files are patched by
+            // hand, so a cell mistyped that way is refused rather than read.
+            if (!Double.isFinite(drift) || !Double.isFinite(across) || !Double.isFinite(wider)) {
+                throw new IllegalArgumentException("a baseline line row holds a drift, a place across or a width "
+                                                   + "that is not a number, which would hold its line to nothing: " + row);
             }
             byDocument.computeIfAbsent(cells[0], stem -> new LinkedHashMap<>())
-                    .put(cells[1], new Found(page, preview, drift, across));
+                    .put(cells[1], new Found(page, cells[5], drift, across, wider));
         } catch (NumberFormatException | StringIndexOutOfBoundsException malformed) {
             throw new IllegalArgumentException("a baseline line row is malformed: " + row, malformed);
         }

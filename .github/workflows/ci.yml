@@ -539,7 +539,8 @@ jobs:
     # DOCX, set by LibreOffice, and held line by line to
     # qa/src/test/resources/docx-fidelity/libreoffice-linux*.tsv
     # (DocxFidelityCorpusTest): a change that moves any line of any document more than 0.5pt from
-    # where the baseline holds it — down or across, nearer the engine's PDF or further — or sets a
+    # where the baseline holds it — down or across, nearer the engine's PDF or further — or sets it
+    # more than 0.5pt wider or narrower, or sets a
     # document at other words, on another number of pages, with another set of its lines found, or
     # one the engine draws on another number of pages or lines, fails here. A move nearer the page is the export doing better and fails all the same, until
     # the change records it by rewriting the baseline: held one-sidedly, the Word baseline drifted

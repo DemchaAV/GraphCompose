@@ -4656,6 +4656,43 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The DOCX fidelity gate holds each line to its width as well as its place, and is fed a
+  document of short lines set in another face.**
+  - A line set in another face that is too short to break at other words keeps its first letter
+    and its baseline where the page has them, so a gate holding a line by those alone could not
+    tell it from the page's. `PdfLines` now reads each line's width — from the left edge of its
+    leftmost letter to the right edge of its rightmost, a space at either end left out — and the
+    baseline holds how much wider than the page's each found line runs, narrower when negative;
+    a line whose width moves more than half a point, either way, fails the gate as a line moved
+    down or across does.
+  - The line file takes a column for it: document, line, drift down, drift across, how much
+    wider, letters. A line file of any other shape — one written before lines were measured
+    across, or before their width was — is refused rather than read as holding less. All three
+    baselines are written in it.
+  - `synthetic-card_over_pages` is changed too: every `w:rFonts` set to Times New Roman, and the
+    run fails unless the gate fails on it with lines found where the page has them set wider or
+    narrower than in the unchanged document. Measured against the unchanged document in
+    Word 16.0.20527, LibreOffice 26.8 on Windows and LibreOffice 24.2, not one of its 114 lines
+    is lost or moves more than half a point down or across — the gate without width let it
+    through in all three — and every one runs wider or narrower than that, by up to 16.00, 16.13
+    and 30.08pt. Courier New, the face `invoice-modern` is changed to, sets these lines 0.84 and
+    0.85pt higher in Word and LibreOffice 26.8, which the gate already caught; LibreOffice 24.2
+    sets them within 0.20pt of the unchanged document's, and only their width tells them apart.
+  - The width a line is set at is the editor's own: two conversions of the corpus by Word, and two
+    by LibreOffice 26.8, give every line the same width to the hundredth. Against the page, Word
+    sets 914 of the corpus's 5788 lines more than 2pt wider or narrower, 206 of them more than 5pt
+    — a CV's or a letter's long lines 12 to 17pt apart, a line of Arabic 18.8pt. The baseline
+    records them as they stand; the acceptance report does not count width.
+  - The Word baseline, shot whole on Word 16.0.20527, moves no line more than half a point down
+    or across and finds the same lines. The Windows LibreOffice baseline, shot whole on
+    LibreOffice 26.8, moves the 16 documents it had gone stale in and no other: the seven sidebar
+    CVs' 487 lines 2.50 to 3.60pt lower, their page backgrounds drawn from a header again; 229
+    lines of eight documents nearer the page, one of them a sidebar CV, by 0.55 to 1.05pt; and `invoice-obsidian` and
+    `proposal-indigo`, held on one page, now on two, 8 of their lines lost and 14 and 51 of the
+    rest up to 5.60 and 10.25pt lower. What moved those two is not found; the file's note records
+    what it held, and its history the rows. The Linux baseline is taken from CI's run of this
+    change.
+
 - **The DOCX fidelity gate reads only the text the page's clip does not hide, and is fed a
   document whose last card is held to a height its text does not fit.**
   - `PdfLines` reads a glyph only where the clip it is drawn under holds its middle — half its
@@ -5436,8 +5473,8 @@ follow semantic versioning; release dates are ISO 8601.
   first letter's drift right of the page's (`FidelityMeasurement.Found.across`), and a line set
   more than half a point further from the page across fails as one set further up or down does.
   With #831 reverted, the LibreOffice gate now fails those two documents and `PlatformInvoice`'s
-  footer. A line file written before keeps holding lines down alone; one measured across
-  refuses a row without the column. "More than half a point" is counted in the hundredths
+  footer. The line file has since taken a column for each line's width too, and a file of either
+  earlier shape is refused (above). "More than half a point" is counted in the hundredths
   drifts are written in, down and across: in doubles, 22 of the 501 steps of exactly half a
   point between 0 and 5pt counted as further. Across the corpus the median line stands 0.07pt off across in Word and 0.10pt in
   LibreOffice on Windows; 175 and 130 lines stand more than 2pt off, and 427 in LibreOffice on

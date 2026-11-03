@@ -48,7 +48,14 @@ record DocxTamper(String name, Cost costs, Edit edit) {
         /** Lines of the page's that the editor no longer shows as the page does. */
         LOST_LINES,
         /** Another number of pages. */
-        PAGES
+        PAGES,
+        /** Lines found where the page has them that run wider or narrower than they did. */
+        WIDTH
+    }
+
+    /** The same change, made to cost {@code cost} instead. */
+    DocxTamper costing(Cost cost) {
+        return new DocxTamper(name, cost, edit);
     }
 
     /** A change made to a package's parts, by name; it may add a part. */

@@ -23,10 +23,12 @@ import java.util.Set;
  * editor sets it on another number of pages, when the pages the engine draws it on, or the lines
  * the gate reads off them, change, when a line the baseline found is no longer found — the editor breaks it at another
  * word, or puts it on another page — when a line is found that the baseline does not hold, or
- * when a found line's drift moves by more than {@value #LINE_SLACK}pt, down or across,
- * <em>whichever way it moved</em>. Across as well as down: a table's left margin the export dropped stood
+ * when a found line's drift moves by more than {@value #LINE_SLACK}pt, down or across, or its
+ * width does, <em>whichever way it moved</em>. Across as well as down: a table's left margin the export dropped stood
  * {@code PaymentsInvoice}'s bank details 36.7pt left of the page's and moved no line up or
- * down. Line by line, because a document already set a few points off throughout hides a new
+ * down. Its width as well: a line too short to break at other words, set in another face,
+ * keeps its first letter and its baseline where the page has them, and only runs wider or
+ * narrower. Line by line, because a document already set a few points off throughout hides a new
  * defect in its counts. A document the baseline does not hold fails until the baseline is
  * written with it, and so does one the baseline holds and the corpus no longer has.</p>
  *
@@ -62,8 +64,9 @@ import java.util.Set;
  *
  * <p>The baseline is two files: {@code <name>.tsv}, a row per document, and
  * {@code <name>-lines.tsv}, a row per found line, named by its page and a digest of its
- * letters, with its drift down and across and a few of its letters to read it by. A line file
- * written before lines were measured across holds them to their drift down alone.</p>
+ * letters, with its drift down and across, how much wider than the page's it runs, and a few
+ * of its letters to read it by. A line file of another shape — one written before lines were
+ * measured across, or before their width was — is refused rather than read as holding less.</p>
  */
 final class FidelityBaseline {
 
@@ -73,9 +76,6 @@ final class FidelityBaseline {
      * way a line rounds.
      */
     static final double LINE_SLACK = 0.5;
-
-    /** The line file's header names this column when its lines were measured across. */
-    private static final String ACROSS_COLUMN = "drift right of the page (pt)";
 
     /** How many of a document's failing lines a failure names. */
     private static final int NAMED = 4;
@@ -102,15 +102,9 @@ final class FidelityBaseline {
             throw new IllegalStateException("the baseline " + documents + " has no line file " + lineFile);
         }
         Map<String, Map<String, FidelityMeasurement.Found>> lines = new LinkedHashMap<>();
-        List<String> lineRows = Files.readAllLines(lineFile, StandardCharsets.UTF_8);
-        // Its lines were measured across, for the whole file, when its header says so or any
-        // row holds a drift across: a row without one there is refused, not read as old.
-        boolean across = !lineRows.isEmpty() && lineRows.get(0).startsWith("#")
-                         && lineRows.get(0).contains(ACROSS_COLUMN)
-                         || lineRows.stream().anyMatch(row -> !row.startsWith("#") && row.split("\t", 5).length == 5);
-        for (String row : lineRows) {
+        for (String row : Files.readAllLines(lineFile, StandardCharsets.UTF_8)) {
             if (!row.isBlank() && !row.startsWith("#")) {
-                FidelityMeasurement.parseLine(row, lines, across);
+                FidelityMeasurement.parseLine(row, lines);
             }
         }
         for (String row : Files.readAllLines(documents, StandardCharsets.UTF_8)) {
@@ -164,7 +158,8 @@ final class FidelityBaseline {
         List<String> rows = new ArrayList<>(List.of("# " + note, FidelityMeasurement.HEADER));
         rows.addAll(1, notesOf(notesFrom));
         List<String> lines = new ArrayList<>(List.of("# " + note
-                + " — document, line, drift below the page (pt), " + ACROSS_COLUMN + ", letters"));
+                + " — document, line, drift below the page (pt), drift right of the page (pt),"
+                + " wider than the page (pt), letters"));
         lines.addAll(notesOf(linesOf(notesFrom)));
         for (FidelityMeasurement measured : sorted) {
             rows.add(measured.row());
@@ -234,18 +229,18 @@ final class FidelityBaseline {
                     lost.add("\"" + line.preview() + "\"");
                     return;
                 }
-                // Named once, with every way it moved.
-                List<String> ways = new ArrayList<>(2);
-                // Both axes fail closed on a measurement that carries no number: Math.round(NaN)
-                // is 0, so a step against it compares false and the line would pass unheld.
+                // Named once, with every way it moved. Each fails closed on a measurement that
+                // carries no number: Math.round(NaN) is 0, so a step against it compares false
+                // and the line would pass unheld.
+                List<String> ways = new ArrayList<>(3);
                 if (Double.isNaN(there.drift()) || moved(line.drift(), there.drift())) {
                     ways.add(step(line.drift(), there.drift(), ""));
                 }
-                // A baseline holding a place across holds the line to it: a measurement without
-                // one is a line that cannot be held, which fails rather than passing unheld.
-                if (!Double.isNaN(line.across())
-                    && (Double.isNaN(there.across()) || moved(line.across(), there.across()))) {
+                if (Double.isNaN(there.across()) || moved(line.across(), there.across())) {
                     ways.add(step(line.across(), there.across(), " across"));
+                }
+                if (Double.isNaN(there.wider()) || moved(line.wider(), there.wider())) {
+                    ways.add(step(line.wider(), there.wider(), " wider"));
                 }
                 if (!ways.isEmpty()) {
                     moved.add("\"" + line.preview() + "\" " + String.join(", ", ways));
@@ -278,7 +273,7 @@ final class FidelityBaseline {
      * a step of exactly half a point came out over half a point for some drifts and not for
      * others.
      */
-    private static boolean moved(double was, double now) {
+    static boolean moved(double was, double now) {
         return Math.round(Math.abs(now - was) * 100) > Math.round(LINE_SLACK * 100);
     }
 
@@ -289,8 +284,7 @@ final class FidelityBaseline {
     /** A line's step, as the baseline holds it, as it is now, and the difference. */
     private static String step(double was, double now, String axis) {
         if (Double.isNaN(now)) {
-            return String.format(Locale.ROOT, "%+.2fpt%s in the baseline, and no place%s measured",
-                    was, axis, axis);
+            return String.format(Locale.ROOT, "%+.2fpt%s in the baseline, and none measured", was, axis);
         }
         return String.format(Locale.ROOT, "%+.2f -> %+.2fpt%s (%+.2f)", was, now, axis, now - was);
     }

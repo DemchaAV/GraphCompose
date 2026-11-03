@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * The lines of text a PDF draws and does not clip away, each with its page, its letters, and
- * where its first letter stands.
+ * The lines of text a PDF draws and does not clip away, each with its page, its letters, where
+ * its first letter stands, and how wide its letters run.
  *
  * <p>Glyphs are read in the order the page draws them. A line ends where the next glyph stands
  * on another baseline (more than half its size off), steps back to the left, or stands further
@@ -42,10 +42,11 @@ import java.util.Locale;
 final class PdfLines {
 
     /**
-     * A line: its page, its letters, and its first letter's left edge and baseline, from the
-     * page's left and top, in points.
+     * A line: its page, its letters, its first letter's left edge and baseline, from the page's
+     * left and top, and its width — from where its leftmost letter starts to where its rightmost
+     * letter's advance ends, white space at either end left out — in points.
      */
-    record Line(int page, String key, double x, double baseline) {
+    record Line(int page, String key, double x, double baseline, double width) {
     }
 
     private final List<Line> lines;
@@ -84,6 +85,8 @@ final class PdfLines {
         private double baseline = Double.NaN;
         private double lastEnd = Double.NaN;
         private double lastX = Double.NaN;
+        private double inkLeft = Double.NaN;
+        private double inkRight = Double.NaN;
         private List<Boolean> shown = List.of();
         private int drawn;
 
@@ -151,20 +154,29 @@ final class PdfLines {
                         .filter(c -> !Character.isWhitespace(c) && !Character.isSpaceChar(c))
                         .forEach(key::appendCodePoint);
             }
+            double end = left + glyph.getWidthDirAdj();
+            // The line's width is its letters' extent: a space an editor leaves at the end of a
+            // line, or writes before its first letter, takes up no room a reader sees.
+            if (!blank) {
+                inkLeft = Double.isNaN(inkLeft) ? left : Math.min(inkLeft, left);
+                inkRight = Double.isNaN(inkRight) ? end : Math.max(inkRight, end);
+            }
             lastX = left;
-            lastEnd = left + glyph.getWidthDirAdj();
+            lastEnd = end;
         }
 
         private void endLine() {
             String letters = key.toString().toLowerCase(Locale.ROOT);
             if (letters.codePointCount(0, letters.length()) >= 3) {
-                lines.add(new Line(page, letters, x, baseline));
+                lines.add(new Line(page, letters, x, baseline, inkRight - inkLeft));
             }
             key.setLength(0);
             x = Double.NaN;
             baseline = Double.NaN;
             lastEnd = Double.NaN;
             lastX = Double.NaN;
+            inkLeft = Double.NaN;
+            inkRight = Double.NaN;
         }
     }
 

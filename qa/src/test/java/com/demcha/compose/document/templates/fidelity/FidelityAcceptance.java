@@ -80,7 +80,6 @@ final class FidelityAcceptance {
         return Math.abs(line.drift()) > FAR_POINTS;
     }
 
-    /** A line measured before lines were measured across holds no place across, and is not far there. */
     private static boolean farAcross(FidelityMeasurement.Found line) {
         return Math.abs(line.across()) > FAR_POINTS;
     }

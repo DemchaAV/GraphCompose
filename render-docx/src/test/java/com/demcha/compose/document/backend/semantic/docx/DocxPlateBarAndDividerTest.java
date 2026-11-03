@@ -249,17 +249,25 @@ class DocxPlateBarAndDividerTest {
             String xml = matcher.group();
             anchors.add(new Anchor(
                     group(xml, "prstGeom prst=\"(\\w+)\""),
-                    Long.parseLong(group(xml, "<wp:extent cx=\"(\\d+)\"")),
-                    Long.parseLong(group(xml, "<wp:extent cx=\"\\d+\" cy=\"(\\d+)\"")),
-                    Long.parseLong(group(xml,
+                    number(group(xml, "<wp:extent cx=\"(\\d+)\"")),
+                    number(group(xml, "<wp:extent cx=\"\\d+\" cy=\"(\\d+)\"")),
+                    number(group(xml,
                             "<wp:positionH relativeFrom=\"page\"><wp:posOffset>(-?\\d+)</wp:posOffset>")),
                     group(xml, "<wp:positionV relativeFrom=\"(\\w+)\""),
-                    Long.parseLong(group(xml, "<wp:positionV relativeFrom=\"\\w+\"><wp:posOffset>(-?\\d+)</wp:posOffset>")),
+                    number(group(xml, "<wp:positionV relativeFrom=\"\\w+\"><wp:posOffset>(-?\\d+)</wp:posOffset>")),
                     group(xml, "<a:solidFill><a:srgbClr val=\"(\\w+)\""),
-                    Long.parseLong(matcher.group(1)),
+                    number(matcher.group(1)),
                     "1".equals(matcher.group(2))));
         }
         return anchors;
+    }
+
+    private static long number(String written) {
+        try {
+            return Long.parseLong(written);
+        } catch (NumberFormatException notANumber) {
+            throw new AssertionError("not a whole number: " + written, notANumber);
+        }
     }
 
     private static String group(String xml, String regex) {

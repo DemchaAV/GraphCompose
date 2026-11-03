@@ -175,36 +175,76 @@ class DocxFidelityGateTest {
     }
 
     @Test
-    void aBaselineWrittenBeforeLinesWereMeasuredAcrossHoldsThemDownAlone() {
-        Map<String, Map<String, FidelityMeasurement.Found>> read = new LinkedHashMap<>();
-        FidelityMeasurement.parseLine("cv-a\t1:aa\t0.25\taa", read);
-        FidelityMeasurement.Found found = read.get("cv-a").get("1:aa");
+    void aLineSetInAnotherFaceStandsWhereThePageHasItAndChangesWidth(@TempDir Path dir) throws Exception {
+        // A line too short to break at other words, set in another face: its first letter and
+        // its baseline stand where the page's do, and only its width tells it apart.
+        Path page = drawn(dir.resolve("page.pdf"), content -> text(content, 50, 700, "Total due"));
+        Path courier = drawn(dir.resolve("courier.pdf"), content -> {
+            content.beginText();
+            content.setFont(new org.apache.pdfbox.pdmodel.font.PDType1Font(
+                    org.apache.pdfbox.pdmodel.font.Standard14Fonts.FontName.COURIER), 10);
+            content.newLineAtOffset(50, 700);
+            content.showText("Total due");
+            content.endText();
+        });
 
-        assertThat(found.preview()).isEqualTo("aa");
-        assertThat(found.drift()).isEqualTo(0.25);
-        assertThat(found.across()).isNaN();
-        FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-a", 1, 1, Map.entry("1:aa", found))));
-        assertThat(baseline.divergences(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, 40)))))
-                .as("no place across to hold it to").isEmpty();
-        assertThat(baseline.divergences(List.of(doc("cv-a", 1, 1, line(1, "aa", 1.0, 0)))))
-                .as("and still held down").singleElement().asString().contains("moved").doesNotContain("across");
-        assertThat(baseline.divergences(List.of(doc("cv-a", 1, 1, line(1, "aa", -0.5, 0)))))
-                .as("held down either way").singleElement().asString().contains("moved").doesNotContain("across");
+        FidelityMeasurement.Found line = FidelityMeasurement.of("face", page, courier).found().values()
+                .iterator().next();
+        float helvetica = HELVETICA.getStringWidth("Total due") / 1000 * 10;
+        assertThat(line.drift()).as("on the page's baseline").isZero();
+        assertThat(line.across()).as("from the page's first letter").isZero();
+        assertThat(line.wider()).as("nine Courier letters of 6pt, against Helvetica's %.2fpt", helvetica)
+                .isCloseTo(54 - helvetica, within(0.01));
+        FidelityBaseline baseline = FidelityBaseline.of(List.of(FidelityMeasurement.of("face", page, page)));
+        assertThat(baseline.divergences(List.of(FidelityMeasurement.of("face", page, courier))))
+                .singleElement().asString().contains("1 line moved").contains("wider").doesNotContain("across");
     }
 
     @Test
-    void aLineFileMeasuredAcrossRefusesARowWithoutItsDriftAcross() throws Exception {
+    void aLinesWidthIsItsLettersNotTheSpacesAtItsEnds(@TempDir Path dir) throws Exception {
+        // Word ends a line with the space it broke at; the page does not draw one.
+        Path page = drawn(dir.resolve("page.pdf"), content -> text(content, 50, 700, "Total due"));
+        Path spaced = drawn(dir.resolve("spaced.pdf"), content -> text(content, 50, 700, "Total due  "));
+
+        assertThat(PdfLines.of(page).lines().get(0).width())
+                .isCloseTo(HELVETICA.getStringWidth("Total due") / 1000 * 10, within(0.01));
+        assertThat(FidelityMeasurement.of("space", page, spaced).found().values().iterator().next().wider())
+                .isZero();
+    }
+
+    @Test
+    void theBaselineFailsALineSetWiderOrNarrower() {
+        FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.1, 0.1, 0.2))));
+
+        assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.1, 0.1, 3.4)))))
+                .singleElement().asString().contains("1 line moved").contains("+0.20 -> +3.40pt wider (+3.20)");
+        assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.1, 0.1, -0.31)))))
+                .as("narrower").singleElement().asString().contains("+0.20 -> -0.31pt wider (-0.51)");
+        assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.1, 0.1, 0.7)))))
+                .as("within half a point").isEmpty();
+    }
+
+    @Test
+    void aLineFileOfAnotherShapeIsRefused() throws Exception {
+        // One written before lines were measured across, or before their width was, would hold
+        // its lines to less than the gate measures.
         Path file = dir.resolve("baseline.tsv");
-        FidelityBaseline.write(file, "probe", List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, 1.5))));
+        FidelityBaseline.write(file, "probe", List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, 1.5, -0.75))));
         Path lines = dir.resolve("baseline-lines.tsv");
         List<String> rows = Files.readAllLines(lines);
+        assertThat(rows).last().isEqualTo("cv-a\t1:aa\t0.25\t1.50\t-0.75\taa");
 
+        Files.write(lines, List.of(rows.get(0), "cv-a\t1:aa\t0.25\t1.50\taa"));
+        assertThatThrownBy(() -> FidelityBaseline.read(file)).as("no width")
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("6 cells").hasMessageContaining("not 5");
         Files.write(lines, List.of(rows.get(0), "cv-a\t1:aa\t0.25\taa"));
-        assertThatThrownBy(() -> FidelityBaseline.read(file)).as("a row cut short, not one written before")
-                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("5 cells");
-        Files.write(lines, List.of("cv-a\t1:aa\t0.25\t1.50\taa", "cv-a\t1:bb\t0.50\tbb"));
-        assertThatThrownBy(() -> FidelityBaseline.read(file)).as("no header, and a row measured across beside one cut short")
-                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("5 cells");
+        assertThatThrownBy(() -> FidelityBaseline.read(file)).as("no place across and no width")
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("6 cells").hasMessageContaining("not 4");
+        // And one written after a column this reader does not know was added: read, that column
+        // would land in the letters, and the line would be held to less than its file holds.
+        Files.write(lines, List.of(rows.get(0), "cv-a\t1:aa\t0.25\t1.50\t-0.75\t0.40\taa"));
+        assertThatThrownBy(() -> FidelityBaseline.read(file)).as("a column more")
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("6 cells").hasMessageContaining("not 7");
     }
 
     @Test
@@ -270,15 +310,19 @@ class DocxFidelityGateTest {
     }
 
     @Test
-    void aLineTheBaselineHoldsAcrossAndTheMeasurementDoesNotFails() {
-        // Fail closed: a baseline holding a place across holds the line to it, so a measurement
-        // that carries none is a line nothing can hold, not a line that passes unheld.
-        FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.1, 1.5))));
+    void aMeasurementCarryingNoPlaceAcrossOrNoWidthFails() {
+        // Fail closed: a measurement that carries no number on an axis is a line nothing can
+        // hold there, not a line that passes unheld.
+        FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.1, 1.5, 0.4))));
 
         assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1,
-                Map.entry("1:aa", new FidelityMeasurement.Found(1, "aa", 0.1, Double.NaN))))))
+                Map.entry("1:aa", new FidelityMeasurement.Found(1, "aa", 0.1, Double.NaN, 0.4))))))
                 .singleElement().asString().contains("1 line moved")
-                .contains("+1.50pt across in the baseline, and no place across measured");
+                .contains("+1.50pt across in the baseline, and none measured");
+        assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1,
+                Map.entry("1:aa", new FidelityMeasurement.Found(1, "aa", 0.1, 1.5, Double.NaN))))))
+                .singleElement().asString().contains("1 line moved")
+                .contains("+0.40pt wider in the baseline, and none measured");
     }
 
     @Test
@@ -305,20 +349,24 @@ class DocxFidelityGateTest {
     @Test
     void aBaselineIsReadAsItWasWritten() throws Exception {
         Path file = dir.resolve("baseline.tsv");
-        List<FidelityMeasurement> rows = List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, -1.25)),
+        List<FidelityMeasurement> rows = List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, -1.25, 2.5)),
                 doc("cv-b", 2, 3, line(1, "aa", -1.5), line(2, "cc", 3)));
 
         FidelityBaseline.write(file, "probe", rows);
 
         assertThat(FidelityBaseline.read(file).divergences(rows)).isEmpty();
-        assertThat(FidelityBaseline.read(file).divergences(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, -1.86)),
+        assertThat(FidelityBaseline.read(file).divergences(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, -1.25, 1.99)),
+                doc("cv-b", 2, 3, line(1, "aa", -1.5), line(2, "cc", 3)))))
+                .as("a width read back as written: 2.50 -> 1.99 is a move")
+                .singleElement().asString().contains("wider").doesNotContain("across");
+        assertThat(FidelityBaseline.read(file).divergences(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, -1.86, 2.5)),
                 doc("cv-b", 2, 3, line(1, "aa", -1.5), line(2, "cc", 3)))))
                 .as("a drift across read back as written: -1.25 -> -1.86 is a move")
                 .singleElement().asString().contains("across");
-        assertThat(FidelityBaseline.read(file).divergences(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.86, -1.25)),
+        assertThat(FidelityBaseline.read(file).divergences(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.86, -1.25, 2.5)),
                 doc("cv-b", 2, 3, line(1, "aa", -1.5), line(2, "cc", 3)))))
                 .as("a drift read back as written: 0.25 -> 0.86 is a move").singleElement().asString().contains("moved");
-        assertThat(FidelityBaseline.read(file).divergences(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, -1.25)),
+        assertThat(FidelityBaseline.read(file).divergences(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, -1.25, 2.5)),
                 doc("cv-b", 2, 3, line(1, "aa", -1.5)))))
                 .as("the line file read back with the document file").singleElement().asString().contains("no longer found");
         assertThat(Files.readAllLines(file)).first().isEqualTo("# probe");
@@ -360,12 +408,15 @@ class DocxFidelityGateTest {
     void aLineRowHoldingADriftThatIsNotANumberIsRefused() {
         // Every comparison against NaN is false, so such a row would hold its line to nothing,
         // however far it moved. These files are patched by hand, so the typo is refused.
-        assertThatThrownBy(() -> FidelityMeasurement.parseLine("cv-a\t1:aa\tNaN\t0.10\taa", new LinkedHashMap<>()))
+        assertThatThrownBy(() -> FidelityMeasurement.parseLine("cv-a\t1:aa\tNaN\t0.10\t0.00\taa", new LinkedHashMap<>()))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("hold its line to nothing");
-        assertThatThrownBy(() -> FidelityMeasurement.parseLine("cv-a\t1:aa\t0.10\tNaN\taa", new LinkedHashMap<>()))
+        assertThatThrownBy(() -> FidelityMeasurement.parseLine("cv-a\t1:aa\t0.10\tNaN\t0.00\taa", new LinkedHashMap<>()))
                 .as("and the same for its place across")
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("hold its line to nothing");
-        assertThatThrownBy(() -> FidelityMeasurement.parseLine("cv-a\t1:aa\tInfinity\t0.10\taa", new LinkedHashMap<>()))
+        assertThatThrownBy(() -> FidelityMeasurement.parseLine("cv-a\t1:aa\t0.10\t0.00\tNaN\taa", new LinkedHashMap<>()))
+                .as("and for its width")
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("hold its line to nothing");
+        assertThatThrownBy(() -> FidelityMeasurement.parseLine("cv-a\t1:aa\tInfinity\t0.10\t0.00\taa", new LinkedHashMap<>()))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("not a number");
     }
 
@@ -389,7 +440,7 @@ class DocxFidelityGateTest {
                 .containsExactly("# second", "# rows of cv-a: from run 7");
         assertThat(Files.readAllLines(lines).stream().filter(row -> row.startsWith("#")).toList())
                 .containsExactly("# second — document, line, drift below the page (pt), "
-                                 + "drift right of the page (pt), letters",
+                                 + "drift right of the page (pt), wider than the page (pt), letters",
                         "# cv-a's heading stood 0.08pt low");
         assertThat(FidelityBaseline.read(file).divergences(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.30, 1.5)))))
                 .as("and reads back past its notes").isEmpty();
@@ -420,14 +471,14 @@ class DocxFidelityGateTest {
 
     @Test
     void aMeasurementCarryingNoDriftOfItsOwnFails() {
-        // Math.round(NaN) is 0, so a step measured against it compares false: both axes fail
-        // closed on a measurement that carries no number, not the across one alone.
+        // Math.round(NaN) is 0, so a step measured against it compares false: every axis fails
+        // closed on a measurement that carries no number, not the across and width ones alone.
         FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.10, 1.5))));
 
         assertThat(baseline.divergences(List.of(doc("cv-probe", 1, 1,
-                Map.entry("1:aa", new FidelityMeasurement.Found(1, "aa", Double.NaN, 1.5))))))
+                Map.entry("1:aa", new FidelityMeasurement.Found(1, "aa", Double.NaN, 1.5, 0))))))
                 .singleElement().asString().contains("1 line moved")
-                .contains("+0.10pt in the baseline, and no place measured");
+                .contains("+0.10pt in the baseline, and none measured");
     }
 
     @Test
@@ -439,7 +490,7 @@ class DocxFidelityGateTest {
 
     @Test
     void aMalformedLineRowIsRefusedByName() {
-        assertThatThrownBy(() -> FidelityMeasurement.parseLine("cv-a\t1:abc\tfar\tletters", new LinkedHashMap<>()))
+        assertThatThrownBy(() -> FidelityMeasurement.parseLine("cv-a\t1:abc\tfar\t0.00\t0.00\tletters", new LinkedHashMap<>()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("cv-a");
     }
@@ -448,9 +499,9 @@ class DocxFidelityGateTest {
     void linesOfTheSameLettersArePairedNearestFirst() {
         // A rota's two "09:00-18:00" on one page: the editor draws them in the other order and
         // loses the first. The one left is the second, where it stood, and the first is lost.
-        PdfLines page = new PdfLines(List.of(new PdfLines.Line(0, "0900-1800", 40, 100),
-                new PdfLines.Line(0, "0900-1800", 40, 200)), 1);
-        PdfLines set = new PdfLines(List.of(new PdfLines.Line(0, "0900-1800", 40, 200.5)), 1);
+        PdfLines page = new PdfLines(List.of(new PdfLines.Line(0, "0900-1800", 40, 100, 50),
+                new PdfLines.Line(0, "0900-1800", 40, 200, 50)), 1);
+        PdfLines set = new PdfLines(List.of(new PdfLines.Line(0, "0900-1800", 40, 200.5, 50)), 1);
 
         FidelityMeasurement measured = FidelityMeasurement.of("rota-probe", page, set);
 
@@ -662,7 +713,7 @@ class DocxFidelityGateTest {
     void aLineFarBothWaysIsOneLineFarOff() {
         Map<String, FidelityMeasurement.Found> lines = found(100, 0, 0);
         for (int i = 0; i < 11; i++) {
-            lines.put("both" + i, new FidelityMeasurement.Found(0, "both", -3, 3));
+            lines.put("both" + i, new FidelityMeasurement.Found(0, "both", -3, 3, 0));
             lines.remove("line" + i);
         }
         FidelityMeasurement measured = accepted("cv-a", 1, 100, lines, 0.1);
@@ -674,20 +725,10 @@ class DocxFidelityGateTest {
     @Test
     void twoPointsIsNotFarEitherWay() {
         Map<String, FidelityMeasurement.Found> lines = found(10, 0, 0);
-        lines.put("line0", new FidelityMeasurement.Found(0, "edge", 2.0, -2.0));
-        lines.put("line1", new FidelityMeasurement.Found(0, "past", 0, -2.01));
+        lines.put("line0", new FidelityMeasurement.Found(0, "edge", 2.0, -2.0, 0));
+        lines.put("line1", new FidelityMeasurement.Found(0, "past", 0, -2.01, 0));
 
         assertThat(FidelityAcceptance.far(accepted("cv-a", 1, 10, lines, 0))).isEqualTo(1);
-    }
-
-    @Test
-    void aLineMeasuredBeforeAcrossIsHeldDownAlone() {
-        Map<String, FidelityMeasurement.Found> lines = found(10, 0, 0);
-        lines.put("line0", new FidelityMeasurement.Found(0, "old", 0.1, Double.NaN));
-        lines.put("line1", new FidelityMeasurement.Found(0, "old, low", 3, Double.NaN));
-
-        assertThat(FidelityAcceptance.far(accepted("cv-a", 1, 10, lines, 0))).as("the low one, by its drift down")
-                .isEqualTo(1);
     }
 
     @Test
@@ -719,7 +760,7 @@ class DocxFidelityGateTest {
         for (int i = 0; i < count; i++) {
             double drift = i < down ? 3 : 0.1;
             double left = i >= down && i < down + across ? -3 : 0.1;
-            found.put("line" + i, new FidelityMeasurement.Found(0, "line", drift, left));
+            found.put("line" + i, new FidelityMeasurement.Found(0, "line", drift, left, 0));
         }
         return found;
     }
@@ -753,7 +794,12 @@ class DocxFidelityGateTest {
 
     private static Map.Entry<String, FidelityMeasurement.Found> line(int page, String letters, double drift,
                                                                      double across) {
-        return Map.entry(page + ":" + letters, new FidelityMeasurement.Found(page, letters, drift, across));
+        return line(page, letters, drift, across, 0);
+    }
+
+    private static Map.Entry<String, FidelityMeasurement.Found> line(int page, String letters, double drift,
+                                                                     double across, double wider) {
+        return Map.entry(page + ":" + letters, new FidelityMeasurement.Found(page, letters, drift, across, wider));
     }
 
     private Path pdf(String name, Consumer<PageFlowBuilder> content) throws Exception {

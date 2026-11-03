@@ -1,29 +1,28 @@
 # word 16.0 (16.0.20527) on windows
-# rows of synthetic-banner_and_initials, synthetic-header_logo_and_filled_row, synthetic-kept_blocks_over_pages, synthetic-kept_icon_panel, synthetic-links_and_toc, synthetic-long_free_text, synthetic-nested_rows, synthetic-rotated_image_and_shape, synthetic-rtl_paragraphs, synthetic-sections_and_fields, synthetic-sidebar_over_pages: word 16.0 (16.0.20527) on windows
-# rows of cv-engineering_resume, cv-timeline_minimal, synthetic-clipped_container: word 16.0 (16.0.20527) on windows, shot again when the gate came to read only the text the page's clip does not hide, which loses the end of one line each of the CVs and two lines of the container to the clip; every other line of the three stands where it stood
+# every row shot whole on this build when the gate came to hold each line to its width, which the column before the letters records: no line moved more than half a point down or across from the row it replaces, none was lost and none found anew, and seven sidebar CVs' medians and p90s moved with lines that stayed within that half point. Shot in two sittings of Word, every line came out at the same width to the hundredth
 document	engine_pages	editor_pages	lines	matched	median	p90	over2
 cv-blue_banner	2	2	54	52	0.12	0.23	0
 cv-boxed_sections	2	2	58	58	0.16	0.25	0
 cv-centered_headline	2	2	58	56	0.14	0.34	0
-cv-charcoal_gold	1	1	85	83	0.09	0.24	0
+cv-charcoal_gold	1	1	85	83	0.09	0.19	0
 cv-classic_serif	2	2	57	54	0.12	0.20	0
 cv-compact_mono	1	1	58	58	0.11	0.26	0
 cv-editorial_blue	2	2	82	82	0.06	0.14	0
 cv-engineering_resume	1	1	57	56	0.06	0.17	0
 cv-executive	2	2	60	60	0.06	0.09	0
-cv-midnight_navy	1	1	86	84	0.16	0.34	0
+cv-midnight_navy	1	1	86	84	0.14	0.34	0
 cv-minimal_underlined	2	2	59	59	0.30	0.55	0
 cv-mint_editorial	2	2	59	59	0.08	0.19	0
 cv-modern_professional	2	2	61	59	0.15	0.21	0
-cv-monogram_sidebar	1	1	53	50	0.08	0.19	0
-cv-navy_sidebar	1	1	71	69	0.05	0.16	0
+cv-monogram_sidebar	1	1	53	50	0.15	0.26	0
+cv-navy_sidebar	1	1	71	69	0.08	0.16	0
 cv-nordic_clean	1	1	63	58	0.09	0.19	0
 cv-orange_ops	1	1	108	106	0.17	0.35	0
 cv-panel	1	1	79	74	0.34	0.46	0
-cv-professional_sidebar	1	1	68	64	0.11	0.16	0
+cv-professional_sidebar	1	1	68	64	0.11	0.17	0
 cv-serif_headline	1	1	103	103	0.31	0.96	0
-cv-sidebar_portrait	1	1	49	49	0.11	0.20	0
-cv-slate_orange	1	1	87	85	0.26	1.12	0
+cv-sidebar_portrait	1	1	49	49	0.15	0.25	0
+cv-slate_orange	1	1	87	85	0.30	1.13	0
 cv-teal_pulse	1	1	57	57	0.17	0.30	0
 cv-terracotta_rail	1	1	102	102	0.08	0.32	0
 cv-timeline_minimal	2	2	89	86	0.04	0.11	0

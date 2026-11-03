@@ -349,8 +349,9 @@ Choose the smallest tests that match the change:
   [DocxFidelityCorpusTest.java](qa/src/test/java/com/demcha/compose/document/templates/fidelity/DocxFidelityCorpusTest.java).
   It exports every template preset to DOCX, with documents built for shapes no preset has on
   its own fixture, has LibreOffice set each one, and holds every
-  line of every document to the drift its baseline records, down and across: a line that
-  moved more than 0.5pt from where the baseline holds it, nearer the page or further, a line
+  line of every document to the drift its baseline records, down and across, and to its width:
+  a line that moved more than 0.5pt from where the baseline holds it, nearer the page or
+  further, or runs more than 0.5pt wider or narrower than it holds it, a line
   set at other words, a line found that the baseline does not hold, another number of pages
   from the editor, or another number of pages from the engine, or of lines read off its pages,
   fails it. A line is
@@ -379,8 +380,8 @@ Choose the smallest tests that match the change:
   from PowerShell (pwsh), after the install above, before a DOCX export change is opened.
   Rewrite the baseline in the change that moves the documents, and the gate will remind you —
   as long as you run it, which for Word means running the script above: it fails a line that has
-  moved more than 0.5pt from where the baseline holds it, nearer the page or further, a document
-  the editor sets on another number of pages, one the engine draws on another number of pages or
+  moved more than 0.5pt from where the baseline holds it, nearer the page or further, or whose
+  width changed by as much, a document the editor sets on another number of pages, one the engine draws on another number of pages or
   whose pages the gate reads another number of lines off, and one whose lines the editor finds
   a different set of. Until the gate was made
   two-sided it only looked for lines set further, which let a change move documents nearer, or
@@ -397,15 +398,19 @@ Choose the smallest tests that match the change:
   above them. Each baseline's header records the build it was shot on, and a
   differing build is rarely the cause: Word 16.0.20430 and 16.0.20527 measure the corpus as
   #899 exported it identically, row for row.
-  `libreoffice-windows.tsv` is known stale, and the local LibreOffice run fails on it: 2
-  documents fail even one-sidedly — 8 lines no longer found, 2 page counts and 65 lines more
-  than half a point further, 8 of them `proposal-indigo`'s, 10.25pt lower than it holds them
-  on the LibreOffice build the baseline names. It has not been shot whole since #898, where
-  `libreoffice-linux.tsv` now has. Do not rewrite it as part of an unrelated change: a move
-  further from the page wants the commit that made it found first, as the Word baseline's drift
-  was attributed before #975 rewrote it, and the file rewritten with that reckoning. Until then,
-  read a local LibreOffice run against the documents your change touches rather than against a
-  green run.
+  `libreoffice-windows.tsv` was shot whole again when the gate came to hold each line to its
+  width, the line file's shape changing with it, after going stale in 16 documents. Fourteen of
+  them were already accounted for: the seven sidebar CVs stand lower for their page
+  backgrounds being drawn from a header again, and lines of eight documents, one of them a
+  sidebar CV, had moved nearer the page. Two had moved further, and what moved them is not
+  found: `invoice-obsidian` and `proposal-indigo`, which it held on one page, LibreOffice now
+  sets on two, losing 8 lines between them and setting `proposal-indigo`'s up to 10.25pt
+  lower. The file's note records each move and the numbers it held; its history holds the
+  rows. That rewrite is the one exception to the rule here, and was made because a file of
+  the old shape no longer reads: do not rewrite a baseline over a move further from the page
+  as part of an unrelated change. Such a move wants the commit that made it found first, as the
+  Word baseline's drift was attributed before #975 rewrote it, and the file rewritten with that
+  reckoning; the two documents' move still does.
   Each run also writes `measured-<editor>-acceptance.md`: which documents the editor sets as the
   page does — the same pages, 95% of the lines found, a median of 1pt or less, no more than 10%
   of the lines found more than 2pt off, above or below the page's line or left or right of it —
@@ -414,11 +419,14 @@ Choose the smallest tests that match the change:
   The same run, in either editor, feeds the gate `invoice-modern` changed after export in each
   way it is there to fail on — a paragraph taken out, every `w:rFonts` set to Courier New, a page
   break before the closing paragraph, the notes card's row held to exactly 25pt, the line items
-  replaced by a picture — and `invoice-luma_studio` with its last card, which nothing holding
-  text follows in the body, held to exactly 22.5pt; and it fails unless the gate, holding each to the run's own
-  measurement of the document it was changed from, fails on every one, and on lost lines or
-  another page count where the change costs them — a card held short of its text costs the
-  lines it clips (`DocxTamper`). A copy of each document left unchanged is converted with them
+  replaced by a picture — `invoice-luma_studio` with its last card, which nothing holding
+  text follows in the body, held to exactly 22.5pt, and `synthetic-card_over_pages`, whose lines
+  are too short to break at other words, with every `w:rFonts` set to Times New Roman; and it
+  fails unless the gate, holding each to the run's own
+  measurement of the document it was changed from, fails on every one, and on lost lines,
+  another page count or lines run wider or narrower where the change costs them — a card held
+  short of its text costs the lines it clips, and a face on short lines costs their width
+  (`DocxTamper`). A copy of each document left unchanged is converted with them
   and must stand where the corpus's conversion set it, within the gate's half-point slack.
   They are written to `qa/target/docx-fidelity/tampered` and converted into `<editor>-tampered`
   beside it, LibreOffice logging to `libreoffice-tampered.log`; `word-fidelity.ps1` converts

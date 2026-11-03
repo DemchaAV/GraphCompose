@@ -24,7 +24,8 @@
     qa/target/docx-fidelity/word-tampered, and the `word` run fails unless each
     unchanged copy stands where the corpus's conversion set it, within the
     gate's half-point slack, and the gate fails on every change, losing lines,
-    or coming to another page count, where the change costs that. Word failing
+    coming to another page count, or setting lines wider or narrower, where
+    the change costs that. Word failing
     to convert them is reported by that run, beside the corpus's result.
 
     Run it from PowerShell (pwsh), not through powershell.exe under Git Bash: Word

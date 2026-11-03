@@ -56,7 +56,7 @@ class DocxTamperTest {
         assertThat(DocxFidelityCorpusTest.tampers()).extracting(DocxFidelityCorpusTest.Change::stem).containsExactly(
                 "invoice-modern--dropped-paragraph", "invoice-modern--changed-font", "invoice-modern--extra-page-break",
                 "invoice-modern--exact-card-height", "invoice-modern--table-as-picture",
-                "invoice-luma_studio--exact-card-height");
+                "invoice-luma_studio--exact-card-height", "synthetic-card_over_pages--changed-font");
         for (DocxFidelityCorpusTest.Change change : DocxFidelityCorpusTest.tampers()) {
             DocxTamper tamper = change.tamper();
             byte[] docx = SOURCES.get(change.source());
@@ -78,12 +78,27 @@ class DocxTamperTest {
     @Test
     void eachDocumentChangedIsConvertedUnchangedFirstThenWithEachOfItsChanges() {
         assertThat(DocxFidelityCorpusTest.sources())
-                .containsExactly(DocxFidelityCorpusTest.TAMPERED_SOURCE, DocxFidelityCorpusTest.LAST_CARD_SOURCE);
+                .containsExactly(DocxFidelityCorpusTest.TAMPERED_SOURCE, DocxFidelityCorpusTest.LAST_CARD_SOURCE,
+                        DocxFidelityCorpusTest.SHORT_LINES_SOURCE);
         assertThat(DocxFidelityCorpusTest.converted()).extracting(DocxFidelityCorpusTest.Change::stem).containsExactly(
                 "invoice-modern--unchanged", "invoice-modern--dropped-paragraph", "invoice-modern--changed-font",
                 "invoice-modern--extra-page-break", "invoice-modern--exact-card-height",
                 "invoice-modern--table-as-picture",
-                "invoice-luma_studio--unchanged", "invoice-luma_studio--exact-card-height");
+                "invoice-luma_studio--unchanged", "invoice-luma_studio--exact-card-height",
+                "synthetic-card_over_pages--unchanged", "synthetic-card_over_pages--changed-font");
+    }
+
+    @Test
+    void theShortLinesAreSetInAnotherFaceAndMustChangeWidth() throws Exception {
+        DocxTamper face = DocxFidelityCorpusTest.tampers().stream()
+                .filter(change -> change.source().equals(DocxFidelityCorpusTest.SHORT_LINES_SOURCE))
+                .map(DocxFidelityCorpusTest.Change::tamper).findFirst().orElseThrow();
+        Map<String, byte[]> before = parts(SOURCES.get(DocxFidelityCorpusTest.SHORT_LINES_SOURCE));
+        Map<String, byte[]> after = parts(face.applyTo(SOURCES.get(DocxFidelityCorpusTest.SHORT_LINES_SOURCE)));
+
+        assertThat(fonts(before)).isNotEmpty().doesNotContain("Times New Roman");
+        assertThat(fonts(after)).containsOnly("Times New Roman");
+        assertThat(face.costs()).isEqualTo(DocxTamper.Cost.WIDTH);
     }
 
     @Test
@@ -217,7 +232,7 @@ class DocxTamperTest {
             measured.put(stem, FidelityMeasurement.of(stem, pdf, pdf));
         }
         // Word set every copy exactly as its own document's page: each unchanged copy passes, and
-        // every change, of either document, is let through, once.
+        // every change, of each document, is let through, once.
         StringBuilder results = new StringBuilder();
         for (DocxFidelityCorpusTest.Change change : DocxFidelityCorpusTest.converted()) {
             java.nio.file.Files.copy(engine.resolve(change.source() + ".pdf"), set.resolve(change.stem() + ".pdf"));
@@ -473,8 +488,34 @@ class DocxTamperTest {
         return new FidelityMeasurement("invoice-modern", 1, editorPages, 2, found.size(), 0, 0, 0, found);
     }
 
+    @Test
+    void aChangeThatCostsWidthIsLetThroughWhenItsLinesRunAsWideAsTheyDid() {
+        FidelityMeasurement page = measured(1, Map.of("0:a", line(0.1), "0:b", line(0.2)));
+        FidelityMeasurement wider = measured(1, Map.of("0:a", line(0.1), "0:b", line(0.2, 0.51)));
+        FidelityMeasurement withinRounding = measured(1, Map.of("0:a", line(0.1), "0:b", line(0.2, 0.5)));
+        FidelityMeasurement lost = measured(1, Map.of("0:a", line(0.1)));
+        FidelityMeasurement moved = measured(1, Map.of("0:a", line(0.1), "0:b", line(9)));
+        DocxFidelityCorpusTest.Change face = new DocxFidelityCorpusTest.Change("synthetic-card_over_pages",
+                DocxTamper.inFont("Times New Roman").costing(DocxTamper.Cost.WIDTH));
+        List<String> apart = List.of("cv: apart");
+
+        assertThat(DocxFidelityCorpusTest.letThrough(face, page, wider, apart)).isNull();
+        assertThat(DocxFidelityCorpusTest.letThrough(face, page, withinRounding, apart))
+                .startsWith("synthetic-card_over_pages--changed-font: failed, but without WIDTH");
+        assertThat(DocxFidelityCorpusTest.letThrough(face, page, lost, apart))
+                .as("a line lost has no width to compare").startsWith("synthetic-card_over_pages--changed-font: failed, but without WIDTH");
+        assertThat(DocxFidelityCorpusTest.letThrough(face, page, moved, apart))
+                .startsWith("synthetic-card_over_pages--changed-font: failed, but without WIDTH");
+        assertThat(DocxFidelityCorpusTest.letThrough(face, page, wider, List.of()))
+                .isEqualTo("synthetic-card_over_pages--changed-font: the gate let it through");
+    }
+
     private static FidelityMeasurement.Found line(double drift) {
-        return new FidelityMeasurement.Found(0, "line", drift, 0);
+        return line(drift, 0);
+    }
+
+    private static FidelityMeasurement.Found line(double drift, double wider) {
+        return new FidelityMeasurement.Found(0, "line", drift, 0, wider);
     }
 
     private static Map<String, byte[]> parts(byte[] docx) throws Exception {

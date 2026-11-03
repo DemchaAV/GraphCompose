@@ -49,8 +49,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * The documents, their PDFs and the report are left in {@code target/docx-fidelity}.</p>
  *
  * <p>The same run feeds the gate corpus documents changed afterwards in each way a reader would
- * see ({@link DocxTamper}) — a paragraph gone, another font, a page break more, a card's row held
- * to a height its text does not fit, the last card's among them, a table replaced by a picture —
+ * see ({@link DocxTamper}) — a paragraph gone, another font, on a document of short lines among
+ * them, a page break more, a card's row held to a height its text does not fit, the last card's
+ * among them, a table replaced by a picture —
  * through the same editor and the same measurement, and fails unless the gate fails on every one.
  * Each is held to this run's own measurement of the document it was changed from, not to the
  * baseline, so what it catches is the change and nothing the baseline holds besides. They are
@@ -75,6 +76,15 @@ class DocxFidelityCorpusTest {
      */
     static final String LAST_CARD_SOURCE = "invoice-luma_studio";
 
+    /**
+     * The corpus document set in another face whose lines change only in width: none of them is
+     * long enough to break at other words, and Times New Roman sets them on the page's baselines.
+     * Set so in Word 16.0.20527, LibreOffice 26.8 on Windows and CI's LibreOffice 24.2 on Linux,
+     * not one of its 114 lines was lost or moved more than half a point down or across, and every
+     * one ran wider or narrower by more than that — by up to 16 points.
+     */
+    static final String SHORT_LINES_SOURCE = "synthetic-card_over_pages";
+
     /** A change the gate must fail on, and the corpus document whose DOCX it is made to. */
     record Change(String source, DocxTamper tamper) {
 
@@ -92,7 +102,9 @@ class DocxFidelityCorpusTest {
                 new Change(TAMPERED_SOURCE, DocxTamper.withPageBreakBefore("Thank you for choosing GraphCompose")),
                 new Change(TAMPERED_SOURCE, DocxTamper.withExactRowHeight("Please include the invoice number", 500)),
                 new Change(TAMPERED_SOURCE, DocxTamper.asPicture("Discovery workshop")),
-                new Change(LAST_CARD_SOURCE, DocxTamper.withExactRowHeight("Thank you for your business", 450)));
+                new Change(LAST_CARD_SOURCE, DocxTamper.withExactRowHeight("Thank you for your business", 450)),
+                new Change(SHORT_LINES_SOURCE,
+                        DocxTamper.inFont("Times New Roman").costing(DocxTamper.Cost.WIDTH)));
     }
 
     /** The documents the changes are made to, in the order they are first named. */
@@ -357,6 +369,10 @@ class DocxFidelityCorpusTest {
             case ANY -> true;
             case LOST_LINES -> !changed.found().keySet().containsAll(source.found().keySet());
             case PAGES -> changed.editorPages() != source.editorPages();
+            case WIDTH -> source.found().entrySet().stream().anyMatch(line -> {
+                FidelityMeasurement.Found there = changed.found().get(line.getKey());
+                return there != null && FidelityBaseline.moved(line.getValue().wider(), there.wider());
+            });
         };
         return costs ? null : change.stem() + ": failed, but without " + cost + ": " + String.join("; ", apart);
     }

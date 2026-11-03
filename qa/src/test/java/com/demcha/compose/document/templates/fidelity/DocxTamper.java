@@ -64,26 +64,28 @@ record DocxTamper(String name, Cost costs, Edit edit) {
 
     private static final Pattern TAG = Pattern.compile("<(/?)(w:[A-Za-z]+)\\b[^>]*?(/?)>");
     private static final Pattern TEXT = Pattern.compile("<w:t(?:\\s[^>]*)?>([^<]*)</w:t>");
-    private static final Pattern FONT = Pattern.compile("(w:(?:ascii|hAnsi|cs|eastAsia)=\")([^\"]+)(\")");
+    /** A {@code w:rFonts} element; it holds attributes only. */
+    private static final Pattern FONTS = Pattern.compile("<w:rFonts\\b[^>]*/>");
 
     /** The DOCX, changed. */
     byte[] applyTo(byte[] docx) throws IOException {
         Map<String, byte[]> parts = new LinkedHashMap<>();
-        Map<String, Long> times = new LinkedHashMap<>();
+        Map<String, java.time.LocalDateTime> times = new LinkedHashMap<>();
         try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(docx))) {
             for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
                 parts.put(entry.getName(), zip.readAllBytes());
-                times.put(entry.getName(), entry.getTime());
+                times.put(entry.getName(), entry.getTimeLocal());
             }
         }
         edit.apply(parts);
         // Each part keeps the time it was written with, and a part the change adds takes the
-        // body's: the zip would otherwise stamp them with the time of this run.
+        // body's: the zip would otherwise stamp them with the time of this run. Read and written
+        // as local times, so no time zone stands between the export run and the word run.
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         try (ZipOutputStream zip = new ZipOutputStream(bytes)) {
             for (Map.Entry<String, byte[]> part : parts.entrySet()) {
                 ZipEntry entry = new ZipEntry(part.getKey());
-                entry.setTime(times.getOrDefault(part.getKey(), times.get(DOCUMENT)));
+                entry.setTimeLocal(times.getOrDefault(part.getKey(), times.get(DOCUMENT)));
                 zip.putNextEntry(entry);
                 zip.write(part.getValue());
                 zip.closeEntry();
@@ -111,30 +113,34 @@ record DocxTamper(String name, Cost costs, Edit edit) {
         });
     }
 
-    /** The name of {@link #unchanged()}, the copy that must show no difference. */
+    /** The name of {@link #unchanged()}, the copy that must stand where the corpus's conversion set it. */
     static final String UNCHANGED = "unchanged";
 
     /**
-     * Every font the document's runs, styles, list levels, headers and footers name — every
-     * {@code w:rFonts} of a {@code word/} part — named {@code font} instead.
+     * Every {@code w:rFonts} of a {@code word/} part — wherever runs, styles, the document's
+     * defaults or list levels name a font — written as {@code font} for each of the four scripts,
+     * with no theme font left to outrank it. A {@code w:rFonts} already so is not counted as
+     * changed, and a document where every one already is refuses.
      */
     static DocxTamper inFont(String font) {
+        String written = "<w:rFonts w:ascii=\"" + font + "\" w:hAnsi=\"" + font + "\" w:eastAsia=\"" + font
+                         + "\" w:cs=\"" + font + "\"/>";
         return new DocxTamper("changed-font", Cost.ANY, parts -> {
             int changed = 0;
             for (String name : List.copyOf(parts.keySet())) {
                 if (!name.startsWith("word/") || !name.endsWith(".xml")) {
                     continue;
                 }
-                Matcher names = FONT.matcher(text(parts, name));
-                StringBuilder written = new StringBuilder();
-                while (names.find()) {
-                    if (!names.group(2).equals(font)) {
+                Matcher fonts = FONTS.matcher(text(parts, name));
+                StringBuilder part = new StringBuilder();
+                while (fonts.find()) {
+                    if (!fonts.group().equals(written)) {
                         changed++;
                     }
-                    names.appendReplacement(written, Matcher.quoteReplacement(names.group(1) + font + names.group(3)));
+                    fonts.appendReplacement(part, Matcher.quoteReplacement(written));
                 }
-                names.appendTail(written);
-                put(parts, name, written.toString());
+                fonts.appendTail(part);
+                put(parts, name, part.toString());
             }
             if (changed == 0) {
                 throw new IllegalStateException("the document names no font other than " + font);
@@ -188,6 +194,10 @@ record DocxTamper(String name, Cost costs, Edit edit) {
             int[] table = onlyOne(holding(xml, body(xml), Set.of("w:tbl"), letters), "table", letters);
             parts.put("word/media/tampered.png", PIXEL);
             String relationships = text(parts, RELATIONSHIPS);
+            if (!relationships.contains("</Relationships>")) {
+                throw new IllegalStateException("the body's relationships do not close, so the picture "
+                                                + "could not be related to it");
+            }
             put(parts, RELATIONSHIPS, relationships.replace("</Relationships>",
                     "<Relationship Id=\"rIdTampered\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/"
                     + "relationships/image\" Target=\"media/tampered.png\"/></Relationships>"));

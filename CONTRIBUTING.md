@@ -410,7 +410,8 @@ Choose the smallest tests that match the change:
   replaced by a picture — and fails unless the gate, holding each to the run's own measurement
   of the unchanged document, fails on every one, and on lost lines or another page count where
   the change costs them (`DocxTamper`). A copy left unchanged is converted with them and must
-  show no difference at all. They are written to `qa/target/docx-fidelity/tampered` and
+  stand where the corpus's conversion set it, within the gate's half-point slack. They are
+  written to `qa/target/docx-fidelity/tampered` and
   converted into `<editor>-tampered` beside it, LibreOffice logging to
   `libreoffice-tampered.log`; `word-fidelity.ps1` converts them too.
   The corpus also answers for how a document edits in Word.

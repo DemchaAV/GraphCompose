@@ -80,9 +80,54 @@ class DocxTamperTest {
         Map<String, byte[]> after = parts(DocxTamper.inFont("Courier New").applyTo(source));
 
         assertThat(fonts(before)).isNotEmpty().doesNotContain("Courier New");
-        assertThat(fonts(after)).hasSize(fonts(before).size()).containsOnly("Courier New");
+        assertThat(fonts(after)).containsOnly("Courier New");
+        assertThat(rFonts(after)).as("as many w:rFonts as there were, every one in place").isEqualTo(rFonts(before));
         assertThat(new String(before.get("word/numbering.xml"), StandardCharsets.UTF_8))
-                .as("the list levels name a font of their own").contains("w:ascii=\"");
+                .as("the list levels name a font of their own").contains("<w:rFonts");
+    }
+
+    @Test
+    void aThemeFontIsTakenOutAndALanguageIsNotAFont() throws Exception {
+        String styles = "<w:styles " + DocxFixtures.NAMESPACES + "><w:docDefaults><w:rPrDefault><w:rPr>"
+                        + "<w:rFonts w:asciiTheme=\"minorHAnsi\" w:hAnsiTheme=\"minorHAnsi\" w:ascii=\"Calibri\"/>"
+                        + "<w:lang w:val=\"en-GB\" w:eastAsia=\"zh-CN\"/></w:rPr></w:rPrDefault></w:docDefaults></w:styles>";
+        byte[] docx = DocxFixtures.docx(Map.of("word/document.xml", DocxFixtures.body(""), "word/styles.xml", styles));
+
+        String after = new String(parts(DocxTamper.inFont("Courier New").applyTo(docx)).get("word/styles.xml"),
+                StandardCharsets.UTF_8);
+
+        assertThat(after).doesNotContain("Theme").doesNotContain("Calibri")
+                .contains("<w:rFonts w:ascii=\"Courier New\" w:hAnsi=\"Courier New\" w:eastAsia=\"Courier New\" "
+                          + "w:cs=\"Courier New\"/>")
+                .contains("<w:lang w:val=\"en-GB\" w:eastAsia=\"zh-CN\"/>");
+    }
+
+    @Test
+    void theUnchangedCopyIsHeldAsTheControlAndTheChangesAsChanges(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir)
+            throws Exception {
+        java.nio.file.Path engine = dir.resolve("engine.pdf");
+        DocxCorpusDocument document = DocxFidelityCorpusTest.corpus().stream()
+                .filter(each -> each.stem().equals(DocxFidelityCorpusTest.TAMPERED_SOURCE)).findFirst().orElseThrow();
+        try (DocumentSession session = DocxFidelityCorpusTest.composed(document)) {
+            java.nio.file.Files.write(engine, session.toPdfBytes());
+        }
+        FidelityMeasurement page = FidelityMeasurement.of(DocxFidelityCorpusTest.TAMPERED_SOURCE, engine, engine);
+        // Every copy set exactly as the page: the unchanged one passes, and no change is caught.
+        for (DocxTamper tamper : DocxFidelityCorpusTest.converted()) {
+            java.nio.file.Files.copy(engine, dir.resolve(DocxFidelityCorpusTest.tamperedStem(tamper) + ".pdf"));
+        }
+
+        assertThat(DocxFidelityCorpusTest.letThrough(page, engine, dir))
+                .containsExactlyElementsOf(DocxFidelityCorpusTest.tampers().stream()
+                        .map(tamper -> tamper.name() + ": the gate let it through").toList());
+
+        // The unchanged copy set as another document: it vouches for nothing.
+        try (DocumentSession other = DocxFidelityCorpusTest.composed(DocxFidelityCorpusTest.corpus().get(0))) {
+            java.nio.file.Files.write(dir.resolve(DocxFidelityCorpusTest.TAMPERED_SOURCE + "--unchanged.pdf"),
+                    other.toPdfBytes());
+        }
+        assertThat(DocxFidelityCorpusTest.letThrough(page, engine, dir))
+                .first().asString().startsWith("unchanged: converted with the changes");
     }
 
     @Test
@@ -290,17 +335,34 @@ class DocxTamperTest {
         return DocxTamper.children(xml, DocxTamper.body(xml), Set.of("w:tbl")).size();
     }
 
-    /** Every font a {@code w:rFonts} of a {@code word/} part names, the part it is in first. */
+    private static final Pattern R_FONTS = Pattern.compile("<w:rFonts\\b[^>]*>");
+
+    /** How many {@code w:rFonts} each {@code word/} part holds, by part. */
+    private static Map<String, Integer> rFonts(Map<String, byte[]> parts) {
+        Map<String, Integer> counts = new java.util.TreeMap<>();
+        for (String name : parts.keySet()) {
+            if (name.startsWith("word/") && name.endsWith(".xml")) {
+                counts.put(name, (int) R_FONTS.matcher(new String(parts.get(name), StandardCharsets.UTF_8))
+                        .results().count());
+            }
+        }
+        return counts;
+    }
+
+    /** Every font, theme fonts included, a {@code w:rFonts} of a {@code word/} part names. */
     private static List<String> fonts(Map<String, byte[]> parts) {
-        Pattern font = Pattern.compile("w:(?:ascii|hAnsi|cs|eastAsia)=\"([^\"]+)\"");
+        Pattern font = Pattern.compile("w:(?:ascii|hAnsi|cs|eastAsia)(?:Theme)?=\"([^\"]+)\"");
         List<String> fonts = new java.util.ArrayList<>();
         for (String name : parts.keySet()) {
             if (!name.startsWith("word/") || !name.endsWith(".xml")) {
                 continue;
             }
-            Matcher names = font.matcher(new String(parts.get(name), StandardCharsets.UTF_8));
-            while (names.find()) {
-                fonts.add(names.group(1));
+            Matcher elements = R_FONTS.matcher(new String(parts.get(name), StandardCharsets.UTF_8));
+            while (elements.find()) {
+                Matcher names = font.matcher(elements.group());
+                while (names.find()) {
+                    fonts.add(names.group(1));
+                }
             }
         }
         return fonts;

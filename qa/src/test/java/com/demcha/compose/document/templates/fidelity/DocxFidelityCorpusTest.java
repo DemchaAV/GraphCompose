@@ -163,7 +163,14 @@ class DocxFidelityCorpusTest {
             assertThat(letThrough(source, sourcePdf, editorTampered)).as(LET_THROUGH, editorTampered).isEmpty();
             return;
         }
-        List<String> letThrough = letThrough(source, sourcePdf, editorTampered);
+        // Measured where a failure to read one of them is reported with the baseline's, not in its place.
+        List<String> letThrough;
+        try {
+            letThrough = letThrough(source, sourcePdf, editorTampered);
+        } catch (java.io.IOException | RuntimeException unreadable) {
+            letThrough = List.of("the changed documents could not be measured: " + unreadable);
+        }
+        List<String> changes = letThrough;
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(divergences)
                     .as("documents standing apart from %s, whichever way they moved: a change that moves "
@@ -171,7 +178,7 @@ class DocxFidelityCorpusTest {
                         + "-Dgraphcompose.docxFidelity.update=true, so its diff shows what moved (measured: %s)",
                             baseline, work.resolve("measured-" + mode + ".tsv"))
                     .isEmpty();
-            softly.assertThat(letThrough).as(LET_THROUGH, editorTampered).isEmpty();
+            softly.assertThat(changes).as(LET_THROUGH, editorTampered).isEmpty();
         });
     }
 

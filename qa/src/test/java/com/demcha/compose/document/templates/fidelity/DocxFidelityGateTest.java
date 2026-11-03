@@ -585,8 +585,10 @@ class DocxFidelityGateTest {
     void aLineMeasuredBeforeAcrossIsHeldDownAlone() {
         Map<String, FidelityMeasurement.Found> lines = found(10, 0, 0);
         lines.put("line0", new FidelityMeasurement.Found(0, "old", 0.1, Double.NaN));
+        lines.put("line1", new FidelityMeasurement.Found(0, "old, low", 3, Double.NaN));
 
-        assertThat(FidelityAcceptance.far(accepted("cv-a", 1, 10, lines, 0))).isZero();
+        assertThat(FidelityAcceptance.far(accepted("cv-a", 1, 10, lines, 0))).as("the low one, by its drift down")
+                .isEqualTo(1);
     }
 
     @Test

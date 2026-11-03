@@ -539,7 +539,7 @@ class DocxRuleTest {
         // Only a drawing that reaches Word as a rule has a paragraph to hold a bookmark
         // (blockAnchorOf), so the builder has to carry the anchor for a link or a page reference to
         // have anything to point at — it used to drop it, and a thin addShape box was the only
-        // way to get a bookmarked rule.
+        // way to get a bookmarked rule from a box.
         try (XWPFDocument document = export(page -> page
                 .addDivider(d -> d.name("Seam").width(200).thickness(2).color(ACCENT).anchor("seam")))) {
             assertThat(document.getParagraphs().get(0).getCTP().getBookmarkStartList())

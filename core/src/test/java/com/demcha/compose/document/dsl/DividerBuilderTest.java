@@ -89,6 +89,21 @@ class DividerBuilderTest {
     }
 
     @Test
+    void aDividerDropsASolidPaintTooAndKeepsTheColourItWasGiven() {
+        // A solid paint would still be a rule's colour, but the builder takes a divider's colour
+        // from color(...) alone, so a paint of any kind is dropped, not only a gradient.
+        ShapeNode divider = (ShapeNode) new SectionBuilder()
+                .addDivider(d -> {
+                    d.name("Seam").width(200).thickness(2).color(INK);
+                    d.fill(DocumentPaint.solid(DocumentColor.WHITE));
+                })
+                .build().children().get(0);
+
+        assertThat(divider.fillPaint()).isNull();
+        assertThat(divider.fillColor().color()).isEqualTo(INK.color());
+    }
+
+    @Test
     void aBoxOfAColourOfTheSameShapeCarriesNoSignal() {
         ShapeNode swatch = new ShapeBuilder().name("Swatch").size(200, 2).fillColor(INK).build();
 

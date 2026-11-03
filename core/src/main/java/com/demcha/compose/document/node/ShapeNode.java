@@ -38,7 +38,8 @@ import java.awt.*;
  *                        pagination do not read it. It is there for a backend that
  *                        has a rule of its own and must know which box asked to be
  *                        one — the DOCX export writes a divider in the flow that
- *                        is only a fill and no taller than Word's thickest border
+ *                        is only a fill — no stroke or gradient, square corners,
+ *                        no transform — and no taller than Word's thickest border
  *                        as Word's horizontal rule, a bordered paragraph that flows
  *                        with the text, and leaves any other box of the same size
  *                        to its drawing path, which draws it where the page puts it

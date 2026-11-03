@@ -44,12 +44,12 @@ can be asked. Drawing
 nodes are a different case: `ShapeNode`, `LineNode`, `EllipseNode`,
 `PolygonNode` and `PathNode` all reach
 `DocxSemanticBackend.writeNode`. A horizontal `LineNode`, or a `ShapeNode` built as a
-divider in the flow that is only a fill, with no stroke, and no taller than Word's
-thickest border, is written as a rule, and a
+divider in the flow that is only a fill — no stroke or gradient, square corners, no
+transform — and no taller than Word's thickest border, is written as a rule, and a
 `ShapeNode` written so is named in the
 report (a box in the tree is a line in the file) while a `LineNode` is not; any other rectangle, rounded rectangle,
-ellipse, line, polygon or path is drawn from the fragments the layout placed
-it as, a floating DrawingML shape behind the text, anchored in a paragraph the nearest block holding it writes on its page — the one whose line it stands level with or below that places it at the smallest offset, the paragraph nearest it where that block writes none, the paragraph of the cell whose box holds it, by that same order, for what a composed cell draws — or else to the page (`DocxDrawings`, `DocxDrawingAnchors`,
+ellipse, line, polygon or path is drawn — or, where it cannot be, dropped with a
+note — from the fragments the layout placed it as, a floating DrawingML shape behind the text, anchored in a paragraph the nearest block holding it writes on its page — the one whose line it stands level with or below that places it at the smallest offset, the paragraph nearest it where that block writes none, the paragraph of the cell whose box holds it, by that same order, for what a composed cell draws — or else to the page (`DocxDrawings`, `DocxDrawingAnchors`,
 polygons and paths as custom geometry). Three writers offer a paragraph to be
 anchored in: a paragraph node's own, an item of a list the layout's items are
 matched to, and the one line two halves of a band share. A table's own cell text

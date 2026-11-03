@@ -123,8 +123,8 @@ public final class DividerBuilder extends ShapeBuilder {
      * <p>What this builder carries is the node's name, width, thickness, colour,
      * padding, margin, stroke, link, outline entry and anchor — a rule written as
      * Word's own holds its anchor's bookmark on its paragraph, so a divider the DSL
-     * builds can be the target of a link or a page reference. The inherited setters
-     * for a corner radius, a transform and a paint fill are dropped. The first two
+     * builds can be the target of a link or a page reference. What the inherited
+     * setters for a corner radius, a transform and a paint fill set is dropped. The first two
      * would stop the box being a rule at all, as a gradient paint would; a paint is
      * dropped whole, a solid one too, so a divider's colour is set with
      * {@code color(...)}. A divider that wants one of them is built from the node's

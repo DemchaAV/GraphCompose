@@ -16078,7 +16078,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>Only a box carrying the divider signal ({@code ShapeNode.divider()}, which the DSL's
      * divider builder sets) is written as a rule; any other box of the same size goes to the
-     * drawing path instead, and its own notes say what became of it there. A
+     * drawing path instead, and its own notes say what became of it there — or, composed in a
+     * table cell, its table's {@code cell drawing} note. A
      * {@link com.demcha.compose.document.node.LineNode} written as a rule is a line either way
      * and is not named for its form; what it loses is ({@link #reportWrittenWithout}). The
      * height the note speaks of is the guard's, {@link DocxRules#MAX_RULE_POINTS}. The note

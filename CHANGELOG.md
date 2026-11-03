@@ -37,7 +37,8 @@ follow semantic versioning; release dates are ISO 8601.
     713 of 728 to 714 of 732 — the four segments are four more drawings asked to follow, and one
     of them does, the other three being anchored in a paragraph 42.71pt above where they stand.
   - A divider written as a rule is still named in the export report at its own path. A box that is
-    not one is named by its drawing's own note, so neither form is silent. A box the export cannot
+    not one is named by its drawing's own note, or, composed in a table cell, by its table's
+    `cell drawing` note, so neither form is silent. A box the export cannot
     draw at all — no layout behind it, a page zone, painted only with a gradient or with nothing —
     is dropped and named, as any other drawing is.
   - **Migration.** Code that relied on a thin `addShape` box becoming Word's editable rule asks

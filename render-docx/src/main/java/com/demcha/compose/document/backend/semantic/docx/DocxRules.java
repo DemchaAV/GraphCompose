@@ -35,7 +35,7 @@ import java.util.List;
  * divider's equal in the tree, and were written as a rule with it until the signal told them
  * apart. The backend writes a box as a rule only outside every layer stack, canvas and shape
  * container — a stack of one layer, which lays nothing over anything, lets only a line
- * through — so a divider inside one is drawn too.</p>
+ * through — so a divider inside one goes to the drawing path too.</p>
  */
 final class DocxRules {
 

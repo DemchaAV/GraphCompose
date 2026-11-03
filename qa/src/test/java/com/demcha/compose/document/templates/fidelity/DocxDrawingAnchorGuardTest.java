@@ -177,7 +177,7 @@ class DocxDrawingAnchorGuardTest {
      * go missing in: a document that stops painting a drawing altogether is not this guard's
      * subject, but a reader that stops seeing them is exactly what the floor is here to catch.</p>
      */
-    private static final int AT_LEAST_THIS_MANY_DRAWINGS = 750;
+    private static final int AT_LEAST_THIS_MANY_DRAWINGS = 762;
 
     /**
      * How many page fills the corpus holds, as a floor, each of which must come back placed from

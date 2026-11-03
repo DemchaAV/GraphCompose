@@ -67,9 +67,8 @@ import static com.demcha.compose.document.style.DocumentRowColumn.weight;
  * number of the pages, paragraphs set right to left, a table of contents with links, and long
  * free text. Where the export writes a form in another, or drops part of it, its report names it;
  * the gate holds where each editor sets the lines round it. No two paragraphs of a document open
- * on the same two sentences ({@link #prose}). Two of these hold lines a line low in both editors on a
- * later page:
- * see {@link #sidebarOverPages} and {@link #longFreeText}.</p>
+ * on the same two sentences ({@link #prose}). Two of these hold a later page's lines a line or two
+ * low in both editors: see {@link #sidebarOverPages} and {@link #longFreeText}.</p>
  */
 final class SyntheticDocxCorpus {
 

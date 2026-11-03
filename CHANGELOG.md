@@ -4670,7 +4670,7 @@ follow semantic versioning; release dates are ISO 8601.
     free text. No two paragraphs of a document open on the same two sentences, so that lines of the
     same letters on a page, which the gate pairs each with the editor's nearest, stay few.
   - Their rows are added to the Word, LibreOffice Windows and LibreOffice Linux baselines,
-    measured on Word 16.0.20527, LibreOffice build bf6ef2662401 and CI's LibreOffice 24.2; no
+    measured on Word 16.0.20527, LibreOffice 26.8 (build bf6ef2662401) and CI's LibreOffice 24.2; no
     other row of any of them changes.
   - Down the page, nine of the eleven stand within 0.11pt of the page's lines in both editors,
     at the median and nine lines in ten. Across it, both editors set the Arabic paragraph's two
@@ -4682,11 +4682,13 @@ follow semantic versioning; release dates are ISO 8601.
     - the footers' lines holding a page number, which the export writes as one line of Word's
       footer;
     - the Hebrew line mixing in Latin and numbers, in both editors;
+    - the lines the editors carry onto another page than the page's, in the two documents below;
     - in Word, the nested table's row reading "Build" and "12 500", whose text Word's PDF holds
       but not as the page's two lines.
-  - In the other two the page sets a paragraph's last line alone at the top of a page, or its
-    first line alone at the foot of one, and Word and LibreOffice each carry a line over the
-    break, so that no line of a paragraph stands alone there. In the column-painted document that
+  - In the column-painted document and the free text, the two not within 0.11pt, the page sets
+    a paragraph's last line alone at the top of a page, or its first line alone at the foot of
+    one, and Word and LibreOffice each carry a line over the break, so that no line of a
+    paragraph stands alone there. In the column-painted document that
     runs page 2 a line long and leaves a paragraph's first line alone at its foot, which they
     carry over too: its page 2 stands one line low and page 3 two. The free text's page 5 stands
     one line low. The export writes no `w:widowControl`, and Word reads widow control as on for

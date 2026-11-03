@@ -354,10 +354,10 @@ Choose the smallest tests that match the change:
   set at other words, a line found that the baseline does not hold, another number of pages
   from the editor, or another number of pages or lines from the engine fails it. A line is
   read as the page's clip shows it: a glyph standing outside the clip it is drawn under is not
-  read, since a PDF keeps the text it clips — Word writes every line of a table row held to an exact height
-  its text does not fit, and the end of a line it runs past its cell, and clips them away. Text
-  drawn invisible, or painted over, is still read. It needs
-  LibreOffice and runs only when asked for — install first, as for any standalone `qa` run:
+  read, since a PDF keeps the text it clips — Word writes every line of a table row held to an
+  exact height its text does not fit, and the end of a line it runs past its cell, and clips
+  them away. Text drawn invisible, or painted over, is still read. It needs LibreOffice and
+  runs only when asked for — install first, as for any standalone `qa` run:
   `./mvnw -B -ntp test -f qa/pom.xml -Dtest=DocxFidelityCorpusTest -Dgraphcompose.docxFidelity=libreoffice`.
   A change that moves documents, nearer the page included, rewrites the baseline with
   `-Dgraphcompose.docxFidelity.update=true`, and commits it with the change: its diff shows
@@ -416,10 +416,10 @@ Choose the smallest tests that match the change:
   measurement of the document it was changed from, fails on every one, and on lost lines or
   another page count where the change costs them — a card held short of its text costs the
   lines it clips (`DocxTamper`). A copy of each document left unchanged is converted with them
-  and must stand where the corpus's conversion set it, within the gate's half-point slack. They are
-  written to `qa/target/docx-fidelity/tampered` and
-  converted into `<editor>-tampered` beside it, LibreOffice logging to
-  `libreoffice-tampered.log`; `word-fidelity.ps1` converts them too.
+  and must stand where the corpus's conversion set it, within the gate's half-point slack.
+  They are written to `qa/target/docx-fidelity/tampered` and converted into `<editor>-tampered`
+  beside it, LibreOffice logging to `libreoffice-tampered.log`; `word-fidelity.ps1` converts
+  them too.
   The corpus also answers for how a document edits in Word.
   `scripts/docx-visual/edit-protocol-corpus.ps1` runs over the DOCX that
   `-Dgraphcompose.docxFidelity=export` leaves in `qa/target/docx-fidelity/engine`. For each

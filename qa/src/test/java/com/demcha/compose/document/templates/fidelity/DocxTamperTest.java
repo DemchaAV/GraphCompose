@@ -59,10 +59,10 @@ class DocxTamperTest {
                 "invoice-luma_studio--exact-card-height");
         for (DocxFidelityCorpusTest.Change change : DocxFidelityCorpusTest.tampers()) {
             DocxTamper tamper = change.tamper();
-            byte[] source = SOURCES.get(change.source());
-            byte[] changed = tamper.applyTo(source);
-            assertThat(changed).as(change.stem()).isNotEqualTo(source);
-            assertThat(tamper.applyTo(source)).as("%s, made again", change.stem()).isEqualTo(changed);
+            byte[] docx = SOURCES.get(change.source());
+            byte[] changed = tamper.applyTo(docx);
+            assertThat(changed).as(change.stem()).isNotEqualTo(docx);
+            assertThat(tamper.applyTo(docx)).as("%s, made again", change.stem()).isEqualTo(changed);
             Map<String, byte[]> parts = parts(changed);
             for (Map.Entry<String, byte[]> part : parts.entrySet()) {
                 if (part.getKey().endsWith(".xml") || part.getKey().endsWith(".rels")) {
@@ -71,7 +71,7 @@ class DocxTamperTest {
                     factory.newDocumentBuilder().parse(new ByteArrayInputStream(part.getValue()));
                 }
             }
-            assertThat(parts.keySet()).as(change.stem()).containsAll(parts(source).keySet());
+            assertThat(parts.keySet()).as(change.stem()).containsAll(parts(docx).keySet());
         }
     }
 
@@ -107,8 +107,9 @@ class DocxTamperTest {
         assertThat(card).as("the body element holding the notes").isNotNegative();
         assertThat(before.substring(children.get(card)[0], children.get(card)[0] + 7)).isEqualTo("<w:tbl>");
         assertThat(children.subList(card + 1, children.size()))
-                .as("what follows the card in the body").isNotEmpty()
-                .allSatisfy(span -> assertThat(DocxTamper.letters(before.substring(span[0], span[1]))).isBlank());
+                .as("what follows the card in the body: one paragraph, empty").singleElement()
+                .satisfies(span -> assertThat(before.substring(span[0], span[1])).startsWith("<w:p")
+                        .satisfies(paragraph -> assertThat(DocxTamper.letters(paragraph)).isEmpty()));
         assertThat(held.costs()).isEqualTo(DocxTamper.Cost.LOST_LINES);
         // The card's own row is held, and nothing outside it changes.
         int[] table = children.get(card);

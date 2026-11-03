@@ -85,7 +85,7 @@ final class PdfLines {
         private double lastEnd = Double.NaN;
         private double lastX = Double.NaN;
         private List<Boolean> shown = List.of();
-        private int glyph;
+        private int drawn;
 
         private Collector() throws IOException {
         }
@@ -97,7 +97,7 @@ final class PdfLines {
             Shown visibility = new Shown(pdPage);
             visibility.processPage(pdPage);
             shown = visibility.shown;
-            glyph = 0;
+            drawn = 0;
             super.startPage(pdPage);
         }
 
@@ -105,8 +105,8 @@ final class PdfLines {
         protected void endPage(PDPage pdPage) throws IOException {
             // Both readings walk the page's content in the order it draws; a count that differs
             // means they did not see the same glyphs, and none of the visibility read can be trusted.
-            if (glyph != shown.size()) {
-                throw new IllegalStateException("page " + (page + 1) + ": the text read " + glyph
+            if (drawn != shown.size()) {
+                throw new IllegalStateException("page " + (page + 1) + ": the text read " + drawn
                                                 + " glyphs where the page draws " + shown.size());
             }
             super.endPage(pdPage);
@@ -114,11 +114,11 @@ final class PdfLines {
 
         @Override
         protected void showGlyph(Matrix trm, PDFont font, int code, Vector displacement) throws IOException {
-            if (glyph >= shown.size()) {
+            if (drawn >= shown.size()) {
                 throw new IllegalStateException("page " + (page + 1) + ": the text read more glyphs than the page "
                                                 + "draws (" + shown.size() + ")");
             }
-            if (shown.get(glyph++)) {
+            if (shown.get(drawn++)) {
                 super.showGlyph(trm, font, code, displacement);
             }
         }

@@ -4675,13 +4675,15 @@ follow semantic versioning; release dates are ISO 8601.
     one line in each of `cv-engineering_resume` and `cv-timeline_minimal`, which Word runs past
     its cell's right edge, at 575pt and 573.5pt on a 595pt page, and clips there; and two lines
     of `synthetic-clipped_container`, whose container clips them on the engine's own page too.
-    LibreOffice 26.8 on Windows clips the same two CV lines.
+    LibreOffice 26.8 on Windows clips the same two CV lines; CI's LibreOffice 24.2 on Linux sets
+    them whole.
   - The baselines change for those three documents alone: each CV loses that line, which the
-    gate had found at the place of its first letter, and the container's page draws 8 lines
-    where it drew 10. In the Word baseline that is four rows taken out, every other line of the
+    gate had found at the place of its first letter, and the gate reads 8 lines of the
+    container's page where it read 10, the page's own clip hiding two. In the Word baseline that is four rows taken out, every other line of the
     three standing where it stood. The Windows LibreOffice baseline takes the three documents'
     rows from a run on the build it names and keeps the rest, stale as they are; the CVs' other
-    lines stand within 0.41pt of the rows they replace. The Linux baseline is taken from CI.
+    lines stand within 0.41pt of the rows they replace. The Linux baseline changes in the container's count of lines alone, taken
+    from CI's run of this change.
   - `invoice-luma_studio` is changed too: its notes card, the last thing in its body that
     holds text, held to exactly 22.5pt. Nothing below it moves when it shrinks, so the gate can
     fail on it only through the card's own lines — and with the whole text read, it passed in
@@ -4690,7 +4692,7 @@ follow semantic versioning; release dates are ISO 8601.
   - A card's row held short of its text must now cost lines, not only move what follows it.
     Word 16.0.20527 and LibreOffice 26.8 on Windows each lose 9 lines of `invoice-modern`'s
     card, which Word had only shown by the closing paragraph below it moving up 65.9pt, and 18
-    of `invoice-luma_studio`'s.
+    of `invoice-luma_studio`'s; CI's LibreOffice 24.2 on Linux loses 9 and 17.
   - The acceptance report counts what is shown too: Word still passes 70 of the 82 documents,
     and LibreOffice 26.8 on Windows 59 where it passed 58, `synthetic-clipped_container` now
     finding every line its page shows.

@@ -1,9 +1,11 @@
 package com.demcha.compose.document.dsl;
 
+import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentTransform;
 import org.junit.jupiter.api.Test;
 
@@ -56,16 +58,18 @@ class DividerBuilderTest {
     @Test
     void aDividerCarriesWhatARuleCanHoldAndDropsWhatWouldStopItBeingOne() {
         // A rule written as Word's own is a bordered paragraph, and a paragraph holds a bookmark,
-        // so an anchor, a link and a bookmark reach the node and have something to point at. A
-        // corner radius, a paint fill and a transform are each a reason the box would not be a
-        // rule at all, so the builder drops them rather than quietly turning its divider into a
-        // drawing.
+        // so an anchor reaches the node and has something to point at; its link and its outline
+        // entry reach it too. A corner radius, a paint fill and a transform are each a reason the
+        // box would not be a rule at all, so the builder drops them rather than quietly turning
+        // its divider into a drawing.
         ShapeNode divider = (ShapeNode) new SectionBuilder()
                 .addDivider(d -> {
                     d.name("Seam").width(200).thickness(2).color(INK);
                     d.anchor("seam");
                     d.linkTo("elsewhere");
+                    d.bookmark(new DocumentBookmarkOptions("Seam"));
                     d.cornerRadius(DocumentCornerRadius.of(3));
+                    d.fill(DocumentPaint.linear(INK, DocumentColor.WHITE));
                     d.transform(DocumentTransform.rotate(10));
                 })
                 .build().children().get(0);
@@ -73,8 +77,10 @@ class DividerBuilderTest {
         assertThat(divider.divider()).isTrue();
         assertThat(divider.anchor()).isEqualTo("seam");
         assertThat(divider.linkTarget()).isNotNull();
+        assertThat(divider.bookmarkOptions()).isEqualTo(new DocumentBookmarkOptions("Seam"));
         assertThat(divider.cornerRadius()).as("dropped: a rounded box is no rule")
                 .isEqualTo(DocumentCornerRadius.ZERO);
+        assertThat(divider.fillPaint()).as("dropped: a gradient box is no rule").isNull();
         assertThat(divider.transform()).as("dropped: a transformed box is no rule")
                 .isEqualTo(DocumentTransform.NONE);
     }

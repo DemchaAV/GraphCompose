@@ -540,7 +540,8 @@ class DocxNodeFieldLedgerTest {
                 "divider:WRITTEN:which Word object the box becomes — a divider in the flow, only a "
                 + "fill and no taller than Word's thickest border, is the bordered paragraph that "
                 + "is Word's own rule; one thicker than that border, stroked wide enough to draw, "
-                + "rounded or transformed, one over another layer of a stack, and any box of a "
+                + "rounded or transformed, one inside a layer stack — of one layer too —, a "
+                + "canvas or a shape container, and any box of a "
                 + "colour that is no divider, a drawing; one of no fill at all, or painted only "
                 + "with a gradient, dropped; " + DRAWING_DROPPED);
         node(SpacerNode.class, "name:INERT", "width:WRITTEN",

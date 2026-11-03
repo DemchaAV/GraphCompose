@@ -115,8 +115,10 @@ public final class DividerBuilder extends ShapeBuilder {
      * differently for the signal. It says only that this box asked to be a rule,
      * which no geometry of the box tells: a divider's thickness is its height and
      * it carries a fill, exactly as a swatch of the same size does. A backend with
-     * a rule of its own reads it, and the DOCX export writes a divider as Word's
-     * horizontal rule where it writes any other box of that size as a drawing.</p>
+     * a rule of its own reads it: the DOCX export writes a divider in the flow, only a
+     * fill and no taller than Word's thickest border, as Word's horizontal rule, and
+     * leaves any other box of that size to its drawing path, which draws it where the
+     * page puts it or drops it with a note.</p>
      *
      * <p>What this builder carries is the node's name, width, thickness, colour,
      * padding, margin, stroke, link, outline entry and anchor — a rule written as

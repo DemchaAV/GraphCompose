@@ -1541,9 +1541,10 @@ twice. Three limits:
   that did not ask to be a divider goes to the drawing path however thin it is — drawn where
   the page puts it, or dropped with a note where the export cannot draw it — so a
   plate, a swatch and a brand strip's segment keep their own place on the page instead of
-  becoming a paragraph a reader moves or deletes as a line of text. A divider laid over another
-  layer of a stack is drawn too, as any other drawing there is, and one of no fill at all is
-  dropped. A divider written as a
+  becoming a paragraph a reader moves or deletes as a line of text. A divider inside a layer stack —
+  one of a single layer too, which lets only a line through —, a canvas or a shape container
+  is drawn too, as any other drawing there is, and one of no fill at all, or painted only
+  with a gradient, is dropped. A divider written as a
   rule is named in the report, at its own path, since a box in the tree is a line in the
   file; a `LineNode` written as a rule is not named for its form.
 - A rule in a page zone is not written, as a zone takes paragraphs, fields, spacers

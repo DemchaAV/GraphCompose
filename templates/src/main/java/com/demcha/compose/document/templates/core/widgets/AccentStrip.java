@@ -24,8 +24,8 @@ import java.util.Objects;
  * are made. In the DOCX export that means a strip goes the way every
  * drawing goes: drawn where the page puts it, keeping its own place, or
  * dropped with a note where that export cannot draw it. {@link Divider}'s
- * rules, of a thickness Word's border can hold, are written as Word's own
- * horizontal rule instead and flow with the text, so a preset that wants
+ * rules in the flow, of a thickness Word's border can hold, are written as
+ * Word's own horizontal rule instead and flow with the text, so a preset that wants
  * the flowing kind asks {@link Divider} for it.</p>
  *
  * <p>This class is a stateless utility — all factories are static and

@@ -615,6 +615,69 @@ class DocxRuleTest {
                 com.demcha.compose.document.style.DocumentTransform.NONE, paint, null, true);
     }
 
+    /** A divider of a fill colour, with what no builder gives one: corners or a transform. */
+    private static com.demcha.compose.document.node.ShapeNode shapedDivider(
+            DocumentCornerRadius radius, com.demcha.compose.document.style.DocumentTransform transform) {
+        return new com.demcha.compose.document.node.ShapeNode("Divider", 100, 2, ACCENT, null, radius,
+                null, null, DocumentInsets.zero(), DocumentInsets.zero(), transform, null, null, true);
+    }
+
+    private static void assertNoRule(XWPFDocument document) {
+        assertThat(document.getParagraphs()).as("no paragraph carries a border for it")
+                .allSatisfy(paragraph -> assertThat(paragraph.getCTP().getPPr())
+                        .matches(properties -> properties == null || properties.getPBdr() == null));
+    }
+
+    @Test
+    void aRoundedDividerIsDrawnRatherThanWrittenAsARule() throws Exception {
+        // Word's rule is a border, square at its ends, so the signal does not make a rounded box
+        // one: it keeps its corners as a drawing.
+        try (XWPFDocument document = export(page -> page.add(shapedDivider(DocumentCornerRadius.of(1),
+                com.demcha.compose.document.style.DocumentTransform.NONE)))) {
+            assertNoRule(document);
+            assertThat(anchoredShapes(document)).containsExactly("roundRect");
+        }
+    }
+
+    @Test
+    void aTurnedDividerIsDrawnRatherThanWrittenAsARule() throws Exception {
+        // A border cannot turn, so a transformed divider goes to the drawing path, which names
+        // the transform it does not carry.
+        try (XWPFDocument document = export(page -> page.add(shapedDivider(DocumentCornerRadius.ZERO,
+                com.demcha.compose.document.style.DocumentTransform.rotate(10))))) {
+            assertNoRule(document);
+            assertThat(anchoredShapes(document)).containsExactly("rect");
+        }
+    }
+
+    @Test
+    void aDividerPaintedOnlyWithAGradientIsDroppedAndNamed() throws Exception {
+        // A rule is one colour and a gradient is not (solidFillOf), so such a divider is no rule;
+        // the drawing path does not draw a gradient either, and the report names the drop.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument document = withReport(report, page -> page.add(paintedDivider(
+                com.demcha.compose.document.style.DocumentPaint.linear(ACCENT, DocumentColor.WHITE))))) {
+            assertNoRule(document);
+            assertThat(document.getDocument().xmlText()).doesNotContain("<wp:anchor");
+            assertThat(report.get().bySubject().get("ShapeNode")).isNotNull()
+                    .anySatisfy(note -> assertThat(note.detail()).contains("painted only with a gradient"));
+        }
+    }
+
+    @Test
+    void aDividerInALayerStackOfOneLayerStaysDrawing() throws Exception {
+        // A stack of one layer lays nothing over anything, yet only a line in it is a rule
+        // (inTheFlow); a divider there is drawn, as any other box in a stack is.
+        try (XWPFDocument document = export(page -> page.addLayerStack(stack -> stack.layer(
+                new SectionBuilder().name("Meta")
+                        .addParagraph(p -> p.text("Issue date"))
+                        .addDivider(d -> d.name("Seam").width(100).thickness(2).color(ACCENT))
+                        .build())))) {
+            assertNoRule(document);
+            assertThat(anchoredShapes(document)).containsExactly("rect");
+        }
+    }
+
     @Test
     void aLinkOnARuleIsReportedAsNotCarried() throws Exception {
         AtomicReference<DocxExportReport> report = new AtomicReference<>();

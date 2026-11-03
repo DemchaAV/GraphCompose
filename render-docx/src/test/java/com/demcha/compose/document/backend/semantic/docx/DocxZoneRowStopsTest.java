@@ -61,7 +61,8 @@ class DocxZoneRowStopsTest {
         // The page sets a field in a box as wide as its number and a point, at its column's start,
         // and aligns the number within that box only: on a page where the number is wider, the
         // box grows to the right. Measured over twelve pages in Word, a right stop at the first
-        // page's end set "10" 4.4pt left of the page; a left stop at its start holds it.
+        // page's end set "10" 4.4pt left of the page; a left stop at its start holds it: its
+        // column's start, 118pt in, and the point the number stands right of it in its box.
         Footer footer = footer(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line").spacing(8)
                 .addParagraph(p -> p.text("Kept blocks").textStyle(CHROME))
                 .add(new com.demcha.compose.document.node.PageFieldNode("Number",
@@ -69,7 +70,7 @@ class DocxZoneRowStopsTest {
                         DocumentInsets.zero(), DocumentInsets.zero()))
                 .build()));
 
-        assertThat(footer.stops()).singleElement().asString().startsWith("left@");
+        assertThat(footer.stops()).containsExactly("left@" + twips(119));
     }
 
     @Test
@@ -122,15 +123,16 @@ class DocxZoneRowStopsTest {
 
     @Test
     void aRigidSpacerIsAGapNotACarryToTheRight() throws Exception {
-        // A spacer that does not grow sets what follows it a gap further on: held by its
-        // alignment, a left stop at its start, not by its end.
+        // A spacer that does not grow is a slot of the row like any other: the three children
+        // share the 228pt line in slots of 76pt, and "Acme", left-aligned in the third, is held
+        // by its start, 152pt in, not by its end.
         Footer footer = footer(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Confidential").textStyle(CHROME))
                 .addSpacer(10)
                 .addParagraph(p -> p.text("Acme").textStyle(CHROME))
                 .build()));
 
-        assertThat(footer.stops()).singleElement().asString().startsWith("left@");
+        assertThat(footer.stops()).containsExactly("left@" + twips(152));
         assertThat(footer.notes()).isEmpty();
     }
 
@@ -177,16 +179,64 @@ class DocxZoneRowStopsTest {
 
     @Test
     void aPartSetRightWhereTheOneBeforeItEndsFollowsItWithNoTab() throws Exception {
-        // The first ends at its column's end, 114pt in, and the second starts there: Word's tab
-        // goes to the first stop past the pen, so the second has none, and follows the first.
+        // A 48pt logo in a 48pt column, 20pt in, and the text after it in the next column: Word's
+        // tab goes to the first stop past the pen, so the text has none, and follows the logo.
+        byte[] logo = png(48, 12);
+        Footer footer = footer(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line").spacing(0)
+                .columns(DocumentRowColumn.fixed(20), DocumentRowColumn.fixed(48), DocumentRowColumn.weight(1))
+                .addParagraph(p -> p.text("A").textStyle(CHROME))
+                .addImage(image -> image.source(logo).size(48, 12))
+                .addParagraph(p -> p.text("Acme").textStyle(CHROME))
+                .build()));
+
+        assertThat(footer.stops()).containsExactly("left@" + twips(20));
+        assertThat(footer.runs()).containsExactly("A", "\t", "Acme");
+        assertThat(footer.notes()).isEmpty();
+    }
+
+    @Test
+    void aPartSetRightWhereAPartAtARightStopEndsIsNotHeldAtStops() throws Exception {
+        // The first ends at its column's end, 114pt in, and the second starts there. Word aligns
+        // all the text after a right stop's tab up to the next tab at that stop: "Acme" with no
+        // tab of its own would end there and carry "Confidential" its width left. The row is
+        // written as before, and the report names what stands off.
         Footer footer = footer(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line").spacing(0)
                 .addParagraph(p -> p.text("Confidential").textStyle(CHROME).align(TextAlign.RIGHT))
                 .addParagraph(p -> p.text("Acme").textStyle(CHROME))
                 .build()));
 
-        assertThat(footer.stops()).containsExactly("right@" + twips(114));
-        assertThat(footer.runs()).containsExactly("\t", "Confidential", "Acme");
-        assertThat(footer.notes()).isEmpty();
+        assertThat(footer.stops()).containsExactly("right@" + twips(228));
+        assertThat(footer.runs()).containsExactly("Confidential", "Acme");
+        assertThat(footer.notes()).containsExactly(
+                "a footer written as one line of Word's footer; 2 of its 2 parts stand off where the page sets them");
+    }
+
+    @Test
+    void aRowOfAutoColumnsOrAnotherArrangementHoldingAPageFieldIsNotHeldAtStops() throws Exception {
+        // An auto column is as wide as what it holds: a wider number widens it on the page, and
+        // moves what comes after it, or, in the last column, its own start. A centred row moves
+        // every part round a wider number.
+        for (DocumentPageZone zone : List.of(
+                DocumentPageZone.footer(30, page -> new RowBuilder().name("Line").spacing(4)
+                        .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1), DocumentRowColumn.auto())
+                        .addParagraph(p -> p.text("Confidential").textStyle(CHROME))
+                        .addParagraph(p -> p.text("Acme").textStyle(CHROME))
+                        .add(page.pageNumber(CHROME))
+                        .build()),
+                DocumentPageZone.footer(30, page -> new RowBuilder().name("Line").spacing(4)
+                        .arrangement(com.demcha.compose.document.node.RowArrangement.CENTER)
+                        .addParagraph(p -> p.text("Page").textStyle(CHROME))
+                        .add(page.pageNumber(CHROME))
+                        .addParagraph(p -> p.text("Acme").textStyle(CHROME))
+                        .build()))) {
+            assertThat(footer(zone).stops()).containsExactly("right@" + twips(228));
+        }
+        // Without a field, an auto column is as wide on every page: the row is held at stops.
+        assertThat(footer(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line").spacing(4)
+                .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1))
+                .addParagraph(p -> p.text("Confidential").textStyle(CHROME))
+                .addParagraph(p -> p.text("Acme").textStyle(CHROME))
+                .build())).stops()).singleElement().asString().startsWith("left@");
     }
 
     @Test
@@ -212,6 +262,13 @@ class DocxZoneRowStopsTest {
                 .addParagraph(p -> p.text("Kept blocks").textStyle(CHROME))
                 .addParagraph(p -> p.text("Page").textStyle(CHROME).align(align))
                 .build());
+    }
+
+    private static byte[] png(int width, int height) throws java.io.IOException {
+        java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(width, height,
+                java.awt.image.BufferedImage.TYPE_INT_RGB), "png", bytes);
+        return bytes.toByteArray();
     }
 
     private static long twips(double points) {

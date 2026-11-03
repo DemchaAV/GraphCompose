@@ -1875,17 +1875,18 @@ sets it (`w:tabs`), one tab before each part that does not start where the part 
 so a label and the page number beside it no longer read as one word ("Kept blocks1",
 "Page1of4"). A part is held by its own alignment in its column — a left stop at its start, a
 centre stop at its middle, a right stop at its end. A picture and a page field are held by their
-start: the page sets a field in a box as wide as its number, and grows the box to the right on a
-page where the number is wider. After a grow spacer a part is held by its end, a right stop.
+start: the page sets a field in a box as wide as its number and a point, and grows the box to the
+right on a page where the number is wider. After a grow spacer a part is held by its end, a right stop.
 Measured in Word 16.0.20527, LibreOffice 24.2 and LibreOffice 26.8 on the four documents of the
 fidelity corpus that set a row in a zone — two of a label beside a page number, "Page 1 of 4" in
 four columns, a logo beside a line of text — every part of the line stood within 0.1pt across of
 where the page sets it, where before most ran together and the text after the logo stood 8pt
 left, its gap lost; on rows over twelve pages, where the number reaches two digits, Word and
 LibreOffice 26.8 set every part within 0.2pt on every page. A row is not held at stops where a
-part of it takes more lines than one or the layout does not show one;
-nor where the row is sized to its content — a grow spacer, or an arrangement other than `START` —
-and a page field in it would move another part on a page where the number is wider: a field
+part of it takes more lines than one or the layout does not show one; nor where a part starts
+right where one held at a right or centre stop ends, since Word aligns all the text after such a
+tab, up to the next one, at its stop; nor where the row is sized to its content — a grow
+spacer, an arrangement other than `START` or an `auto()` column — and a page field in it would move another part on a page where the number is wider: a field
 anywhere but last before the row's one grow spacer or first after it. Then, as any other zone's
 line, Word sets the parts one after another from the page's left margin, and those after the
 first spacer against its right margin, at the right tab the line holds. The line has one

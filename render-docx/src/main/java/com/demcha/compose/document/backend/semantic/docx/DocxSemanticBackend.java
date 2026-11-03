@@ -3002,8 +3002,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>A zone is one band deep, so its children belong on one Word line rather
      * than stacked paragraphs: a row's children become runs in document order — a
      * picture an inline picture in its run — which is how a Word footer is built by
-     * hand anyway. A row held at tab stops ({@link #zoneStops}) stands each part at a stop
-     * where the page sets it; otherwise the parts follow one another, and a spacer becomes the
+     * hand anyway. A row held at tab stops ({@link #zoneStops}) stands each part where the page
+     * sets it, at a stop or right after the part before it; otherwise the parts follow one
+     * another, and a spacer becomes the
      * tab that carries the rest to the right margin.</p>
      *
      * <p>Where the layout shows its text or pictures, the line is exact and as tall as
@@ -3336,15 +3337,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * each right after the one before, and a label and a page number read as one word. So each
      * part stands at a stop where the page sets it: by its own alignment in its column — its
      * start, its middle or its end, a left, centre or right stop; a picture, and a page field,
-     * by its start, a left stop, since the page sets a field in a box as wide as its number and
-     * grows that box to the right on a page where the number is wider — and, after a grow
-     * spacer, by its end, a right stop, the spacer giving up the room a wider number takes.</p>
+     * by its start, a left stop, since the page sets a field in a box as wide as its number and a
+     * point, and grows that box to the right on a page where the number is wider — and, after a
+     * grow spacer, by its end, a right stop, the spacer giving up the room a wider number takes.</p>
      *
      * <p>Only a row the page sets on one line, each part as written and laid out on the page the
-     * zone is measured on, at least one set apart from where the part before it ends; and, in a
-     * row sized to its content, no part the page moves where a page
-     * field is wider ({@link #fieldsMoveNoPart}). Otherwise the parts follow one another, a
-     * flex spacer the tab to the right margin.</p>
+     * zone is measured on, at least one set apart from where the part before it ends, and none
+     * set right where a part held at a right or centre stop ends — Word aligns all the text up
+     * to the next tab at such a stop; and, in a row sized to its content — by its arrangement, a
+     * grow spacer or an auto column — no part the page moves where a page field is wider
+     * ({@link #fieldsMoveNoPart}). Otherwise the parts follow one another, a spacer the tab to
+     * the right margin.</p>
      *
      * @return each placed part's stop, none for one that follows the part before it; {@code null}
      *         where the row is not held at stops
@@ -3356,14 +3359,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!(content instanceof RowNode row) || Double.isNaN(canvasLeftMargin)) {
             return null;
         }
-        // A row sized to its content moves a part on a page where a page field before it on its
-        // side is wider; a stop does not move with it.
-        if ((row.arrangement() != RowArrangement.START || hasGrowChild(row)) && !fieldsMoveNoPart(row)) {
+        // A row sized to its content — by its arrangement, a grow spacer or a column as wide as
+        // what it holds — moves a part on a page where a page field is wider; a stop does not
+        // move with it.
+        boolean sizedToContent = row.arrangement() != RowArrangement.START || hasGrowChild(row)
+                                 || row.columns().stream().anyMatch(column -> column.type() == DocumentRowColumn.Type.AUTO);
+        if (sizedToContent && !fieldsMoveNoPart(row)) {
             return null;
         }
         java.util.Map<DocumentNode, ZoneStop> stops = new java.util.IdentityHashMap<>();
         boolean afterASpacer = false;
         double previousEnd = canvasLeftMargin;
+        // Whether the stop the last tab goes to is a right or centre one.
+        boolean aligningTheTextAfterIt = false;
         for (DocumentNode part : DocxZoneParts.of(content)) {
             if (part instanceof SpacerNode spacer) {
                 afterASpacer |= spacer.grow() > 0;
@@ -3393,9 +3401,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 case LEFT -> new ZoneStop(STTabJc.LEFT, line.start() - canvasLeftMargin);
             };
             // Set right where the part before it ends — at the left margin, the first — it follows
-            // it, with no tab: a tab goes to the first stop past the pen.
+            // it, with no tab: a tab goes to the first stop past the pen. After a part held at a
+            // right or centre stop it cannot: Word aligns all the text up to the next tab at
+            // that stop, and would move both.
             if (toTwips(line.start() - previousEnd) > 0) {
                 stops.put(part, stop);
+                aligningTheTextAfterIt = stop.kind() != STTabJc.LEFT;
+            } else if (aligningTheTextAfterIt) {
+                return null;
             }
             previousEnd = line.end();
         }
@@ -3407,8 +3420,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Whether no part of a row sized to its content moves as a page field in it is wider on a
      * page: a field is the last part before the row's one grow spacer, which takes up what it
      * grows by, or comes before every other part after it, which the spacer holds at the row's
-     * right end. A row of more grow spacers than one, or of another arrangement, shares out its
-     * leftover width among all its parts; any field there moves them.
+     * right end. A row of no grow spacer — sized by its arrangement or by columns as wide as what
+     * they hold — moves what is placed after a wider field, or round it; a row of more grow
+     * spacers than one shares its leftover width out among them, which moves the parts between
+     * them. Any field there moves a part.
      */
     private static boolean fieldsMoveNoPart(RowNode row) {
         boolean anyField = row.children().stream().anyMatch(PageFieldNode.class::isInstance);
@@ -3417,7 +3432,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         long growSpacers = row.children().stream()
                 .filter(child -> child instanceof SpacerNode spacer && spacer.grow() > 0).count();
-        if (row.arrangement() != RowArrangement.START || growSpacers != 1) {
+        if (growSpacers != 1) {
             return false;
         }
         boolean afterTheSpacer = false;

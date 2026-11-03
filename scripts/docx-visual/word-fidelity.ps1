@@ -22,7 +22,9 @@
     gate is there to fail on, with a copy of it left unchanged, to
     qa/target/docx-fidelity/tampered; Word converts those into
     qa/target/docx-fidelity/word-tampered, and the `word` run fails unless the
-    gate fails on every change and the unchanged copy shows no difference.
+    unchanged copy stands where the corpus's conversion set it, within the
+    gate's half-point slack, and the gate fails on every change, with the lines
+    or the page count lost where the change costs them.
 
     Run it from PowerShell (pwsh), not through powershell.exe under Git Bash: Word
     driven through COM from a process Git Bash started has stalled on its first

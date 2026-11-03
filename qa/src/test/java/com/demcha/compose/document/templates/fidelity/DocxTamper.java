@@ -25,9 +25,10 @@ import java.util.zip.ZipOutputStream;
  * ({@link DocxFidelityCorpusTest}), and requires it to fail. A change is made to the bytes, not
  * to the document the engine composes, so it is the gate that is tested, not the export.</p>
  *
- * <p>A change refuses a document it would leave as it was: one finding what it changes by the
- * letters it holds refuses a document where it finds none of it, or more than one, and the font
- * change refuses a document naming no other font. A change that silently changed nothing would
+ * <p>A change refuses a document it would leave as it was — {@link #unchanged()} aside, which is
+ * made to: one finding what it changes by the letters it holds refuses unless exactly one element
+ * directly in the body, or in the table, holds them, the row change refuses a row already held
+ * so, and the font change refuses a document naming no other font. A change that silently changed nothing would
  * leave the gate passing for want of anything to catch. The same DOCX changed the same way gives
  * the same bytes: Word converts outside the build and is measured only on a DOCX whose digest
  * matches the one this run makes ({@link WordConversion}), which a change stamped with the time
@@ -64,8 +65,8 @@ record DocxTamper(String name, Cost costs, Edit edit) {
 
     private static final Pattern TAG = Pattern.compile("<(/?)(w:[A-Za-z]+)\\b[^>]*?(/?)>");
     private static final Pattern TEXT = Pattern.compile("<w:t(?:\\s[^>]*)?>([^<]*)</w:t>");
-    /** A {@code w:rFonts} element; it holds attributes only. */
-    private static final Pattern FONTS = Pattern.compile("<w:rFonts\\b[^>]*/>");
+    /** A {@code w:rFonts} element, which holds attributes only, written empty or as a pair. */
+    private static final Pattern FONTS = Pattern.compile("<w:rFonts\\b[^>]*?/>|<w:rFonts\\b[^>]*>\\s*</w:rFonts>");
 
     /** The DOCX, changed. */
     byte[] applyTo(byte[] docx) throws IOException {
@@ -183,6 +184,10 @@ record DocxTamper(String name, Cost costs, Edit edit) {
                 own = own.endsWith("/>") ? "<w:trPr>" + height + "</w:trPr>" : own.replaceFirst(">", ">" + height);
                 written = xml.substring(row[0], trPr[0]) + own + xml.substring(trPr[1], row[1]);
             }
+            if (written.equals(xml.substring(row[0], row[1]))) {
+                throw new IllegalStateException("the row holding \"" + letters + "\" is already held to exactly "
+                                                + twips + " twips");
+            }
             put(parts, DOCUMENT, xml.substring(0, row[0]) + written + xml.substring(row[1]));
         });
     }
@@ -202,6 +207,10 @@ record DocxTamper(String name, Cost costs, Edit edit) {
                     "<Relationship Id=\"rIdTampered\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/"
                     + "relationships/image\" Target=\"media/tampered.png\"/></Relationships>"));
             String types = text(parts, CONTENT_TYPES);
+            if (!types.contains("Extension=\"png\"") && !types.contains("</Types>")) {
+                throw new IllegalStateException("the package's content types do not close, so the picture's "
+                                                + "could not be declared");
+            }
             if (!types.contains("Extension=\"png\"")) {
                 put(parts, CONTENT_TYPES, types.replace("</Types>",
                         "<Default Extension=\"png\" ContentType=\"image/png\"/></Types>"));

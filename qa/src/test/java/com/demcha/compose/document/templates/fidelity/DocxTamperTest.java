@@ -90,13 +90,15 @@ class DocxTamperTest {
     void aThemeFontIsTakenOutAndALanguageIsNotAFont() throws Exception {
         String styles = "<w:styles " + DocxFixtures.NAMESPACES + "><w:docDefaults><w:rPrDefault><w:rPr>"
                         + "<w:rFonts w:asciiTheme=\"minorHAnsi\" w:hAnsiTheme=\"minorHAnsi\" w:ascii=\"Calibri\"/>"
-                        + "<w:lang w:val=\"en-GB\" w:eastAsia=\"zh-CN\"/></w:rPr></w:rPrDefault></w:docDefaults></w:styles>";
+                        + "<w:lang w:val=\"en-GB\" w:eastAsia=\"zh-CN\"/></w:rPr></w:rPrDefault></w:docDefaults>"
+                        + "<w:style w:styleId=\"Code\"><w:rPr><w:rFonts w:ascii=\"Consolas\"></w:rFonts></w:rPr></w:style>"
+                        + "</w:styles>";
         byte[] docx = DocxFixtures.docx(Map.of("word/document.xml", DocxFixtures.body(""), "word/styles.xml", styles));
 
         String after = new String(parts(DocxTamper.inFont("Courier New").applyTo(docx)).get("word/styles.xml"),
                 StandardCharsets.UTF_8);
 
-        assertThat(after).doesNotContain("Theme").doesNotContain("Calibri")
+        assertThat(after).doesNotContain("Theme").doesNotContain("Calibri").doesNotContain("Consolas")
                 .contains("<w:rFonts w:ascii=\"Courier New\" w:hAnsi=\"Courier New\" w:eastAsia=\"Courier New\" "
                           + "w:cs=\"Courier New\"/>")
                 .contains("<w:lang w:val=\"en-GB\" w:eastAsia=\"zh-CN\"/>");
@@ -128,6 +130,54 @@ class DocxTamperTest {
         }
         assertThat(DocxFidelityCorpusTest.letThrough(page, engine, dir))
                 .first().asString().startsWith("unchanged: converted with the changes");
+    }
+
+    @Test
+    void everyPartKeepsTheTimeTheExportWroteIt() throws Exception {
+        Map<String, java.time.LocalDateTime> written = times(source);
+        for (DocxTamper tamper : DocxFidelityCorpusTest.converted()) {
+            Map<String, java.time.LocalDateTime> kept = times(tamper.applyTo(source));
+            written.forEach((name, time) -> assertThat(kept.get(name)).as("%s: %s", tamper.name(), name).isEqualTo(time));
+            kept.forEach((name, time) -> assertThat(time).as("%s: %s", tamper.name(), name)
+                    .isEqualTo(written.getOrDefault(name, written.get("word/document.xml"))));
+        }
+    }
+
+    @Test
+    void aPictureThatCannotBeRelatedOrDeclaredRefuses() throws Exception {
+        String table = "<w:tbl><w:tr><w:tc>" + DocxFixtures.paragraph("<w:r><w:t>Line item</w:t></w:r>")
+                       + "</w:tc></w:tr></w:tbl>";
+        Map<String, String> parts = new LinkedHashMap<>(Map.of("word/document.xml", DocxFixtures.body(table),
+                "word/_rels/document.xml.rels", "<Relationships>",
+                "[Content_Types].xml", "<Types></Types>"));
+
+        assertThatThrownBy(() -> DocxTamper.asPicture("Line item").applyTo(DocxFixtures.docx(parts)))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("relationships do not close");
+
+        parts.put("word/_rels/document.xml.rels", "<Relationships></Relationships>");
+        parts.put("[Content_Types].xml", "<Types>");
+        assertThatThrownBy(() -> DocxTamper.asPicture("Line item").applyTo(DocxFixtures.docx(parts)))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("content types do not close");
+    }
+
+    @Test
+    void changedDocumentsThatCannotBeMadeAreAnEntryNotAnException(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir) {
+        FidelityMeasurement page = measured(1, Map.of("0:a", line(0.1)));
+
+        // No source DOCX to change: making them fails, and the corpus's result must still be reported.
+        assertThat(DocxFidelityCorpusTest.changesLetThrough("libreoffice", dir, dir, page, null, null))
+                .singleElement().asString().startsWith("the changed documents could not be made, converted or measured");
+        // No record of Word's conversion of them.
+        assertThat(DocxFidelityCorpusTest.changesLetThrough("word", dir, dir, page, source, null))
+                .singleElement().asString().contains("no Word conversion recorded");
+    }
+
+    @Test
+    void aRowAlreadyHeldSoRefuses() throws Exception {
+        byte[] held = DocxTamper.withExactRowHeight("Please include the invoice number", 500).applyTo(source);
+
+        assertThatThrownBy(() -> DocxTamper.withExactRowHeight("Please include the invoice number", 500).applyTo(held))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("already held to exactly 500 twips");
     }
 
     @Test
@@ -310,6 +360,16 @@ class DocxTamperTest {
             }
         }
         return parts;
+    }
+
+    private static Map<String, java.time.LocalDateTime> times(byte[] docx) throws Exception {
+        Map<String, java.time.LocalDateTime> times = new LinkedHashMap<>();
+        try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(docx))) {
+            for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
+                times.put(entry.getName(), entry.getTimeLocal());
+            }
+        }
+        return times;
     }
 
     private static String body(byte[] docx) throws Exception {

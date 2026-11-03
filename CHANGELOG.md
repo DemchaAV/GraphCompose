@@ -4659,15 +4659,18 @@ follow semantic versioning; release dates are ISO 8601.
 - **The DOCX fidelity gate is fed a document changed after export in each way it is there to
   fail on, through the same editor and the same measurement as the corpus, and the run fails
   unless the gate fails on every one.**
-  - `invoice-modern`'s DOCX is changed five ways (`DocxTamper`): a paragraph taken out, every
-    `w:rFonts` set to Courier New for each script with no theme font left to outrank it — in
-    this document, those of its default run properties, its Normal style and its two list
-    levels — a page
-    break before the closing paragraph, the notes card's row held to exactly 25pt, the line
-    items replaced by a picture. A change refuses a document it would leave as it was — one that
-    finds its target by the letters it holds refuses unless exactly one element directly in the
-    body, or in the table, holds them, and the font change refuses a document naming no other
-    font — so a change that changed nothing cannot pass as caught.
+  - `invoice-modern`'s DOCX is changed five ways (`DocxTamper`):
+    - a paragraph taken out;
+    - every `w:rFonts` set to Courier New for each script, with no theme font left to outrank
+      it (in this document, those of its default run properties, its Normal style and its two
+      list levels);
+    - a page break before the closing paragraph;
+    - the notes card's row held to exactly 25pt;
+    - the line items replaced by a picture.
+  - A change refuses a document it would leave as it was, so a change that changed nothing
+    cannot pass as caught: one that finds its target by the letters it holds refuses unless
+    exactly one element directly in the body, or in the table, holds them; the row change
+    refuses a row already held so; and the font change refuses a document naming no other font.
   - Each changed document is held to the run's own measurement of the unchanged one, not to the
     baseline, so what fails is the change and nothing the baseline holds besides: the local
     LibreOffice baseline, which is stale for 16 documents, `invoice-modern` among them, gives

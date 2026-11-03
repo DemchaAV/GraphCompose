@@ -141,8 +141,9 @@ class DocxZonePictureTest {
 
     @Test
     void textRightAfterALogoStartsWhereWordSetsIt() throws Exception {
-        // Word sets the text after the picture's width, as the page sets it in the column after the
-        // logo's, as wide as the logo; an even split would set it at the row's middle, named.
+        // The page sets the text in the column after the logo's, as wide as the logo: right where
+        // the logo ends, where Word sets it after the logo with no tab. In an even split the page
+        // sets it at the row's middle, half the 256pt line in: Word sets it at a left stop there.
         Exported exported = export(zone(DocumentHeaderFooterZone.HEADER, page -> new RowBuilder().name("Line")
                 .columns(com.demcha.compose.document.style.DocumentRowColumn.fixed(48),
                         com.demcha.compose.document.style.DocumentRowColumn.weight(1))
@@ -155,9 +156,14 @@ class DocxZonePictureTest {
                 .build()));
 
         assertThat(DocxExports.besidesTheExactLines(exported.report())).isEmpty();
-        assertThat(split.report().bySubject().get("page zone")).extracting(DocxExportReport.Note::detail)
-                .containsExactly("a header written as one line of Word's header; 1 of its 2 parts stands off where "
-                                 + "the page sets them");
+        assertThat(DocxExports.besidesTheExactLines(split.report())).isEmpty();
+        for (var line : java.util.List.of(java.util.Map.entry(exported, "right@" + 256 * 20L),
+                java.util.Map.entry(split, "left@" + 128 * 20L))) {
+            var tabs = line.getKey().document().getHeaderArray(0).getParagraphs().get(0).getCTP().getPPr().getTabs();
+            assertThat(tabs.sizeOfTabArray()).isEqualTo(1);
+            assertThat(tabs.getTabArray(0).getVal() + "@" + DocxTwips.of(tabs.getTabArray(0).getPos()))
+                    .isEqualTo(line.getValue());
+        }
     }
 
     @Test

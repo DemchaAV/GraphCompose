@@ -1870,8 +1870,27 @@ the line's baseline, so where it is the line's tallest part the line is placed b
 which then stands where the page draws it. Anything else in a zone — a shape, a panel, a table
 — is not written, and the export report names it once (`page zone content`).
 
-Word sets the line's parts one after another from the page's left margin, and those after
-the first spacer against its right margin, at the right tab the line holds, on one
+A row the page sets on one line keeps its columns: each part stands at a tab stop where the page
+sets it (`w:tabs`), one tab before each part that does not start where the part before it ends,
+so a label and the page number beside it no longer read as one word ("Kept blocks1",
+"Page1of4"). A part is held by its own alignment in its column — a left stop at its start, a
+centre stop at its middle, a right stop at its end. A picture and a page field are held by their
+start: the page sets a field in a box as wide as its number and a point, and grows the box to the
+right on a page where the number is wider. After a grow spacer a part is held by its end, a right stop.
+Measured in Word 16.0.20527, LibreOffice 24.2 and LibreOffice 26.8 on the four documents of the
+fidelity corpus that set a row in a zone — two of a label beside a page number, "Page 1 of 4" in
+four columns, a logo beside a line of text — every part of the line stood within 0.1pt across of
+where the page sets it, where before most ran together and the text after the logo stood 8pt
+left, its gap lost; on rows over twelve pages, where the number reaches two digits, Word and
+LibreOffice 26.8 set every part within 0.2pt on every page. A row is not held at stops where a
+part of it takes more lines than one or the layout does not show one; nor where a part starts
+right where one held at a right or centre stop ends, since Word aligns all the text after such a
+tab, up to the next one, at its stop; nor where the row is sized to its content — a grow
+spacer, an arrangement other than `START`, or a page field in an `auto()` column — and a page
+field in it would move another part on a page where the number is wider: a field anywhere but
+last before the row's one grow spacer or first after it. Then, as any other zone's
+line, Word sets the parts one after another from the page's left margin, and those after the
+first spacer against its right margin, at the right tab the line holds. The line has one
 baseline, its tallest part's. In a zone of one line, a one-line part the page sets on a
 baseline of its own — the text beside a logo, set from the logo's top, or a smaller text beside
 a larger one — is raised or lowered to it (`w:position`), and the exact line grows to hold what
@@ -1882,10 +1901,12 @@ towards the line's baseline where the nearest would pass the line's edge. Measur
 point of the page's in Word. LibreOffice raises a run about a seventh further than
 `w:position` says, does not raise a page field, which stands on Word's baseline there, and
 stands every picture on the line's baseline, a raised one included. Where the page sets a part
-elsewhere — by the zone's padding, a row's columns and gap, a paragraph's alignment or a part's
-own sides — lower than the line holds, past the page's edge, over more than one line or after a
-prefix, the export report counts it (`page zone`): "1 of its 3 parts stands off where
-the page sets them". A page field's alignment
+elsewhere than Word — in a line not held at stops, by the zone's padding, a row's columns and
+gap, a paragraph's alignment or a part's own sides; in a row held at stops, where Word cannot
+set it at its stop, the parts before it reaching it — or sets it lower than the line holds,
+past the page's edge, over more than one line or after a prefix, the export report counts it
+(`page zone`): "1 of its 3 parts stands off where the page sets them". In a row held at stops,
+where the parts after one Word cannot set at its stop stand is not measured. A page field's alignment
 moves its number up to a point: the page sets it in a box a point wider than it. Past a part Word sets
 at another width — after a prefix, auto-sized to a size its lines do not tell, over more
 lines than one — or in a zone whose nodes the page names or nests otherwise than the file, it

@@ -20,9 +20,9 @@ import java.util.zip.ZipOutputStream;
  * another font, a page break that was not there, a card's row held to a height its text does not
  * fit, a table replaced by a picture of it.
  *
- * <p>The fidelity gate is there to fail on exactly these, so the corpus run feeds it one
- * document changed each way, through the same editor and the same measurement as the corpus
- * ({@link DocxFidelityCorpusTest}), and requires it to fail. A change is made to the bytes, not
+ * <p>The fidelity gate is there to fail on exactly these, so the corpus run feeds it corpus
+ * documents changed each way ({@link DocxFidelityCorpusTest#tampers()}), through the same editor
+ * and the same measurement as the corpus, and requires it to fail. A change is made to the bytes, not
  * to the document the engine composes, so it is the gate that is tested, not the export.</p>
  *
  * <p>A change refuses what it would leave as it was — {@link #unchanged()} aside, which is made

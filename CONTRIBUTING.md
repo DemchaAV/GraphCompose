@@ -352,7 +352,8 @@ Choose the smallest tests that match the change:
   line of every document to the drift its baseline records, down and across: a line that
   moved more than 0.5pt from where the baseline holds it, nearer the page or further, a line
   set at other words, a line found that the baseline does not hold, another number of pages
-  from the editor, or another number of pages or lines from the engine fails it. A line is
+  from the editor, or another number of pages from the engine, or of lines read off its pages,
+  fails it. A line is
   read as the page's clip shows it: a glyph standing outside the clip it is drawn under is not
   read, since a PDF keeps the text it clips — Word writes every line of a table row held to an
   exact height its text does not fit, and the end of a line it runs past its cell, and clips
@@ -380,7 +381,8 @@ Choose the smallest tests that match the change:
   as long as you run it, which for Word means running the script above: it fails a line that has
   moved more than 0.5pt from where the baseline holds it, nearer the page or further, a document
   the editor sets on another number of pages, one the engine draws on another number of pages or
-  lines, and one whose lines the editor finds a different set of. Until the gate was made
+  whose pages the gate reads another number of lines off, and one whose lines the editor finds
+  a different set of. Until the gate was made
   two-sided it only looked for lines set further, which let a change move documents nearer, or
   less than 0.5pt further, with the baseline left as it was: between #899 and #974 that left
   1609 of the Word baseline's 5165 rows stale over 74 commits, 226 of them standing more than

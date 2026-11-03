@@ -4674,8 +4674,9 @@ follow semantic versioning; release dates are ISO 8601.
     other row of any of them changes.
   - Down the page, nine of the eleven stand within 0.11pt of the page's lines in both editors,
     at the median and nine lines in ten. Across it, both editors set the Arabic paragraph's two
-    lines 12 to 19pt right of the page's, and the header's line beside its logo 8pt left,
-    LibreOffice 3.27pt high as well.
+    lines 12.2 to 19.0pt right of the page's, and the header's line beside its logo 8pt left,
+    LibreOffice 3.27pt high as well; LibreOffice on Linux sets the filled row's two lines 8.6pt
+    right.
   - Some of the page's lines are not found, and the baselines hold them so:
     - a few paragraphs LibreOffice breaks at other words, the one under the turned picture
       among them;
@@ -4688,11 +4689,11 @@ follow semantic versioning; release dates are ISO 8601.
   - In the column-painted document and the free text, the two not within 0.11pt, the page sets
     a paragraph's last line alone at the top of a page, or its first line alone at the foot of
     one, and Word and LibreOffice each carry a line over the break, so that no line of a
-    paragraph stands alone there. In the column-painted document that
-    runs page 2 a line long and leaves a paragraph's first line alone at its foot, which they
-    carry over too: its page 2 stands one line low and page 3 two. The free text's page 5 stands
-    one line low. The export writes no `w:widowControl`, and Word reads widow control as on for
-    every paragraph. The baselines hold the lines where the editors set them.
+    paragraph stands alone there. In the column-painted document that runs page 2 a line long
+    and leaves a paragraph's first line alone at its foot, which they carry over too: its page 2
+    stands one line low and page 3 two. The free text's page 5 stands one line low. The export
+    writes no `w:widowControl`, and Word reads widow control as on for every paragraph. The
+    baselines hold the lines where the editors set them.
 
 - **A plate, a progress bar and a divider — boxes of one colour each, no taller than Word's
   thickest border — are held to the forms the DOCX export writes them in: the plate and the bar

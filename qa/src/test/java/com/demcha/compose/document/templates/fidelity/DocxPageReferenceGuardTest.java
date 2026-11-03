@@ -41,8 +41,8 @@ import static org.assertj.core.api.Assertions.tuple;
  *
  * <p>Held over the fidelity corpus, whose presets refer to no page and whose
  * {@code synthetic-links_and_toc} refers to three from its table of contents, and over documents
- * that refer to an anchor on every kind of node that declares one, from a table of contents, the body, a
- * table's composed cell, a layer stack's column, a panel and a row's column
+ * that refer to an anchor on every kind of node that declares one, from a table of contents, the
+ * body, a table's composed cell, a layer stack's column, a panel and a row's column
  * ({@link PageReferenceDocxDocuments}). Where the export writes an anchor no bookmark — a block that
  * draws nothing, one whose first drawing fills a page nothing is written on, one composed in a
  * table's cell, a drawn shape, an anchor the document does not have — the reference is the number

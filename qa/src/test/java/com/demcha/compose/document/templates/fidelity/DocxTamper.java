@@ -43,13 +43,16 @@ record DocxTamper(String name, Cost costs, Edit edit) {
 
     /** What a change must cost the document as the editor sets it, beyond any difference at all. */
     enum Cost {
-        /** Some difference the gate names: a line moved, lost or gained, a page more or less. */
+        /**
+         * Some difference the gate names: a line moved, lost or gained, set wider or narrower, a
+         * page more or less.
+         */
         ANY,
         /** Lines of the page's that the editor no longer shows as the page does. */
         LOST_LINES,
         /** Another number of pages. */
         PAGES,
-        /** Lines found where the page has them that run wider or narrower than they did. */
+        /** Lines the editor still finds that run wider or narrower than they did, wherever they stand. */
         WIDTH
     }
 

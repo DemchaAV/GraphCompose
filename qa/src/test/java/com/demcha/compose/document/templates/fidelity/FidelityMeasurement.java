@@ -210,7 +210,9 @@ record FidelityMeasurement(String stem, int enginePages, int editorPages, int li
         String[] cells = row.split("\t", -1);
         if (cells.length != 6) {
             throw new IllegalArgumentException("a baseline line row has 6 cells (document, line, drift, drift "
-                                               + "across, how much wider, letters), not " + cells.length + ": " + row);
+                                               + "across, how much wider, letters), not " + cells.length + ": " + row
+                                               + " — a baseline of another shape is shot again by copying what a run"
+                                               + " measured, target/docx-fidelity/measured-<editor>*.tsv, over it");
         }
         try {
             int page = Integer.parseInt(cells[1].substring(0, cells[1].indexOf(':')));

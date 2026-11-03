@@ -79,9 +79,9 @@ class DocxFidelityCorpusTest {
     /**
      * The corpus document set in another face whose lines change only in width: none of them is
      * long enough to break at other words, and Times New Roman sets them on the page's baselines.
-     * Set so in Word 16.0.20527, LibreOffice 26.8 on Windows and LibreOffice 24.2, not one of its
-     * 114 lines was lost or moved more than half a point down or across, and every one ran wider
-     * or narrower by more than that — by up to 16 to 30 points.
+     * Set so in Word 16.0.20527, LibreOffice 26.8 on Windows and CI's LibreOffice 24.2 on Linux,
+     * not one of its 114 lines was lost or moved more than half a point down or across, and every
+     * one ran wider or narrower by more than that — by up to 16 points.
      */
     static final String SHORT_LINES_SOURCE = "synthetic-card_over_pages";
 

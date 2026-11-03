@@ -4670,17 +4670,18 @@ follow semantic versioning; release dates are ISO 8601.
     across, or before their width was — is refused rather than read as holding less. All three
     baselines are written in it.
   - `synthetic-card_over_pages` is changed too: every `w:rFonts` set to Times New Roman, and the
-    run fails unless the gate fails on it with lines found where the page has them set wider or
-    narrower than in the unchanged document. Measured against the unchanged document in
-    Word 16.0.20527, LibreOffice 26.8 on Windows and LibreOffice 24.2, not one of its 114 lines
-    is lost or moves more than half a point down or across — the gate without width let it
-    through in all three — and every one runs wider or narrower than that, by up to 16.00, 16.13
-    and 30.08pt. Courier New, the face `invoice-modern` is changed to, sets these lines 0.84 and
-    0.85pt higher in Word and LibreOffice 26.8, which the gate already caught; LibreOffice 24.2
-    sets them within 0.20pt of the unchanged document's, and only their width tells them apart.
+    run fails unless the gate fails on it with lines it still finds set wider or narrower than in
+    the unchanged document. Measured against the unchanged document in
+    Word 16.0.20527, LibreOffice 26.8 on Windows and CI's LibreOffice 24.2 on Linux, not one of
+    its 114 lines is lost or moves more than half a point down or across — the gate without
+    width let it through in all three — and every one runs wider or narrower than that, by up to
+    16.00, 16.13 and 16.20pt. Courier New, the face `invoice-modern` is changed to, sets these
+    lines 0.84 and 0.85pt higher in Word and LibreOffice 26.8, which the gate already caught; a
+    LibreOffice 24.2 with no Courier New installed sets them within 0.20pt of the unchanged
+    document's, and only their width tells them apart.
   - The width a line is set at is the editor's own: two conversions of the corpus by Word, and two
     by LibreOffice 26.8, give every line the same width to the hundredth. Against the page, Word
-    sets 914 of the corpus's 5788 lines more than 2pt wider or narrower, 206 of them more than 5pt
+    sets 914 of the 5788 lines it finds more than 2pt wider or narrower, 206 of them more than 5pt
     — a CV's or a letter's long lines 12 to 17pt apart, a line of Arabic 18.8pt. The baseline
     records them as they stand; the acceptance report does not count width.
   - The Word baseline, shot whole on Word 16.0.20527, moves no line more than half a point down
@@ -4691,7 +4692,7 @@ follow semantic versioning; release dates are ISO 8601.
     `proposal-indigo`, held on one page, now on two, 8 of their lines lost and 14 and 51 of the
     rest up to 5.60 and 10.25pt lower. What moved those two is not found; the file's note records
     what it held, and its history the rows. The Linux baseline is taken from CI's run of this
-    change.
+    change, and moves no line more than half a point down or across and finds the same lines.
 
 - **The DOCX fidelity gate reads only the text the page's clip does not hide, and is fed a
   document whose last card is held to a height its text does not fit.**
@@ -4754,8 +4755,8 @@ follow semantic versioning; release dates are ISO 8601.
     whose every `w:rFonts` already reads as it would write it.
   - Each changed document is held to the run's own measurement of the unchanged one, not to the
     baseline, so what fails is the change and nothing the baseline holds besides: the local
-    LibreOffice baseline, which is stale for 16 documents, `invoice-modern` among them, gives
-    the same answer as a green one. A paragraph or a table taken out must cost the page's lines,
+    LibreOffice baseline, which was then stale for 16 documents, `invoice-modern` among them,
+    gave the same answer as a green one (it has since been shot whole, above). A paragraph or a table taken out must cost the page's lines,
     and a page break a page, not merely move something. The changed documents are converted
     apart from the corpus, with a copy left unchanged that must stand where the corpus's
     conversion set it, so a difference the second conversion makes on its own does not count as
@@ -5249,7 +5250,9 @@ follow semantic versioning; release dates are ISO 8601.
     than it holds them on the build it names, so the move is the export's and not the editor's.
     Rewriting it alongside the Linux file would bury a 10pt move in a baseline diff; a move
     further from the page wants attributing to the commit that made it first, as the Word
-    baseline's drift was attributed before #975 rewrote it.
+    baseline's drift was attributed before #975 rewrote it. (It has since been shot whole, when
+    the line file took a column for each line's width, with that move still unattributed and
+    recorded in its note; above.)
 
 - **The DOCX fidelity corpus holds an icon laid over a card's corner, as the export writes it
   today.**

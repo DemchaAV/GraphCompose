@@ -5150,7 +5150,7 @@ synthetic-header_logo_and_filled_row	0:2f77bc031664	-0.02	0.10	-0.20	theboardmee
 synthetic-header_logo_and_filled_row	0:e4cb8ddf8110	-0.02	0.10	-0.16	changesofscope.newstartersaregiv
 synthetic-header_logo_and_filled_row	0:e1e30ae17239	-0.02	0.10	-0.36	listontheirfirstmorning.holidayr
 synthetic-header_logo_and_filled_row	0:b83ca9683f99	-0.02	0.10	-0.09	andshownonthesharedcalendar.
-synthetic-header_logo_and_filled_row	0:84cb38cb9d80	-3.27	-7.90	-0.04	headerwithalogo
+synthetic-header_logo_and_filled_row	0:84cb38cb9d80	-3.27	0.10	-0.04	headerwithalogo
 synthetic-icon_over_card	0:22d08874d8c4	-0.02	0.10	-0.22	beforethecard:thisparagraphisthe
 synthetic-icon_over_card	0:ea7f305a7f76	-0.02	0.10	-0.17	thatlengthensthelongestparagraph
 synthetic-icon_over_card	0:e3ac6d2ba79c	-0.02	0.10	-0.10	theiconoveritscornerdownthepaget
@@ -5199,6 +5199,7 @@ synthetic-kept_blocks_over_pages	0:a5845d492e47	-0.02	0.60	-0.05	tasknumber17
 synthetic-kept_blocks_over_pages	0:8b5e701af1c6	-0.02	0.60	-0.05	tasknumber18
 synthetic-kept_blocks_over_pages	0:85647748ea4e	-0.02	0.60	-0.05	tasknumber19
 synthetic-kept_blocks_over_pages	0:44b7f62bcfd5	-0.02	0.60	-0.05	tasknumber20
+synthetic-kept_blocks_over_pages	0:112edabc8968	-1.12	0.10	-0.04	keptblocks
 synthetic-kept_blocks_over_pages	1:0ebb429fa86d	-0.02	0.60	-0.01	task
 synthetic-kept_blocks_over_pages	1:4c1029697ee3	-0.02	0.55	-0.03	owner
 synthetic-kept_blocks_over_pages	1:5931f6c8632a	-0.02	0.60	-0.07	tasknumber21(review)
@@ -5234,6 +5235,7 @@ synthetic-kept_blocks_over_pages	1:be2cc46b853e	-0.02	0.10	-0.21	eachworkstreamk
 synthetic-kept_blocks_over_pages	1:af30ee36eab9	-0.02	0.10	-0.18	theywereagreed.statusreportsuset
 synthetic-kept_blocks_over_pages	1:5573ae29a8ef	-0.02	0.10	-0.38	recoveryplanwithinfivedays.there
 synthetic-kept_blocks_over_pages	1:e4cc8af75925	-0.02	0.10	-0.11	beforeeachquarterlyplanningsessi
+synthetic-kept_blocks_over_pages	1:112edabc8968	-1.12	0.10	-0.04	keptblocks
 synthetic-kept_blocks_over_pages	2:f041e26a12a0	-0.02	10.10	-0.20	keptline1.trainingbudgetsareshar
 synthetic-kept_blocks_over_pages	2:7ff8adc7bc51	-0.02	10.10	-0.10	dayscarryoverforoneyear.risksare
 synthetic-kept_blocks_over_pages	2:04b3d21a5afa	-0.02	10.10	-0.55	impact,andthefivehighestarerevie
@@ -5261,6 +5263,7 @@ synthetic-kept_blocks_over_pages	2:c526d055e492	-0.02	10.10	-0.32	buddy,alaptopa
 synthetic-kept_blocks_over_pages	2:f1abca8e8f36	-0.02	10.10	-0.35	scoredbylikelihoodandimpact,andt
 synthetic-kept_blocks_over_pages	2:0eac7d776c90	-0.02	10.10	-0.21	first.
 synthetic-kept_blocks_over_pages	2:9b68a465b95e	-0.02	0.10	-0.34	afterthekeptpanel.
+synthetic-kept_blocks_over_pages	2:112edabc8968	-1.12	0.10	-0.04	keptblocks
 synthetic-kept_icon_panel	0:3ca143dca8d5	-0.02	0.10	-0.23	deliveryteamsreportprogressweekl
 synthetic-kept_icon_panel	0:5d55c437cb60	-0.02	0.10	-0.22	programmeboard.theboardmeetsever
 synthetic-kept_icon_panel	0:cfa7f68580a1	-0.02	0.10	-0.17	budgetandchangesofscope.risksare
@@ -5608,6 +5611,7 @@ synthetic-sections_and_fields	0:7841e7b252c7	-0.02	0.10	-0.26	8.thereleasecalend
 synthetic-sections_and_fields	0:feb1cbbbcbac	-0.02	0.10	-0.05	session.supplierssendinvoicesatt
 synthetic-sections_and_fields	0:755f715a6dec	-0.02	0.10	-0.18	ordertheybelongto.theboardmeetse
 synthetic-sections_and_fields	0:dc5a51629a0f	-0.02	0.10	-0.09	risks,budgetandchangesofscope.
+synthetic-sections_and_fields	0:3660315a9af3	-1.12	0.10	-0.01	page
 synthetic-sections_and_fields	1:b03c15e343fe	-0.02	0.10	-0.42	9.customerfeedbackiscollectedaft
 synthetic-sections_and_fields	1:6b1aa4ad2e4c	-0.02	0.10	-0.55	thenextreview.officemovesareplan
 synthetic-sections_and_fields	1:d8162013e5ea	-0.02	0.10	-0.21	beforetheleaserunsout.securityre
@@ -5633,6 +5637,7 @@ synthetic-sections_and_fields	1:b49397a7c718	-0.02	0.10	-0.19	15.holidayrequests
 synthetic-sections_and_fields	1:41f9ca248d78	-0.02	0.10	-0.19	sharedcalendar.deliveryteamsrepo
 synthetic-sections_and_fields	1:eb370bfaad86	-0.02	0.10	-0.16	blockersthroughtheprogrammeboard
 synthetic-sections_and_fields	1:a071ed52eb40	-0.02	0.10	-0.89	weekofeffortneedsthesponsor'swri
+synthetic-sections_and_fields	1:3660315a9af3	-1.12	0.10	-0.01	page
 synthetic-sections_and_fields	2:aa7cc568247b	-0.02	0.10	-0.21	16.deliveryteamsreportprogresswe
 synthetic-sections_and_fields	2:1d2ac6c77d74	-0.02	0.10	-0.15	theprogrammeboard.newstartersare
 synthetic-sections_and_fields	2:e041d62aa8e5	-0.02	0.10	-0.31	readinglistontheirfirstmorning.r
@@ -5661,6 +5666,7 @@ synthetic-sections_and_fields	2:e9cb354ed716	-0.02	0.10	-0.32	listontheirfirstmo
 synthetic-sections_and_fields	2:b9aa54e8a5b8	-0.02	0.10	-0.49	thefivehighestarereviewedfirst.
 synthetic-sections_and_fields	2:6edf098acb95	-0.02	0.10	-0.34	22.risksarescoredbylikelihoodand
 synthetic-sections_and_fields	2:cd624d7e9209	-0.02	0.10	-0.37	reviewedfirst.statusreportsuseth
+synthetic-sections_and_fields	2:3660315a9af3	-1.12	0.10	-0.01	page
 synthetic-sections_and_fields	3:dbac73819331	-0.02	0.10	-0.36	23.newstartersaregivenabuddy,ala
 synthetic-sections_and_fields	3:bbca3a9867fa	-0.02	0.10	-0.04	morning.supplierssendinvoicesatt
 synthetic-sections_and_fields	3:be54db2dea7d	-0.02	0.10	-0.47	ordertheybelongto.customerfeedba
@@ -5677,6 +5683,7 @@ synthetic-sections_and_fields	3:53986f0db4c9	-0.02	0.10	-0.58	26.officemovesarep
 synthetic-sections_and_fields	3:7c38b949eb3b	-0.02	0.10	-0.33	runsout.risksarescoredbylikeliho
 synthetic-sections_and_fields	3:18a89083de7e	-0.02	0.10	-0.72	arereviewedfirst.achangeofscopel
 synthetic-sections_and_fields	3:dac9e8eb49f3	-0.02	0.10	-0.46	thesponsor'swrittenapproval.
+synthetic-sections_and_fields	3:3660315a9af3	-1.12	0.10	-0.01	page
 synthetic-sidebar_over_pages	0:d8fc95063b1e	-0.02	0.10	-0.18	1.theboardmeetseverysecondtuesda
 synthetic-sidebar_over_pages	0:8bfdf54b0bed	-0.02	0.10	-0.14	andchangesofscope.newstartersare
 synthetic-sidebar_over_pages	0:1774fc9ddf79	-0.02	0.10	-0.35	readinglistontheirfirstmorning.h
@@ -5705,6 +5712,7 @@ synthetic-sidebar_over_pages	0:9da6aa1712ce	-0.02	0.10	-0.35	recoveryplanwithinf
 synthetic-sidebar_over_pages	0:a85c44db67e3	-0.02	0.10	-0.14	weeksbeforeeachquarterlyplanning
 synthetic-sidebar_over_pages	0:ddc4ad3830e6	-0.02	0.10	-0.23	8.thereleasecalendarisfrozentwow
 synthetic-sidebar_over_pages	0:37e51820b620	-0.02	0.10	-0.16	planningsession.supplierssendinv
+synthetic-sidebar_over_pages	0:2aca0c68ff3e	-1.12	0.10	-0.01	sidebar
 synthetic-sidebar_over_pages	1:d5c2716b7e89	11.98	0.10	-0.16	tuesdaytoreviewrisks,budgetandch
 synthetic-sidebar_over_pages	1:08a041cc6ccd	11.98	0.10	-0.37	9.customerfeedbackiscollectedaft
 synthetic-sidebar_over_pages	1:b04f688df8bc	11.98	0.10	-0.73	summarisedforthenextreview.offic
@@ -5734,6 +5742,7 @@ synthetic-sidebar_over_pages	1:03a21a6dedf7	11.98	0.10	-0.16	15.holidayrequestsa
 synthetic-sidebar_over_pages	1:32bd266602a8	11.98	0.10	-0.13	thesharedcalendar.deliveryteamsr
 synthetic-sidebar_over_pages	1:f418e7306c30	11.98	0.10	-0.17	escalateblockersthroughtheprogra
 synthetic-sidebar_over_pages	1:61c63ccb235a	11.98	0.10	-0.90	largerthanaweekofeffortneedsthes
+synthetic-sidebar_over_pages	1:2aca0c68ff3e	-1.12	0.10	-0.01	sidebar
 synthetic-sidebar_over_pages	2:d84a76e11f2a	23.98	0.10	-0.35	laptopandareadinglistontheirfirs
 synthetic-sidebar_over_pages	2:56a91f164904	23.98	0.10	-0.56	likelihoodandimpact,andthefivehi
 synthetic-sidebar_over_pages	2:5015b1a370b1	23.98	0.10	-0.18	17.theboardmeetseverysecondtuesd
@@ -5762,3 +5771,4 @@ synthetic-sidebar_over_pages	2:450e5bf101e7	23.98	0.10	-0.34	22.risksarescoredby
 synthetic-sidebar_over_pages	2:12a16172ce34	23.98	0.10	-0.36	arereviewedfirst.statusreportsus
 synthetic-sidebar_over_pages	2:e85b379cd760	23.98	0.10	-0.34	arecoveryplanwithinfivedays.deli
 synthetic-sidebar_over_pages	2:f3fb25113857	23.98	0.10	-0.18	weeklyandescalateblockersthrough
+synthetic-sidebar_over_pages	2:2aca0c68ff3e	-1.12	0.10	-0.01	sidebar

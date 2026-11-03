@@ -5169,7 +5169,7 @@ follow semantic versioning; release dates are ISO 8601.
   - Each is now measured as a step from where the baseline holds it: a line fails when its drift
     moves more than 0.5pt, down or across, nearer the page or further, and a document fails when
     the editor sets it on another number of pages, when the engine draws it on another number of
-    pages or another number of lines, or
+    pages or the gate reads another number of lines off them, or
     when the set of its lines found is not the set the baseline holds. The failure names each
     line's step — `+1.10 -> +0.00pt (-1.10)` — so the direction is in the message.
   - Measured on the gate as it stood: a line moving 1.10pt nearer the page, one moving 5pt

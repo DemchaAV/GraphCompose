@@ -87,7 +87,7 @@ class DocxTamperTest {
     }
 
     @Test
-    void theLastCardHasNoTextBelowItAndOnlyItsOwnRowIsHeld() throws Exception {
+    void nothingWithTextFollowsTheLastCardInTheBodyAndOnlyItsOwnRowIsHeld() throws Exception {
         byte[] luma = SOURCES.get(DocxFidelityCorpusTest.LAST_CARD_SOURCE);
         String before = body(luma);
         DocxTamper held = DocxFidelityCorpusTest.tampers().stream()

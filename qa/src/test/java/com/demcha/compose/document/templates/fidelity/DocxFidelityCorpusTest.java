@@ -69,8 +69,9 @@ class DocxFidelityCorpusTest {
     static final String TAMPERED_SOURCE = "invoice-modern";
 
     /**
-     * The corpus document whose last card is held to a height: nothing below it but an empty
-     * paragraph, so nothing moves when it shrinks, and the gate must fail on the card's own lines.
+     * The corpus document whose last card is held to a height: nothing that holds text follows it
+     * in the body — the sign-off under it on the page is a drawing placed from a paragraph above
+     * it — so nothing moves when it shrinks, and the gate must fail on the card's own lines.
      */
     static final String LAST_CARD_SOURCE = "invoice-luma_studio";
 

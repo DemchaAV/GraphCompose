@@ -412,8 +412,8 @@ Choose the smallest tests that match the change:
   The same run, in either editor, feeds the gate `invoice-modern` changed after export in each
   way it is there to fail on — a paragraph taken out, every `w:rFonts` set to Courier New, a page
   break before the closing paragraph, the notes card's row held to exactly 25pt, the line items
-  replaced by a picture — and `invoice-luma_studio` with its last card, which has no text below
-  it, held to exactly 22.5pt; and it fails unless the gate, holding each to the run's own
+  replaced by a picture — and `invoice-luma_studio` with its last card, which nothing holding
+  text follows in the body, held to exactly 22.5pt; and it fails unless the gate, holding each to the run's own
   measurement of the document it was changed from, fails on every one, and on lost lines or
   another page count where the change costs them — a card held short of its text costs the
   lines it clips (`DocxTamper`). A copy of each document left unchanged is converted with them

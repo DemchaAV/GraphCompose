@@ -3001,9 +3001,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>A zone is one band deep, so its children belong on one Word line rather
      * than stacked paragraphs: a row's children become runs in document order — a
-     * picture an inline picture in its run — and a flex spacer becomes the tab that
-     * carries the rest to the right margin — which is how a Word footer is built by
-     * hand anyway.</p>
+     * picture an inline picture in its run — which is how a Word footer is built by
+     * hand anyway. A row held at tab stops ({@link #zoneStops}) stands each part at a stop
+     * where the page sets it; otherwise the parts follow one another, and a spacer becomes the
+     * tab that carries the rest to the right margin.</p>
      *
      * <p>Where the layout shows its text or pictures, the line is exact and as tall as
      * {@link #zonePlacement} says, which with the distance {@link #placeZone} writes stands it on
@@ -3047,11 +3048,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             spacing.setLineRule(STLineSpacingRule.EXACT);
             spacing.setLine(BigInteger.valueOf(Math.round(placement.line() * POINT_TO_TWIP)));
         }
-        CTTabStop tab = properties.addNewTabs().addNewTab();
-        tab.setVal(STTabJc.RIGHT);
-        tab.setPos(java.math.BigInteger.valueOf(Math.round(zoneRightTab() * TWIPS_PER_POINT)));
-
         List<DocumentNode> parts = DocxZoneParts.of(content);
+        java.util.Map<DocumentNode, ZoneStop> stops = placement.stops();
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTabs tabs = properties.addNewTabs();
+        if (stops == null) {
+            CTTabStop tab = tabs.addNewTab();
+            tab.setVal(STTabJc.RIGHT);
+            tab.setPos(java.math.BigInteger.valueOf(Math.round(zoneRightTab() * TWIPS_PER_POINT)));
+        } else {
+            for (DocumentNode part : parts) {
+                ZoneStop stop = stops.get(part);
+                if (stop != null) {
+                    CTTabStop tab = tabs.addNewTab();
+                    tab.setVal(stop.kind());
+                    tab.setPos(BigInteger.valueOf(toTwips(stop.at())));
+                }
+            }
+        }
         // A zone's row is its children on one line; its paint is lost, and said once, though the
         // line is written into each kind of header the zone is given.
         if (content instanceof RowNode row && zonePartsReported.add(row)) {
@@ -3065,6 +3078,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         reportingAZoneLine = zoneLinesReported.add(content);
         try {
             for (DocumentNode part : parts) {
+                if (stops != null && part instanceof SpacerNode) {
+                    // Held at stops, the parts after a spacer have a tab of their own.
+                    continue;
+                }
+                if (stops != null && stops.containsKey(part)) {
+                    para.createRun().addTab();
+                }
                 int runsBefore = runsIn(para).size();
                 appendZonePart(para, part, zoneLinesOf(part, paths, laid, placement),
                         placement.laidOtherwise().contains(part) ? null : pictures.get(paths.get(part)));
@@ -3142,17 +3162,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param raised        how far each part the page sets on a baseline of its own is raised
      *                      from the line's to it, in points, lowered where below zero: in the
      *                      half points Word counts a run's position in
+     * @param stops         the tab stops a row's parts are carried to where the page sets them
+     *                      ({@link #zoneStops}), none for a part at the left margin; {@code null}
+     *                      where the parts follow one another instead
      */
     private record ZonePlacement(double line, int lines, double distance, double baseline,
                                  java.util.Set<DocumentNode> laidOtherwise,
-                                 java.util.Map<DocumentNode, Double> raised) {
+                                 java.util.Map<DocumentNode, Double> raised,
+                                 java.util.Map<DocumentNode, ZoneStop> stops) {
 
         private static final ZonePlacement UNMEASURED =
-                new ZonePlacement(Double.NaN, 0, Double.NaN, Double.NaN, java.util.Set.of(), java.util.Map.of());
+                new ZonePlacement(Double.NaN, 0, Double.NaN, Double.NaN, java.util.Set.of(), java.util.Map.of(), null);
 
         /** Not measured, its parts named laid otherwise among them. */
         static ZonePlacement laidOtherwise(java.util.Set<DocumentNode> parts) {
-            return new ZonePlacement(Double.NaN, 0, Double.NaN, Double.NaN, parts, java.util.Map.of());
+            return new ZonePlacement(Double.NaN, 0, Double.NaN, Double.NaN, parts, java.util.Map.of(), null);
         }
 
         /** Whether the layout laid out the text or picture the line is placed by. */
@@ -3290,7 +3314,131 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 raised.put(part.getKey(), raise);
             }
         }
-        return new ZonePlacement(line, mostLines, distance, baseline, java.util.Set.of(), raised);
+        return new ZonePlacement(line, mostLines, distance, baseline, java.util.Set.of(), raised,
+                zoneStops(content, paths, laid, pictures));
+    }
+
+    /**
+     * A tab stop a part of a zone's row is carried to on Word's line.
+     *
+     * @param kind what of the part the stop holds: its start, its middle or its end
+     * @param at   where the stop stands, from the left margin, in points
+     */
+    private record ZoneStop(STTabJc.Enum kind, double at) {
+    }
+
+    /**
+     * The tab stops that carry the parts of a zone's row to where the page sets them, one tab
+     * before each part that does not start where the part before it ends, the first at the left
+     * margin.
+     *
+     * <p>A row sets its parts in columns, a gap between them; written one after another, Word sets
+     * each right after the one before, and a label and a page number read as one word. So each
+     * part stands at a stop where the page sets it: by its own alignment in its column — its
+     * start, its middle or its end, a left, centre or right stop; a picture, and a page field,
+     * by its start, a left stop, since the page sets a field in a box as wide as its number and
+     * grows that box to the right on a page where the number is wider — and, after a grow
+     * spacer, by its end, a right stop, the spacer giving up the room a wider number takes.</p>
+     *
+     * <p>Only a row the page sets on one line, each part as written and laid out on the page the
+     * zone is measured on, at least one set apart from where the part before it ends; and, in a
+     * row sized to its content, no part the page moves where a page
+     * field is wider ({@link #fieldsMoveNoPart}). Otherwise the parts follow one another, a
+     * flex spacer the tab to the right margin.</p>
+     *
+     * @return each placed part's stop, none for one that follows the part before it; {@code null}
+     *         where the row is not held at stops
+     */
+    private java.util.Map<DocumentNode, ZoneStop> zoneStops(
+            DocumentNode content, java.util.Map<DocumentNode, String> paths,
+            java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid,
+            java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> pictures) {
+        if (!(content instanceof RowNode row) || Double.isNaN(canvasLeftMargin)) {
+            return null;
+        }
+        // A row sized to its content moves a part on a page where a page field before it on its
+        // side is wider; a stop does not move with it.
+        if ((row.arrangement() != RowArrangement.START || hasGrowChild(row)) && !fieldsMoveNoPart(row)) {
+            return null;
+        }
+        java.util.Map<DocumentNode, ZoneStop> stops = new java.util.IdentityHashMap<>();
+        boolean afterASpacer = false;
+        double previousEnd = canvasLeftMargin;
+        for (DocumentNode part : DocxZoneParts.of(content)) {
+            if (part instanceof SpacerNode spacer) {
+                afterASpacer |= spacer.grow() > 0;
+                continue;
+            }
+            if (!(part instanceof ParagraphNode || part instanceof PageFieldNode || part instanceof ImageNode)) {
+                continue;
+            }
+            com.demcha.compose.document.layout.PlacedFragment fragment =
+                    (part instanceof ImageNode ? pictures : laid).get(paths.get(part));
+            if (fragment == null) {
+                return null;
+            }
+            ZoneLine line = part instanceof ImageNode ? pictureOnThePage(fragment) : firstLineOnThePage(fragment);
+            if (!line.oneLine()) {
+                return null;
+            }
+            // A page field's box is as wide as its number, and a point: the page grows it to the
+            // right on a page where the number is wider, whatever its alignment within that box.
+            TextAlign align = afterASpacer ? TextAlign.RIGHT
+                    : part instanceof ParagraphNode
+                      && fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload text
+                      && text.align() != null ? text.align() : TextAlign.LEFT;
+            ZoneStop stop = switch (align) {
+                case RIGHT -> new ZoneStop(STTabJc.RIGHT, line.end() - canvasLeftMargin);
+                case CENTER -> new ZoneStop(STTabJc.CENTER, (line.start() + line.end()) / 2 - canvasLeftMargin);
+                case LEFT -> new ZoneStop(STTabJc.LEFT, line.start() - canvasLeftMargin);
+            };
+            // Set right where the part before it ends — at the left margin, the first — it follows
+            // it, with no tab: a tab goes to the first stop past the pen.
+            if (toTwips(line.start() - previousEnd) > 0) {
+                stops.put(part, stop);
+            }
+            previousEnd = line.end();
+        }
+        // A line holds no empty list of stops: its parts all follow one another.
+        return stops.isEmpty() ? null : stops;
+    }
+
+    /**
+     * Whether no part of a row sized to its content moves as a page field in it is wider on a
+     * page: a field is the last part before the row's one grow spacer, which takes up what it
+     * grows by, or comes before every other part after it, which the spacer holds at the row's
+     * right end. A row of more grow spacers than one, or of another arrangement, shares out its
+     * leftover width among all its parts; any field there moves them.
+     */
+    private static boolean fieldsMoveNoPart(RowNode row) {
+        boolean anyField = row.children().stream().anyMatch(PageFieldNode.class::isInstance);
+        if (!anyField) {
+            return true;
+        }
+        long growSpacers = row.children().stream()
+                .filter(child -> child instanceof SpacerNode spacer && spacer.grow() > 0).count();
+        if (row.arrangement() != RowArrangement.START || growSpacers != 1) {
+            return false;
+        }
+        boolean afterTheSpacer = false;
+        boolean fieldBefore = false;
+        boolean partAfterTheSpacer = false;
+        for (DocumentNode child : row.children()) {
+            if (child instanceof SpacerNode spacer) {
+                afterTheSpacer |= spacer.grow() > 0;
+            } else if (!afterTheSpacer) {
+                if (fieldBefore) {
+                    return false;
+                }
+                fieldBefore = child instanceof PageFieldNode;
+            } else {
+                if (child instanceof PageFieldNode && partAfterTheSpacer) {
+                    return false;
+                }
+                partAfterTheSpacer = true;
+            }
+        }
+        return true;
     }
 
     /** How far past an exact line's edge a part may reach and still be held: a hundredth of a point. */
@@ -3333,7 +3481,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Names what a page zone loses as the one line of a Word header or footer it is written as
      * ({@link #writeZoneLine}).
      *
-     * <p>Word sets the line's parts one after another from the page's left margin, and those
+     * <p>A row held at tab stops ({@link #zoneStops}) Word sets each part of at its stop, a part
+     * at a right stop read by its end; a part whose stop the parts before it reach in Word, or
+     * that they reach past where it would start, it cannot set there: that part stands off, and
+     * where the parts after it stand is not measured. Otherwise, Word
+     * sets the line's parts one after another from the page's left margin, and those
      * after the first spacer against its right margin, at the right tab the line holds; a part
      * after a second spacer goes to no tab the line holds. The page sets each part where the
      * zone's padding, a row's columns and gap and the part's own alignment and sides put it, on
@@ -3344,8 +3496,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * of what holds a body paragraph's breaks where the page sets them — on the baseline Word
      * sets it on, the line's raised or lowered by its own position ({@link ZonePlacement#raised}), and
      * its line starts within {@link #ZONE_PLACE_CLEARANCE} of Word's start, or, against the
-     * right margin, ends within it of Word's end; a part a prefix stands before starts off it,
-     * the prefix being unwritten. Word's place for a part follows from the widths of those
+     * right margin or at a right stop, ends within it of Word's end; a part a prefix stands
+     * before starts off it, the prefix being unwritten, unless it is read by its end. Word's place
+     * for a part follows from the widths of those
      * before it on its side of the line: past a part whose width Word does not keep — of more
      * lines than one, after a prefix, or auto-sized to a size its lines do not tell — or one
      * the layout does not show, where it stands across the line is not measured; past a part of
@@ -3388,13 +3541,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         java.util.Map<DocumentNode, com.demcha.compose.document.layout.PlacedFragment> laidOut =
                 new java.util.IdentityHashMap<>();
         List<DocumentNode> placed = new ArrayList<>();
+        java.util.Map<DocumentNode, ZoneStop> stops = placement.stops();
         int spacers = 0;
         for (DocumentNode part : parts) {
             if (part instanceof SpacerNode) {
                 spacers++;
             } else if (part instanceof ParagraphNode || part instanceof PageFieldNode || part instanceof ImageNode) {
                 placed.add(part);
-                side.put(part, Math.min(spacers, 2));
+                // Held at stops, every part is placed from the left margin.
+                side.put(part, stops != null ? 0 : Math.min(spacers, 2));
                 com.demcha.compose.document.layout.PlacedFragment fragment =
                         (part instanceof ImageNode ? pictures : laid).get(paths.get(part));
                 if (fragment != null) {
@@ -3406,17 +3561,38 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // as far as the widths before it on its side are ones Word keeps.
         java.util.Map<DocumentNode, Double> wordsStart = new java.util.IdentityHashMap<>();
         java.util.Map<DocumentNode, Double> wordsEnd = new java.util.IdentityHashMap<>();
+        // A part held at a stop Word cannot set it at, the parts before it reaching its stop or
+        // where it would start: it stands off, and where the parts after it stand is not measured.
+        java.util.Set<DocumentNode> pastItsStop = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
         double x = canvasLeftMargin;
         for (DocumentNode part : placed) {
             com.demcha.compose.document.layout.PlacedFragment fragment = laidOut.get(part);
             if (side.get(part) != 0 || fragment == null) {
                 break;
             }
-            wordsStart.put(part, x);
+            ZoneStop stop = stops == null ? null : stops.get(part);
+            double width = wordsWidthOf(part, fragment);
+            if (stop == null) {
+                wordsStart.put(part, x);
+            } else {
+                double at = canvasLeftMargin + stop.at();
+                double start = stop.kind() == STTabJc.RIGHT ? at - width
+                        : stop.kind() == STTabJc.CENTER ? at - width / 2 : at;
+                // A tab goes to the first stop past the pen.
+                if (at <= x + ZONE_LINE_HOLDS || start < x - ZONE_LINE_HOLDS) {
+                    pastItsStop.add(part);
+                    break;
+                } else if (stop.kind() == STTabJc.RIGHT) {
+                    wordsEnd.put(part, at);
+                } else {
+                    wordsStart.put(part, start);
+                }
+                x = Math.max(x, start);
+            }
             if (!widthKept(part, fragment)) {
                 break;
             }
-            x += wordsWidthOf(part, fragment);
+            x += width;
         }
         double end = canvasLeftMargin + zoneRightTab();
         List<DocumentNode> againstTheRight = placed.stream().filter(part -> side.get(part) == 1).toList();
@@ -3450,15 +3626,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             ZoneLine line = onThePage.get(part);
             Double wordStart = wordsStart.get(part);
             Double wordEnd = wordsEnd.get(part);
-            boolean prefixed = side.get(part) == 0 && part instanceof ParagraphNode paragraph
-                               && setsAPrefixBeforeTheFirstLine(paragraph);
+            // A part placed by its start or middle starts off by the prefix Word does not write;
+            // one held at a right stop ends where the page ends it all the same.
+            boolean prefixed = side.get(part) == 0 && !wordsEnd.containsKey(part)
+                               && part instanceof ParagraphNode paragraph && setsAPrefixBeforeTheFirstLine(paragraph);
             boolean afterABreak = broken;
             broken |= line != null && !line.oneLine();
             // Word stands a part raised or lowered from the line's baseline as written.
             double wordsBaseline = baseline + placement.raised().getOrDefault(part, 0.0);
             if (line == null || afterABreak) {
                 unread++;
-            } else if (side.get(part) == 2 || !line.oneLine() || prefixed
+            } else if (side.get(part) == 2 || !line.oneLine() || prefixed || pastItsStop.contains(part)
                        || Math.abs(line.baseline() - wordsBaseline) > ZONE_PLACE_CLEARANCE) {
                 off++;
             } else if (wordStart == null && wordEnd == null) {

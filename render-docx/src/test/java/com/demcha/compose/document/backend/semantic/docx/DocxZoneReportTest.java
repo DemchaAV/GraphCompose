@@ -28,8 +28,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * What a page zone loses as the one line of a Word header or footer it is written as is in the
  * report: where its parts stand, and what a paragraph among them loses of its own.
  *
- * <p>Word sets the line's parts one after another from the page's left margin, and those after
- * the first spacer against its right margin. The page sets each where the zone's padding, a row's
+ * <p>Word sets the parts of a row held at tab stops at them, where the page sets them (see
+ * {@code DocxZoneRowStopsTest}); other lines' parts one after
+ * another from the page's left margin, and those after the first spacer against its right margin.
+ * The page sets each where the zone's padding, a row's
  * columns and gap and the part's own alignment and sides put it. A zone whose parts stand where
  * Word sets them, and whose paragraphs lose nothing of their own, is not named.</p>
  */
@@ -95,14 +97,21 @@ class DocxZoneReportTest {
     }
 
     @Test
-    void aRowsColumnsAndGapAreCountedWherePartsStandOffWordsLine() throws Exception {
-        // Without a spacer, Word sets the second right after the first; the page sets it at its column.
+    void aRowsColumnsAndGapAreKeptAtTabStops() throws Exception {
+        // Without a spacer, the page sets the second part at its column, and a tab stop holds it there.
         assertThat(zoneNotes(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Confidential").textStyle(CHROME))
                 .addParagraph(p -> p.text("Acme").textStyle(CHROME))
-                .build())))
-                .containsExactly(FOOTER + "1 of its 2 parts stands off where the page sets them");
-        // After a spacer, the page keeps its gap between the parts; Word sets them against each other.
+                .build()))).isEmpty();
+        // After a spacer, the page keeps its gap between the parts; each has a right stop at its end.
+        assertThat(zoneNotes(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line").spacing(8)
+                .addParagraph(p -> p.text("Confidential").textStyle(CHROME))
+                .flexSpacer()
+                .addParagraph(p -> p.text("v2.4").textStyle(CHROME))
+                .addParagraph(p -> p.text("Acme").textStyle(CHROME))
+                .build()))).isEmpty();
+        // A row sized to its content where a wider page number moves "v2.4" is not held at stops:
+        // Word sets its parts against each other after the spacer, and the page keeps a gap.
         assertThat(zoneNotes(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line").spacing(8)
                 .addParagraph(p -> p.text("Confidential").textStyle(CHROME))
                 .flexSpacer()
@@ -110,7 +119,8 @@ class DocxZoneReportTest {
                 .add(page.pageNumber(CHROME))
                 .build())))
                 .containsExactly(FOOTER + "1 of its 3 parts stands off where the page sets them");
-        // A part after a second spacer goes to no tab the line holds.
+        // Nor is one of two spacers and a page number, where a part after a second spacer goes to
+        // no tab the line holds.
         assertThat(zoneNotes(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Confidential").textStyle(CHROME))
                 .flexSpacer()
@@ -202,7 +212,8 @@ class DocxZoneReportTest {
 
     @Test
     void wherePartsStandPastOneWordSetsAtAnotherWidthIsNotMeasured() throws Exception {
-        // Word writes no prefix, so the part after it starts where the layout does not tell.
+        // Word writes no prefix, so the parts after it stand where the layout does not tell: at
+        // their stops, unless it reaches past one.
         assertThat(zoneNotes(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Confidential").textStyle(CHROME).bulletOffset("• ")
                         .indentStrategy(DocumentTextIndent.FIRST_LINE))
@@ -210,17 +221,16 @@ class DocxZoneReportTest {
                 .flexSpacer()
                 .add(page.pageNumber(CHROME))
                 .build())))
-                .containsExactly(FOOTER + "1 of its 3 parts stands off where the page sets them; where 1 of its 3 "
-                                 + "parts stands is not measured; a paragraph's bulletOffset letters, \"•\", are not "
+                .containsExactly(FOOTER + "1 of its 3 parts stands off where the page sets them; where 2 of its 3 "
+                                 + "parts stand is not measured; a paragraph's bulletOffset letters, \"•\", are not "
                                  + "written before its first line");
         // A part auto-sized is written at the size the page fits it to, as wide as the page sets
-        // it; set lower than Word's baseline, the parts after it stand off.
+        // it: the parts after it stand at their columns' stops, each raised to its own baseline.
         assertThat(zoneNotes(DocumentPageZone.footer(40, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Hi").textStyle(CHROME).autoSize(14))
                 .addParagraph(p -> p.text("Acme").textStyle(CHROME))
                 .addParagraph(p -> p.text("Co").textStyle(CHROME))
-                .build())))
-                .containsExactly(FOOTER + "2 of its 3 parts stand off where the page sets them");
+                .build()))).isEmpty();
         // Past a part auto-sized to a size its lines do not tell, where a part on its baseline
         // stands is not measured.
         assertThat(zoneNotes(DocumentPageZone.footer(40, page -> new RowBuilder().name("Line")

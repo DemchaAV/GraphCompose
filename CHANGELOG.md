@@ -8,6 +8,37 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export keeps a page zone's row in its columns: each part of the row stands at a tab
+  stop where the page sets it, so a label and the page number beside it no longer read as one
+  word.**
+  - A zone is written as one line of Word's header or footer, and its row's parts were written one
+    after another, with no space between them, so "Kept blocks" and the number became
+    "Kept blocks1", and "Page", the number, "of" and the total became "Page1of4". Only a spacer
+    was written, as the tab to the right margin. Text after a logo lost the row's gap.
+  - Where the page sets the row on one line, the line now holds a tab stop for each part that
+    does not start where the part before it ends, and a tab before it. A part is held by its
+    alignment in its column — a left stop at its start, a centre stop at its middle, a right stop
+    at its end. A picture and a page field are held by their start: the page sets a field in a
+    box as wide as its number, and grows that box to the right where the number is wider. After a
+    grow spacer a part is held by its end, a right stop. A spacer writes no tab of its own there.
+  - A row is written as before — its parts one after another, a spacer the tab to the right
+    margin — where one of its parts takes more lines than one or the layout does not show one;
+    and where the row is sized to its content and a page field in it
+    would move another part on a page where the number is wider: a field anywhere but last before
+    the row's one grow spacer or first after it, or in a row of more grow spacers than one or of
+    another arrangement. A stop does not move with the page.
+  - Measured in Word 16.0.20527, LibreOffice 24.2 and LibreOffice 26.8 on the four documents of
+    the fidelity corpus that set a row in a zone: every part of the line, 35 words over 11 pages,
+    stands within 0.1pt across of where the page sets it. Before, each editor read 7 of them as
+    the page writes them — the first word of three labels, and the header's four words after the
+    logo, which stood 8pt left — and ran the rest together. On rows over twelve pages, where the
+    number reaches two digits — beside a label and a word in even columns, before a word after a
+    grow spacer, and a right-aligned page field after a centred word — Word and LibreOffice 26.8 set every part
+    within 0.2pt of the page on every page. Where each line stands up and down is unchanged.
+  - The export report no longer counts those parts as standing off. In a row held at stops it
+    counts a part Word cannot set at its stop, the parts before it reaching it, and says where
+    the parts after it stand is not measured.
+
 - **A DOCX export writes only a divider, of all boxes of a colour, as Word's horizontal rule; any
   other box goes the way every drawing goes.** (A horizontal `LineNode` is written as that rule
   too, unchanged, and is still chosen by its geometry — a line is one either way.)

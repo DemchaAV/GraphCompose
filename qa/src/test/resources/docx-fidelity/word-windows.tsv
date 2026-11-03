@@ -72,7 +72,7 @@ synthetic-card_over_pages	3	3	114	114	1.03	1.15	0
 synthetic-clipped_container	1	1	8	8	0.99	0.99	0
 synthetic-header_logo_and_filled_row	1	1	7	7	0.01	0.01	0
 synthetic-icon_over_card	1	1	6	6	0.05	0.06	0
-synthetic-kept_blocks_over_pages	3	3	107	104	0.04	0.11	0
+synthetic-kept_blocks_over_pages	3	3	107	107	0.04	0.11	0
 synthetic-kept_icon_panel	2	2	38	38	0.04	0.07	0
 synthetic-links_and_toc	3	3	81	81	0.04	0.08	0
 synthetic-long_free_text	5	5	154	153	0.04	12.02	22
@@ -81,5 +81,5 @@ synthetic-nested_rows	1	1	24	22	0.02	0.06	0
 synthetic-rotated_image_and_shape	1	1	9	9	0.01	0.02	0
 synthetic-rounded_card	1	1	7	7	0.01	0.02	0
 synthetic-rtl_paragraphs	1	1	11	10	0.06	0.10	0
-synthetic-sections_and_fields	4	4	108	104	0.02	0.07	0
-synthetic-sidebar_over_pages	3	3	94	85	12.04	24.07	57
+synthetic-sections_and_fields	4	4	108	108	0.02	0.07	0
+synthetic-sidebar_over_pages	3	3	94	88	12.04	24.04	57

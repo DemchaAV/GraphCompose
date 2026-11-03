@@ -540,24 +540,89 @@ class DocxFidelityGateTest {
 
     @Test
     void aDocumentPassesWhenTheEditorSetsItAsThePageDoes() {
-        // engine pages, editor pages, lines, found, median, p90, past 2pt
-        assertThat(FidelityAcceptance.shortfalls(new FidelityMeasurement("cv-a", 1, 1, 100, 95, 1.0, 2, 9, Map.of())))
+        // editor pages (the engine's is 1), lines, found lines (found, far down, far across), median
+        assertThat(FidelityAcceptance.shortfalls(accepted("cv-a", 1, 100, found(95, 9, 0), 1.0)))
                 .as("at every limit").isEmpty();
-        assertThat(FidelityAcceptance.shortfalls(new FidelityMeasurement("cv-a", 1, 2, 100, 94, 1.01, 2, 10, Map.of())))
-                .containsExactly("2 pages, not 1", "94 of 100 lines found", "median 1.01pt", "10 lines past 2pt");
+        assertThat(FidelityAcceptance.shortfalls(accepted("cv-a", 2, 100, found(94, 10, 0), 1.01)))
+                .containsExactly("2 pages, not 1", "94 of 100 lines found", "median 1.01pt",
+                        "10 lines past 2pt (10 down, 0 across)");
+    }
+
+    @Test
+    void linesFarAcrossCountAsFarAsLinesFarDown() {
+        assertThat(FidelityAcceptance.shortfalls(accepted("cv-a", 1, 100, found(100, 0, 10), 0.1)))
+                .as("ten in a hundred, across").isEmpty();
+        assertThat(FidelityAcceptance.shortfalls(accepted("cv-a", 1, 100, found(100, 0, 11), 0.1)))
+                .containsExactly("11 lines past 2pt (0 down, 11 across)");
+        assertThat(FidelityAcceptance.shortfalls(accepted("cv-a", 1, 100, found(100, 6, 5), 0.1)))
+                .as("six down and five across are eleven lines")
+                .containsExactly("11 lines past 2pt (6 down, 5 across)");
+    }
+
+    @Test
+    void aLineFarBothWaysIsOneLineFarOff() {
+        Map<String, FidelityMeasurement.Found> lines = found(100, 0, 0);
+        for (int i = 0; i < 11; i++) {
+            lines.put("both" + i, new FidelityMeasurement.Found(0, "both", -3, 3));
+            lines.remove("line" + i);
+        }
+        FidelityMeasurement measured = accepted("cv-a", 1, 100, lines, 0.1);
+
+        assertThat(FidelityAcceptance.far(measured)).isEqualTo(11);
+        assertThat(FidelityAcceptance.shortfalls(measured)).containsExactly("11 lines past 2pt (11 down, 11 across)");
+    }
+
+    @Test
+    void twoPointsIsNotFarEitherWay() {
+        Map<String, FidelityMeasurement.Found> lines = found(10, 0, 0);
+        lines.put("line0", new FidelityMeasurement.Found(0, "edge", 2.0, -2.0));
+        lines.put("line1", new FidelityMeasurement.Found(0, "past", 0, -2.01));
+
+        assertThat(FidelityAcceptance.far(accepted("cv-a", 1, 10, lines, 0))).isEqualTo(1);
+    }
+
+    @Test
+    void aLineMeasuredBeforeAcrossIsHeldDownAlone() {
+        Map<String, FidelityMeasurement.Found> lines = found(10, 0, 0);
+        lines.put("line0", new FidelityMeasurement.Found(0, "old", 0.1, Double.NaN));
+        lines.put("line1", new FidelityMeasurement.Found(0, "old, low", 3, Double.NaN));
+
+        assertThat(FidelityAcceptance.far(accepted("cv-a", 1, 10, lines, 0))).as("the low one, by its drift down")
+                .isEqualTo(1);
     }
 
     @Test
     void theAcceptanceReportNamesTheDocumentsThatFallShort() throws Exception {
         Path file = dir.resolve("acceptance.md");
         FidelityAcceptance.write(file, "probe", List.of(
-                new FidelityMeasurement("cv-a", 1, 1, 100, 100, 0.2, 0.4, 0, Map.of()),
-                new FidelityMeasurement("cv-b", 1, 2, 100, 60, 3.0, 9, 50, Map.of())));
+                accepted("cv-a", 1, 100, found(100, 0, 3), 0.2),
+                accepted("cv-b", 2, 100, found(60, 30, 20), 3.0)));
 
         assertThat(String.join("\n", Files.readAllLines(file)))
                 .contains("1 of 2 documents pass")
-                .contains("| cv-b | 2 pages, not 1; 60 of 100 lines found; median 3.00pt; 50 lines past 2pt |")
+                .contains("no more than 10% past 2pt down or across")
+                .contains("Lines past 2pt: 30 down, in 1 document; 23 across, in 2 documents.")
+                .contains("| cv-b | 2 pages, not 1; 60 of 100 lines found; median 3.00pt; "
+                          + "50 lines past 2pt (30 down, 20 across) |")
                 .doesNotContain("| cv-a |");
+    }
+
+    /** A measurement on one page of the engine's, as the acceptance reads it. */
+    private static FidelityMeasurement accepted(String stem, int editorPages, int lines,
+                                                Map<String, FidelityMeasurement.Found> found, double median) {
+        return new FidelityMeasurement(stem, 1, editorPages, lines, found.size(), median, median,
+                (int) found.values().stream().filter(line -> Math.abs(line.drift()) > 2).count(), found);
+    }
+
+    /** {@code count} found lines: the first {@code down} 3pt low, the next {@code across} 3pt left. */
+    private static Map<String, FidelityMeasurement.Found> found(int count, int down, int across) {
+        Map<String, FidelityMeasurement.Found> found = new LinkedHashMap<>();
+        for (int i = 0; i < count; i++) {
+            double drift = i < down ? 3 : 0.1;
+            double left = i >= down && i < down + across ? -3 : 0.1;
+            found.put("line" + i, new FidelityMeasurement.Found(0, "line", drift, left));
+        }
+        return found;
     }
 
     @Test

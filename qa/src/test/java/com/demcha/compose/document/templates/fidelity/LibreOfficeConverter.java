@@ -91,18 +91,28 @@ final class LibreOfficeConverter {
         return "unknown";
     }
 
-    /** Converts each DOCX into a PDF of the same stem in {@code outDir}. */
+    /** Converts each DOCX into a PDF of the same stem in {@code outDir}, logging to {@code libreoffice.log}. */
     void convert(List<Path> docxFiles, Path outDir, Path workDir) throws IOException, InterruptedException {
+        convert(docxFiles, outDir, workDir, "libreoffice.log");
+    }
+
+    /**
+     * Converts each DOCX into a PDF of the same stem in {@code outDir}, logging to {@code logName}
+     * in {@code workDir}: a second conversion in one run logs apart, since the log is written
+     * afresh and is what tells why a PDF is missing.
+     */
+    void convert(List<Path> docxFiles, Path outDir, Path workDir, String logName)
+            throws IOException, InterruptedException {
         Files.createDirectories(outDir);
         Path profile = Files.createDirectories(workDir.resolve("libreoffice-profile"));
         List<String> command = new ArrayList<>(List.of(soffice.toString(), "--headless", "--norestore",
                 "-env:UserInstallation=" + profile.toUri(), "--convert-to", "pdf", "--outdir", outDir.toString()));
         docxFiles.forEach(file -> command.add(file.toString()));
-        Path log = workDir.resolve("libreoffice.log");
+        Path log = workDir.resolve(logName);
         Process process = new ProcessBuilder(command).redirectErrorStream(true).redirectOutput(log.toFile()).start();
         if (!process.waitFor(TIMEOUT_MINUTES, TimeUnit.MINUTES)) {
             process.destroyForcibly();
-            throw new IllegalStateException("LibreOffice did not convert the corpus within "
+            throw new IllegalStateException("LibreOffice did not convert " + docxFiles.size() + " documents within "
                                             + TIMEOUT_MINUTES + " minutes; see " + log);
         }
         if (process.exitValue() != 0) {

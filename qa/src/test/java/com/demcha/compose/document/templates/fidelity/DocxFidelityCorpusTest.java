@@ -10,6 +10,7 @@ import com.demcha.compose.document.templates.invoice.presets.InvoiceDocxCorpus;
 import com.demcha.compose.document.templates.proposal.presets.ProposalDocxCorpus;
 import com.demcha.compose.document.templates.receipt.presets.ReceiptDocxCorpus;
 import com.demcha.compose.document.templates.rota.presets.RotaDocxCorpus;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
@@ -44,12 +45,44 @@ import static org.assertj.core.api.Assertions.assertThat;
  * writes what it measured as the baseline, which is how a change that moves documents records
  * the move; the baseline's diff then shows the reviewer which documents moved, and which way.
  * The documents, their PDFs and the report are left in {@code target/docx-fidelity}.</p>
+ *
+ * <p>The same run feeds the gate one document changed afterwards in each way a reader would see
+ * ({@link DocxTamper}) — a paragraph gone, another font, a page break more, a card's row held to
+ * a height its text does not fit, a table replaced by a picture — through the same editor and the
+ * same measurement, and fails unless the gate fails on every one. Each is held to this run's own
+ * measurement of the document it was changed from, not to the baseline, so what it catches is
+ * the change and nothing the baseline holds besides. They are converted apart from the corpus,
+ * with a copy of the document left unchanged, which must stand where the corpus's conversion set
+ * it: a difference the second conversion makes on its own is then not counted as a change
+ * caught. They are written to {@code tampered}, and set by the editor into
+ * {@code <editor>-tampered}.</p>
  */
 class DocxFidelityCorpusTest {
 
     private static final String LIBREOFFICE = "libreoffice";
     private static final String WORD = "word";
     private static final String EXPORT = "export";
+
+    /** The corpus document the gate is fed changed: it has a paragraph, a card and a table. */
+    static final String TAMPERED_SOURCE = "invoice-modern";
+
+    /** The changes the gate must fail on, each made to {@link #TAMPERED_SOURCE}'s DOCX. */
+    static List<DocxTamper> tampers() {
+        return List.of(
+                DocxTamper.withoutParagraph("Thank you for choosing GraphCompose"),
+                DocxTamper.inFont("Courier New"),
+                DocxTamper.withPageBreakBefore("Thank you for choosing GraphCompose"),
+                DocxTamper.withExactRowHeight("Please include the invoice number", 500),
+                DocxTamper.asPicture("Discovery workshop"));
+    }
+
+    /** What the changed documents' conversion makes: the unchanged copy first, then each change. */
+    static List<DocxTamper> converted() {
+        List<DocxTamper> converted = new ArrayList<>();
+        converted.add(DocxTamper.unchanged());
+        converted.addAll(tampers());
+        return converted;
+    }
 
     @Test
     void everyDocumentStandsWhereItsBaselineHoldsIt() throws Exception {
@@ -62,6 +95,10 @@ class DocxFidelityCorpusTest {
         List<DocxCorpusDocument> corpus = corpus();
         String note;
         Path editor = work.resolve(mode);
+        Path tampered = work.resolve("tampered");
+        Path editorTampered = work.resolve(mode + "-tampered");
+        byte[] sourceDocx = null;
+        LibreOfficeConverter converter = null;
         if (mode.equals(WORD)) {
             // Word converts outside this run (see word-fidelity.ps1), so its PDFs are measured
             // only when the DOCX it converted is, to the byte, the one this tree exports.
@@ -70,8 +107,12 @@ class DocxFidelityCorpusTest {
             Files.createDirectories(engine);
             List<String> stale = new ArrayList<>();
             for (DocxCorpusDocument document : corpus) {
-                if (!conversion.convertedFrom(document.stem() + ".docx", exportTo(document, engine))) {
+                byte[] docx = exportTo(document, engine);
+                if (!conversion.convertedFrom(document.stem() + ".docx", docx)) {
                     stale.add(document.stem());
+                }
+                if (document.stem().equals(TAMPERED_SOURCE)) {
+                    sourceDocx = docx;
                 }
             }
             assertThat(stale).as("documents Word converted from other DOCX than this tree exports: run "
@@ -85,10 +126,18 @@ class DocxFidelityCorpusTest {
             for (DocxCorpusDocument document : corpus) {
                 docx.add(export(document, engine));
             }
+            sourceDocx = Files.readAllBytes(engine.resolve(TAMPERED_SOURCE + ".docx"));
             if (mode.equals(EXPORT)) {
+                // Written after the corpus, so a change that cannot be made leaves the corpus for
+                // Word to convert; the word run then reports the failure beside the corpus's result.
+                try {
+                    writeTampered(sourceDocx, tampered);
+                } catch (java.io.IOException | RuntimeException unmade) {
+                    unmade.printStackTrace();
+                }
                 return;
             }
-            LibreOfficeConverter converter = LibreOfficeConverter.find().orElseThrow(() -> new IllegalStateException(
+            converter = LibreOfficeConverter.find().orElseThrow(() -> new IllegalStateException(
                     "the DOCX fidelity corpus was asked for, and no LibreOffice was found: set -Dgraphcompose.soffice"));
             // LibreOffice can exit cleanly when a file fails to load: a PDF left from an earlier
             // run would then be measured in its place.
@@ -110,19 +159,152 @@ class DocxFidelityCorpusTest {
         // run on a machine the baseline cannot be shot on, CI's, is for — keeps them.
         FidelityBaseline.write(work.resolve("measured-" + mode + ".tsv"), note, measurements, baseline);
         FidelityAcceptance.write(work.resolve("measured-" + mode + "-acceptance.md"), note, measurements);
+        FidelityMeasurement source = measurements.stream()
+                .filter(measured -> measured.stem().equals(TAMPERED_SOURCE)).findFirst().orElseThrow();
         List<String> divergences = FidelityBaseline.read(baseline).divergences(measurements);
         if (Boolean.getBoolean("graphcompose.docxFidelity.update")) {
             // Written all the same: what it lets through is the baseline's diff, shown here first.
             divergences.forEach(divergence -> System.err.println("baseline rewritten over: " + divergence));
             FidelityBaseline.write(baseline, note, measurements);
+        }
+        // The changed documents are made, converted and measured only now, once the corpus's
+        // measurements, its report and any rewritten baseline are written: whatever goes wrong
+        // with them is reported beside the baseline's divergences, never in their place.
+        List<String> changes = changesLetThrough(mode, work, engine, source, sourceDocx, converter);
+        if (Boolean.getBoolean("graphcompose.docxFidelity.update")) {
+            assertThat(changes).as(LET_THROUGH, editorTampered).isEmpty();
             return;
         }
-        assertThat(divergences)
-                .as("documents standing apart from %s, whichever way they moved: a change that moves "
-                    + "them — nearer the page included — rewrites the baseline in the same commit, with "
-                    + "-Dgraphcompose.docxFidelity.update=true, so its diff shows what moved (measured: %s)",
-                        baseline, work.resolve("measured-" + mode + ".tsv"))
-                .isEmpty();
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(divergences)
+                    .as("documents standing apart from %s, whichever way they moved: a change that moves "
+                        + "them — nearer the page included — rewrites the baseline in the same commit, with "
+                        + "-Dgraphcompose.docxFidelity.update=true, so its diff shows what moved (measured: %s)",
+                            baseline, work.resolve("measured-" + mode + ".tsv"))
+                    .isEmpty();
+            softly.assertThat(changes).as(LET_THROUGH, editorTampered).isEmpty();
+        });
+    }
+
+    private static final String LET_THROUGH = "changes to " + TAMPERED_SOURCE + "'s DOCX the gate did not fail on, "
+                                              + "or failed on short of what the change costs (the editor's PDFs: %s)";
+
+    /** A changed DOCX's file stem: its document's, and the change's. */
+    static String tamperedStem(DocxTamper tamper) {
+        return TAMPERED_SOURCE + "--" + tamper.name();
+    }
+
+    /**
+     * Each change the gate let through, the changed documents made and converted here for
+     * LibreOffice, or checked to be the ones Word converted; anything that stops them being made,
+     * converted or measured is one more entry, not an exception, so the corpus's own result is
+     * reported with it.
+     */
+    static List<String> changesLetThrough(String mode, Path work, Path engine, FidelityMeasurement source,
+                                                  byte[] sourceDocx, LibreOfficeConverter converter) {
+        Path editorTampered = work.resolve(mode + "-tampered");
+        try {
+            if (mode.equals(WORD)) {
+                List<String> stale = staleTampered(WordConversion.read(editorTampered), sourceDocx);
+                if (!stale.isEmpty()) {
+                    return List.of("changed documents Word converted from other DOCX than this tree makes: " + stale
+                                   + ": run scripts/docx-visual/word-fidelity.ps1, which exports and converts first");
+                }
+            } else {
+                List<Path> changed = writeTampered(sourceDocx, work.resolve("tampered"));
+                deleteTree(editorTampered);
+                converter.convert(changed, editorTampered, work, "libreoffice-tampered.log");
+            }
+            return letThrough(source, engine.resolve(TAMPERED_SOURCE + ".pdf"), editorTampered);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            return List.of("the changed documents' conversion was interrupted");
+        } catch (java.io.IOException | RuntimeException failed) {
+            java.io.StringWriter trace = new java.io.StringWriter();
+            failed.printStackTrace(new java.io.PrintWriter(trace));
+            return List.of("the changed documents could not be made, converted or measured: " + trace);
+        }
+    }
+
+    /** Writes the source DOCX, unchanged and changed each way, into {@code dir}, emptied first. */
+    private static List<Path> writeTampered(byte[] docx, Path dir) throws java.io.IOException {
+        deleteTree(dir);
+        Files.createDirectories(dir);
+        List<Path> written = new ArrayList<>();
+        for (DocxTamper tamper : converted()) {
+            Path file = dir.resolve(tamperedStem(tamper) + ".docx");
+            Files.write(file, tamper.applyTo(docx));
+            written.add(file);
+        }
+        return written;
+    }
+
+    /** The changed documents Word converted from other DOCX than this tree's source changes into. */
+    static List<String> staleTampered(WordConversion conversion, byte[] sourceDocx) throws java.io.IOException {
+        List<String> stale = new ArrayList<>();
+        for (DocxTamper tamper : converted()) {
+            if (!conversion.convertedFrom(tamperedStem(tamper) + ".docx", tamper.applyTo(sourceDocx))) {
+                stale.add(tamperedStem(tamper));
+            }
+        }
+        return stale;
+    }
+
+    /**
+     * Each change the gate let through. Held to this run's measurement of the document it was
+     * changed from, the unchanged copy converted with them must stand where that measurement
+     * holds it, and each changed document must stand apart from it — and, where the change is
+     * one that costs lines or a page, cost them.
+     */
+    static List<String> letThrough(FidelityMeasurement source, Path enginePdf, Path editorPdfs)
+            throws java.io.IOException {
+        FidelityBaseline held = FidelityBaseline.of(List.of(source));
+        List<String> through = new ArrayList<>();
+        for (DocxTamper tamper : converted()) {
+            Path pdf = editorPdfs.resolve(tamperedStem(tamper) + ".pdf");
+            if (!Files.exists(pdf)) {
+                // A DOCX the editor cannot open is a change that was never made, not one caught.
+                through.add(tamper.name() + ": the editor wrote no PDF of it");
+                continue;
+            }
+            FidelityMeasurement changed = FidelityMeasurement.of(source.stem(), enginePdf, pdf);
+            List<String> apart = held.divergences(List.of(changed));
+            String why = tamper.name().equals(DocxTamper.UNCHANGED)
+                    ? unchangedApart(apart)
+                    : letThrough(tamper, source, changed, apart);
+            if (why != null) {
+                through.add(why);
+            } else if (!apart.isEmpty()) {
+                System.out.println("against the unchanged document, the gate fails on " + tamper.name() + ": "
+                                   + String.join("; ", apart));
+            }
+        }
+        return through;
+    }
+
+    /**
+     * Why the unchanged copy cannot vouch for the changed ones' conversion, or {@code null}: it
+     * stands apart from the corpus's conversion of the same document, so a difference a change
+     * shows may be the second conversion's.
+     */
+    static String unchangedApart(List<String> apart) {
+        return apart.isEmpty() ? null : "unchanged: converted with the changes, the unchanged document stands apart "
+                                        + "from the corpus's conversion of it, so what they show is not theirs alone: "
+                                        + String.join("; ", apart);
+    }
+
+    /** Why the gate let a change through, or {@code null} when it failed on it as it must. */
+    static String letThrough(DocxTamper tamper, FidelityMeasurement source, FidelityMeasurement changed,
+                             List<String> apart) {
+        if (apart.isEmpty()) {
+            return tamper.name() + ": the gate let it through";
+        }
+        boolean costs = switch (tamper.costs()) {
+            case ANY -> true;
+            case LOST_LINES -> !changed.found().keySet().containsAll(source.found().keySet());
+            case PAGES -> changed.editorPages() != source.editorPages();
+        };
+        return costs ? null : tamper.name() + ": failed, but without " + tamper.costs() + ": " + String.join("; ", apart);
     }
 
     @Test

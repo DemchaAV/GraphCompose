@@ -615,6 +615,8 @@ jobs:
             qa/target/docx-fidelity/measured-libreoffice*.tsv
             qa/target/docx-fidelity/measured-libreoffice-acceptance.md
             qa/target/docx-fidelity/libreoffice.log
+            qa/target/docx-fidelity/libreoffice-tampered.log
+            qa/target/docx-fidelity/libreoffice-tampered/*.pdf
           if-no-files-found: warn
           # What a reviewer compares against the baseline, or takes as the new one
           # when a change moves documents nearer the page: needed while the change

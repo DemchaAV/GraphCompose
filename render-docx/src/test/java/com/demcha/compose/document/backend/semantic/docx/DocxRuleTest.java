@@ -497,10 +497,184 @@ class DocxRuleTest {
     }
 
     @Test
-    void aSolidPaintedBarIsARuleToo() throws Exception {
-        try (XWPFDocument document = export(page -> page
-                .addShape(s -> s.size(100, 2).fill(com.demcha.compose.document.style.DocumentPaint.solid(ACCENT))))) {
+    void aSolidPaintedDividerIsARuleToo() throws Exception {
+        // A paint the layout turns into the same flat fill is a rule's colour (solidFillOf). The
+        // DSL's divider builder sets no paint, so the node is built as the backend receives it.
+        try (XWPFDocument document = export(page -> page.add(paintedDivider(
+                com.demcha.compose.document.style.DocumentPaint.solid(ACCENT))))) {
             assertThat(hex(bottomOf(document, 0).getColor())).isEqualTo("1A5694");
+        }
+    }
+
+    @Test
+    void aBoxOfAColourThatIsNoDividerIsDrawnRatherThanWrittenAsARule() throws Exception {
+        // The signal is the whole difference: the same geometry, the same flat fill, and the box
+        // keeps its own place on the page instead of becoming a bordered paragraph.
+        try (XWPFDocument document = export(page -> page
+                .addShape(s -> s.name("Plate").size(100, 2).fillColor(ACCENT)))) {
+            assertThat(document.getParagraphs()).as("no paragraph carries a border for it")
+                    .allSatisfy(paragraph -> assertThat(paragraph.getCTP().getPPr())
+                            .matches(properties -> properties == null || properties.getPBdr() == null));
+            assertThat(document.getDocument().xmlText())
+                    .as("it is drawn where the page puts it").contains("<wp:anchor");
+        }
+    }
+
+    @Test
+    void aDividerTallerThanWordsThickestBorderIsNotARule() throws Exception {
+        // The signal does not lift the height cap: Word's border stops at 12pt, so a divider
+        // thicker than that is drawn at its own thickness rather than written 12pt thin.
+        try (XWPFDocument document = export(page -> page
+                .addDivider(d -> d.name("Band").width(200).thickness(DocxRules.MAX_RULE_POINTS + 1)
+                        .color(ACCENT)))) {
+            assertThat(document.getParagraphs()).allSatisfy(paragraph ->
+                    assertThat(paragraph.getCTP().getPPr())
+                            .matches(properties -> properties == null || properties.getPBdr() == null));
+            assertThat(document.getDocument().xmlText()).contains("<wp:anchor");
+        }
+    }
+
+    @Test
+    void aDividerBuiltByTheDslCarriesItsAnchorsBookmark() throws Exception {
+        // Only a drawing that reaches Word as a rule has a paragraph to hold a bookmark
+        // (blockAnchorOf), so the builder has to carry the anchor for a link or a page reference to
+        // have anything to point at — it used to drop it, and a thin addShape box was the only
+        // way to get a bookmarked rule from a box.
+        try (XWPFDocument document = export(page -> page
+                .addDivider(d -> d.name("Seam").width(200).thickness(2).color(ACCENT).anchor("seam")))) {
+            assertThat(document.getParagraphs().get(0).getCTP().getBookmarkStartList())
+                    .extracting(CTBookmark::getName)
+                    .containsExactly("seam");
+        }
+    }
+
+    @Test
+    void aDividerGivenAStrokeIsDrawnRatherThanWrittenAsARule() throws Exception {
+        // Word's rule is a border of one colour with no stroke of its own, so a stroked divider
+        // cannot be written as one (DividerBuilder's javadoc says so, and this holds it).
+        try (XWPFDocument document = export(page -> page.addDivider(d -> {
+            d.name("Edged").width(200).thickness(2).color(ACCENT);
+            d.stroke(DocumentStroke.of(DocumentColor.rgb(0, 0, 0), 1));
+        }))) {
+            assertThat(document.getParagraphs()).allSatisfy(paragraph ->
+                    assertThat(paragraph.getCTP().getPPr())
+                            .matches(properties -> properties == null || properties.getPBdr() == null));
+            assertThat(document.getDocument().xmlText()).contains("<wp:anchor");
+        }
+    }
+
+    @Test
+    void aDividerOverAnotherLayerIsDrawnBecauseItIsNotInTheFlow() throws Exception {
+        // The signal says what the box is for; being in the flow says whether Word's rule can
+        // stand there at all. Over a second layer it cannot, so the divider is drawn.
+        try (XWPFDocument document = export(page -> page.addLayerStack(stack -> stack
+                .layer(new SectionBuilder().name("Under").addParagraph(p -> p.text("Under")).build())
+                .layer(new SectionBuilder().name("Over")
+                        .addDivider(d -> d.name("Over").width(200).thickness(2).color(ACCENT))
+                        .build())))) {
+            assertThat(document.getParagraphs()).allSatisfy(paragraph ->
+                    assertThat(paragraph.getCTP().getPPr())
+                            .matches(properties -> properties == null || properties.getPBdr() == null));
+            assertThat(document.getDocument().xmlText()).contains("<wp:anchor");
+        }
+    }
+
+    @Test
+    void aDividerOfNoFillIsDroppedAndNamed() throws Exception {
+        // DividerBuilder.color passes a null colour straight through, so the box can reach the
+        // export painting nothing: it is neither a rule nor a drawing, and the report says so.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument document = withReport(report, page -> page
+                .addDivider(d -> d.name("Blank").width(200).thickness(2)
+                        .color((DocumentColor) null)))) {
+            assertThat(document.getDocument().xmlText()).doesNotContain("<wp:anchor");
+            assertThat(report.get().bySubject().get("ShapeNode")).isNotNull()
+                    .anySatisfy(note -> assertThat(note.detail()).contains("paints nothing"));
+        }
+    }
+
+    @Test
+    void aPaintedBoxThatIsNoDividerIsDrawnToo() throws Exception {
+        // A paint the layout flattens to one colour is a fill like any other, so what decides is
+        // the signal and not how the fill was stated.
+        try (XWPFDocument document = export(page -> page.add(
+                new com.demcha.compose.document.dsl.ShapeBuilder().name("Plate").size(100, 2)
+                        .fill(com.demcha.compose.document.style.DocumentPaint.solid(ACCENT)).build()))) {
+            assertThat(document.getParagraphs()).allSatisfy(paragraph ->
+                    assertThat(paragraph.getCTP().getPPr())
+                            .matches(properties -> properties == null || properties.getPBdr() == null));
+            assertThat(document.getDocument().xmlText()).contains("<wp:anchor");
+        }
+    }
+
+    /** A divider of a paint, which no builder states: the signal is the canonical constructor's. */
+    private static com.demcha.compose.document.node.ShapeNode paintedDivider(
+            com.demcha.compose.document.style.DocumentPaint paint) {
+        return new com.demcha.compose.document.node.ShapeNode("Divider", 100, 2, null, null,
+                DocumentCornerRadius.ZERO, null, null, DocumentInsets.zero(), DocumentInsets.zero(),
+                com.demcha.compose.document.style.DocumentTransform.NONE, paint, null, true);
+    }
+
+    /** A divider of a fill colour, with what no builder gives one: corners or a transform. */
+    private static com.demcha.compose.document.node.ShapeNode shapedDivider(
+            DocumentCornerRadius radius, com.demcha.compose.document.style.DocumentTransform transform) {
+        return new com.demcha.compose.document.node.ShapeNode("Divider", 100, 2, ACCENT, null, radius,
+                null, null, DocumentInsets.zero(), DocumentInsets.zero(), transform, null, null, true);
+    }
+
+    private static void assertNoRule(XWPFDocument document) {
+        assertThat(document.getParagraphs()).as("no paragraph carries a border for it")
+                .allSatisfy(paragraph -> assertThat(paragraph.getCTP().getPPr())
+                        .matches(properties -> properties == null || properties.getPBdr() == null));
+    }
+
+    @Test
+    void aRoundedDividerIsDrawnRatherThanWrittenAsARule() throws Exception {
+        // Word's rule is a border, square at its ends, so the signal does not make a rounded box
+        // one: it keeps its corners as a drawing.
+        try (XWPFDocument document = export(page -> page.add(shapedDivider(DocumentCornerRadius.of(1),
+                com.demcha.compose.document.style.DocumentTransform.NONE)))) {
+            assertNoRule(document);
+            assertThat(anchoredShapes(document)).containsExactly("roundRect");
+        }
+    }
+
+    @Test
+    void aTurnedDividerIsDrawnRatherThanWrittenAsARule() throws Exception {
+        // A border cannot turn, so a transformed divider goes to the drawing path, which names
+        // the transform it does not carry.
+        try (XWPFDocument document = export(page -> page.add(shapedDivider(DocumentCornerRadius.ZERO,
+                com.demcha.compose.document.style.DocumentTransform.rotate(10))))) {
+            assertNoRule(document);
+            assertThat(anchoredShapes(document)).containsExactly("rect");
+        }
+    }
+
+    @Test
+    void aDividerPaintedOnlyWithAGradientIsDroppedAndNamed() throws Exception {
+        // A rule is one colour and a gradient is not (solidFillOf), so such a divider is no rule;
+        // the drawing path does not draw a gradient either, and the report names the drop.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument document = withReport(report, page -> page.add(paintedDivider(
+                com.demcha.compose.document.style.DocumentPaint.linear(ACCENT, DocumentColor.WHITE))))) {
+            assertNoRule(document);
+            assertThat(document.getDocument().xmlText()).doesNotContain("<wp:anchor");
+            assertThat(report.get().bySubject().get("ShapeNode")).isNotNull()
+                    .anySatisfy(note -> assertThat(note.detail()).contains("painted only with a gradient"));
+        }
+    }
+
+    @Test
+    void aDividerInALayerStackOfOneLayerStaysDrawing() throws Exception {
+        // A stack of one layer lays nothing over anything, yet only a line in it is a rule
+        // (inTheFlow); a divider there is drawn, as any other box in a stack is.
+        try (XWPFDocument document = export(page -> page.addLayerStack(stack -> stack.layer(
+                new SectionBuilder().name("Meta")
+                        .addParagraph(p -> p.text("Issue date"))
+                        .addDivider(d -> d.name("Seam").width(100).thickness(2).color(ACCENT))
+                        .build())))) {
+            assertNoRule(document);
+            assertThat(anchoredShapes(document)).containsExactly("rect");
         }
     }
 

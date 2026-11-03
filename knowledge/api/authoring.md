@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.5.0-SNAPSHOT
 
-Types: 237 · methods: 2133 · constants: 236 · compiler-generated members: 1129
+Types: 237 · methods: 2135 · constants: 236 · compiler-generated members: 1130
 
 ## com.demcha.compose
 
@@ -1722,9 +1722,10 @@ Types: 237 · methods: 2133 · constants: 236 · compiler-generated members: 112
 - `DocumentStroke stroke()`
 
 ### ShapeNode (record)
+- `new ShapeNode(String name, double width, double height, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentLinkTarget linkTarget, DocumentBookmarkOptions bookmarkOptions, DocumentInsets padding, DocumentInsets margin, DocumentTransform transform, DocumentPaint fillPaint, String anchor)`
 - `new ShapeNode(String name, double width, double height, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentLinkOptions linkOptions, DocumentBookmarkOptions bookmarkOptions, DocumentInsets padding, DocumentInsets margin, DocumentTransform transform, DocumentPaint fillPaint)`
 - `new ShapeNode(String name, double width, double height, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentLinkOptions linkOptions, DocumentBookmarkOptions bookmarkOptions, DocumentInsets padding, DocumentInsets margin, DocumentTransform transform)`
-- `new ShapeNode(String, double, double, DocumentColor, DocumentStroke, DocumentCornerRadius, DocumentLinkTarget, DocumentBookmarkOptions, DocumentInsets, DocumentInsets, DocumentTransform, DocumentPaint, String)`
+- `new ShapeNode(String, double, double, DocumentColor, DocumentStroke, DocumentCornerRadius, DocumentLinkTarget, DocumentBookmarkOptions, DocumentInsets, DocumentInsets, DocumentTransform, DocumentPaint, String, boolean)`
 - `new ShapeNode(String name, double width, double height, Color fillColor, DocumentStroke stroke, DocumentInsets padding, DocumentInsets margin)`
 - `new ShapeNode(String name, double width, double height, DocumentColor fillColor, DocumentStroke stroke, DocumentLinkOptions linkOptions, DocumentBookmarkOptions bookmarkOptions, DocumentInsets padding, DocumentInsets margin)`
 - `new ShapeNode(String name, double width, double height, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentLinkOptions linkOptions, DocumentBookmarkOptions bookmarkOptions, DocumentInsets padding, DocumentInsets margin)`
@@ -1741,6 +1742,7 @@ Types: 237 · methods: 2133 · constants: 236 · compiler-generated members: 112
 - `DocumentTransform transform()`
 - `DocumentPaint fillPaint()`
 - `String anchor()`
+- `boolean divider()`
 
 ### SpacerNode (record)
 - `new SpacerNode(String, double, double, DocumentInsets, DocumentInsets, double)`

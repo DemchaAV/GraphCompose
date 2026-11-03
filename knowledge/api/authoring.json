@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 237,
-    "methods": 2133,
+    "methods": 2135,
     "constants": 236,
-    "generated": 1129
+    "generated": 1130
   },
   "packages": [
     {
@@ -23988,6 +23988,68 @@
                   "name": "cornerRadius"
                 },
                 {
+                  "type": "DocumentLinkTarget",
+                  "name": "linkTarget"
+                },
+                {
+                  "type": "DocumentBookmarkOptions",
+                  "name": "bookmarkOptions"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "padding"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "margin"
+                },
+                {
+                  "type": "DocumentTransform",
+                  "name": "transform"
+                },
+                {
+                  "type": "DocumentPaint",
+                  "name": "fillPaint"
+                },
+                {
+                  "type": "String",
+                  "name": "anchor"
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ShapeNode",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "name"
+                },
+                {
+                  "type": "double",
+                  "name": "width"
+                },
+                {
+                  "type": "double",
+                  "name": "height"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "fillColor"
+                },
+                {
+                  "type": "DocumentStroke",
+                  "name": "stroke"
+                },
+                {
+                  "type": "DocumentCornerRadius",
+                  "name": "cornerRadius"
+                },
+                {
                   "type": "DocumentLinkOptions",
                   "name": "linkOptions"
                 },
@@ -24125,6 +24187,10 @@
                 },
                 {
                   "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "boolean",
                   "name": null
                 }
               ]
@@ -24378,6 +24444,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "divider",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
               "params": []
             }
           ]

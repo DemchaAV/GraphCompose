@@ -22,14 +22,20 @@ import java.util.List;
  *   <li>a {@link LineNode} whose two ends sit at one height, with no transform, stroked no
  *       thicker than Word's thickest border — a 20pt bar written as a border came out 12pt, and
  *       what followed stood 8pt high, over it; and</li>
- *   <li>a {@link ShapeNode} that is only a fill — a colour or a solid paint; no stroke, no
- *       rounded corners, no gradient, no transform — and no taller than Word's thickest
- *       border, which is how {@code addDivider} draws one.</li>
+ *   <li>a {@link ShapeNode} the author asked to be a divider ({@link ShapeNode#divider()},
+ *       which the DSL's divider builder sets, as does the templates module's own divider
+ *       widget) that is only a fill — a colour or a solid paint; no stroke, no rounded
+ *       corners, no gradient, no transform — and no taller than Word's thickest border.</li>
  * </ul>
  *
  * <p>Anything else drawn — a vertical or slanted line, a box, a circle — is not a rule, and
- * this returns {@code null} for it. Neither is a rule laid over something else in a layer
- * stack; the backend asks only for nodes in the flow.</p>
+ * this returns {@code null} for it. A box of a colour that did not ask to be a divider is
+ * left to the drawing path however thin it is, which draws it where the page puts it or drops
+ * it with a note where it cannot: a plate, a swatch and a brand strip's segment are a
+ * divider's equal in the tree, and were written as a rule with it until the signal told them
+ * apart. The backend writes a box as a rule only outside every layer stack, canvas and shape
+ * container — a stack of one layer, which lays nothing over anything, lets only a line
+ * through — so a divider inside one goes to the drawing path too.</p>
  */
 final class DocxRules {
 
@@ -100,7 +106,7 @@ final class DocxRules {
         boolean stroked = shape.stroke() != null && shape.stroke().width() > 0;
         boolean rounded = shape.cornerRadius() != null && !shape.cornerRadius().isZero();
         DocumentColor fill = solidFillOf(shape);
-        if (fill == null || stroked || rounded || transformed(shape.transform())
+        if (!shape.divider() || fill == null || stroked || rounded || transformed(shape.transform())
             || !(shape.height() > 0) || shape.height() > MAX_RULE_POINTS || !(shape.width() > 0)) {
             return null;
         }

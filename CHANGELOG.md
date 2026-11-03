@@ -8,6 +8,58 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export writes only a divider, of all boxes of a colour, as Word's horizontal rule; any
+  other box goes the way every drawing goes.** (A horizontal `LineNode` is written as that rule
+  too, unchanged, and is still chosen by its geometry — a line is one either way.)
+  - The rule the export chose by was the box's size: a `ShapeNode` of a plain fill, no stroke and
+    no more than 12pt tall — Word's thickest border — became an empty paragraph bordered below.
+    `addDivider` builds exactly such a box, and so does a swatch, a plate and a brand strip's
+    segment, and nothing in the tree tells them apart: the `DividerBuilder`
+    knows what the box is for, the node it hands on did not. A box of a colour therefore became a
+    paragraph a reader moves or deletes as a line of text, and the geometry Word drew it with was
+    the border's, not the box's.
+  - `ShapeNode` now carries that purpose itself, as a `divider` component, which `addDivider` and
+    the templates module's `Divider` widget set and no other builder does; `DocxRules` asks for
+    it, and the canonical constructor states it for a node you build yourself. The
+    component is additive — the constructor that states no signal builds no divider, so every
+    caller written before it keeps the box it built — and nothing is drawn differently for it:
+    layout, measurement, pagination and every other backend see the box they always saw.
+  - Measured against the engine's own page, before and after, in Word 16.0.20527 and LibreOffice
+    24.2, on the one corpus document this moves — `SubscriptionInvoice`'s four-segment brand
+    strip, 3.39pt tall and the full width of the paper. Drawn rather than bordered, it stands
+    within 0.08pt in Word, where the border stood within 0.15pt and left a 0.12pt gap between the
+    first two segments, and within 0.18pt in LibreOffice 24.2, where the border stood within
+    0.43pt — 0.4pt wide of each segment and over its neighbour; the four colours are exact either
+    way. `MeteredInvoice`'s two dividers are byte-identical, and stay the rule they were.
+  - What the strip gives up for that is measured too, and it is the other half of the same
+    change: a rule flows with the text and a drawing is placed from the page. Over the whole
+    corpus, drawings that follow or stand with their text when the text above is edited went from
+    713 of 728 to 714 of 732 — the four segments are four more drawings asked to follow, and one
+    of them does, the other three being anchored in a paragraph 42.71pt above where they stand.
+  - A divider written as a rule is still named in the export report at its own path. A box that is
+    not one is named by its drawing's own note, or, composed in a table cell, by its table's
+    `cell drawing` note, so neither form is silent. A box the export cannot
+    draw at all — no layout behind it, a page zone, painted only with a gradient or with nothing —
+    is dropped and named, as any other drawing is.
+  - **Migration.** Code that relied on a thin `addShape` box becoming Word's editable rule asks
+    `addDivider` (or `ModuleBuilder.divider` / `DocumentDsl.divider`) for it instead. The box keeps
+    its geometry either way, and what else changes is what a rule carries and a drawing does not:
+    such a box with an `anchor` held its bookmark on the rule's paragraph and, drawn, holds none —
+    reported, as a drawing's lost bookmark always is. So that the migration can carry it,
+    `DividerBuilder` now passes an `anchor`, a link and an outline entry (`bookmark(...)`) through
+    to the node it builds, where it used to drop all three silently. A corner radius, a transform
+    and a paint stay dropped: the first two would stop the box being a rule at all, as a gradient
+    would, and a paint is dropped whole, a solid one too, so a divider's colour is set with
+    `color(...)`. The templates module's
+    `Divider` widget already asks for the signal; `AccentStrip` is chrome and deliberately does
+    not, its horizontal `top`/`bottom` included.
+  - One case the signal does not reach, named rather than fixed: a divider sharing a composed
+    table cell with a box of the same thickness that is **not** a divider. The rule is chosen by
+    the signal, while the cell's drawings are still matched to it by their height, so the export
+    cannot tell which of the two drawings belongs to the rule and keeps both, reporting that the
+    rule stands twice in Word. No template in the corpus has such a cell. Carrying the signal into
+    the layout's shape fragments would close it at the root.
+
 - **A DOCX export names what a node was written as where that is not the kind of thing the node
   is, rather than saying it only when the node happened to lose something else as well.**
   - Which Word object a node becomes is settled as the node is written, in the guards of

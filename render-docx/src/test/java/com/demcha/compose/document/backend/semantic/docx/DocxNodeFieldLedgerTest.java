@@ -536,7 +536,14 @@ class DocxNodeFieldLedgerTest {
                 "linkTarget:REPORTED", "bookmarkOptions:REPORTED",
                 "padding:GAP:" + TOP_PULL + "; " + DRAWING_DROPPED,
                 "margin:GAP:" + TOP_PULL + "; " + DRAWING_DROPPED, "transform:REPORTED", "fillPaint:REPORTED",
-                "anchor:REPORTED:drawn; a rule in the flow is bookmarked");
+                "anchor:REPORTED:drawn; a rule in the flow is bookmarked",
+                "divider:WRITTEN:which Word object the box becomes — a divider in the flow, only a "
+                + "fill and no taller than Word's thickest border, is the bordered paragraph that "
+                + "is Word's own rule; one thicker than that border, stroked wide enough to draw, "
+                + "rounded or transformed, one inside a layer stack — of one layer too —, a "
+                + "canvas or a shape container, and any box of a "
+                + "colour that is no divider, a drawing; one that paints nothing — no fill and no "
+                + "stroke — or only a gradient, dropped; " + DRAWING_DROPPED);
         node(SpacerNode.class, "name:INERT", "width:WRITTEN",
                 "height:GAP:" + STAND_IN_LEFT_EMPTY + "; any other is written",
                 "padding:REPORTED:above and below; below a block a band or a column measures from, written",

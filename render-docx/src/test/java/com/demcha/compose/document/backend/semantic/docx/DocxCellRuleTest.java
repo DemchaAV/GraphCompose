@@ -14,8 +14,11 @@ import com.demcha.compose.document.node.AlignNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.HorizontalAlign;
 import com.demcha.compose.document.node.LayerAlign;
+import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTransform;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import org.apache.poi.util.Units;
@@ -71,11 +74,43 @@ class DocxCellRuleTest {
     }
 
     @Test
-    void aBarComposedInACellIsWrittenOnceAsItsRule() throws Exception {
-        Export export = inACell(new ShapeBuilder().size(100, 2).fillColor(INK).build());
+    void aDividerComposedInACellIsWrittenOnceAsItsRule() throws Exception {
+        Export export = inACell(divider(100, 2));
 
         assertThat(export.rules()).isEqualTo(1);
         assertThat(export.body()).doesNotContain("<wp:anchor");
+    }
+
+    @Test
+    void aDividerBesideAPlateOfItsThicknessInOneCellSaysItStandsTwice() throws Exception {
+        // The rule is chosen by the signal and the cell's drawings are matched by their height,
+        // so in a cell holding both, the count of drawings that look like the rule (two) and the
+        // count of rules left to take them (one, the plate being no rule) disagree. The export
+        // cannot tell which drawing is the rule's, so it keeps both and says the rule stands
+        // twice rather than guessing. Held here as the record: the loss is named, not silent.
+        Export export = inACell(new SectionBuilder()
+                .add(divider(100, 2))
+                .add(new ShapeBuilder().name("Plate").size(100, 2).fillColor(INK).build())
+                .build());
+
+        assertThat(export.rules()).as("the border is written").isEqualTo(1);
+        assertThat(export.body()).as("and the table draws both boxes").contains("<wp:anchor");
+        assertThat(export.report().bySubject().get("ShapeNode"))
+                .anySatisfy(note -> assertThat(note.detail())
+                        .contains("does not tell that drawing apart from another in the cell")
+                        .contains("stands twice in Word"));
+    }
+
+    @Test
+    void aBarComposedInACellThatIsNoDividerIsDrawnByItsTable() throws Exception {
+        // Its table draws what its composed cells paint, so the box keeps its place in the cell
+        // rather than becoming the cell's rule. Both halves are asserted: a box that was dropped
+        // altogether would write no rule either, and a lost box in a composed cell leaves no
+        // placed node to notice it by.
+        Export export = inACell(new ShapeBuilder().size(100, 2).fillColor(INK).build());
+
+        assertThat(export.rules()).isZero();
+        assertThat(export.body()).as("drawn by its table, in the cell").contains("<wp:anchor");
     }
 
     @Test
@@ -253,6 +288,13 @@ class DocxCellRuleTest {
             return document.getTables().get(0).getRow(0).getCell(0).getParagraphs().stream()
                     .filter(DocxCellRuleTest::isARule).findFirst().orElseThrow();
         }
+    }
+
+    /** A divider the canonical constructor marks as one, which is what makes it a rule. */
+    private static ShapeNode divider(double width, double thickness) {
+        return new ShapeNode("Divider", width, thickness, INK, null, DocumentCornerRadius.ZERO,
+                null, null, DocumentInsets.zero(), DocumentInsets.zero(), DocumentTransform.NONE,
+                null, null, true);
     }
 
     private static boolean isARule(XWPFParagraph paragraph) {

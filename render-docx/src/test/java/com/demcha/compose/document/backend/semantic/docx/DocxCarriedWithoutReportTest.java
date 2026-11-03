@@ -92,11 +92,14 @@ class DocxCarriedWithoutReportTest {
     }
 
     @Test
-    void aFilledBarWrittenAsARuleNamesItsLinkAndOutlineEntry() throws Exception {
+    void aDividerWrittenAsARuleNamesItsLinkAndOutlineEntry() throws Exception {
+        // Only a divider is written as a rule (DocxRules), and the DSL's divider builder carries
+        // its link, its outline entry and its anchor to the node, so what the rule loses is read
+        // from what a document built with the DSL would hand it.
         DocxExportReport report = reportOf(page -> page
                 .addParagraph(p -> p.text("Target").anchor("target"))
-                .addShape(shape -> shape.size(200, 2).fillColor(INK).linkTo("target").bookmark(OUTLINE)
-                        .anchor("bar")));
+                .addDivider(d -> d.width(200).thickness(2).color(INK)
+                        .linkTo("target").bookmark(OUTLINE).anchor("bar")));
 
         assertThat(detailOf(report, "ShapeNode")).startsWith("written as a paragraph border")
                 .contains("its link is not carried").contains("its outline entry is not written")

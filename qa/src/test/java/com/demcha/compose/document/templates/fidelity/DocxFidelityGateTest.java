@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.within;
  */
 class DocxFidelityGateTest {
 
-    /** The lines a synthetic document's page draws, however many of them the editor finds. */
+    /** The lines read off a synthetic document's page, however many of them the editor finds. */
     private static final int PAGE_LINES = 40;
 
     private static final List<String> LINES = List.of(
@@ -255,18 +255,18 @@ class DocxFidelityGateTest {
 
     @Test
     void theBaselineFailsAnotherNumberOfLinesOnThePage() {
-        // The lines the engine draws are what the drifts are measured against: a page drawing
-        // another number of them is another page, whether or not the editor finds the same ones.
+        // The lines read off the engine's page are what the drifts are measured against: a page
+        // reading another number of them is another page, whether or not the editor finds the same ones.
         FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.4))));
 
         assertThat(baseline.divergences(List.of(new FidelityMeasurement("cv-probe", 1, 1, PAGE_LINES + 1, 1,
                 0, 0, 0, Map.ofEntries(line(1, "aa", 0.4))))))
                 .as("a line more on the page, the same one found").singleElement().asString()
-                .contains("the page draws 41 lines, and the baseline holds 40");
+                .contains("the gate reads 41 lines on the page, and the baseline holds 40");
         assertThat(baseline.divergences(List.of(new FidelityMeasurement("cv-probe", 1, 1, PAGE_LINES - 1, 1,
                 0, 0, 0, Map.ofEntries(line(1, "aa", 0.4))))))
                 .as("a line fewer on the page").singleElement().asString()
-                .contains("the page draws 39 lines, and the baseline holds 40");
+                .contains("the gate reads 39 lines on the page, and the baseline holds 40");
     }
 
     @Test
@@ -502,6 +502,105 @@ class DocxFidelityGateTest {
     }
 
     @Test
+    void aLineTheClipHidesIsNotReadAndTheClipEndsWithItsGraphicsState(@TempDir Path dir) throws Exception {
+        // Word clips a table row held to an exact height and still writes every line of its text.
+        Path page = drawn(dir.resolve("clipped.pdf"), content -> {
+            content.saveGraphicsState();
+            content.addRect(40, 600, 300, 150);
+            content.clip();
+            text(content, 50, 700, "Shown inside");
+            text(content, 50, 500, "Hidden below");
+            content.restoreGraphicsState();
+            text(content, 50, 400, "After the clip");
+        });
+
+        assertThat(PdfLines.of(page).lines()).extracting(PdfLines.Line::key)
+                .containsExactly("showninside", "aftertheclip");
+    }
+
+    @Test
+    void theLettersALineRunsPastItsClipAreNotFound(@TempDir Path dir) throws Exception {
+        // Word runs a line past its cell and clips the end of it away.
+        Path whole = drawn(dir.resolve("whole.pdf"), content -> text(content, 50, 700, "Retiring per-team scripts"));
+        Path cut = drawn(dir.resolve("cut.pdf"), content -> {
+            content.addRect(40, 600, 100, 150);
+            content.clip();
+            text(content, 50, 700, "Retiring per-team scripts");
+        });
+
+        PdfLines.Line line = PdfLines.of(cut).lines().get(0);
+        assertThat(line.key()).startsWith("retiring").isNotEqualTo("retiringper-teamscripts");
+        FidelityMeasurement measured = FidelityMeasurement.of("cut", whole, cut);
+        assertThat(measured.lines()).isEqualTo(1);
+        assertThat(measured.matched()).as("the line the page shows whole").isZero();
+    }
+
+    @Test
+    void aSpaceTheClipHidesLeavesTheLineAsItWas(@TempDir Path dir) throws Exception {
+        // Most of what Word clips is a space at the end of a cell's line, past the cell's edge.
+        float end = 50 + HELVETICA.getStringWidth("Total due") / 1000 * 10;
+        Path page = drawn(dir.resolve("space.pdf"), content -> {
+            content.addRect(40, 600, end + 0.5f - 40, 150);
+            content.clip();
+            text(content, 50, 700, "Total due ");
+        });
+
+        assertThat(PdfLines.of(page).lines()).extracting(PdfLines.Line::key).containsExactly("totaldue");
+        // And the space is hidden: nine glyphs shown, then the tenth not.
+        try (org.apache.pdfbox.pdmodel.PDDocument document = org.apache.pdfbox.Loader.loadPDF(page.toFile())) {
+            PdfLines.Shown shown = new PdfLines.Shown(document.getPage(0));
+            shown.processPage(document.getPage(0));
+            assertThat(shown.shown).containsExactly(true, true, true, true, true, true, true, true, true, false);
+        }
+    }
+
+    @Test
+    void theLinesAContainerClipsOffItsOwnPageAreNotRead(@TempDir Path dir) throws Exception {
+        // The engine clips them too: a shape container shorter than its text, drawn with its clip.
+        DocxCorpusDocument container = DocxFidelityCorpusTest.corpus().stream()
+                .filter(each -> each.stem().equals("synthetic-clipped_container")).findFirst().orElseThrow();
+        Path page = dir.resolve("container.pdf");
+        try (DocumentSession session = DocxFidelityCorpusTest.composed(container)) {
+            Files.write(page, session.toPdfBytes());
+        }
+
+        assertThat(PdfLines.of(page).lines()).extracting(PdfLines.Line::key)
+                .hasSize(8)
+                .doesNotContain("andtheboxstaysastallasitwasmade,", "whateveritisgiventohold.");
+    }
+
+    private static final org.apache.pdfbox.pdmodel.font.PDType1Font HELVETICA = new org.apache.pdfbox.pdmodel.font.PDType1Font(
+            org.apache.pdfbox.pdmodel.font.Standard14Fonts.FontName.HELVETICA);
+
+    /** Something drawn on a page's content. */
+    @FunctionalInterface
+    private interface Drawing {
+        void on(org.apache.pdfbox.pdmodel.PDPageContentStream content) throws java.io.IOException;
+    }
+
+    /** A one-page PDF with {@code drawing} on it, written to {@code file}. */
+    private static Path drawn(Path file, Drawing drawing) throws java.io.IOException {
+        try (org.apache.pdfbox.pdmodel.PDDocument document = new org.apache.pdfbox.pdmodel.PDDocument()) {
+            org.apache.pdfbox.pdmodel.PDPage sheet = new org.apache.pdfbox.pdmodel.PDPage();
+            document.addPage(sheet);
+            try (var content = new org.apache.pdfbox.pdmodel.PDPageContentStream(document, sheet)) {
+                drawing.on(content);
+            }
+            document.save(file.toFile());
+        }
+        return file;
+    }
+
+    private static void text(org.apache.pdfbox.pdmodel.PDPageContentStream content, float x, float y, String text)
+            throws java.io.IOException {
+        content.beginText();
+        content.setFont(HELVETICA, 10);
+        content.newLineAtOffset(x, y);
+        content.showText(text);
+        content.endText();
+    }
+
+    @Test
     void aWordConversionIsMeasuredOnlyForTheDocxItConverted() throws Exception {
         byte[] docx = docx();
         // As convert-with-word.ps1 writes it: UTF-8 with a byte-order mark, the digest in hex.
@@ -634,9 +733,9 @@ class DocxFidelityGateTest {
 
     /**
      * A document of {@link #PAGE_LINES} lines, of which the editor found the ones given. The
-     * page's line count is held apart from them on purpose: the engine draws the same lines
-     * whether or not the editor finds each one, so a test about the lines found says nothing
-     * about how many the page draws.
+     * page's line count is held apart from them on purpose: the engine's page holds the same
+     * lines whether or not the editor finds each one, so a test about the lines found says
+     * nothing about how many are read off the page.
      */
     @SafeVarargs
     private static FidelityMeasurement doc(String stem, int enginePages, int editorPages,

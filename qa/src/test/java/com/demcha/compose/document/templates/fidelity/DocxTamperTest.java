@@ -31,25 +31,38 @@ class DocxTamperTest {
 
     private static final String THANKS = "Thank you for choosing GraphCompose";
 
+    private static final String NOTES = "Thank you for your business";
+
+    /** {@link DocxFidelityCorpusTest#TAMPERED_SOURCE}'s DOCX. */
     private static byte[] source;
 
+    /** Each document the run changes, as the run exports it, by its stem. */
+    private static final Map<String, byte[]> SOURCES = new LinkedHashMap<>();
+
     @BeforeAll
-    static void exportTheSource() throws Exception {
-        DocxCorpusDocument document = DocxFidelityCorpusTest.corpus().stream()
-                .filter(each -> each.stem().equals(DocxFidelityCorpusTest.TAMPERED_SOURCE)).findFirst().orElseThrow();
-        try (DocumentSession session = DocxFidelityCorpusTest.composed(document)) {
-            source = session.export(DocxSemanticBackend.builder().deterministic(true).build());
+    static void exportTheSources() throws Exception {
+        for (String stem : DocxFidelityCorpusTest.sources()) {
+            DocxCorpusDocument document = DocxFidelityCorpusTest.corpus().stream()
+                    .filter(each -> each.stem().equals(stem)).findFirst().orElseThrow();
+            try (DocumentSession session = DocxFidelityCorpusTest.composed(document)) {
+                SOURCES.put(stem, session.export(DocxSemanticBackend.builder().deterministic(true).build()));
+            }
         }
+        source = SOURCES.get(DocxFidelityCorpusTest.TAMPERED_SOURCE);
     }
 
     @Test
     void everyChangeTheRunMakesStillOpensAsXmlAndIsMadeTheSameEachTime() throws Exception {
-        assertThat(DocxFidelityCorpusTest.tampers()).extracting(DocxTamper::name).containsExactly(
-                "dropped-paragraph", "changed-font", "extra-page-break", "exact-card-height", "table-as-picture");
-        for (DocxTamper tamper : DocxFidelityCorpusTest.tampers()) {
-            byte[] changed = tamper.applyTo(source);
-            assertThat(changed).as(tamper.name()).isNotEqualTo(source);
-            assertThat(tamper.applyTo(source)).as("%s, made again", tamper.name()).isEqualTo(changed);
+        assertThat(DocxFidelityCorpusTest.tampers()).extracting(DocxFidelityCorpusTest.Change::stem).containsExactly(
+                "invoice-modern--dropped-paragraph", "invoice-modern--changed-font", "invoice-modern--extra-page-break",
+                "invoice-modern--exact-card-height", "invoice-modern--table-as-picture",
+                "invoice-luma_studio--exact-card-height");
+        for (DocxFidelityCorpusTest.Change change : DocxFidelityCorpusTest.tampers()) {
+            DocxTamper tamper = change.tamper();
+            byte[] docx = SOURCES.get(change.source());
+            byte[] changed = tamper.applyTo(docx);
+            assertThat(changed).as(change.stem()).isNotEqualTo(docx);
+            assertThat(tamper.applyTo(docx)).as("%s, made again", change.stem()).isEqualTo(changed);
             Map<String, byte[]> parts = parts(changed);
             for (Map.Entry<String, byte[]> part : parts.entrySet()) {
                 if (part.getKey().endsWith(".xml") || part.getKey().endsWith(".rels")) {
@@ -58,8 +71,60 @@ class DocxTamperTest {
                     factory.newDocumentBuilder().parse(new ByteArrayInputStream(part.getValue()));
                 }
             }
-            assertThat(parts.keySet()).as(tamper.name()).containsAll(parts(source).keySet());
+            assertThat(parts.keySet()).as(change.stem()).containsAll(parts(docx).keySet());
         }
+    }
+
+    @Test
+    void eachDocumentChangedIsConvertedUnchangedFirstThenWithEachOfItsChanges() {
+        assertThat(DocxFidelityCorpusTest.sources())
+                .containsExactly(DocxFidelityCorpusTest.TAMPERED_SOURCE, DocxFidelityCorpusTest.LAST_CARD_SOURCE);
+        assertThat(DocxFidelityCorpusTest.converted()).extracting(DocxFidelityCorpusTest.Change::stem).containsExactly(
+                "invoice-modern--unchanged", "invoice-modern--dropped-paragraph", "invoice-modern--changed-font",
+                "invoice-modern--extra-page-break", "invoice-modern--exact-card-height",
+                "invoice-modern--table-as-picture",
+                "invoice-luma_studio--unchanged", "invoice-luma_studio--exact-card-height");
+    }
+
+    @Test
+    void nothingWithTextFollowsTheLastCardInTheBodyAndOnlyItsOwnRowIsHeld() throws Exception {
+        byte[] luma = SOURCES.get(DocxFidelityCorpusTest.LAST_CARD_SOURCE);
+        String before = body(luma);
+        DocxTamper held = DocxFidelityCorpusTest.tampers().stream()
+                .filter(change -> change.source().equals(DocxFidelityCorpusTest.LAST_CARD_SOURCE))
+                .map(DocxFidelityCorpusTest.Change::tamper).findFirst().orElseThrow();
+        String after = body(held.applyTo(luma));
+
+        // The case the change is there for: nothing that holds text follows the card in the body,
+        // so a card that shrinks moves no line below it, and only its own lines can fail the gate.
+        List<int[]> children = DocxTamper.children(before, DocxTamper.body(before), Set.of("w:p", "w:tbl"));
+        int card = -1;
+        for (int i = 0; i < children.size(); i++) {
+            if (DocxTamper.letters(before.substring(children.get(i)[0], children.get(i)[1])).contains(NOTES)) {
+                card = i;
+            }
+        }
+        assertThat(card).as("the body element holding the notes").isNotNegative();
+        assertThat(before.substring(children.get(card)[0], children.get(card)[0] + 7)).isEqualTo("<w:tbl>");
+        assertThat(children.subList(card + 1, children.size()))
+                .as("what follows the card in the body: one paragraph, empty").singleElement()
+                .satisfies(span -> assertThat(before.substring(span[0], span[1])).startsWith("<w:p")
+                        .satisfies(paragraph -> assertThat(DocxTamper.letters(paragraph)).isEmpty()));
+        assertThat(held.costs()).isEqualTo(DocxTamper.Cost.LOST_LINES);
+        // The card's own row is held, and nothing outside it changes.
+        int[] table = children.get(card);
+        int[] inside = {before.indexOf('>', table[0]) + 1, before.lastIndexOf("</", table[1] - 1)};
+        List<int[]> rows = DocxTamper.children(before, inside, Set.of("w:tr")).stream()
+                .filter(span -> DocxTamper.letters(before.substring(span[0], span[1])).contains(NOTES)).toList();
+        assertThat(rows).as("the card's own rows holding the notes").hasSize(1);
+        String head = before.substring(0, rows.get(0)[0]);
+        String tail = before.substring(rows.get(0)[1]);
+        assertThat(after).startsWith(head).endsWith(tail);
+        String row = after.substring(head.length(), after.length() - tail.length());
+        assertThat(row.substring(0, row.indexOf("<w:tc")))
+                .as("the row's own properties").containsOnlyOnce("<w:trHeight")
+                .contains("<w:trHeight w:val=\"450\" w:hRule=\"exact\"/>");
+        assertThat(DocxTamper.letters(row)).isEqualTo(DocxTamper.letters(before.substring(rows.get(0)[0], rows.get(0)[1])));
     }
 
     @Test
@@ -115,13 +180,17 @@ class DocxTamperTest {
         }
         FidelityMeasurement page = FidelityMeasurement.of(DocxFidelityCorpusTest.TAMPERED_SOURCE, engine, engine);
         // Every copy set exactly as the page: the unchanged one passes, and no change is caught.
-        for (DocxTamper tamper : DocxFidelityCorpusTest.converted()) {
-            java.nio.file.Files.copy(engine, dir.resolve(DocxFidelityCorpusTest.tamperedStem(tamper) + ".pdf"));
+        for (DocxFidelityCorpusTest.Change change : DocxFidelityCorpusTest.converted()) {
+            java.nio.file.Files.copy(engine, dir.resolve(change.stem() + ".pdf"));
         }
 
+        // Only the changes made to this document are held to it.
         assertThat(DocxFidelityCorpusTest.letThrough(page, engine, dir))
-                .containsExactlyElementsOf(DocxFidelityCorpusTest.tampers().stream()
-                        .map(tamper -> tamper.name() + ": the gate let it through").toList());
+                .containsExactly("invoice-modern--dropped-paragraph: the gate let it through",
+                        "invoice-modern--changed-font: the gate let it through",
+                        "invoice-modern--extra-page-break: the gate let it through",
+                        "invoice-modern--exact-card-height: the gate let it through",
+                        "invoice-modern--table-as-picture: the gate let it through");
 
         // The unchanged copy set as another document: it vouches for nothing.
         try (DocumentSession other = DocxFidelityCorpusTest.composed(DocxFidelityCorpusTest.corpus().get(0))) {
@@ -129,16 +198,54 @@ class DocxTamperTest {
                     other.toPdfBytes());
         }
         assertThat(DocxFidelityCorpusTest.letThrough(page, engine, dir))
-                .first().asString().startsWith("unchanged: converted with the changes");
+                .first().asString().startsWith("invoice-modern--unchanged: converted with the changes");
+    }
+
+    @Test
+    void everyDocumentChangedIsHeldToItsOwnMeasurement(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir)
+            throws Exception {
+        java.nio.file.Path engine = java.nio.file.Files.createDirectories(dir.resolve("engine"));
+        java.nio.file.Path set = java.nio.file.Files.createDirectories(dir.resolve("word-tampered"));
+        Map<String, FidelityMeasurement> measured = new LinkedHashMap<>();
+        for (String stem : DocxFidelityCorpusTest.sources()) {
+            DocxCorpusDocument document = DocxFidelityCorpusTest.corpus().stream()
+                    .filter(each -> each.stem().equals(stem)).findFirst().orElseThrow();
+            java.nio.file.Path pdf = engine.resolve(stem + ".pdf");
+            try (DocumentSession session = DocxFidelityCorpusTest.composed(document)) {
+                java.nio.file.Files.write(pdf, session.toPdfBytes());
+            }
+            measured.put(stem, FidelityMeasurement.of(stem, pdf, pdf));
+        }
+        // Word set every copy exactly as its own document's page: each unchanged copy passes, and
+        // every change, of either document, is let through, once.
+        StringBuilder results = new StringBuilder();
+        for (DocxFidelityCorpusTest.Change change : DocxFidelityCorpusTest.converted()) {
+            java.nio.file.Files.copy(engine.resolve(change.source() + ".pdf"), set.resolve(change.stem() + ".pdf"));
+            results.append(results.isEmpty() ? "" : ",").append("{\"source\":\"").append(change.stem())
+                    .append(".docx\",\"sha256\":\"")
+                    .append(WordConversion.sha256(change.tamper().applyTo(SOURCES.get(change.source())))).append("\"}");
+        }
+        java.nio.file.Files.writeString(set.resolve("conversion.json"),
+                "{\"version\":\"16.0\",\"results\":[" + results + "]}");
+
+        assertThat(DocxFidelityCorpusTest.changesLetThrough("word", dir, engine, measured, SOURCES, null))
+                .containsExactlyElementsOf(DocxFidelityCorpusTest.tampers().stream()
+                        .map(change -> change.stem() + ": the gate let it through").toList());
+
+        // A document the run did not measure cannot have its changes held to anything.
+        assertThat(DocxFidelityCorpusTest.changesLetThrough("word", dir, engine,
+                Map.of(DocxFidelityCorpusTest.TAMPERED_SOURCE, measured.get(DocxFidelityCorpusTest.TAMPERED_SOURCE)),
+                SOURCES, null))
+                .singleElement().asString().contains("the run measured no invoice-luma_studio to hold its changes to");
     }
 
     @Test
     void everyPartKeepsTheTimeTheExportWroteIt() throws Exception {
-        Map<String, java.time.LocalDateTime> written = times(source);
-        for (DocxTamper tamper : DocxFidelityCorpusTest.converted()) {
-            Map<String, java.time.LocalDateTime> kept = times(tamper.applyTo(source));
-            written.forEach((name, time) -> assertThat(kept.get(name)).as("%s: %s", tamper.name(), name).isEqualTo(time));
-            kept.forEach((name, time) -> assertThat(time).as("%s: %s", tamper.name(), name)
+        for (DocxFidelityCorpusTest.Change change : DocxFidelityCorpusTest.converted()) {
+            Map<String, java.time.LocalDateTime> written = times(SOURCES.get(change.source()));
+            Map<String, java.time.LocalDateTime> kept = times(change.tamper().applyTo(SOURCES.get(change.source())));
+            written.forEach((name, time) -> assertThat(kept.get(name)).as("%s: %s", change.stem(), name).isEqualTo(time));
+            kept.forEach((name, time) -> assertThat(time).as("%s: %s", change.stem(), name)
                     .isEqualTo(written.getOrDefault(name, written.get("word/document.xml"))));
         }
     }
@@ -165,10 +272,13 @@ class DocxTamperTest {
         FidelityMeasurement page = measured(1, Map.of("0:a", line(0.1)));
 
         // No source DOCX to change: making them fails, and the corpus's result must still be reported.
-        assertThat(DocxFidelityCorpusTest.changesLetThrough("libreoffice", dir, dir, page, null, null))
-                .singleElement().asString().startsWith("the changed documents could not be made, converted or measured");
+        Map<String, FidelityMeasurement> measured = Map.of(DocxFidelityCorpusTest.TAMPERED_SOURCE, page,
+                DocxFidelityCorpusTest.LAST_CARD_SOURCE, page);
+        assertThat(DocxFidelityCorpusTest.changesLetThrough("libreoffice", dir, dir, measured, Map.of(), null))
+                .singleElement().asString().startsWith("the changed documents could not be made, converted or measured")
+                .contains("the run exported no invoice-modern to change");
         // No record of Word's conversion of them.
-        assertThat(DocxFidelityCorpusTest.changesLetThrough("word", dir, dir, page, source, null))
+        assertThat(DocxFidelityCorpusTest.changesLetThrough("word", dir, dir, measured, SOURCES, null))
                 .singleElement().asString().contains("no Word conversion recorded");
     }
 
@@ -204,30 +314,36 @@ class DocxTamperTest {
         FidelityMeasurement page = measured(1, Map.of("0:a", line(0.1)));
 
         assertThat(DocxFidelityCorpusTest.letThrough(page, dir.resolve("engine.pdf"), dir))
-                .hasSize(DocxFidelityCorpusTest.converted().size())
-                .allMatch(why -> why.endsWith(": the editor wrote no PDF of it"));
+                .hasSize(6)
+                .allMatch(why -> why.startsWith("invoice-modern--") && why.endsWith(": the editor wrote no PDF of it"));
     }
 
     @Test
     void theUnchangedCopyStandingApartVouchesForNothing() {
-        assertThat(DocxFidelityCorpusTest.unchangedApart(List.of())).isNull();
-        assertThat(DocxFidelityCorpusTest.unchangedApart(List.of("invoice-modern: 1 line moved")))
-                .startsWith("unchanged: converted with the changes").endsWith("invoice-modern: 1 line moved");
+        DocxFidelityCorpusTest.Change unchanged = DocxFidelityCorpusTest.converted().get(0);
+        assertThat(DocxFidelityCorpusTest.unchangedApart(unchanged, List.of())).isNull();
+        assertThat(DocxFidelityCorpusTest.unchangedApart(unchanged, List.of("invoice-modern: 1 line moved")))
+                .startsWith("invoice-modern--unchanged: converted with the changes")
+                .endsWith("invoice-modern: 1 line moved");
     }
 
     @Test
     void aWordConversionOfOtherChangedDocumentsIsStale() throws Exception {
         Map<String, String> converted = new LinkedHashMap<>();
-        for (DocxTamper tamper : DocxFidelityCorpusTest.converted()) {
-            converted.put(DocxFidelityCorpusTest.tamperedStem(tamper) + ".docx",
-                    WordConversion.sha256(tamper.applyTo(source)));
+        for (DocxFidelityCorpusTest.Change change : DocxFidelityCorpusTest.converted()) {
+            converted.put(change.stem() + ".docx",
+                    WordConversion.sha256(change.tamper().applyTo(SOURCES.get(change.source()))));
         }
-        assertThat(DocxFidelityCorpusTest.staleTampered(new WordConversion("16.0", converted), source)).isEmpty();
+        assertThat(DocxFidelityCorpusTest.staleTampered(new WordConversion("16.0", converted), SOURCES)).isEmpty();
 
         converted.put("invoice-modern--changed-font.docx", WordConversion.sha256(source));
         converted.remove("invoice-modern--unchanged.docx");
-        assertThat(DocxFidelityCorpusTest.staleTampered(new WordConversion("16.0", converted), source))
-                .containsExactly("invoice-modern--unchanged", "invoice-modern--changed-font");
+        // The last card's change, made to invoice-modern rather than to its own document.
+        converted.put("invoice-luma_studio--exact-card-height.docx", WordConversion.sha256(
+                DocxTamper.withExactRowHeight("Please include the invoice number", 450).applyTo(source)));
+        assertThat(DocxFidelityCorpusTest.staleTampered(new WordConversion("16.0", converted), SOURCES))
+                .containsExactly("invoice-modern--unchanged", "invoice-modern--changed-font",
+                        "invoice-luma_studio--exact-card-height");
     }
 
     @Test
@@ -319,10 +435,11 @@ class DocxTamperTest {
     @Test
     void theGateLetsAChangeThroughThatMovesNothing() {
         FidelityMeasurement page = measured(1, Map.of("0:a", line(0.1), "0:b", line(0.2)));
-        DocxTamper font = DocxTamper.inFont("Courier New");
+        DocxFidelityCorpusTest.Change font = new DocxFidelityCorpusTest.Change("invoice-modern",
+                DocxTamper.inFont("Courier New"));
 
         assertThat(DocxFidelityCorpusTest.letThrough(font, page, page, List.of()))
-                .isEqualTo("changed-font: the gate let it through");
+                .isEqualTo("invoice-modern--changed-font: the gate let it through");
         assertThat(DocxFidelityCorpusTest.letThrough(font, page, page, List.of("cv: 1 line moved"))).isNull();
     }
 
@@ -332,16 +449,24 @@ class DocxTamperTest {
         FidelityMeasurement lost = measured(1, Map.of("0:a", line(0.1)));
         FidelityMeasurement moved = measured(1, Map.of("0:a", line(0.1), "0:b", line(9)));
         FidelityMeasurement longer = measured(2, Map.of("0:a", line(0.1), "0:b", line(0.2)));
-        DocxTamper paragraph = DocxTamper.withoutParagraph(THANKS);
-        DocxTamper pageBreak = DocxTamper.withPageBreakBefore(THANKS);
+        DocxFidelityCorpusTest.Change paragraph = new DocxFidelityCorpusTest.Change("invoice-modern",
+                DocxTamper.withoutParagraph(THANKS));
+        DocxFidelityCorpusTest.Change pageBreak = new DocxFidelityCorpusTest.Change("invoice-modern",
+                DocxTamper.withPageBreakBefore(THANKS));
+        DocxFidelityCorpusTest.Change card = new DocxFidelityCorpusTest.Change("invoice-luma_studio",
+                DocxTamper.withExactRowHeight(NOTES, 450));
         List<String> apart = List.of("cv: apart");
 
         assertThat(DocxFidelityCorpusTest.letThrough(paragraph, page, lost, apart)).isNull();
         assertThat(DocxFidelityCorpusTest.letThrough(paragraph, page, moved, apart))
-                .startsWith("dropped-paragraph: failed, but without LOST_LINES");
+                .startsWith("invoice-modern--dropped-paragraph: failed, but without LOST_LINES");
         assertThat(DocxFidelityCorpusTest.letThrough(pageBreak, page, longer, apart)).isNull();
         assertThat(DocxFidelityCorpusTest.letThrough(pageBreak, page, lost, apart))
-                .startsWith("extra-page-break: failed, but without PAGES");
+                .startsWith("invoice-modern--extra-page-break: failed, but without PAGES");
+        // A card held short of its text that only moves what follows it has not shown that it clips.
+        assertThat(DocxFidelityCorpusTest.letThrough(card, page, lost, apart)).isNull();
+        assertThat(DocxFidelityCorpusTest.letThrough(card, page, moved, apart))
+                .startsWith("invoice-luma_studio--exact-card-height: failed, but without LOST_LINES");
     }
 
     private static FidelityMeasurement measured(int editorPages, Map<String, FidelityMeasurement.Found> found) {

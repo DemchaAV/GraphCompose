@@ -18,10 +18,10 @@
          PDFs line by line against the engine's, and holds them to
          qa/src/test/resources/docx-fidelity/word-windows.tsv.
 
-    The `export` run also writes one corpus document changed in each way the
-    gate is there to fail on, with a copy of it left unchanged, to
+    The `export` run also writes corpus documents changed in each way the gate
+    is there to fail on, with a copy of each left unchanged, to
     qa/target/docx-fidelity/tampered; Word converts those into
-    qa/target/docx-fidelity/word-tampered, and the `word` run fails unless the
+    qa/target/docx-fidelity/word-tampered, and the `word` run fails unless each
     unchanged copy stands where the corpus's conversion set it, within the
     gate's half-point slack, and the gate fails on every change, losing lines,
     or coming to another page count, where the change costs that. Word failing

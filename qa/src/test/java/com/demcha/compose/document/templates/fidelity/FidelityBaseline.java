@@ -20,8 +20,8 @@ import java.util.Set;
  *
  * <p>The baseline is the record of where the export stands, so a change may move the export
  * either way and must write the move into it. Against its baseline a document fails when the
- * editor sets it on another number of pages, when the pages or the lines the engine draws it on
- * change, when a line the baseline found is no longer found — the editor breaks it at another
+ * editor sets it on another number of pages, when the pages the engine draws it on, or the lines
+ * the gate reads off them, change, when a line the baseline found is no longer found — the editor breaks it at another
  * word, or puts it on another page — when a line is found that the baseline does not hold, or
  * when a found line's drift moves by more than {@value #LINE_SLACK}pt, down or across,
  * <em>whichever way it moved</em>. Across as well as down: a table's left margin the export dropped stood
@@ -223,7 +223,7 @@ final class FidelityBaseline {
                           + ", and the baseline holds " + pages(was.enginePages()));
             }
             if (now.lines() != was.lines()) {
-                apart.add(now.stem() + ": the page draws " + lineCount(now.lines())
+                apart.add(now.stem() + ": the gate reads " + lineCount(now.lines()) + " on the page"
                           + ", and the baseline holds " + was.lines());
             }
             List<String> lost = new ArrayList<>();

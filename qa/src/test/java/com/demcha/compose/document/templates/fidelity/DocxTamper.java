@@ -20,9 +20,9 @@ import java.util.zip.ZipOutputStream;
  * another font, a page break that was not there, a card's row held to a height its text does not
  * fit, a table replaced by a picture of it.
  *
- * <p>The fidelity gate is there to fail on exactly these, so the corpus run feeds it one
- * document changed each way, through the same editor and the same measurement as the corpus
- * ({@link DocxFidelityCorpusTest}), and requires it to fail. A change is made to the bytes, not
+ * <p>The fidelity gate is there to fail on exactly these, so the corpus run feeds it corpus
+ * documents changed each way ({@link DocxFidelityCorpusTest#tampers()}), through the same editor
+ * and the same measurement as the corpus, and requires it to fail. A change is made to the bytes, not
  * to the document the engine composes, so it is the gate that is tested, not the export.</p>
  *
  * <p>A change refuses what it would leave as it was — {@link #unchanged()} aside, which is made
@@ -45,7 +45,7 @@ record DocxTamper(String name, Cost costs, Edit edit) {
     enum Cost {
         /** Some difference the gate names: a line moved, lost or gained, a page more or less. */
         ANY,
-        /** Lines of the page's that the editor no longer sets as the page does. */
+        /** Lines of the page's that the editor no longer shows as the page does. */
         LOST_LINES,
         /** Another number of pages. */
         PAGES
@@ -166,10 +166,12 @@ record DocxTamper(String name, Cost costs, Edit edit) {
 
     /**
      * The row of a body table holding {@code letters} held to exactly {@code twips}: what a card
-     * whose height was fixed looks like when its text needs more.
+     * whose height was fixed looks like when its text needs more. An editor clips the text below
+     * the height away, so the change costs the card's own lines, not only the place of what
+     * follows it.
      */
     static DocxTamper withExactRowHeight(String letters, int twips) {
-        return new DocxTamper("exact-card-height", Cost.ANY, parts -> {
+        return new DocxTamper("exact-card-height", Cost.LOST_LINES, parts -> {
             String xml = text(parts, DOCUMENT);
             int[] table = onlyOne(holding(xml, body(xml), Set.of("w:tbl"), letters), "table", letters);
             int[] row = onlyOne(holding(xml, inside(xml, table), Set.of("w:tr"), letters), "row", letters);

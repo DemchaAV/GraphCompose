@@ -45,7 +45,7 @@ record DocxTamper(String name, Cost costs, Edit edit) {
     enum Cost {
         /** Some difference the gate names: a line moved, lost or gained, a page more or less. */
         ANY,
-        /** Lines of the page's that the editor no longer sets as the page does. */
+        /** Lines of the page's that the editor no longer shows as the page does. */
         LOST_LINES,
         /** Another number of pages. */
         PAGES
@@ -166,10 +166,12 @@ record DocxTamper(String name, Cost costs, Edit edit) {
 
     /**
      * The row of a body table holding {@code letters} held to exactly {@code twips}: what a card
-     * whose height was fixed looks like when its text needs more.
+     * whose height was fixed looks like when its text needs more. An editor clips the text below
+     * the height away, so the change costs the card's own lines, not only the place of what
+     * follows it.
      */
     static DocxTamper withExactRowHeight(String letters, int twips) {
-        return new DocxTamper("exact-card-height", Cost.ANY, parts -> {
+        return new DocxTamper("exact-card-height", Cost.LOST_LINES, parts -> {
             String xml = text(parts, DOCUMENT);
             int[] table = onlyOne(holding(xml, body(xml), Set.of("w:tbl"), letters), "table", letters);
             int[] row = onlyOne(holding(xml, inside(xml, table), Set.of("w:tr"), letters), "row", letters);

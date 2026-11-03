@@ -1,5 +1,6 @@
 # word 16.0 (16.0.20527) on windows — document, line, drift below the page (pt), drift right of the page (pt), letters
 # rows of synthetic-banner_and_initials, synthetic-header_logo_and_filled_row, synthetic-kept_blocks_over_pages, synthetic-kept_icon_panel, synthetic-links_and_toc, synthetic-long_free_text, synthetic-nested_rows, synthetic-rotated_image_and_shape, synthetic-rtl_paragraphs, synthetic-sections_and_fields, synthetic-sidebar_over_pages: word 16.0 (16.0.20527) on windows
+# rows of cv-engineering_resume, cv-timeline_minimal, synthetic-clipped_container: word 16.0 (16.0.20527) on windows, shot again when the gate came to read only the text the page's clip does not hide, which loses the end of one line each of the CVs and two lines of the container to the clip; every other line of the three stands where it stood
 cv-blue_banner	0:8f1010120ed6	-0.02	-0.08	jordanrivera
 cv-blue_banner	0:8d7a2cca3060	0.00	-0.07	+442055551000|jordan.rivera@exam
 cv-blue_banner	0:b944906ed84c	-0.21	-1.21	professionalsummary
@@ -483,7 +484,6 @@ cv-engineering_resume	0:53e5e7c5a884	-0.04	0.09	experience
 cv-engineering_resume	0:4977534824cc	-0.02	0.01	seniorplatformengineer/2024-pres
 cv-engineering_resume	0:f890faef907f	0.01	0.01	northwindsystems
 cv-engineering_resume	0:0bf7eb0b1058	-0.12	0.01	ledthereusabledocument-generatio
-cv-engineering_resume	0:d69cae607226	0.06	0.01	teams.reducedtemplatemaintenance
 cv-engineering_resume	0:bdea17333528	0.00	0.01	engine.
 cv-engineering_resume	0:7033b2988e4d	-0.01	0.01	softwareengineer/2021-2024
 cv-engineering_resume	0:998c1a985022	0.02	0.01	brightleaflabs
@@ -1708,7 +1708,6 @@ cv-timeline_minimal	0:64c4b52dceb1	0.02	0.01	ledthereusabledocument-generatio
 cv-timeline_minimal	0:1f193cd1d987	0.02	0.01	productteams.reducedtemplatemain
 cv-timeline_minimal	0:9ccc3e904e5a	0.05	0.01	favourofonecanonicalengine.
 cv-timeline_minimal	0:fb53bd1bfeb9	-0.03	0.01	softwareengineer|brightleaflabs-
-cv-timeline_minimal	0:632618b20dab	0.01	0.01	builtbackendservicesandproductio
 cv-timeline_minimal	0:5d86afffe129	0.01	0.01	month.drovethemigrationfromitext
 cv-timeline_minimal	0:70dd947a4558	0.01	0.01	cuttingp99renderlatencyfrom1.4st
 cv-timeline_minimal	0:8a9898d2c965	-0.07	0.01	backendengineer|helixprintco-201
@@ -5156,8 +5155,6 @@ synthetic-clipped_container	0:08eb95ef1c44	0.99	0.02	holdit.thepagesetsitfromthe
 synthetic-clipped_container	0:7876cbea781b	0.99	0.02	boxandcutsitattheoutline,sotheli
 synthetic-clipped_container	0:1d37c4498256	0.99	0.02	thatrunpastthefootoftheboxarenot
 synthetic-clipped_container	0:e7653895ac38	0.99	0.02	seen.onlythelinestheboxholdsarer
-synthetic-clipped_container	0:7365672653fc	0.99	0.02	andtheboxstaysastallasitwasmade,
-synthetic-clipped_container	0:f0da0f0af799	1.02	0.02	whateveritisgiventohold.
 synthetic-clipped_container	0:2633ce73dc24	-0.02	0.02	aftertheclippedbox:thisparagraph
 synthetic-clipped_container	0:667f8b3b3eff	-0.02	0.02	noneofitslinesrunsoverthebox.
 synthetic-header_logo_and_filled_row	0:0673cf5bfdfd	-0.01	0.06	filledrow,left

@@ -4656,6 +4656,45 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The DOCX fidelity gate reads only the text the page's clip does not hide, and is fed a
+  document whose last card is held to a height its text does not fit.**
+  - `PdfLines` reads a glyph only where the clip it is drawn under holds its middle — half its
+    advance along the baseline, three tenths of its size up. A PDF keeps the text it clips: Word
+    writes every line of a table row held to an exact height, and the end of a line it runs
+    past its cell, and clips them away. Read whole, those lines were found where the page has
+    them. The clip is followed by a second reading of each page, through PDFBox's graphics
+    engine, in the order the page draws; the two readings must count the same glyphs, or the
+    page is refused rather than half read. Only the clip is followed: text drawn invisible
+    (rendering mode 3), or painted over, is still read. No PDF of the corpus, the engine's or
+    an editor's, draws a glyph invisible.
+  - What the clip hides, measured on Word 16.0.20527's PDFs of the corpus: 54 of the 82
+    documents hold clipped glyphs, and in 51 of them every one is a space — one past the right
+    edge of the clip its line is drawn under, one just above the cell that clips it, one set
+    above the top of the page, up to 57 in a document. A space opens no line and adds no letter,
+    so none of them changes a line. The other three are where the reading changes: the end of
+    one line in each of `cv-engineering_resume` and `cv-timeline_minimal`, which Word runs past
+    its cell's right edge, at 575pt and 573.5pt on a 595pt page, and clips there; and two lines
+    of `synthetic-clipped_container`, whose container clips them on the engine's own page too.
+    LibreOffice 26.8 on Windows clips the same two CV lines.
+  - The baselines change for those three documents alone: each CV loses that line, which the
+    gate had found at the place of its first letter, and the container's page draws 8 lines
+    where it drew 10. In the Word baseline that is four rows taken out, every other line of the
+    three standing where it stood. The Windows LibreOffice baseline takes the three documents'
+    rows from a run on the build it names and keeps the rest, stale as they are; the CVs' other
+    lines stand within 0.41pt of the rows they replace. The Linux baseline is taken from CI.
+  - `invoice-luma_studio` is changed too: its notes card, the last thing in its body that
+    holds text, held to exactly 22.5pt. Nothing below it moves when it shrinks, so the gate can
+    fail on it only through the card's own lines — and with the whole text read, it passed in
+    Word, every line found where the page has it. Each document changed is converted with a
+    copy of it left unchanged, and each change is held to its own document's measurement.
+  - A card's row held short of its text must now cost lines, not only move what follows it.
+    Word 16.0.20527 and LibreOffice 26.8 on Windows each lose 9 lines of `invoice-modern`'s
+    card, which Word had only shown by the closing paragraph below it moving up 65.9pt, and 18
+    of `invoice-luma_studio`'s.
+  - The acceptance report counts what is shown too: Word still passes 70 of the 82 documents,
+    and LibreOffice 26.8 on Windows 59 where it passed 58, `synthetic-clipped_container` now
+    finding every line its page shows.
+
 - **The DOCX fidelity gate is fed a document changed after export in each way it is there to
   fail on, through the same editor and the same measurement as the corpus, and the run fails
   unless the gate fails on every one.**
@@ -4686,10 +4725,11 @@ follow semantic versioning; release dates are ISO 8601.
     the time it was written with — which is what lets the `word` run find, by the SHA-256 Word
     recorded, that Word converted what this tree makes. In Word 16.0.20527, LibreOffice 26.8 on
     Windows and CI's LibreOffice 24.2 on Linux, the gate fails on all five, and the unchanged copy
-    stands where the corpus's conversion set it. Word fails the card's change only through the
-    closing paragraph below it, which moves up 65.9pt: Word's PDF still holds the nine lines it
-    clips out of the card, and the gate, which reads the PDF's text, finds them where they were.
-    LibreOffice does not write them, and the gate names them lost.
+    stands where the corpus's conversion set it. Word failed the card's change at first only
+    through the closing paragraph below it, which moves up 65.9pt: Word's PDF still holds the
+    nine lines it clips out of the card, and the gate read them where they were, until it came
+    to read only the text the page's clip does not hide (above). LibreOffice does not write
+    them.
   - The acceptance report now counts a line far off when it stands more than 2pt off across as
     well as down, and gives the corpus's count of such lines each way. Counting only down, 14
     documents passed on CI's LibreOffice with lines set across — `invoice-classic_long` with

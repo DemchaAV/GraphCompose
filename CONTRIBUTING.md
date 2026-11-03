@@ -352,7 +352,11 @@ Choose the smallest tests that match the change:
   line of every document to the drift its baseline records, down and across: a line that
   moved more than 0.5pt from where the baseline holds it, nearer the page or further, a line
   set at other words, a line found that the baseline does not hold, another number of pages
-  from the editor, or another number of pages or lines from the engine fails it. It needs
+  from the editor, or another number of pages or lines from the engine fails it. A line is
+  read as the page's clip shows it: a glyph standing outside the clip it is drawn under is not
+  read, since a PDF keeps the text it clips — Word writes every line of a table row held to an exact height
+  its text does not fit, and the end of a line it runs past its cell, and clips them away. Text
+  drawn invisible, or painted over, is still read. It needs
   LibreOffice and runs only when asked for — install first, as for any standalone `qa` run:
   `./mvnw -B -ntp test -f qa/pom.xml -Dtest=DocxFidelityCorpusTest -Dgraphcompose.docxFidelity=libreoffice`.
   A change that moves documents, nearer the page included, rewrites the baseline with
@@ -407,10 +411,12 @@ Choose the smallest tests that match the change:
   The same run, in either editor, feeds the gate `invoice-modern` changed after export in each
   way it is there to fail on — a paragraph taken out, every `w:rFonts` set to Courier New, a page
   break before the closing paragraph, the notes card's row held to exactly 25pt, the line items
-  replaced by a picture — and fails unless the gate, holding each to the run's own measurement
-  of the unchanged document, fails on every one, and on lost lines or another page count where
-  the change costs them (`DocxTamper`). A copy left unchanged is converted with them and must
-  stand where the corpus's conversion set it, within the gate's half-point slack. They are
+  replaced by a picture — and `invoice-luma_studio` with its last card, which has no text below
+  it, held to exactly 22.5pt; and it fails unless the gate, holding each to the run's own
+  measurement of the document it was changed from, fails on every one, and on lost lines or
+  another page count where the change costs them — a card held short of its text costs the
+  lines it clips (`DocxTamper`). A copy of each document left unchanged is converted with them
+  and must stand where the corpus's conversion set it, within the gate's half-point slack. They are
   written to `qa/target/docx-fidelity/tampered` and
   converted into `<editor>-tampered` beside it, LibreOffice logging to
   `libreoffice-tampered.log`; `word-fidelity.ps1` converts them too.

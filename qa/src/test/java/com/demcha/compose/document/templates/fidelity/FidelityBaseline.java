@@ -223,7 +223,7 @@ final class FidelityBaseline {
                           + ", and the baseline holds " + pages(was.enginePages()));
             }
             if (now.lines() != was.lines()) {
-                apart.add(now.stem() + ": the page draws " + lineCount(now.lines())
+                apart.add(now.stem() + ": the gate reads " + lineCount(now.lines()) + " on the page"
                           + ", and the baseline holds " + was.lines());
             }
             List<String> lost = new ArrayList<>();

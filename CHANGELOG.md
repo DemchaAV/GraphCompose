@@ -4660,17 +4660,17 @@ follow semantic versioning; release dates are ISO 8601.
   document whose last card is held to a height its text does not fit.**
   - `PdfLines` reads a glyph only where the clip it is drawn under holds its middle — half its
     advance along the baseline, three tenths of its size up. A PDF keeps the text it clips: Word
-    writes every line of a table row held to an exact height, and the end of a line it runs
-    past its cell, and clips them away. Read whole, those lines were found where the page has
-    them. The clip is followed by a second reading of each page, through PDFBox's graphics
+    writes every line of a table row held to an exact height its text does not fit, and the
+    end of a line it runs past its cell, and clips them away. Read whole, those lines were
+    found where the page has them. The clip is followed by a second reading of each page, through PDFBox's graphics
     engine, in the order the page draws; the two readings must count the same glyphs, or the
-    page is refused rather than half read. Only the clip is followed: text drawn invisible
+    page is refused rather than half read. Only a path's clip is followed: text drawn invisible
     (rendering mode 3), or painted over, is still read. No PDF of the corpus, the engine's or
     an editor's, draws a glyph invisible.
   - What the clip hides, measured on Word 16.0.20527's PDFs of the corpus: 54 of the 82
-    documents hold clipped glyphs, and in 51 of them every one is a space — one past the right
-    edge of the clip its line is drawn under, one just above the cell that clips it, one set
-    above the top of the page, up to 57 in a document. A space opens no line and adds no letter,
+    documents hold clipped glyphs, and in 51 of them every one is a space — past the right edge
+    of the clip its line is drawn under, just above the cell that clips it, or set above the top
+    of the page; up to 57 in a document. A space opens no line and adds no letter,
     so none of them changes a line. The other three are where the reading changes: the end of
     one line in each of `cv-engineering_resume` and `cv-timeline_minimal`, which Word runs past
     its cell's right edge, at 575pt and 573.5pt on a 595pt page, and clips there; and two lines
@@ -4679,11 +4679,12 @@ follow semantic versioning; release dates are ISO 8601.
     them whole.
   - The baselines change for those three documents alone: each CV loses that line, which the
     gate had found at the place of its first letter, and the gate reads 8 lines of the
-    container's page where it read 10, the page's own clip hiding two. In the Word baseline that is four rows taken out, every other line of the
-    three standing where it stood. The Windows LibreOffice baseline takes the three documents'
-    rows from a run on the build it names and keeps the rest, stale as they are; the CVs' other
-    lines stand within 0.41pt of the rows they replace. The Linux baseline changes in the container's count of lines alone, taken
-    from CI's run of this change.
+    container's page where it read 10, the page's own clip hiding two. In the Word baseline
+    that is four rows taken out, every other line of the three standing where it stood. The
+    Windows LibreOffice baseline takes the three documents' rows from a run on the build it
+    names and keeps the rest, stale as they are; the CVs' other lines stand within 0.41pt of
+    the rows they replace. The Linux baseline changes in the container's count of lines alone,
+    taken from CI's run of this change.
   - `invoice-luma_studio` is changed too: its notes card, the last thing in its body that
     holds text, held to exactly 22.5pt. Nothing below it moves when it shrinks, so the gate can
     fail on it only through the card's own lines — and with the whole text read, it passed in
@@ -4693,9 +4694,10 @@ follow semantic versioning; release dates are ISO 8601.
     Word 16.0.20527 and LibreOffice 26.8 on Windows each lose 9 lines of `invoice-modern`'s
     card, which Word had only shown by the closing paragraph below it moving up 65.9pt, and 18
     of `invoice-luma_studio`'s; CI's LibreOffice 24.2 on Linux loses 9 and 17.
-  - The acceptance report counts what is shown too: Word still passes 70 of the 82 documents,
-    and LibreOffice 26.8 on Windows 59 where it passed 58, `synthetic-clipped_container` now
-    finding every line its page shows.
+  - The acceptance report counts what the clip shows too: Word still passes 70 of the 82
+    documents, LibreOffice 26.8 on Windows 59 where it passed 58, and CI's LibreOffice 24.2 on
+    Linux 45 where it passed 44, `synthetic-clipped_container` now finding every line its
+    clip shows in both.
 
 - **The DOCX fidelity gate is fed a document changed after export in each way it is there to
   fail on, through the same editor and the same measurement as the corpus, and the run fails

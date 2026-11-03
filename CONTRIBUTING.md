@@ -356,8 +356,9 @@ Choose the smallest tests that match the change:
   read as the page's clip shows it: a glyph standing outside the clip it is drawn under is not
   read, since a PDF keeps the text it clips — Word writes every line of a table row held to an
   exact height its text does not fit, and the end of a line it runs past its cell, and clips
-  them away. Text drawn invisible, or painted over, is still read. It needs LibreOffice and
-  runs only when asked for — install first, as for any standalone `qa` run:
+  them away. Only a path's clip is followed: text drawn invisible, or painted over, is still
+  read. It needs LibreOffice and runs only when asked for — install first, as for any
+  standalone `qa` run:
   `./mvnw -B -ntp test -f qa/pom.xml -Dtest=DocxFidelityCorpusTest -Dgraphcompose.docxFidelity=libreoffice`.
   A change that moves documents, nearer the page included, rewrites the baseline with
   `-Dgraphcompose.docxFidelity.update=true`, and commits it with the change: its diff shows

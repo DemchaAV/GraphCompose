@@ -26,7 +26,7 @@ import java.util.Map;
  * @param stem         the document
  * @param enginePages  the pages the engine draws
  * @param editorPages  the pages the editor sets the DOCX on
- * @param lines        the page's lines
+ * @param lines        the page's lines, as far as its clip shows them
  * @param matched      the page's lines found in the editor's
  * @param median       the median of the found lines' drift either way, in points
  * @param p90          the drift either way nine in ten found lines stay within, in points

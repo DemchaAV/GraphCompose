@@ -36,7 +36,7 @@ import java.util.Locale;
  * clipping path in force when it is drawn is left out, as a reader never sees it. A PDF keeps the
  * text it clips: Word writes every line of a table row held to an exact height its text does not
  * fit, and the end of a line it runs past its cell, and clips them away. Read whole, those lines
- * are found where the page has them. Only the clip is followed: a glyph drawn invisible
+ * are found where the page has them. Only a path's clip is followed: a glyph drawn invisible
  * (rendering mode 3), or painted over, is still read.</p>
  */
 final class PdfLines {

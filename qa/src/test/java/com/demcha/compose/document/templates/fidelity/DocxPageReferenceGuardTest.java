@@ -39,9 +39,10 @@ import static org.assertj.core.api.Assertions.tuple;
  * Every {@code PAGEREF} field the DOCX export writes names exactly one bookmark the file holds, so
  * Word shows a page number once it updates its fields rather than "Error! Bookmark not defined."
  *
- * <p>Held over the template corpus, which refers to no page today, and over documents that refer
- * to an anchor on every kind of node that declares one, from a table of contents, the body, a
- * table's composed cell, a layer stack's column, a panel and a row's column
+ * <p>Held over the fidelity corpus, whose presets refer to no page and whose
+ * {@code synthetic-links_and_toc} refers to three from its table of contents, and over documents
+ * that refer to an anchor on every kind of node that declares one, from a table of contents, the
+ * body, a table's composed cell, a layer stack's column, a panel and a row's column
  * ({@link PageReferenceDocxDocuments}). Where the export writes an anchor no bookmark — a block that
  * draws nothing, one whose first drawing fills a page nothing is written on, one composed in a
  * table's cell, a drawn shape, an anchor the document does not have — the reference is the number

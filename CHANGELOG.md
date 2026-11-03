@@ -4656,6 +4656,45 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The DOCX fidelity corpus holds eleven more documents composed the way a user builds one, so
+  the line-by-line gate reaches forms no template preset has.**
+  - `SyntheticDocxCorpus` adds: a panel kept together, of icon rows, that the layout moves whole
+    onto the next page; nested rows, a table in a panel beside a list, a picture and an icon row;
+    a rounded banner with its title centred in it, and initials centred in a circle; a repeated
+    table header, a heading kept with the next block and a kept panel over three pages, under a
+    footer holding the page's number; a turned picture and a turned shape; a column painted down
+    the left of three pages; a header holding a logo, over a row filled and outlined; margins
+    that change from page 2 and again from page 3, under a footer reading the page's number of
+    the pages; Hebrew and Arabic paragraphs set right to left, one mixing in Latin and numbers;
+    a table of contents with a link to a heading and one to a web page; and five pages of
+    free text. No two paragraphs of a document open on the same two sentences, so that lines of the
+    same letters on a page, which the gate pairs each with the editor's nearest, stay few.
+  - Their rows are added to the Word, LibreOffice Windows and LibreOffice Linux baselines,
+    measured on Word 16.0.20527, LibreOffice 26.8 (build bf6ef2662401) and CI's LibreOffice 24.2; no
+    other row of any of them changes.
+  - Down the page, nine of the eleven stand within 0.11pt of the page's lines in both editors,
+    at the median and nine lines in ten. Across it, both editors set the Arabic paragraph's two
+    lines 12.2 to 19.0pt right of the page's, and the header's line beside its logo 8pt left,
+    LibreOffice 3.27pt high as well; LibreOffice on Linux sets the filled row's two lines 8.6pt
+    right.
+  - Some of the page's lines are not found, and the baselines hold them so:
+    - a few paragraphs LibreOffice breaks at other words, the one under the turned picture
+      among them;
+    - the footers' lines holding a page number, which the export writes as one line of Word's
+      footer;
+    - the Hebrew line mixing in Latin and numbers, in both editors;
+    - the lines the editors carry onto another page than the page's, in the two documents below;
+    - in Word, the nested table's row reading "Build" and "12 500", whose text Word's PDF holds
+      but not as the page's two lines.
+  - In the column-painted document and the free text, the two not within 0.11pt, the page sets
+    a paragraph's last line alone at the top of a page, or its first line alone at the foot of
+    one, and Word and LibreOffice each carry a line over the break, so that no line of a
+    paragraph stands alone there. In the column-painted document that runs page 2 a line long
+    and leaves a paragraph's first line alone at its foot, which they carry over too: its page 2
+    stands one line low and page 3 two. The free text's page 5 stands one line low. The export
+    writes no `w:widowControl`, and Word reads widow control as on for every paragraph. The
+    baselines hold the lines where the editors set them.
+
 - **A plate, a progress bar and a divider — boxes of one colour each, no taller than Word's
   thickest border — are held to the forms the DOCX export writes them in: the plate and the bar
   drawn at their own size, place and colour, and only the divider written as Word's rule.**

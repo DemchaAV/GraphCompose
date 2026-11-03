@@ -113,8 +113,8 @@ class DocxDrawingAnchorGuardTest {
 
     /**
      * The drawings of the corpus still placed from the page: which they are, and why each is there.
-     * Measured over the corpus of 71 documents, which holds 760 floating drawings painted by a
-     * node, of which 728 are carried by a paragraph.
+     * Measured over the corpus of 82 documents, which holds 772 floating drawings painted by a
+     * node, of which 740 are carried by a paragraph.
      *
      * <p>Twenty-five are a composed cell's ({@link #COMPOSED_CELL_WALK_STOPS}): thirteen in
      * {@code invoice-payments} under {@code LineItemsBox/LineItems}, eight in
@@ -170,19 +170,19 @@ class DocxDrawingAnchorGuardTest {
 
     /**
      * How many floating drawings the corpus has a node paint, as a floor: a reader that stopped
-     * finding them would otherwise report every document clean. Measured at 760 over 71 documents,
-     * beside 381 inline ones, which are placed from nothing and so are not this guard's business.
+     * finding them would otherwise report every document clean. Measured at 772 over 82 documents,
+     * beside 384 inline ones, which are placed from nothing and so are not this guard's business.
      *
      * <p>Held close to the measurement rather than loosely, since the slack is what a drawing could
      * go missing in: a document that stops painting a drawing altogether is not this guard's
      * subject, but a reader that stops seeing them is exactly what the floor is here to catch.</p>
      */
-    private static final int AT_LEAST_THIS_MANY_DRAWINGS = 750;
+    private static final int AT_LEAST_THIS_MANY_DRAWINGS = 762;
 
     /**
      * How many page fills the corpus holds, as a floor, each of which must come back placed from
      * the page: this is the reader's own proof that it can read a drawing placed from the page at
-     * all. Measured at 32.
+     * all. Measured at 33.
      */
     private static final int AT_LEAST_THIS_MANY_BACKGROUNDS = 30;
 

@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * A plate, a progress bar and a divider: boxes of one colour no taller than Word's thickest
+ * A plate, a progress bar and a divider: boxes of one colour each, no taller than Word's thickest
  * border, and only the divider written as Word's rule.
  *
  * <p>A 10pt plate and a 6pt bar are no taller than Word's thickest border, and the export used to
@@ -78,11 +78,14 @@ class DocxPlateBarAndDividerTest {
 
     /**
      * The divider's left indent, in twips, as the measured file wrote it: 1.4pt, which Word draws
-     * its border past to start it at 20.04pt, the column's edge.
+     * its border past to start it at 20.04pt, 0.04pt inside the column's edge.
      */
     private static final long RULE_INDENT_LEFT = 28;
 
-    /** The divider's right indent, in twips: 1.5pt, which Word draws past to end it at 380.16pt. */
+    /**
+     * The divider's right indent, in twips: 1.5pt, which Word draws past to end it at 380.16pt,
+     * 0.16pt past the column's edge.
+     */
     private static final long RULE_INDENT_RIGHT = 30;
 
     private static final Consumer<PageFlowBuilder> CONTENT = page -> page

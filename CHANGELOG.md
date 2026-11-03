@@ -4656,13 +4656,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
-- **A plate, a progress bar and a divider — three boxes of one colour no taller than Word's
+- **A plate, a progress bar and a divider — boxes of one colour each, no taller than Word's
   thickest border — are held to the forms the DOCX export writes them in: the plate and the bar
   drawn at their own size, place and colour, and only the divider written as Word's rule.**
   - Such a box standing in the flow used to be written as a rule, an empty paragraph bordered
     below — the plate with the divider; the bar's two layers, in a stack, were drawn either way —
-    and the divider signal (`ShapeNode.divider`, above) left only the divider so. `DocxPlateBarAndDividerTest`
-    exports a 10×10pt plate, a 6pt bar — a 200pt track and a 120pt fill laid over it in a layer
+    and the divider signal (`ShapeNode.divider`, above) left only the divider so.
+    `DocxPlateBarAndDividerTest` exports a 10×10pt plate, a 6pt bar — a 200pt track and a 120pt fill laid over it in a layer
     stack — and a 1pt divider across the column, and asserts what an editor draws them from:
     each drawing's extent, its distance from the page's left edge, the paragraph it moves with
     and its offset there, its colour and its paint order; the divider's border, colour and the

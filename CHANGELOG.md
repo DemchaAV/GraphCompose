@@ -4670,7 +4670,8 @@ follow semantic versioning; release dates are ISO 8601.
   - A change refuses a document it would leave as it was, so a change that changed nothing
     cannot pass as caught: one that finds its target by the letters it holds refuses unless
     exactly one element directly in the body, or in the table, holds them; the row change
-    refuses a row already held so; and the font change refuses a document naming no other font.
+    refuses a row already written as it would write it; and the font change refuses a document
+    whose every `w:rFonts` already reads as it would write it.
   - Each changed document is held to the run's own measurement of the unchanged one, not to the
     baseline, so what fails is the change and nothing the baseline holds besides: the local
     LibreOffice baseline, which is stale for 16 documents, `invoice-modern` among them, gives
@@ -4694,9 +4695,8 @@ follow semantic versioning; release dates are ISO 8601.
     documents passed on CI's LibreOffice with lines set across — `invoice-classic_long` with
     136 of the 166 lines found. Measured, the documents passing go from 58 to 44 of 82 on CI's
     LibreOffice, from 59 to 58 on LibreOffice 26.8 for Windows and from 71 to 70 in Word
-    16.0.20527, and Word sets 55 of the
-    corpus's lines more than 2pt across, 49 of them in `synthetic-card_over_pages`. The report is
-    not a gate, and no baseline changes.
+    16.0.20527, and Word sets 55 of the corpus's lines more than 2pt across, 49 of them in
+    `synthetic-card_over_pages`. The report is not a gate, and no baseline changes.
 
 - **The DOCX fidelity corpus holds eleven more documents composed the way a user builds one, so
   the line-by-line gate reaches forms no template preset has.**

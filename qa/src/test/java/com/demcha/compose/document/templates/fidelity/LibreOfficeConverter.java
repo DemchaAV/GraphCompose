@@ -112,7 +112,7 @@ final class LibreOfficeConverter {
         Process process = new ProcessBuilder(command).redirectErrorStream(true).redirectOutput(log.toFile()).start();
         if (!process.waitFor(TIMEOUT_MINUTES, TimeUnit.MINUTES)) {
             process.destroyForcibly();
-            throw new IllegalStateException("LibreOffice did not convert the corpus within "
+            throw new IllegalStateException("LibreOffice did not convert " + docxFiles.size() + " documents within "
                                             + TIMEOUT_MINUTES + " minutes; see " + log);
         }
         if (process.exitValue() != 0) {

@@ -23,8 +23,9 @@
     qa/target/docx-fidelity/tampered; Word converts those into
     qa/target/docx-fidelity/word-tampered, and the `word` run fails unless the
     unchanged copy stands where the corpus's conversion set it, within the
-    gate's half-point slack, and the gate fails on every change, with the lines
-    or the page count lost where the change costs them.
+    gate's half-point slack, and the gate fails on every change, losing lines,
+    or coming to another page count, where the change costs that. Word failing
+    to convert them is reported by that run, beside the corpus's result.
 
     Run it from PowerShell (pwsh), not through powershell.exe under Git Bash: Word
     driven through COM from a process Git Bash started has stalled on its first
@@ -71,11 +72,17 @@ $global:LASTEXITCODE = 0
 & (Join-Path $PSScriptRoot 'convert-with-word.ps1') -Path (Join-Path $work 'engine') -OutputDir $pdfs
 if ($LASTEXITCODE -ne 0) { throw "Word did not convert the corpus (exit $LASTEXITCODE)" }
 
+# The changed documents are converted apart, and a failure there does not stop the corpus being
+# measured: the word run reports what it lacks of them beside the corpus's result.
 $tampered = Join-Path $work 'word-tampered'
 if (Test-Path $tampered) { Remove-Item -Recurse -Force $tampered }
-$global:LASTEXITCODE = 0
-& (Join-Path $PSScriptRoot 'convert-with-word.ps1') -Path (Join-Path $work 'tampered') -OutputDir $tampered
-if ($LASTEXITCODE -ne 0) { throw "Word did not convert the changed documents (exit $LASTEXITCODE)" }
+try {
+    $global:LASTEXITCODE = 0
+    & (Join-Path $PSScriptRoot 'convert-with-word.ps1') -Path (Join-Path $work 'tampered') -OutputDir $tampered
+    if ($LASTEXITCODE -ne 0) { Write-Warning "Word did not convert the changed documents (exit $LASTEXITCODE)" }
+} catch {
+    Write-Warning "Word did not convert the changed documents: $_"
+}
 
 $extra = if ($Update) { @('-Dgraphcompose.docxFidelity.update=true') } else { @() }
 Invoke-Corpus -Mode 'word' -Extra $extra

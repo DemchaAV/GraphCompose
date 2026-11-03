@@ -25,11 +25,12 @@ import java.util.zip.ZipOutputStream;
  * ({@link DocxFidelityCorpusTest}), and requires it to fail. A change is made to the bytes, not
  * to the document the engine composes, so it is the gate that is tested, not the export.</p>
  *
- * <p>A change refuses a document it would leave as it was — {@link #unchanged()} aside, which is
- * made to: one finding what it changes by the letters it holds refuses unless exactly one element
- * directly in the body, or in the table, holds them, the row change refuses a row already held
- * so, and the font change refuses a document naming no other font. A change that silently changed nothing would
- * leave the gate passing for want of anything to catch. The same DOCX changed the same way gives
+ * <p>A change refuses what it would leave as it was — {@link #unchanged()} aside, which is made
+ * to: one finding what it changes by the letters it holds refuses unless exactly one element
+ * directly in the body, or in the table, holds them, the row change refuses a row already
+ * written as it would write it, and the font change refuses a document whose every
+ * {@code w:rFonts} already reads as it would write it. A change that silently changed nothing
+ * would leave the gate passing for want of anything to catch. The same DOCX changed the same way gives
  * the same bytes: Word converts outside the build and is measured only on a DOCX whose digest
  * matches the one this run makes ({@link WordConversion}), which a change stamped with the time
  * of the run would never do.</p>

@@ -129,7 +129,7 @@ class DocxFidelityCorpusTest {
             sourceDocx = Files.readAllBytes(engine.resolve(TAMPERED_SOURCE + ".docx"));
             if (mode.equals(EXPORT)) {
                 // Written after the corpus, so a change that cannot be made leaves the corpus for
-                // Word to convert; the word run then names the changed documents it lacks.
+                // Word to convert; the word run then reports the failure beside the corpus's result.
                 try {
                     writeTampered(sourceDocx, tampered);
                 } catch (java.io.IOException | RuntimeException unmade) {

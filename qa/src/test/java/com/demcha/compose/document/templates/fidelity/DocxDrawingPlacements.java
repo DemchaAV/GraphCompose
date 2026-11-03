@@ -145,8 +145,8 @@ final class DocxDrawingPlacements {
 
     /**
      * The drawings a node paints, floating and inline together. POI names an inline picture
-     * "Drawing N" as the export names a floating one, and the corpus holds 381 of them against
-     * 760 floating, so a count of these is not a count of what this guard is about:
+     * "Drawing N" as the export names a floating one, and the corpus holds 384 of them against
+     * 772 floating, so a count of these is not a count of what this guard is about:
      * {@link #floatingPainted()} is.
      */
     List<Placement> painted() {

@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * the reader never sees that much of it.
  *
  * <p>Measured on the fidelity corpus in Word 16.0.20527 and LibreOffice 24.2, at 300 dpi: the one
- * document of the seventy-one that holds the case lays an 18pt icon over a card's top right
+ * document of the corpus that holds the case lays an 18pt icon over a card's top right
  * corner through a layer stack. The engine's PDF draws 4308 pixels of the icon's own ink; Word's
  * draws none, and LibreOffice's draws none — not one pixel anywhere on the page, the icon's whole
  * box coming back the card's colour. Until the stack's order is carried into the document, the

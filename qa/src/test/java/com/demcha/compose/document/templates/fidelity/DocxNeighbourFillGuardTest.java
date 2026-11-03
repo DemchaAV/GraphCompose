@@ -91,7 +91,7 @@ class DocxNeighbourFillGuardTest {
      * paint the card's fill over it, and neither draws one pixel of its ink.
      *
      * <p>It is the corpus's only instance, and it is a synthetic document rather than a shipped
-     * preset: of the seventy-one, sixty-four are presets — twenty-six CVs, seventeen invoices,
+     * preset: of the eighty-two, sixty-four are presets — twenty-six CVs, seventeen invoices,
      * fifteen letters, four proposals, a receipt and a rota — and not one of them lays a drawing
      * over a painted neighbour. The synthetic document was not written for this case either. It
      * joined the corpus to hold a band's space above and below the panel that opens it, and the
@@ -136,7 +136,7 @@ class DocxNeighbourFillGuardTest {
 
     /**
      * The nodes of the corpus whose notes this test classifies as a drawing's, in front of the
-     * text and behind it alike — 503 today, counted once per node however many shapes it is drawn
+     * text and behind it alike — 515 today, counted once per node however many shapes it is drawn
      * from. A floor rather than the number, and well under it, so that it catches a reader that
      * has stopped seeing drawings rather than a document gained or lost.
      */

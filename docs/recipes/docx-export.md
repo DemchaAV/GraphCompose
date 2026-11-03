@@ -1541,7 +1541,14 @@ twice. Three limits:
   that did not ask to be a divider goes to the drawing path however thin it is — drawn where
   the page puts it, or dropped with a note where the export cannot draw it — so a
   plate, a swatch and a brand strip's segment keep their own place on the page instead of
-  becoming a paragraph a reader moves or deletes as a line of text. A divider inside a layer stack —
+  becoming a paragraph a reader moves or deletes as a line of text. Measured on a page holding a
+  10×10pt plate, a 6pt progress bar — its track and its fill laid over each other in a layer
+  stack — and a 1pt divider across the column, converted by Word 16.0.20527 and LibreOffice 24.2
+  against the engine's own PDF: the plate and both layers of the bar stood at the page's place
+  and size to within 0.01pt in both editors, each in its own colour and the fill over the track,
+  and Word drew the divider as its rule within 0.17pt of the page's line (LibreOffice draws it
+  between its indents, as above). `DocxPlateBarAndDividerTest` holds the record the editors
+  draw that from. A divider inside a layer stack —
   one of a single layer too, which lets only a line through —, a canvas or a shape container
   is drawn too, as any other drawing there is, and one that paints nothing — no fill and no
   stroke — or only a gradient is dropped. A divider written as a

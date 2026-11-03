@@ -4656,6 +4656,26 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **A plate, a progress bar and a divider — three boxes of one colour no taller than Word's
+  thickest border — are held to the forms the DOCX export writes them in: the plate and the bar
+  drawn at their own size, place and colour, and only the divider written as Word's rule.**
+  - Such a box standing in the flow used to be written as a rule, an empty paragraph bordered
+    below — the plate with the divider; the bar's two layers, in a stack, were drawn either way —
+    and the divider signal (`ShapeNode.divider`, above) left only the divider so. `DocxPlateBarAndDividerTest`
+    exports a 10×10pt plate, a 6pt bar — a 200pt track and a 120pt fill laid over it in a layer
+    stack — and a 1pt divider across the column, and asserts what an editor draws them from:
+    each drawing's extent, its distance from the page's left edge, the paragraph it moves with
+    and its offset there, its colour and its paint order; the divider's border, colour and the
+    indents Word draws it past; the form the export report names for each; and, beside it, that
+    a divider of the plate's own size is still a rule, so it is the signal and not the size that
+    keeps the plate a drawing.
+  - CI runs no Word, so the picture is not in the test: it was taken once, on the same document
+    converted by Word 16.0.20527 and LibreOffice 24.2 against the engine's own PDF. The plate,
+    the track and the fill stood at the page's place and size to within 0.01pt in both, in their
+    exact colours, the fill over the track; Word drew the divider as its rule from 20.04pt to
+    380.16pt across a column ruled from 20pt to 380pt, within 0.17pt of the page's line, and
+    LibreOffice between its indents, from 21.40pt to 378.45pt.
+
 - **A table composed in a cell inside a block held on one page is now held to what actually keeps
   it whole — the row round it, since neither of the two writers that hold an ordinary table
   reaches it. And a kept block's table is asked for both of those writers on the `keepTogether`

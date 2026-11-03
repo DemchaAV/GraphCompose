@@ -401,7 +401,18 @@ Choose the smallest tests that match the change:
   green run.
   Each run also writes `measured-<editor>-acceptance.md`: which documents the editor sets as the
   page does — the same pages, 95% of the lines found, a median of 1pt or less, no more than 10%
-  past 2pt — and what keeps the rest short of it. CI shows LibreOffice's in the job summary.
+  of the lines found more than 2pt off, above or below the page's line or left or right of it —
+  and what keeps the rest short of it, with the corpus's count of lines past 2pt down and
+  across. CI shows LibreOffice's in the job summary.
+  The same run, in either editor, feeds the gate `invoice-modern` changed after export in each
+  way it is there to fail on — a paragraph taken out, every `w:rFonts` set to Courier New, a page
+  break before the closing paragraph, the notes card's row held to exactly 25pt, the line items
+  replaced by a picture — and fails unless the gate, holding each to the run's own measurement
+  of the unchanged document, fails on every one, and on lost lines or another page count where
+  the change costs them (`DocxTamper`). A copy left unchanged is converted with them and must
+  show no difference at all. They are written to `qa/target/docx-fidelity/tampered` and
+  converted into `<editor>-tampered` beside it, LibreOffice logging to
+  `libreoffice-tampered.log`; `word-fidelity.ps1` converts them too.
   The corpus also answers for how a document edits in Word.
   `scripts/docx-visual/edit-protocol-corpus.ps1` runs over the DOCX that
   `-Dgraphcompose.docxFidelity=export` leaves in `qa/target/docx-fidelity/engine`. For each

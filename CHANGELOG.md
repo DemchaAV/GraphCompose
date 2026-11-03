@@ -4656,6 +4656,41 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The DOCX fidelity gate is fed a document changed after export in each way it is there to
+  fail on, through the same editor and the same measurement as the corpus, and the run fails
+  unless the gate fails on every one.**
+  - `invoice-modern`'s DOCX is changed five ways (`DocxTamper`): a paragraph taken out, every
+    `w:rFonts` of its runs, styles and list levels set to Courier New, a page break before the
+    closing paragraph, the notes card's row held to exactly 25pt, the line items replaced by a
+    picture. A change refuses a document it would leave as it was — one that finds its target by
+    the letters it holds refuses a document holding none of them, or two, and the font change
+    one naming no other font — so a change that changed nothing cannot pass as caught.
+  - Each changed document is held to the run's own measurement of the unchanged one, not to the
+    baseline, so what fails is the change and nothing the baseline holds besides: the local
+    LibreOffice baseline, which is stale for 16 documents, `invoice-modern` among them, gives
+    the same answer as a green one. A paragraph or a table taken out must cost the page's lines,
+    and a page break a page, not merely move something. The changed documents are converted
+    apart from the corpus, with a copy left unchanged that must stand where the corpus's
+    conversion set it, so a difference the second conversion makes on its own does not count as
+    a change caught.
+  - The LibreOffice run converts them into `libreoffice-tampered`, logging to
+    `libreoffice-tampered.log`, and CI uploads both; `word-fidelity.ps1` has Word convert them
+    into `word-tampered`. The same DOCX changed the same way is the same bytes — each part keeps
+    the time it was written with — which is what lets the `word` run find, by the SHA-256 Word
+    recorded, that Word converted what this tree makes. In Word 16.0.20527 and LibreOffice 26.8
+    on Windows, the gate fails on all five. Word fails the card's change only through the
+    closing paragraph below it, which moves up 65.9pt: Word's PDF still holds the nine lines it
+    clips out of the card, and the gate, which reads the PDF's text, finds them where they were.
+    LibreOffice does not write them, and the gate names them lost.
+  - The acceptance report now counts a line far off when it stands more than 2pt off across as
+    well as down, and gives the corpus's count of such lines each way. Counting only down, 14
+    documents passed on CI's LibreOffice with lines set across — `invoice-classic_long` with
+    136 of the 166 lines found. The documents passing go from 58 to 44 of 82 on CI's LibreOffice
+    (read from its baseline, which CI's run matches), from 59 to 58 on LibreOffice 26.8 for
+    Windows and from 71 to 70 in Word 16.0.20527 (each measured), and Word sets 55 of the
+    corpus's lines more than 2pt across, 49 of them in `synthetic-card_over_pages`. The report is
+    not a gate, and no baseline changes.
+
 - **The DOCX fidelity corpus holds eleven more documents composed the way a user builds one, so
   the line-by-line gate reaches forms no template preset has.**
   - `SyntheticDocxCorpus` adds: a panel kept together, of icon rows, that the layout moves whole

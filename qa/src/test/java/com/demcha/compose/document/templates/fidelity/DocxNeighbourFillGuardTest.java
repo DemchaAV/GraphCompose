@@ -74,7 +74,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * cell's own shading, which belongs to a cell rather than to a node. A cell's paint the table
  * draws itself, which never passes the export's queue. The second panel over a drawing lying over
  * two, the export naming one. And the drawings this test's own scan does not know by their note —
- * a rail drawn as a line, a picture drawn over the badge holding it — which the export judges and
+ * a timeline's rail, a picture drawn over the badge holding it — which the export judges and
  * this test checks one by one instead ({@link #NAMED_BUT_UNPLACEABLE}).</p>
  *
  * <p>The list is a ledger of work still to do, not a licence: the export has no drawing it is
@@ -183,8 +183,8 @@ class DocxNeighbourFillGuardTest {
             List<String> seen = scan.covered().stream().sorted().toList();
             // Every drawing the export names is checked against this test's own geometry, one by
             // one. Not through the scan: the scan knows a drawing by the wording of its note, and
-            // the export names drawings whose notes it does not know — a rail is drawn as a line,
-            // a picture over a badge says so instead. Those land in namedButUnplaceable rather
+            // the export names drawings whose notes it does not know — a timeline's rail, and a
+            // picture over a badge, whose note says so instead. Those land in namedButUnplaceable rather
             // than being read as a disagreement.
             for (String path : named) {
                 if (!scan.placed().containsKey(path)) {

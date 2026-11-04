@@ -241,10 +241,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             + "line it stands level with or below taken first, so it moves with that block when the text "
             + "above is edited; in the paragraph nearest it where no block holding it writes one there, or to "
             + "the page where no paragraph on its page can carry it";
-    /** How a drawing no node paints — a timeline's rail — is anchored, as the report says it. */
-    private static final String ANCHORED_IN_THE_NEAREST = "anchored in the paragraph nearest it on its page, "
-            + "so it moves with that paragraph when the text above is edited, or to the page where no "
-            + "paragraph on its page can carry it";
+    /**
+     * How a drawing no node paints — a timeline's rail — is anchored, and what it does not do, as
+     * the report says it.
+     */
+    private static final String ANCHORED_IN_ITS_ENTRY = "anchored on each page in a paragraph of the "
+            + "timeline entry it starts in there, or of the nearest block holding that entry, so it moves "
+            + "with that entry when the text above is edited; in the paragraph nearest it where none of "
+            + "them writes one there, or to the page where no paragraph on its page can carry it. It keeps "
+            + "the length the layout gives it on each page: the entries after one that grows in the editor "
+            + "run on past its end, and an entry the editor moves onto another page stands off the rail there";
     /**
      * The report's subject for a translucent colour Word holds only opaque — a cell's shading, a
      * border — flattened against the colour under it (see {@link DocxTranslucency}).
@@ -1364,15 +1370,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     earlierZones.add(DocumentHeaderFooterZone.HEADER);
                 }
                 // Drawing the layout paints in a pass of its own — a timeline's rail — belongs to
-                // no node, so it waits for the first paragraph on its page. Every rail, and every
-                // page of one, shares the pass's path: it is named once, as what nothing carries
-                // is reckoned for that path together (DocxDrawingAnchors.Owner).
+                // no node. Each page of it is held by the block the layout anchors that it starts in
+                // there — a timeline's entry, or that entry's marker — so it waits for that block's
+                // paragraphs; one that starts in none waits for the paragraph nearest it. Every rail,
+                // and every page of one, is named under the pass's path, once.
                 java.util.Set<String> railsNamed = new java.util.HashSet<>();
                 for (com.demcha.compose.document.layout.PlacedFragment pass : layout.passFragments()) {
-                    drawingFor = new DocxDrawingAnchors.Owner("timeline rail", pass.path());
+                    String block = layout.anchoredBlockAt(pass);
+                    drawingFor = new DocxDrawingAnchors.Owner("timeline rail", pass.path(), false,
+                            block == null ? pass.path() : block);
                     if (queueDrawing(pass, drawsInFront()) && railsNamed.add(pass.path())) {
                         report.add(DocxExportReport.Severity.APPROXIMATED, "timeline rail", pass.path(),
-                                "drawn as a line where the layout puts it, " + ANCHORED_IN_THE_NEAREST);
+                                "drawn as a filled bar the rail's width where the layout puts it, "
+                                + ANCHORED_IN_ITS_ENTRY);
                     }
                     drawingFor = null;
                 }

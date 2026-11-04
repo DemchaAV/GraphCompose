@@ -212,8 +212,8 @@ final class DocxDrawings {
             add(shapes, visible(new Shape(radius > 0 ? Kind.ROUND_RECT : Kind.RECT, fragment.x(), top,
                     fragment.width(), fragment.height(), shape.fillColor(), colourOf(shape.stroke()),
                     widthOf(shape.stroke()), radius, false, page)));
-            // A side border is a line along that edge, as the page strokes it — a timeline's rail
-            // is a box with only its left side drawn.
+            // A side border is a stroke along that edge, as the page strokes it — a timeline's rail
+            // is a box with only its left side drawn (see edge).
             SideBorders sides = shape.sideBorders();
             if (sides != null && sides.hasAny()) {
                 double x = fragment.x();
@@ -248,9 +248,30 @@ final class DocxDrawings {
         return shapes;
     }
 
+    /**
+     * One side of a box, as the page strokes it: a rectangle the stroke's width across, centred on
+     * that side and as long as it, filled with the stroke's colour — what a stroke with flat ends
+     * covers.
+     *
+     * <p>Not a line. LibreOffice 24.2 draws a line of no width — the preset a side is otherwise —
+     * turned a quarter round its middle at some places on the page and not at others. Measured, a
+     * timeline's rail at 30 and 31.5pt from the page's left edge came out a horizontal stroke and
+     * at 15.8 and 52.7pt upright, and three of the ten rails of the fidelity corpus came out
+     * turned. Drawn as this rectangle, all ten stand where the page puts them in LibreOffice 24.2
+     * and in Word, which drew the line there already.</p>
+     *
+     * @param width  the side's length across, 0 for a left or right side
+     * @param height the side's length down, 0 for a top or bottom side
+     */
     private static Shape edge(Stroke stroke, double x, double top, double width, double height, int page) {
-        return stroke == null ? null
-                : visible(new Shape(Kind.LINE, x, top, width, height, null, colourOf(stroke), widthOf(stroke),
+        if (stroke == null) {
+            return null;
+        }
+        double across = widthOf(stroke);
+        return width == 0
+                ? visible(new Shape(Kind.RECT, x - across / 2, top, across, height, colourOf(stroke), null, 0,
+                        0, false, page))
+                : visible(new Shape(Kind.RECT, x, top - across / 2, width, across, colourOf(stroke), null, 0,
                         0, false, page));
     }
 

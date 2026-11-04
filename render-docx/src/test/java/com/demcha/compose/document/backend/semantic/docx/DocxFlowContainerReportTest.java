@@ -117,7 +117,8 @@ class DocxFlowContainerReportTest {
                                     .title("BSc").meta("2016 - 2019")));
         };
 
-        assertThat(detailOf(reportOf(two), "timeline rail")).startsWith("drawn as a line where the layout puts it");
+        assertThat(detailOf(reportOf(two), "timeline rail"))
+                .startsWith("drawn as a filled bar the rail's width where the layout puts it");
         assertThat(anchoredDrawings(bodyOf(two))).as("both rails drawn, with their markers")
                 .isEqualTo(2 * anchoredDrawings(bodyOf(one)));
     }

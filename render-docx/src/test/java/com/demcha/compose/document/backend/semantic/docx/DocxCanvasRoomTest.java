@@ -536,7 +536,8 @@ class DocxCanvasRoomTest {
                         .entry(com.demcha.compose.document.dsl.TimelineMarker.dot(8, INK), entry -> entry
                                 .title("Senior Engineer").meta("2023 - Present")))
                 .add(paragraph("Below")));
-        XWPFTableCell marker = exported.document().getTables().get(0).getRow(0).getCell(0);
+        // The rail, beside the markers, has a column of its own in the gutter first (DocxTimelineRails).
+        XWPFTableCell marker = exported.document().getTables().get(0).getRow(0).getCell(1);
 
         assertThat(marker.getParagraphs()).hasSize(1);
         assertThat(before(marker.getParagraphs().get(0))).as("the marker's room")

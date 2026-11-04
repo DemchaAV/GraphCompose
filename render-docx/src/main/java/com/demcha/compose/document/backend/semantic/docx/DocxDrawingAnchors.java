@@ -84,6 +84,9 @@ final class DocxDrawingAnchors {
     private final Map<Integer, List<Ordered>> pending = new TreeMap<>();
     // What each waiting shape is drawn for, where something is.
     private final Map<Ordered, Owner> owners = new java.util.IdentityHashMap<>();
+    /** The shapes asked about ({@link #watch}), each with the drawing it was written as, once it is. */
+    private final Map<DocxDrawings.Shape, org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing> watched =
+            new java.util.IdentityHashMap<>();
     // The cell whose box holds each waiting shape a table's composed cell draws, where one does.
     private final Map<Ordered, HoldingCell> heldBy = new java.util.IdentityHashMap<>();
     // The first body paragraph written on each page of the section, by page.
@@ -141,6 +144,7 @@ final class DocxDrawingAnchors {
     /** Forgets everything, for a new export. */
     void reset() {
         pending.clear();
+        watched.clear();
         owners.clear();
         heldBy.clear();
         bodyParagraph.clear();
@@ -541,7 +545,7 @@ final class DocxDrawingAnchors {
     void anchorInCell(XWPFParagraph carrier, List<Ordered> shapes, DocxDrawings.CellOrigin origin) {
         XWPFRun run = carrier.insertNewRun(0);
         for (Ordered shape : shapes) {
-            run.getCTR().addNewDrawing().set(
+            written(shape.shape(), run.getCTR().addNewDrawing()).set(
                     DocxDrawings.drawingInCell(shape.shape(), ids.getAsLong(), shape.order(), shape.drawn(), origin));
             carry(carrier, shape);
         }
@@ -762,7 +766,7 @@ final class DocxDrawingAnchors {
             // one of its position keywords. A shape higher keeps its own offset, which Word reports.
             double rise = placed.place().top() - ordered.shape().top();
             double top = rise > 0 && rise < READABLE_RISE ? ordered.shape().top() : placed.place().top();
-            run.getCTR().addNewDrawing().set(Double.isInfinite(column)
+            written(ordered.shape(), run.getCTR().addNewDrawing()).set(Double.isInfinite(column)
                     ? DocxDrawings.drawingInParagraph(ordered.shape(), ids.getAsLong(), ordered.order(), ordered.drawn(), top)
                     : DocxDrawings.drawingInCell(ordered.shape(), ids.getAsLong(), ordered.order(), ordered.drawn(),
                             new DocxDrawings.CellOrigin(column, top)));
@@ -1262,8 +1266,50 @@ final class DocxDrawingAnchors {
     private void anchor(XWPFParagraph carrier, List<Ordered> shapes) {
         XWPFRun run = carrier.insertNewRun(0);
         for (Ordered shape : shapes) {
-            run.getCTR().addNewDrawing().set(DocxDrawings.drawing(shape.shape(), ids.getAsLong(), shape.order(), shape.drawn()));
+            written(shape.shape(), run.getCTR().addNewDrawing())
+                    .set(DocxDrawings.drawing(shape.shape(), ids.getAsLong(), shape.order(), shape.drawn()));
             carry(carrier, shape);
         }
+    }
+
+    /**
+     * Asks to be told where each of these shapes is written ({@link #writtenAs}): a timeline's rail
+     * is drawn in case the export cannot write it as the cells' border it runs along, and removed
+     * where it can, which is known only once every table of the timeline is written.
+     *
+     * @param shapes the shapes, as they are queued
+     */
+    void watch(List<DocxDrawings.Shape> shapes) {
+        for (DocxDrawings.Shape shape : shapes) {
+            watched.putIfAbsent(shape, null);
+        }
+    }
+
+    /**
+     * Whether a shape was given to {@link #watch}.
+     *
+     * @param shape a shape
+     * @return true where it is watched
+     */
+    boolean isWatched(DocxDrawings.Shape shape) {
+        return watched.containsKey(shape);
+    }
+
+    /**
+     * The drawing a watched shape was written as.
+     *
+     * @param shape a shape given to {@link #watch}
+     * @return its drawing, or null where it has not been written
+     */
+    org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing writtenAs(DocxDrawings.Shape shape) {
+        return watched.get(shape);
+    }
+
+    private org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing written(
+            DocxDrawings.Shape shape, org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing drawing) {
+        if (watched.containsKey(shape)) {
+            watched.put(shape, drawing);
+        }
+        return drawing;
     }
 }

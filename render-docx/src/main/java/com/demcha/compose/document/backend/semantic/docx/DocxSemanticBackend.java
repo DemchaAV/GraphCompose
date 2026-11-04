@@ -4925,16 +4925,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeNodeContentOf(XWPFDocument document, DocumentNode node) throws Exception {
-        // A title and its dates at either end of one band are one line before they are layers.
+        // A title and its dates at either end of one band, and any caption between them, are one
+        // line before they are layers.
         if (node instanceof com.demcha.compose.document.node.LayerStackNode
             || node instanceof ShapeContainerNode) {
             DocxLinePair.Pair pair = DocxLinePair.of(node, layout);
             if (pair != null) {
                 // A pill's outline round its title and dates is drawn as writeShapeContainer draws it.
-                reportRewritten(node, "written as one line that two paragraphs share, the one further "
-                        + "along it set where the page sets it — at the line's end, or at a tab where "
-                        + "the page starts it — and whatever else the layers hold drawn where the page "
-                        + "draws it");
+                reportRewritten(node, pair.stops().size() == 1
+                        ? "written as one line that two paragraphs share, the one further "
+                          + "along it set where the page sets it — at the line's end, or at a tab where "
+                          + "the page starts it — and whatever else the layers hold drawn where the page "
+                          + "draws it"
+                        : "written as one line that " + pair.paragraphs().size() + " paragraphs share, "
+                          + "each one after the first set where the page sets it, at a tab holding its "
+                          + "start, its middle or its end, and whatever else the layers hold drawn where "
+                          + "the page draws it");
                 drawOutlineOf(node);
                 writeLinePair(document, node, pair);
                 return;
@@ -10505,18 +10511,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Offers the one line two halves of a band share to the shapes beside it, as the text of the
-     * half that starts it, reaching across to the end of the other's box.
+     * Offers the one line the parts of a band share to the shapes beside it, as the text of the
+     * part that starts it, reaching across to the end of the last one's box.
      *
-     * <p>One place is enough for the line, since both halves are written in this one paragraph and
-     * a place stands for a paragraph. The half that starts it is the one whose text begins where
+     * <p>One place is enough for the line, since every part is written in this one paragraph and
+     * a place stands for a paragraph. The part that starts it is the one whose text begins where
      * the line begins, and whose raise Word reads back from the line's first run
-     * ({@link DocxDrawingAnchors.Seat#paragraphTop}); the line itself is raised by the lesser of
-     * what its two halves call for ({@link #raiseTheSharedLine}), so a shape placed from it stands
+     * ({@link DocxDrawingAnchors.Seat#paragraphTop}); the line itself is raised by the least of
+     * what its parts call for ({@link #raiseTheSharedLine}), so a shape placed from it stands
      * as far below the page's place as the line does — 0.2 to 0.33pt, measured there.</p>
      *
-     * <p>Where its text starts is where the line's own indent puts it: the half's inked start, not
-     * the box it is laid out in, which is as wide as the band where the half is set in it by its
+     * <p>Where its text starts is where the line's own indent puts it: the part's inked start, not
+     * the box it is laid out in, which is as wide as the band where the part is set in it by its
      * alignment. A shape anchored in a table cell is placed from the cell's text column, and a
      * place states that column by its text's left edge less the indent written on it
      * ({@link DocxDrawingAnchors.Seat#textLeft}) — the two must be the one edge, or the column
@@ -10530,17 +10536,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * text column cannot be read back from the place, and the shapes beside the line keep to the
      * text nearest them, as they did before any of this.</p>
      *
-     * <p>How far it reaches across is the whole line's, not that half's: a shape standing beside
-     * the dates at the line's right end, or in the gap between the two texts, stands beside the
+     * <p>How far it reaches across is the whole line's, not that part's: a shape standing beside
+     * the dates at the line's right end, or in a gap between two of its texts, stands beside the
      * line, and the text nearest a shape is reckoned from its edges
-     * ({@code DocxDrawingAnchors.distance}). The half that starts the line is laid out in a box of
+     * ({@code DocxDrawingAnchors.distance}). The part that starts the line is laid out in a box of
      * its own width — the title of the test's band is 60pt of a line 360pt wide — and offered as
      * that box the line was reckoned 250pt from a shape beside the dates, which a paragraph of
      * body text above it then took.</p>
      *
-     * @param para      the one paragraph the two halves are written in
-     * @param band      where the layout placed the overlay, the box both halves are set in
-     * @param pair      the two halves, as {@link DocxLinePair} read them
+     * @param para      the one paragraph the parts are written in
+     * @param band      where the layout placed the overlay, the box the parts are set in
+     * @param pair      the parts, as {@link DocxLinePair} read them
      * @param lineInset where the line's text is written from, inside its cell
      */
     private void offerTheSharedLine(XWPFParagraph para, com.demcha.compose.document.layout.PlacedNode band,
@@ -10564,7 +10570,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Offers a paragraph written for any piece of text to the shapes standing beside it: a
      * paragraph node's text, an item of a list whose items the layout's are matched to
-     * ({@link #listItemsMatched}), the line two halves of a band share.
+     * ({@link #listItemsMatched}), the line the parts of a band share.
      *
      * <p>A shape belongs to the node drawing it and to the blocks holding that node, and is
      * anchored in the first paragraph the nearest of them writes on its page
@@ -11806,12 +11812,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Writes an overlay's left and right paragraph as one line, the right one after a tab stop:
-     * a right-aligned one where it ends on the page, or a left-aligned one where it starts when
-     * it is set from its start (see {@link DocxLinePair}).
+     * Writes the paragraphs an overlay sets on one line as one Word line, each after the first
+     * after a tab stop holding its start, its middle or its end where the page does (see
+     * {@link DocxLinePair.Stop}).
      *
-     * <p>The line starts where the left paragraph does and runs from the top of the higher
-     * text to the bottom of the lower, so the band keeps its place in the flow: the space
+     * <p>The line starts where the left paragraph does and runs from the top of the highest
+     * text to the bottom of the lowest, so the band keeps its place in the flow: the space
      * the band leaves above and below its text is owed around the line, and text standing
      * out of the band — a title the page pulls up to centre it on a marker smaller than its
      * line — takes that much back from the gaps on either side, as it does on the page. A
@@ -11850,41 +11856,63 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             applyLineHeight(para, java.util.OptionalDouble.of(text));
         }
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
-        CTTabStop tab = (properties.isSetTabs() ? properties.getTabs() : properties.addNewTabs()).addNewTab();
-        // A right text set from its start holds that start; one set against its end, as a date
-        // at the right of a band is, holds its end (see DocxLinePair.Pair#fromItsStart).
-        tab.setVal(pair.fromItsStart() ? STTabJc.LEFT : STTabJc.RIGHT);
-        tab.setPos(BigInteger.valueOf(toTwips(lineStart + pair.tabStop())));
-        // Each half is still the paragraph it was: its outline level, its bookmark around its
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTabs tabs =
+                properties.isSetTabs() ? properties.getTabs() : properties.addNewTabs();
+        for (DocxLinePair.Stop stop : pair.stops()) {
+            // Each text after a tab is held where the page holds it: by its start, its middle or
+            // its end (see DocxLinePair.Stop).
+            CTTabStop tab = tabs.addNewTab();
+            tab.setVal(switch (stop.tab()) {
+                case LEFT -> STTabJc.LEFT;
+                case CENTER -> STTabJc.CENTER;
+                case RIGHT -> STTabJc.RIGHT;
+            });
+            tab.setPos(BigInteger.valueOf(toTwips(lineStart + stop.at())));
+        }
+        // Each part is still the paragraph it was: its outline level, its bookmark around its
         // own text, and whether it keeps with what follows.
-        applyHeadingRole(para, headingLevelOf(pair.left()) != null ? pair.left() : pair.right());
-        // The line starts at the higher text's top; each half is seated from there.
+        ParagraphNode heads = headingOfTheSharedLine(pair);
+        applyHeadingRole(para, heads != null ? heads : pair.right());
+        // The line starts at the highest text's top; each part is seated from there.
         com.demcha.compose.document.layout.PlacedNode box = layout.placement(overlay);
         double lineTop = box.placementY() + box.placementHeight() - pair.above();
         int leftAnchor = openAnchor(para, pair.left().anchor());
         writeParagraphRuns(para, pair.left(), false, lineTopAbove(lineTop, pair.left()), false);
         closeAnchor(para, leftAnchor);
-        para.createRun().addTab();
-        int rightAnchor = openAnchor(para, pair.right().anchor());
-        writeParagraphRuns(para, pair.right(), false, lineTopAbove(lineTop, pair.right()), false);
-        closeAnchor(para, rightAnchor);
+        for (DocxLinePair.Stop stop : pair.stops()) {
+            para.createRun().addTab();
+            int anchor = openAnchor(para, stop.text().anchor());
+            writeParagraphRuns(para, stop.text(), false, lineTopAbove(lineTop, stop.text()), false);
+            closeAnchor(para, anchor);
+        }
         offerTheSharedLine(para, box, pair, lineStart + pair.leftOffset());
         raiseTheSharedLine(para, pair, lineTop, opensItsPage);
         // A Word paragraph has one outline level, and its outline lists the whole line by it: the
-        // left side's level where it has one, the right side's where not; the other's is lost.
-        boolean leftHeads = headingLevelOf(pair.left()) != null;
-        String line = leftHeads || headingLevelOf(pair.right()) != null
-                ? collapsedWhitespace(outlineTextOf(pair.left()) + " " + outlineTextOf(pair.right())) : null;
-        // The left side starts where its line starts, prefix and all; the right side does too
-        // where a left tab holds its start, and where a right tab holds its end it ends there.
+        // level of the first part along the line that has one; the others' are lost.
+        String line = null;
+        if (heads != null) {
+            List<String> outline = new ArrayList<>();
+            for (ParagraphNode part : pair.paragraphs()) {
+                outline.add(outlineTextOf(part));
+            }
+            line = collapsedWhitespace(String.join(" ", outline));
+        }
+        // The left part starts where its line starts, prefix and all; a part after a tab does too
+        // where a left tab holds its start, and where a centre or right tab holds it, it does not.
         reportWrittenWithout(pair.left(), "written as one side of a line it shares",
                 paragraphLost(pair.left(), laysOutAPrefix(pair.left()),
-                        leftHeads ? line : null));
-        reportWrittenWithout(pair.right(), "written as one side of a line it shares",
-                paragraphLost(pair.right(), pair.fromItsStart() && laysOutAPrefix(pair.right()),
-                        leftHeads ? null : line));
-        if ((pair.left().keepWithNext() && layout.onOnePage(pair.left()))
-            || (pair.right().keepWithNext() && layout.onOnePage(pair.right()))) {
+                        heads == pair.left() ? line : null));
+        boolean keepsWithNext = pair.left().keepWithNext() && layout.onOnePage(pair.left());
+        for (int at = 0; at < pair.stops().size(); at++) {
+            DocxLinePair.Stop stop = pair.stops().get(at);
+            // Its ends are its sides; a caption between them is a part of it.
+            reportWrittenWithout(stop.text(), at == pair.stops().size() - 1
+                            ? "written as one side of a line it shares" : "written as one part of a line it shares",
+                    paragraphLost(stop.text(), stop.tab() == DocxLinePair.Tab.LEFT && laysOutAPrefix(stop.text()),
+                            heads == stop.text() ? line : null));
+            keepsWithNext |= stop.text().keepWithNext() && layout.onOnePage(stop.text());
+        }
+        if (keepsWithNext) {
             para.setKeepNext(true);
         }
         double below = overlay.margin().bottom() + pair.below();
@@ -11895,8 +11923,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         overlayDepth++;
         try {
+            List<ParagraphNode> written = pair.paragraphs();
             for (DocumentNode child : overlay.children()) {
-                if (child != pair.left() && child != pair.right()) {
+                if (written.stream().noneMatch(part -> part == child)) {
                     writeNode(document, child);
                 }
             }
@@ -11905,18 +11934,28 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
+    /** The first part along a shared line that has an outline level, or {@code null}. */
+    private static ParagraphNode headingOfTheSharedLine(DocxLinePair.Pair pair) {
+        for (ParagraphNode part : pair.paragraphs()) {
+            if (headingLevelOf(part) != null) {
+                return part;
+            }
+        }
+        return null;
+    }
+
     /**
-     * Raises a line pair's shared line into the space above it by the least its two halves call
+     * Raises a line pair's shared line into the space above it by the least its parts call
      * for, as a line of its own is raised ({@link #raiseIntoTheSpaceAbove}).
      *
-     * <p>Each half is seated in the line by its own position, half a point and more, and a line
-     * cut to fit its halves' letters however little ({@link #shiftToThePagesBaseline}). Under half
+     * <p>Each part is seated in the line by its own position, half a point and more, and a line
+     * cut to fit its parts' letters however little ({@link #shiftToThePagesBaseline}). Under half
      * a point the position moves nothing, and the shared line was left where Word set it:
      * {@code ConsultingInvoice}'s bank details, a label and its value to a line, half a point below
      * the page's line, stood 0.7 to 0.8pt low in Word and both LibreOffice builds with the drift all
      * under its line-item table shares, and raised stand 0.2 to 0.33pt low (measured). Where
-     * neither half is moved by its position, the line moves up for both, by the lesser of what they
-     * call for: moved for one alone it would move the other too. A half cut to its own measure or
+     * no part is moved by its position, the line moves up for all, by the least of what they
+     * call for: moved for one alone it would move the others too. A part cut to its own measure or
      * laying out no text keeps the line where it is, and so does a pair the layout opens a page
      * with, whose space above Word drops there, and one a line of its own would not be raised in
      * ({@link #raiseIntoTheSpaceAbove}). Only into the space written above the line: a pair opening
@@ -11933,24 +11972,28 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void raiseTheSharedLine(XWPFParagraph para, DocxLinePair.Pair pair, double lineTop,
                                     boolean opensItsPage) {
-        double left = belowThePagesBaselineInAPair(para, pair.left(), lineTopAbove(lineTop, pair.left()));
-        double right = belowThePagesBaselineInAPair(para, pair.right(), lineTopAbove(lineTop, pair.right()));
-        if (!(left > 0 && right > 0)) {
-            return;
+        double least = Double.POSITIVE_INFINITY;
+        boolean staysOnItsPage = !opensItsPage;
+        for (ParagraphNode part : pair.paragraphs()) {
+            double below = belowThePagesBaselineInAPair(para, part, lineTopAbove(lineTop, part));
+            if (!(below > 0)) {
+                return;
+            }
+            least = Math.min(least, below);
+            staysOnItsPage &= staysOnItsPage(part);
         }
-        raiseIntoTheSpaceAbove(para, !opensItsPage && staysOnItsPage(pair.left()) && staysOnItsPage(pair.right()),
-                para.getCTP().getPPr().getSpacing(), Math.min(left, right), false);
+        raiseIntoTheSpaceAbove(para, staysOnItsPage, para.getCTP().getPPr().getSpacing(), least, false);
     }
 
     /**
-     * How far Word sets one half of a line pair below the page's baseline, in points, where its
-     * position does not move it; NaN where it does, or where the half is cut to fit or is no text.
+     * How far Word sets one part of a line pair below the page's baseline, in points, where its
+     * position does not move it; NaN where it does, or where the part is cut to fit or is no text.
      */
-    private double belowThePagesBaselineInAPair(XWPFParagraph para, ParagraphNode half, double lineTopAbove) {
-        if (lineTopAbove != 0 || stackedLineHeights.containsKey(half)) {
+    private double belowThePagesBaselineInAPair(XWPFParagraph para, ParagraphNode part, double lineTopAbove) {
+        if (lineTopAbove != 0 || stackedLineHeights.containsKey(part)) {
             return Double.NaN;
         }
-        double shift = belowThePagesBaseline(para, layout.lines(half), layout.lineGap(half), lineTopAbove);
+        double shift = belowThePagesBaseline(para, layout.lines(part), layout.lineGap(part), lineTopAbove);
         return Math.abs(shift) < LEAST_BASELINE_SHIFT_POINTS ? shift : Double.NaN;
     }
 
@@ -14135,7 +14178,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Writes a paragraph's runs into a Word paragraph whose line starts above the page's first
-     * line of it: a line pair's line starts at the higher of its two texts.
+     * line of it: a line pair's line starts at the highest of its texts.
      *
      * @param lineTopAbove how far above the page's first line of the paragraph the Word line
      *                     starts, in points
@@ -14333,7 +14376,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>Only a drawn shape's frame, and only where the pictures' edges pass the line written:
      * where they stay within it Word keeps that height, and taking the room would lift what
-     * follows. A line of its own only: half of a line pair shares its line with the other half.</p>
+     * follows. A line of its own only: a part of a line pair shares its line with the others.</p>
      */
     private void takeThePicturesEdgesFromAround(XWPFParagraph para, PictureReach pictures) {
         CTPPr properties = para.getCTP().getPPr();
@@ -14726,8 +14769,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * it lower — but for a Word list's item, which no position lowers in both editors
      * ({@link #lowerIntoTheSpaceAbove}), and a line set high by under half a point, lowered once
      * what follows is written and has taken its own of that space ({@link #offerToLower}). Only a
-     * line of its own, as its caller raises, and a line pair's shared line, by the lesser of what
-     * its halves call for, where neither is moved by its position ({@link #raiseTheSharedLine}):
+     * line of its own, as its caller raises, and a line pair's shared line, by the least of what
+     * its parts call for, where none is moved by its position ({@link #raiseTheSharedLine}):
      * not a container's stacked lines, a text box's, nor one cut to its pictures. Only a
      * paragraph in the flow, in a cell, or among a band's layers, where the space owed below it is
      * the space above what follows: a band measures what follows each of its layers, and itself,
@@ -16060,8 +16103,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return inside && smaller;
     }
 
-    /** The most characters a badge's text is drawn in it rather than written: initials, a monogram. */
-    private static final int BADGE_TEXT_LIMIT = 4;
+    /**
+     * The most characters a badge's text is drawn in it rather than written: initials, a monogram.
+     * A label that long is a mark, set in its shape; anything longer — a word in a pill — is
+     * content, and stays a paragraph of the flow an editor edits as any other, whatever room its
+     * shape leaves it. A policy, not a measure: no width or face moves it.
+     */
+    static final int BADGE_TEXT_LIMIT = 4;
 
     /**
      * The paragraph a badge holds when its initials are drawn in it rather than written: the

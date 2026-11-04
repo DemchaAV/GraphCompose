@@ -8,6 +8,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export writes a band of three or more one-line captions as one line, as it did a
+  band of two.**
+  - A container or a layer stack whose paragraphs the page sets level on one line — a title at
+    the left, a place in the middle, dates at the right — was written one paragraph under
+    another unless it held exactly two: measured on such a band, three lines in Word and four in
+    LibreOffice 24.2 where the page sets one.
+  - Two or more one-line, left-to-right paragraphs on one page, each at least 4pt from the next,
+    are now one Word line: the leftmost paragraph's runs, then a tab and the next one's runs for
+    each paragraph further along. The last keeps the stop a band of two gave it: a right stop
+    where it ends, or a left stop where it starts when it is set from its start with room past
+    its end. One between the first and the last is held where the page sets it: a centred one by
+    a centre stop at its middle, a right-aligned one by a right stop at its end, and a left-aligned
+    one, whose box the layout shrinks to its text, by what its layer sets it from — a left stop at
+    its start, a centre stop at its middle, or a right stop at its end.
+  - A band of two is written as before, byte for byte. A band with a paragraph the page sets over
+    two lines or more is written as before — as its layers, a band or a panel — and named as that
+    form is.
+  - The report names a band of three or more as the line its paragraphs share, and a caption
+    between its ends, where it loses anything, as "one part of a line it shares"; the ends keep
+    "one side".
+  - A badge's text is still drawn in its shape only up to four characters, now stated as the
+    policy it is: initials are a mark, a word in a pill is content, and stays a paragraph of the
+    flow.
+
 - **A DOCX export of a document the engine cannot lay out says why in its report.**
   _(Experimental — see [API stability](docs/api-stability.md).)_
   - Such a document still exports, as before. Its report already named what the editor is

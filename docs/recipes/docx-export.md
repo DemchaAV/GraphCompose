@@ -287,7 +287,7 @@ cannot proceed throws, and the report is not how you find that out.
 A note also names what a node was written as where that is not the kind of thing the node is,
 since nothing in your own tree shows it: a divider written as a paragraph border
 (see "What is skipped"); a layer stack written as the columns of a table or as a band of its
-layers; a stack or a shape container written as one line two paragraphs share; a box of
+layers; a stack or a shape container written as one line its paragraphs share; a box of
 nothing but drawing written as
 drawing alone, with the room it took owed as space to the block after it; a container of a few
 letters written as one drawn shape holding them; and a node laid over
@@ -302,8 +302,8 @@ as its contents or as a panel, a row as the one-row table with a hidden grid tha
 thing Word has to set its children side by side — is not named for its form, and neither is a
 `LineNode` written as a paragraph border, which is a line either way; what any of them loses is
 still named. Nor is a node whose form follows from one above it that now says so: a layer
-written as a column of its stack, a box inside a node laid over the flow, each half of a line
-two layers share, a badge's own paragraph written as its letters. A shape container whose layers
+written as a column of its stack, a box inside a node laid over the flow, each part of a line
+its layers share, a badge's own paragraph written as its letters. A shape container whose layers
 are written in the flow names that itself (`shape container`), and a barcode and a chart have
 named what they become all along.
 
@@ -1201,24 +1201,33 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   each (`layer offset`), but not a layer that only draws, which is drawn where the page
   draws it, nor one written where a band or a layer of a column sets the next block at the
   page's distance below what is above it: that distance holds the offset.
-- **Text at the left and the right of one band → one line split by a tab.** A
-  container or a layer stack holding exactly two single-line paragraphs, level with
-  one another and apart across the page — a CV entry's title and its dates — is one
-  Word paragraph: the left paragraph's runs, a tab, the right one's, with a
-  right-aligned tab stop where the right text ends on the page. A right text set from
+- **Text at the left and the right of one band → one line split by tabs.** A
+  container or a layer stack holding two or more single-line paragraphs, all level with
+  one another and each at least 4pt apart from the next across the page — a CV entry's
+  title and its dates, or a title, a place in the middle and dates — is one Word
+  paragraph: the leftmost paragraph's runs, then a tab and the next one's runs for each
+  paragraph further along. The last one takes a right-aligned tab stop where its text
+  ends on the page. A last text set from
   its start — aligned left in a layer placed from the left, with room past its end, as
   a bank detail's value is — takes a left-aligned stop where it starts instead, so an
-  editor setting it a little narrower moves its end, not its start. Its line runs from the
-  top of the higher text to the bottom of the lower; text standing out of its band
+  editor setting it a little narrower moves its end, not its start. A paragraph between
+  the first and the last is held where the page sets it: a centred one by a centre stop at
+  its middle, a right-aligned one by a right stop at its end, and a left-aligned one —
+  whose box the layout shrinks to its text, so its layer places it — by a left stop at its
+  start in a layer placed from the left, a centre stop at its middle in a centred layer,
+  a right stop at its end in one placed from the right. A band with a paragraph the page sets over two lines or more, or
+  in a right-to-left direction, or reaching onto another page, is written as before — as
+  its layers, a band or a panel — and named as that form is. Its line runs from the
+  top of the highest text to the bottom of the lowest; text standing out of its band
   takes that much from the gap on that side, as it does on the page. A Word paragraph
   cannot reach above its cell, so text standing above a cell of a table's first row
   takes that much out of the cell's top padding first, then — unless the cell is painted
   or framed — lifts the table out of the gap above it, as far as that gap goes, and the
   row's other cells start that much lower inside. Each paragraph
-  keeps its bookmark; the line is the left paragraph's heading, or the right one's where the
-  left has none, listed in Word's outline by both texts, and the report names a title that
-  is not that line and a right side's outline entry beside a left one's.
-  Two texts closer than 4pt stay one after the other. Drawing in the band is drawn as shapes
+  keeps its bookmark; the line is the heading of the first paragraph along it that has one,
+  listed in Word's outline by all its texts, and the report names a title that is not that
+  line and the outline entry of every other paragraph on it, which is not written.
+  Two texts closer than 4pt keep the whole band one after the other. Drawing in the band is drawn as shapes
   where the page draws it.
 - **Shape containers → panels or inline layers.** A rectangle or a rounded
   rectangle, filled or outlined, holding text is written as a panel, as a
@@ -1259,7 +1268,7 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   holds only drawing; a badge centring a few letters is drawn as one shape
   holding them, and a pill holding a title and its dates is written as one
   line (see "Text at the left and the right of one band → one line split by
-  a tab"). DOCX has no portable equivalent of
+  tabs"). DOCX has no portable equivalent of
   a graphics-state path clip, so the container's layers are written
   inline, in source order, without clipping — again with one warning per
   export, and a note on each container that writes a layer in the flow.
@@ -1619,16 +1628,16 @@ lines carries none. Three writers of text offer their paragraphs, and the first
 paragraph of each piece of text that holds text takes the place: a paragraph node's own
 paragraph, in a column's cell too; each item of a list, so that a card whose only text is a
 list's items carries the drawings laid over it, and a shape standing beside the third item takes
-that item; and the one line two halves of a band share — a title at the left, its dates at the
-right — offered as the half that starts the line, since both are written in that one paragraph.
-That line's text starts where the line's own indent puts it, at that half's inked start rather
-than at the edge of the box it is laid out in, which is as wide as the band where the half is set
-in it by its alignment: a shape anchored in a cell is placed from the cell's text column, and the
+that item; and the one line the parts of a band share — a title at the left, its dates at the
+right — offered as the part that starts the line, since every part is written in that one
+paragraph. That line's text starts where the line's own indent puts it, at that part's inked
+start rather than at the edge of the box it is laid out in, which is as wide as the band where
+the part is set in it by its alignment: a shape anchored in a cell is placed from the cell's text column, and the
 column is read from the place's left edge less the indent written on the paragraph, so the two
 must be the one edge — stated as the box, the column comes out the band's width to the left and
 the cell carries the shape from there. How far the line reaches across is the whole line's, to the
-end of the box the other half is laid out in, so that a shape beside the dates at its right end,
-or in the gap between the two texts, stands beside the line and not beside some other paragraph.
+end of the box the last part is laid out in, so that a shape beside the dates at its right end,
+or in a gap between two of its texts, stands beside the line and not beside some other paragraph.
 A line the layout starts left of its cell's text column offers no place — a band pulled out by a
 margin below zero, into the cell's padding or past it: Word draws no text past a cell's left edge,
 so the indent written for such a line is held at nought and its text does not start where the
@@ -1702,7 +1711,10 @@ lies behind the text — unless it frames a line of text or a picture on the pag
 round a photo does, which stays behind what it frames and hidden; a filled table cell counts
 as a panel here. A filled or outlined rectangle, rounded rectangle or ellipse whose one
 layer, centred, is a line of at most four characters in one style — initials, a monogram, a
-step number — is one shape holding that text centred in it, drawn in front. The shape wraps
+step number — is one shape holding that text centred in it, drawn in front. Four characters is
+a policy, not a measure: a label that short is a mark, while a fifth character makes it a word in
+a pill — content, which stays a paragraph of the flow you edit as any other, written as the
+container's layers or as its panel, however much room the shape leaves it. The shape wraps
 its text in its own box, reaching out to its edges past the preset's inner text rectangle:
 Word shrinks a text box that does not wrap to the width of its letters, and wraps an
 ellipse's text in the square inscribed in it. Text seated by its cap band (`verticalAlign`)

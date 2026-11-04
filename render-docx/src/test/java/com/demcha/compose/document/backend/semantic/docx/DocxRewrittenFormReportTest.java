@@ -249,6 +249,54 @@ class DocxRewrittenFormReportTest {
     }
 
     @Test
+    void threeCaptionsOnOneLineAreNamedAsTheLineTheyShare() throws Exception {
+        Consumer<PageFlowBuilder> content = page -> page.add(new ShapeContainerBuilder().name("Head")
+                .rectangle(360, 14).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(new ParagraphBuilder().name("Title").text("Engineer")
+                        .bookmark(new com.demcha.compose.document.node.DocumentBookmarkOptions("Engineer", 0))
+                        .align(TextAlign.LEFT).build(), 0, 0, LayerAlign.CENTER_LEFT)
+                .position(new ParagraphBuilder().name("Place").text("London")
+                        .bookmark(new com.demcha.compose.document.node.DocumentBookmarkOptions("London", 0))
+                        .align(TextAlign.CENTER).build(), 0, 0, LayerAlign.CENTER)
+                .position(new ParagraphBuilder().name("Dates").text("2019 - 2023")
+                        .bookmark(new com.demcha.compose.document.node.DocumentBookmarkOptions("Dates", 0))
+                        .align(TextAlign.RIGHT).build(), 0, 0, LayerAlign.CENTER_RIGHT)
+                .build());
+        DocxExportReport report = reportOf(content);
+
+        assertThat(detailOf(report, "ShapeContainerNode"))
+                .isEqualTo("written as one line that 3 paragraphs share, each one after the first set "
+                           + "where the page sets it, at a tab holding its start, its middle or its end, "
+                           + "and whatever else the layers hold drawn where the page draws it");
+        assertThat(pathOf(report, "ShapeContainerNode")).isEqualTo("ContainerNode[0]/Head[0]");
+        // The line takes the title's heading, listed by all three texts; its ends are its sides and
+        // the caption between them a part of it, each other one losing its own outline entry.
+        assertThat(notesOn(report, "ParagraphNode")).containsExactlyInAnyOrder(
+                "written as one side of a line it shares; its outline entry shows \"Engineer London 2019 - 2023\", "
+                + "not its title \"Engineer\"",
+                "written as one part of a line it shares; its outline entry is not written",
+                "written as one side of a line it shares; its outline entry is not written");
+    }
+
+    @Test
+    void threeCaptionsOneOfWhichWrapsAreNamedAsTheBandTheyAreWrittenAs() throws Exception {
+        // A paragraph the page sets over two lines is no part of one line: the stack is written
+        // as before, and named as the form it is written in.
+        Consumer<PageFlowBuilder> content = page -> page.addLayerStack(stack -> stack.name("Head")
+                .layer(new ParagraphBuilder().name("Title").text("Engineer").align(TextAlign.LEFT).build(),
+                        LayerAlign.TOP_LEFT)
+                .layer(new ParagraphBuilder().name("Place").text("A place in the middle that runs onto a second line")
+                        .align(TextAlign.CENTER).padding(new DocumentInsets(0, 130, 0, 130)).build(),
+                        LayerAlign.TOP_CENTER)
+                .layer(new ParagraphBuilder().name("Dates").text("2019 - 2023").align(TextAlign.RIGHT).build(),
+                        LayerAlign.TOP_RIGHT));
+        DocxExportReport report = reportOf(content);
+
+        assertThat(detailOf(report, "LayerStackNode"))
+                .startsWith("written as a band of its layers: what they write goes one after another");
+    }
+
+    @Test
     void aBoxOfNothingButDrawingIsNamedAsDrawingAlone() throws Exception {
         DocxExportReport report = reportOf(page -> page
                 .addLayerStack(stack -> stack.name("Ornament")

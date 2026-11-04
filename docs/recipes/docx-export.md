@@ -116,16 +116,38 @@ when the reader edits the document:
 | Where | Field | Updated by |
 |---|---|---|
 | a page zone's `pageNumber()` | `PAGE` | the editor, every time it lays the pages out |
-| a page zone's `pageTotal()` | `NUMPAGES`, or `SECTIONPAGES` in a multi-section document | the editor, every time it lays the pages out — except LibreOffice, which does not update `SECTIONPAGES` |
+| a page zone's `pageTotal()` | `NUMPAGES`, or `SECTIONPAGES` in a multi-section document | the editor, every time it lays the pages out — except LibreOffice, which does not update `SECTIONPAGES` (measured: the first of two sections, grown to three pages, read "3 / 2") |
 | `{page}` and `{pages}` in a text header or footer | `PAGE` and `NUMPAGES` / `SECTIONPAGES`, with Word's roman or alphabetic switch for those number styles | as the two rows above |
-| a table of contents' page numbers, `addPageReference(...)` | `PAGEREF` to the anchor's bookmark, as a hyperlink | LibreOffice on every layout (measured: a field whose stored number was replaced by 99 showed the real page); Word when fields are updated — F9, or printing with field updates on |
+| a table of contents' page numbers, `addPageReference(...)` | `PAGEREF` to the anchor's bookmark, as a hyperlink | LibreOffice on every layout (measured: a field whose stored number was replaced by 99 showed the real page); Word when fields are updated — F9, or printing with field updates on — and when it saves the file as PDF, even with "Update fields before printing" turned off |
+
+Measured in Word 16 and LibreOffice 24.2 with a page put in at the start of documents holding
+every kind of field above: nineteen templates and samples whose footers state the page, one whose
+table of contents refers to three headings, and two built for it — page fields in a page zone and
+in a text header, a table of contents and a page reference in one; in the other, two sections and
+a page reference from the first into the second. With no update, every page number and total in a
+header or footer read the new pages in the PDF Word saved, and in LibreOffice's (read on the two
+documents built for it and one of the samples) but for its `SECTIONPAGES`; every total did in
+Word's own reading of its fields too. A page reference read its
+anchor's new page in LibreOffice and in the PDF Word saved; in Word's own reading it kept the
+number the file held until its fields were updated: a table of contents still read 2 and 3 where
+its anchors now stood on pages 3 and 4.
+
+A page reference from one section of a multi-section document into another stores no number:
+each section is laid out on its own, so the page prints none there. Word, once it updates the
+field, and LibreOffice show the page as the anchor's section numbers it.
 
 Each field also stores a result, which is what a reader sees before an editor updates it
 and what a text extractor finds: the page the layout resolved, and for a page total the
 number of pages it laid out. A file therefore opens reading the same numbers as the PDF.
 
-The export does not set `w:updateFields`. It would make Word ask, on every open, whether to
-update fields — to recompute numbers that already read correctly.
+The export does not set `w:updateFields`, and marks no field to be updated (`w:dirty`). Either
+makes Word ask, when it opens the file, whether to update "fields that may refer to other
+files", and the update Word runs on a yes sets every page reference to 1 — the numbers the file
+held right or not (measured in Word 16: `w:updateFields` on a file as exported and on one with a
+page put in at its start, `w:dirty` on every field of the latter and on the page references
+alone of the former; waited for, the numbers stayed 1). LibreOffice lays the file out the same
+with either flag or none. A reader who adds pages in Word updates the page references with
+select all and F9 (measured as a field update), or gets them right in a PDF Word saves.
 
 A page reference to an anchor the export writes no bookmark for — a drawn shape's, or a
 block's that writes no paragraph and whose first drawing no paragraph carries as its own, as a

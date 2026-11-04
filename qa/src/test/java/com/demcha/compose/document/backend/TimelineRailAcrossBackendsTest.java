@@ -33,7 +33,8 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  *       fails at export rather than at layout.</li>
  *   <li><b>DOCX</b> is semantic: {@code DocxSemanticBackend} walks the tree, where the rail
  *       is not, and reads the rail from the resolved layout it is handed, drawing it as a
- *       shape anchored to the page. The timeline's <em>content</em> exports as text.</li>
+ *       filled bar anchored in the entry it starts in. The timeline's <em>content</em> exports
+ *       as text.</li>
  * </ul>
  */
 class TimelineRailAcrossBackendsTest {
@@ -69,7 +70,7 @@ class TimelineRailAcrossBackendsTest {
     @Test
     void docxExportsTheTimelinesContentAndDrawsTheRail() throws Exception {
         // DOCX walks the semantic tree, where the rail is not; it reads the rail from the
-        // resolved layout instead and draws it as a line anchored to the page.
+        // resolved layout instead and draws it as a bar the rail's width, in the rail's colour.
         try (DocumentSession session = timeline()) {
             assertThat(docxText(session))
                     .as("every entry's content survives the export")
@@ -79,9 +80,9 @@ class TimelineRailAcrossBackendsTest {
             try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
                     session.export(new DocxSemanticBackend())))) {
                 assertThat(document.getDocument().xmlText())
-                        .as("the rail, a line in the rail's colour")
-                        .contains("prst=\"line\"")
-                        .contains("srgbClr val=\"969EAC\"");
+                        .as("the rail, a bar filled with the rail's colour")
+                        .contains("prst=\"rect\"")
+                        .contains("<a:solidFill><a:srgbClr val=\"969EAC\"/></a:solidFill>");
             }
         }
     }

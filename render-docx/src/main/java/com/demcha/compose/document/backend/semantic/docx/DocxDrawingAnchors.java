@@ -39,8 +39,9 @@ import java.util.function.Supplier;
  * had put it while the text moved away from it. In a table cell, the cell of the paragraph's row
  * that holds the shape across takes it — a timeline's dot in a column of its own beside its entry —
  * placed from that cell's first paragraph (see {@link Seat#placeHeld}). A shape no node draws —
- * a timeline's rail — or whose holders write no paragraph on its page goes to the paragraph
- * nearest it there. What a table's composed cell draws has no node of its own — such a cell's
+ * a timeline's rail — is held on each page by the timeline entry it starts in there
+ * ({@link DocxLayoutMetrics#anchoredBlockAt}). One whose holders write no paragraph on its page
+ * goes to the paragraph nearest it there. What a table's composed cell draws has no node of its own — such a cell's
  * content is laid out under its table — so the cell found by the box the layout placed it in
  * stands for the block holding it: it goes to the paragraph of that cell which places it nearest
  * and can place it, ordered as a holder's paragraphs are ({@link #placeInItsCell}). One no cell's
@@ -248,16 +249,31 @@ final class DocxDrawingAnchors {
      * holders carry it.
      *
      * @param subject  the note's subject
-     * @param path     the note's path: the node that draws it, whose holders look for the
-     *                 paragraph carrying it; a path no node has — a pass of the layout's own —
-     *                 leaves it to the paragraph nearest it
+     * @param path     the note's path: the node that draws it, or a pass of the layout's own
      * @param composed whether a table's composed cell draws it, which has no node of its own
+     * @param heldBy   the node whose holders look for the paragraph carrying it: the node that
+     *                 draws it, or for a timeline's rail the block it starts in on its page; a path
+     *                 no node has leaves it to the paragraph nearest it
      */
-    record Owner(String subject, String path, boolean composed) {
+    record Owner(String subject, String path, boolean composed, String heldBy) {
 
-        /** What a node draws, or a pass of the layout's own. */
+        /** What a node draws, or a pass of the layout's own no block holds. */
         Owner(String subject, String path) {
-            this(subject, path, false);
+            this(subject, path, false, path);
+        }
+
+        /** What a node draws, or what a table's composed cell draws for it. */
+        Owner(String subject, String path, boolean composed) {
+            this(subject, path, composed, path);
+        }
+
+        /**
+         * The note this is drawn for, whatever holds it: every page of a timeline's rail is held
+         * by a block of its own and named in one note, so what nothing carries is reckoned for
+         * that note together.
+         */
+        Owner noted() {
+            return heldBy.equals(path) ? this : new Owner(subject, path, composed, path);
         }
     }
 
@@ -431,7 +447,7 @@ final class DocxDrawingAnchors {
         pending.values().forEach(all -> all.forEach(shape -> {
             Owner owner = owners.get(shape);
             if (owner != null) {
-                queuedFor.merge(owner, 1, Integer::sum);
+                queuedFor.merge(owner.noted(), 1, Integer::sum);
             }
         }));
         takeTheSeats();
@@ -443,7 +459,7 @@ final class DocxDrawingAnchors {
                 Owner owner = owners.get(shape);
                 Place place = owner != null && owner.composed()
                         ? placeInItsCell(shape.shape(), heldBy.get(shape))
-                        : placeInItsHolder(shape.shape(), owner == null ? List.of() : holders.apply(owner.path()));
+                        : placeInItsHolder(shape.shape(), owner == null ? List.of() : holders.apply(owner.heldBy()));
                 if (place != null) {
                     beside.computeIfAbsent(place.paragraph(), ignored -> new ArrayList<>()).add(new Placed(shape, place));
                 } else {
@@ -476,7 +492,7 @@ final class DocxDrawingAnchors {
                     if (owner == null) {
                         unowned++;
                     } else {
-                        droppedFor.merge(owner, 1, Integer::sum);
+                        droppedFor.merge(owner.noted(), 1, Integer::sum);
                     }
                 }
                 if (unowned > 0) {
@@ -541,9 +557,10 @@ final class DocxDrawingAnchors {
      * row's, a portrait its sidebar's. Anchored in a paragraph one of them writes on its page, it
      * moves with that block wherever an edit above takes it, however far from the paragraph's text
      * it stands: where it stands gives only its offset. A holder that writes no paragraph there,
-     * or only ones that cannot place it, passes it on to the next one up. A shape no holder
-     * carries — a timeline's rail, which no node draws, or one whose holders' text is a list or a
-     * table — goes to the paragraph nearest it.</p>
+     * or only ones that cannot place it, passes it on to the next one up. A timeline's rail, which
+     * no node draws, comes with the entry it starts in on its page as its node. A shape no holder
+     * carries — one whose holders' text is a list or a table, or a rail no entry holds — goes to
+     * the paragraph nearest it.</p>
      *
      * <p>Which of a holder's paragraphs is only the offset, so the shape is placed out of the one
      * whose offset is the smallest of those it stands below ({@link #asTheShapeStandsTo}) — usually

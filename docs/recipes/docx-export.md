@@ -1599,9 +1599,12 @@ bottom, or sits in one, carries none: LibreOffice 24.2 sets the text of a cell c
 drawing from the cell's top, whatever the cell says — 16pt high in a cell set to the middle,
 32pt in one set to the bottom, its row three lines tall — so the shape goes to that block's
 next paragraph able to place it, or else to the next block up that writes one. A line not set from the cell's left and a repeated
-header row carry none either. A shape no node draws — a timeline's rail — and one none of
-whose blocks writes such a paragraph on its page — a badge beside a table holding its stack's
-text — is anchored in the paragraph nearest it on its page that can place it, however far off.
+header row carry none either. A shape no node draws — a timeline's rail — belongs on each page
+to the timeline entry it starts in there, or to that entry's marker where it starts in it, and
+is anchored in that block's paragraphs as a shape is in its blocks', not in a heading above the
+timeline that stands nearer its top. A shape none of whose blocks writes such a paragraph on its page — a badge beside a
+table holding its stack's text — is anchored in the paragraph nearest it on its page that can
+place it, however far off.
 A shape the export can place from no paragraph at all stays placed from the page: it keeps its
 place on the sheet while the text it belongs to is edited away from under it, and the note naming
 how it is anchored says that this may be where it ends up.
@@ -1746,6 +1749,13 @@ named in the report:
   same way.
 - A timeline's rail stands under every other shape on its page, where the page puts it
   under the markers only; a filled card drawn under a timeline covers it.
+- A timeline's rail, like every side of a box the page strokes on its own, is a filled bar the
+  stroke's width, centred on that side, not a line: LibreOffice 24.2 drew three of the ten rails
+  of the fidelity corpus as a line turned a quarter round its middle, a horizontal stroke, and
+  draws all ten bars where the page does. In the corpus only a timeline's rail is drawn as such a
+  side; the other sides were not measured. The rail keeps the length the layout gives it on each page:
+  an entry that grows in Word or LibreOffice pushes the entries after it past the rail's end, and
+  an entry moved onto another page stands off the rail there. The report names it.
 
 Polygons and paths — a star, a chevron, an SVG icon's layers, a portrait drawn as paths —
 are drawn the same way, as custom geometry through the same points and curves, their fill

@@ -101,6 +101,16 @@ class SemanticExportContextTest {
     }
 
     @Test
+    void aBlankFailureShouldBeReadAsNone() {
+        // Else a backend's report would end on a reason with nothing in it.
+        LayoutGraph layout = new LayoutGraph(CANVAS, 1, List.of(), List.of());
+
+        assertThat(new SemanticExportContext(CANVAS, List.of(), null, null, null, " \n").layoutFailure()).isNull();
+        assertThat(new SemanticExportContext(CANVAS, List.of(), null, null, layout, "").layoutGraph())
+                .as("and a blank one beside a layout is no conflict").isSameAs(layout);
+    }
+
+    @Test
     void aContextShouldNotCarryBothALayoutAndAReasonThereIsNone() {
         LayoutGraph layout = new LayoutGraph(CANVAS, 1, List.of(), List.of());
 

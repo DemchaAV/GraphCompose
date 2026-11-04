@@ -26,7 +26,8 @@ import java.util.List;
  *                      message of the failure that stopped the document being laid out, as
  *                      the engine words it (its class name when it carries no message),
  *                      present only when {@code layoutGraph} is {@code null} because
- *                      compiling it failed, so a backend that exports without it can say why
+ *                      compiling it failed, so a backend that exports without it can say why;
+ *                      a blank one is read as none
  * @since 2.5.0 carries {@code layoutGraph} and {@code layoutFailure}
  */
 public record SemanticExportContext(
@@ -38,15 +39,16 @@ public record SemanticExportContext(
         @com.demcha.compose.document.api.Beta String layoutFailure
 ) {
     /**
-     * Normalizes the custom font collection into an immutable snapshot and
+     * Normalizes the custom font collection into an immutable snapshot,
      * defaults the output options to the empty bundle when the caller passes
-     * {@code null}.
+     * {@code null}, and reads a blank layout failure as none.
      *
      * @throws IllegalArgumentException if both a layout and a failure to compile one are given
      */
     public SemanticExportContext {
         customFontFamilies = List.copyOf(customFontFamilies);
         outputOptions = outputOptions == null ? DocumentOutputOptions.EMPTY : outputOptions;
+        layoutFailure = layoutFailure == null || layoutFailure.isBlank() ? null : layoutFailure;
         if (layoutGraph != null && layoutFailure != null) {
             throw new IllegalArgumentException(
                     "A context carries a layout or the reason there is none, not both: " + layoutFailure);

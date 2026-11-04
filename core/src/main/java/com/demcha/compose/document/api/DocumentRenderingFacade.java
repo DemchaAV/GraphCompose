@@ -136,7 +136,8 @@ final class DocumentRenderingFacade {
      * exchange for a number the backend only wanted as an improvement.</p>
      *
      * <p>So the layout is offered rather than imposed: what compiles is handed over; when
-     * compiling fails, the failure is logged once, its message is handed to the backend, and
+     * compiling fails, the failure is logged once, its message (or its class name, when it
+     * carries none) is handed to the backend, and
      * the export continues without a layout. {@code SemanticExportContext.layoutGraph()} is
      * nullable for exactly this, {@code layoutFailure()} says why it is missing so a backend's
      * own report can name the cause, and a backend that cannot proceed without a layout says

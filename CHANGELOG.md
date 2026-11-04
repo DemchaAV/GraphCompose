@@ -5752,20 +5752,22 @@ follow semantic versioning; release dates are ISO 8601.
   added, and why the file asks for no update on open.**
   - Measured in Word 16 and LibreOffice 24.2, with a page put in at the start of the corpus's
     documents that hold fields and of two built for every kind of field the export writes: a page
-    number or total in a header or footer reads the new pages with no update in the PDF each
-    editor saves, but for LibreOffice's `SECTIONPAGES`, which keeps the total the file held. A page reference reads its
-    anchor's new page in LibreOffice and in a PDF Word saves; in Word's own reading it keeps the
-    number the file held until its fields are updated.
+    number or total in a header or footer reads the new pages with no update in the PDF Word
+    saves, and in LibreOffice's but for its `SECTIONPAGES`, which keeps the total the file held.
+    A page reference reads its anchor's new page in LibreOffice and in a PDF Word saves; in
+    Word's own reading it keeps the number the file held until its fields are updated.
   - The export sets neither `w:updateFields` nor `w:dirty`, as before, and the recipe now says
-    what either would cost: Word asks, when it opens the file, whether to update "fields
-    that may refer to other files", and the update it runs on a yes sets every page reference to
-    1, on a file as exported as much as on an edited one. LibreOffice lays the file out the same
+    what either would cost: Word asks, when it opens the file, whether to update "fields that
+    may refer to other files", and the update it runs on a yes sets every page reference to 1,
+    on a file as exported as much as on an edited one. LibreOffice lays the file out the same
     with either or none.
-  - `DocxFieldsUpdateOnOpenTest` holds it, over a document of one section and one of two holding
-    every kind of field the export writes — a page zone's and a text header's, a table of contents,
-    a page reference and one into another section — and proves on a changed file that it reads
-    either flag in each of its spellings. It takes
-    the place of the one check of `w:updateFields`, made on page references alone.
+  - The recipe and the capability matrix also say that a page reference from one section into
+    another stores no number, and what each editor shows for it.
+  - `DocxFieldsUpdateOnOpenTest` holds the policy over a document of one section and one of two
+    holding every kind of field the export writes — a page zone's and a text header's, a table of
+    contents, a page reference and one into another section — and proves on a changed file that
+    it reads either flag in each of its spellings. It replaces the one check of
+    `w:updateFields`, made on page references alone.
 
 - **The recipe and the capability matrix now say what was measured of a kept block at the foot of a
   page, and finish the half-sentence they carried about a table inside one.** Both said that the

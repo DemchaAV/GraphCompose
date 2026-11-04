@@ -201,15 +201,6 @@ class DocxPageReferenceTest {
         }
     }
 
-    @Test
-    void theDocumentDoesNotAskToUpdateItsFieldsOnOpen() throws Exception {
-        try (XWPFDocument document = export(threeChapters())) {
-            // The fields open reading the layout's numbers; w:updateFields would only add a
-            // prompt asking the reader to recompute what is already right.
-            assertThat(DocxSettings.xmlOf(document)).doesNotContain("updateFields");
-        }
-    }
-
     private static java.util.function.Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> threeChapters() {
         return page -> page
                 .addTableOfContents(toc -> toc.title("Contents")

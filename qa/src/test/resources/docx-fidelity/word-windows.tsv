@@ -12,7 +12,7 @@ cv-engineering_resume	1	1	57	56	0.06	0.17	0
 cv-executive	2	2	60	60	0.06	0.09	0
 cv-midnight_navy	1	1	86	84	0.14	0.34	0
 cv-minimal_underlined	2	2	59	59	0.30	0.55	0
-cv-mint_editorial	2	2	59	59	0.08	0.19	0
+cv-mint_editorial	2	2	59	59	0.06	0.15	0
 cv-modern_professional	2	2	61	59	0.15	0.21	0
 cv-monogram_sidebar	1	1	53	50	0.15	0.26	0
 cv-navy_sidebar	1	1	71	69	0.08	0.16	0
@@ -25,7 +25,7 @@ cv-sidebar_portrait	1	1	49	49	0.15	0.25	0
 cv-slate_orange	1	1	87	85	0.30	1.13	0
 cv-teal_pulse	1	1	57	57	0.17	0.30	0
 cv-terracotta_rail	1	1	102	102	0.08	0.32	0
-cv-timeline_minimal	2	2	89	86	0.04	0.11	0
+cv-timeline_minimal	2	2	89	86	0.04	0.08	0
 cv-violet_grid	1	1	80	78	0.15	0.33	0
 invoice-classic	1	1	56	56	0.07	0.20	0
 invoice-classic_long	2	2	166	166	0.06	0.16	0
@@ -59,10 +59,10 @@ letter-nordic_clean	1	1	15	15	0.02	0.10	0
 letter-panel	1	1	13	13	0.08	0.13	0
 letter-sidebar_portrait	1	1	12	12	0.05	0.07	0
 letter-timeline_minimal	1	1	15	15	0.04	0.06	0
-proposal-editorial	2	2	132	130	0.10	0.29	0
+proposal-editorial	2	2	132	130	0.08	0.26	0
 proposal-indigo	1	1	72	70	0.25	0.46	0
 proposal-modern	1	1	44	44	0.07	0.16	0
-proposal-northline	2	2	132	132	0.12	0.23	0
+proposal-northline	2	2	132	132	0.10	0.22	0
 receipt-modern	1	1	57	57	0.11	0.21	0
 rota-cobalt	1	1	154	154	0.15	0.29	0
 synthetic-banner_and_initials	1	1	14	14	0.03	0.06	0

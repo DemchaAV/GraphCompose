@@ -21,7 +21,8 @@ follow semantic versioning; release dates are ISO 8601.
     the gutter, the table moved left by it. Where the rail starts or ends at a marker, that entry's
     row is cut at the marker's centre into a row of that exact height and the rest, the other cells
     merged down both, and only the part along the rail is bordered. Every entry's row is one the
-    page never breaks inside, as the layout keeps it.
+    page never breaks inside, as the layout keeps it, but for a timeline of one entry left whole,
+    which stays a table of one row as before.
   - Measured on the corpus's ten rails, in Word 16 and LibreOffice 24.2: the rail is one unbroken
     line, standing within 0.35pt of the page at both ends in Word and where LibreOffice sets the
     text in LibreOffice. After an entry grows, its foot stays at the last entry's marker, within

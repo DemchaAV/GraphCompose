@@ -8,6 +8,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's embedded faces survive a save in LibreOffice.**
+  - The export shipped the document's faces but did not ask for embedded fonts in its settings,
+    and LibreOffice saves a document's faces back only when asked. Measured with faces installed
+    nowhere on the machine, a save left every face behind. LibreOffice 26.8 reopened the document
+    in Liberation Serif, with Bodoni MT Black for the bold. LibreOffice 24.2 reopened it in DejaVu
+    Sans, and the italic was lost.
+  - A document that ships at least one face now states `w:embedTrueTypeFonts`, and its faces stay
+    through a save in both. Word 16 opened an export that did not ask with the request on all the
+    same, and kept the faces through a save. The export does not ask for subset fonts
+    (`w:saveSubsetFonts`): with that request, Word 16 saved only the characters typed so far, and
+    characters typed after a reopen were set in Cambria. A document that ships no face states
+    nothing.
+  - Typing a character the document never had, on a machine without the family, already set it in
+    the shipped face in Word 16 and LibreOffice 26.8, because each face is the whole font. This is
+    unchanged.
+
 - **A DOCX export writes a band of three or more one-line captions as one line, as it did a
   band of two.**
   - A container or a layer stack whose paragraphs the page sets level on one line — a title at

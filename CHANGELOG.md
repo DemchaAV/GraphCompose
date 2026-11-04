@@ -18,8 +18,10 @@ follow semantic versioning; release dates are ISO 8601.
     row after a table with 4pt between them stood 3.7pt high in Word and 4pt in LibreOffice 24.2.
   - The gap is now the line's space above, less what a border below the table above reaches
     into it, as in the flow. Both editors drop it where the line opens a page they break to, so a
-    page breaking where the layout breaks it is unchanged, and keep it in the flow: within 0.3pt
-    of the same document laid out on a page that needs no break. Where a page with margins of its
+    page breaking where the layout breaks it is unchanged, and keep it in the flow: a row of text
+    within 0.3pt of the same document laid out on a page that needs no break. Neither the reach of
+    the moved block's own top border nor text hanging below a panel above comes out of the gap,
+    as it does in the flow, so such a block stands up to that much lower there (not measured). Where a page with margins of its
     own opens a Word section with the line, the gap is not written: both editors keep a section's
     first space above, and the section's break fixes the page anyway.
   - A block with no edge of its own to hold, moved after a table, gets a line a twip tall for the
@@ -28,8 +30,8 @@ follow semantic versioning; release dates are ISO 8601.
     their second page so, right after a table, with a block written as a table and nothing of its
     own above it (`MintEditorial`, `TimelineMinimal`, `EditorialProposal`, `NorthlineProposal`):
     the four notes are gone; LibreOffice 24.2 sets those pages where it did, and Word a step of its
-    line grid higher, each page's median and 90th percentile nearer the page (of 84 lines, 69
-    nearer, 12 a step further). With their page made half as tall again, LibreOffice 24.2 now sets
+    line grid higher: every document's 90th percentile and three of its four medians nearer the
+    page, the fourth unchanged (of 84 lines, 69 nearer, 12 a step further). With their page made half as tall again, LibreOffice 24.2 now sets
     the gap there, which it had lost: 11.95pt in `TimelineMinimal`, 4.95pt in `NorthlineProposal`.
   - As before, the line takes no more room in the flow than the space it holds, whatever shape
     opens the page — a paragraph, a row, a table, a list: seven documents of the fidelity corpus,

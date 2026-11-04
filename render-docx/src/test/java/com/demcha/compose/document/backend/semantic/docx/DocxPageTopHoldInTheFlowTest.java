@@ -3,7 +3,10 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.api.PageMarginRule;
+import com.demcha.compose.document.dsl.LayerStackBuilder;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.dsl.ParagraphBuilder;
+import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -137,6 +140,29 @@ class DocxPageTopHoldInTheFlowTest {
     }
 
     @Test
+    void aPanelMovedToANewPageAfterATableKeepsTheGapBelowTheTable() throws Exception {
+        // A filled container is written as a panel, through the panel's own path to the line.
+        assertTheSpaceAboveIsTheFlows(page -> {
+            itemsTable(page);
+            page.addSection(section -> section.name("Card").fillColor(DocumentColor.LIGHT_GRAY)
+                    .margin(DocumentInsets.top(EDGE)).addParagraph("Notes"));
+        }, "Item 6", "Notes");
+    }
+
+    @Test
+    void aBandOpeningANewPageWithATableAfterATableKeepsTheGapBelowTheTable() throws Exception {
+        // The band's top edge is held with its first block, and the gap before the band, which no
+        // paragraph above carries, above them.
+        assertTheSpaceAboveIsTheFlows(page -> {
+            itemsTable(page);
+            page.add(new LayerStackBuilder().name("Band").margin(DocumentInsets.top(EDGE))
+                    .topLeft(new TableBuilder().name("Closing").autoColumns(2).row("Notes", "Payment").build())
+                    .bottomRight(new ParagraphBuilder().text("Caption").build())
+                    .build());
+        }, "Item 6", "Notes");
+    }
+
+    @Test
     void aParagraphMovedToANewPageAfterATableKeepsTheGapBelowTheTable() throws Exception {
         // A paragraph's line takes the gap as its space above through the paragraph's own path,
         // as it did before; held here beside the blocks written as tables.
@@ -147,8 +173,8 @@ class DocxPageTopHoldInTheFlowTest {
     }
 
     @Test
-    void aRowWithNoEdgeMovedToANewPageAfterATableKeepsTheGapBelowTheTable() throws Exception {
-        // Nothing of the row's own is carried to its page, and a line is written for the gap
+    void aTableWithNoEdgeMovedToANewPageAfterATableKeepsTheGapBelowTheTable() throws Exception {
+        // Nothing of the table's own is carried to its page, and a line is written for the gap
         // alone, a twip tall, the gap above it; without it the gap was lost as before.
         Consumer<PageFlowBuilder> content = page -> {
             itemsTable(page);

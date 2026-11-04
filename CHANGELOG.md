@@ -8,6 +8,37 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export writes a timeline's rail as the border of the cells it runs along, so it
+  stretches with the entries when one is edited.**
+  - The rail was drawn as a bar of the length the layout gives it on each page. An entry that grew
+    in Word or LibreOffice pushed the entries after it past the bar's foot: measured on the ten rails
+    of the fidelity corpus, after one entry's text grows, the rail stopped 10 to 38pt short of the
+    last marker in both editors.
+  - A timeline whose entries are each a row alone — every timeline the templates write — is now one
+    table, an entry a row. Each gap between two entries is a row of the gap's exact height. The
+    column the rail runs down is cut where the rail stands, and the cell right of the cut carries
+    the rail as its left border in every row; a rail beside the markers gets a column of its own in
+    the gutter, the table moved left by it. Where the rail starts or ends at a marker, that entry's
+    row is cut at the marker's centre into a row of that exact height and the rest, the other cells
+    merged down both, and only the part along the rail is bordered. Every entry's row is one the
+    page never breaks inside, as the layout keeps it.
+  - Measured on the corpus's ten rails, in Word 16 and LibreOffice 24.2: the rail is one unbroken
+    line, standing within 0.35pt of the page at both ends in Word and where LibreOffice sets the
+    text in LibreOffice. After an entry grows, its foot stays at the last entry's marker, within
+    0.12pt. No line of text moves more than 0.05pt (in LibreOffice, on `ModernReceipt`).
+  - A gap is a row of its own and not a margin of the row above: of two cells merged down two rows,
+    Word reads a cell's bottom margin off the lower one and LibreOffice off the upper one, so a
+    margin set the gap below the first entry wrong in one editor or the other.
+  - The two rows of a cut entry keep together. With a timeline pushed down past the foot of its
+    page 3pt at a time, Word otherwise left an entry's marker and text at the foot of one page and
+    the rest of its row on the next, the rail starting above nothing there, and LibreOffice started
+    the rail above the marker.
+  - A timeline keeps its drawn rail, and its note, where any entry has a body laid out below its row
+    (`entry.body(...)`), where its rail stands beside the markers of a timeline set in a cell — a
+    table there stays in its cell whatever its indent, so the gutter column would push the entries
+    right — or where the export did not place the rail from a cell of its first entry. The corpus
+    has none of these: nine of its 1696 notes go.
+
 - **A DOCX export draws a timeline's rail as a bar LibreOffice draws upright, held by the entry
   it starts in.**
   - The rail — and every side of a box the page strokes on its own — was a line of no width.
@@ -24,7 +55,8 @@ follow semantic versioning; release dates are ISO 8601.
     in its blocks, so it moves with that entry when the text above it is edited. A timeline set
     right under another one has its rail in its own first entry, not in the last entry of the one
     above, at whose foot the rail starts.
-  - The rail still keeps the length the layout gives it on each page: the entries after one that
+  - Where the rail is still drawn — a timeline whose entries have a body below their row (see the
+    entry above) — it keeps the length the layout gives it on each page: the entries after one that
     grows in Word or LibreOffice run past its end, and an entry moved onto another page stands off
     the rail there. The report says so in its note on the rail.
 

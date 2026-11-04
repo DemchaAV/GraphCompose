@@ -166,6 +166,14 @@ class DocxExportIsolationTest {
                             .cornerRadius(DocumentCornerRadius.of(8))
                             .addParagraph(p -> p.text("Inside")))
                     .addLine(line -> line.name("Divider").thickness(1))
+                    // A rail written along its cells at the end of the export, whose tables a
+                    // reused backend would otherwise try to rewrite again in the next document.
+                    .addTimeline(timeline -> timeline.markerOnRail()
+                            .connector(DocumentColor.rgb(200, 60, 40), 1)
+                            .entry(com.demcha.compose.document.dsl.TimelineMarker.dot(6, DocumentColor.BLACK),
+                                    entry -> entry.title("Role 1").meta("2020"))
+                            .entry(com.demcha.compose.document.dsl.TimelineMarker.dot(6, DocumentColor.BLACK),
+                                    entry -> entry.title("Role 2").meta("2021")))
                     .chart(ChartSpec.bar().data(data).build()));
             return session.export(backend);
         }

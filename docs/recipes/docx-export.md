@@ -1753,9 +1753,32 @@ named in the report:
   stroke's width, centred on that side, not a line: LibreOffice 24.2 drew three of the ten rails
   of the fidelity corpus as a line turned a quarter round its middle, a horizontal stroke, and
   draws all ten bars where the page does. In the corpus only a timeline's rail is drawn as such a
-  side; the other sides were not measured. The rail keeps the length the layout gives it on each page:
+  side; the other sides were not measured. A drawn rail keeps the length the layout gives it on each page:
   an entry that grows in Word or LibreOffice pushes the entries after it past the rail's end, and
   an entry moved onto another page stands off the rail there. The report names it.
+- A timeline whose entries are each a row alone — every timeline the templates write — has its rail
+  written instead as the border of the cells it runs along, and the drawn rail removed, so the rail
+  stretches with the entries when one is edited. Its entries are one table, an entry a row, each gap
+  between two entries a row of the gap's exact height. The column the rail runs down is cut where the
+  rail stands, read off where the drawn rail was placed in its cell, and the cell right of the cut
+  carries the rail as its left border; a rail beside the markers gets a column of its own in the
+  gutter, the table moved left by it. Where the rail starts or ends at a marker, that entry's row is
+  cut at the marker's centre into a row of that exact height and the rest — the other cells merged
+  down both, a height the row was held to shared between them, the upper row kept with the lower
+  one — and only the part along the rail is bordered. Every entry's row is one the page never breaks
+  inside, as the layout keeps it.
+  Measured on the ten rails of the fidelity corpus, in Word 16 and LibreOffice 24.2: one unbroken
+  line, within 0.35pt of the page at both ends in Word and where LibreOffice sets the text there; after
+  an entry's text grows, its foot at the last entry's marker within 0.12pt, where the drawn rail ended
+  10 to 38pt short; no line of text moved. A gap is a row and not a margin of the row above: of two
+  cells merged down two rows, Word reads a cell's bottom margin off the lower one and LibreOffice off
+  the upper one. Unkept, a page breaking between the two rows of a cut entry left its marker and text
+  at the foot of one page in Word, the rail starting above nothing on the next, and in LibreOffice
+  started the rail above the marker (measured, a timeline pushed down past the foot of its page 3pt at
+  a time). A timeline keeps its drawn rail, and its note, where any entry has a body laid out below
+  its row, where its rail stands beside the markers of a timeline set in a cell (a table there stays
+  in its cell whatever its indent), or where the drawn rail was not placed from a cell of its first
+  entry.
 
 Polygons and paths — a star, a chevron, an SVG icon's layers, a portrait drawn as paths —
 are drawn the same way, as custom geometry through the same points and curves, their fill

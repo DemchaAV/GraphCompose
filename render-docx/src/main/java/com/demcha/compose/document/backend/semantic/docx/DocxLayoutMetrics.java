@@ -2129,6 +2129,125 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * The timelines whose entries are each a row alone, with the parts of the rail drawn over them.
+     *
+     * <p>A timeline's rail is found through the block that holds it ({@link #anchoredBlockAt}): an
+     * entry or a marker, anchored under its timeline. The timeline's entries are the anchors of
+     * that timeline that hold another of its anchors — an entry holds its marker — in their order.
+     * Only a timeline every entry of which holds its header row and nothing else is returned: its
+     * entries are written as tables of one row each, which is what the rail can be written along.
+     * An entry with a body laid out below its row — under a rail through the markers, in the row's
+     * content column — is not, and its timeline keeps its drawn rail.</p>
+     *
+     * @return those timelines, each with its rail's parts by page and its entries in order
+     */
+    List<RailedTimeline> railedTimelines() {
+        Map<Object, List<PlacedFragment>> railsByTimeline = new IdentityHashMap<>();
+        List<Object> timelines = new ArrayList<>();
+        for (PlacedFragment rail : passFragments()) {
+            String block = anchoredBlockAt(rail);
+            if (!(nodesByPath().get(block)
+                    instanceof com.demcha.compose.document.layout.LayoutAnchorNode anchor)) {
+                continue;
+            }
+            Object timeline = anchor.id().groupKey();
+            if (!railsByTimeline.containsKey(timeline)) {
+                timelines.add(timeline);
+            }
+            railsByTimeline.computeIfAbsent(timeline, key -> new ArrayList<>()).add(rail);
+        }
+        List<RailedTimeline> railed = new ArrayList<>();
+        for (Object timeline : timelines) {
+            List<RailedEntry> entries = entriesOf(timeline);
+            if (entries != null) {
+                railed.add(new RailedTimeline(List.copyOf(railsByTimeline.get(timeline)), entries));
+            }
+        }
+        return railed;
+    }
+
+    /** A timeline's entries, each its header row and that row's box, or null where one is more. */
+    private List<RailedEntry> entriesOf(Object timeline) {
+        List<com.demcha.compose.document.layout.LayoutAnchorNode> anchors = new ArrayList<>();
+        for (DocumentNode node : paths.keySet()) {
+            if (node instanceof com.demcha.compose.document.layout.LayoutAnchorNode anchor
+                && anchor.id().groupKey() == timeline) {
+                anchors.add(anchor);
+            }
+        }
+        List<com.demcha.compose.document.layout.LayoutAnchorNode> entries = new ArrayList<>();
+        for (com.demcha.compose.document.layout.LayoutAnchorNode anchor : anchors) {
+            if (holdsAnchorOf(anchor.child(), timeline)) {
+                entries.add(anchor);
+            }
+        }
+        if (entries.isEmpty()) {
+            return null;
+        }
+        entries.sort(java.util.Comparator.comparingInt(anchor -> anchor.id().index()));
+        List<RailedEntry> rows = new ArrayList<>();
+        for (com.demcha.compose.document.layout.LayoutAnchorNode entry : entries) {
+            if (!(entry.child() instanceof com.demcha.compose.document.node.SectionNode section)
+                || section.children().size() != 1) {
+                return null;
+            }
+            DocumentNode only = section.children().get(0);
+            if (only instanceof com.demcha.compose.document.layout.HorizontalBandsNode bands) {
+                only = bands.child();
+            }
+            PlacedNode box = only instanceof com.demcha.compose.document.node.RowNode ? placedFor(only) : null;
+            PlacedFragment slice = null;
+            for (PlacedFragment fragment : fragmentsOf(entry)) {
+                if (box != null && fragment.pageIndex() == box.startPage()
+                    && fragment.payload() instanceof com.demcha.compose.document.layout.payloads.LayoutAnchorPayload) {
+                    slice = fragment;
+                    break;
+                }
+            }
+            if (slice == null) {
+                return null;
+            }
+            // The entry has no padding above its row, so the row's top is the entry's on its page.
+            double top = slice.y() + slice.height();
+            rows.add(new RailedEntry((com.demcha.compose.document.node.RowNode) only, box.startPage(),
+                    box.placementX(), top, top - box.placementHeight()));
+        }
+        return rows;
+    }
+
+    private static boolean holdsAnchorOf(DocumentNode node, Object timeline) {
+        for (DocumentNode child : node.children()) {
+            if (child instanceof com.demcha.compose.document.layout.LayoutAnchorNode anchor
+                && anchor.id().groupKey() == timeline || holdsAnchorOf(child, timeline)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * A timeline whose entries are each a row alone.
+     *
+     * @param rails   its rail's parts, a fragment per page, by page
+     * @param entries its entries, in order
+     */
+    record RailedTimeline(List<PlacedFragment> rails, List<RailedEntry> entries) {
+    }
+
+    /**
+     * An entry of a {@link RailedTimeline}: its header row, and where the layout put that row.
+     *
+     * @param row    the row
+     * @param page   the page the row stands on
+     * @param left   the row's left edge, in points from the page's left
+     * @param top    its top edge, as the layout measures up from the page's foot
+     * @param bottom its foot, measured the same way
+     */
+    record RailedEntry(com.demcha.compose.document.node.RowNode row, int page, double left, double top,
+                       double bottom) {
+    }
+
+    /**
      * How far inside its parent's content box the layout placed a node, on the left and on
      * the right, in points.
      *

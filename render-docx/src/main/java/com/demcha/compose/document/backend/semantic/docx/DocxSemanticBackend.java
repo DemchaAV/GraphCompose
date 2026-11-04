@@ -251,6 +251,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             + "them writes one there, or to the page where no paragraph on its page can carry it. It keeps "
             + "the length the layout gives it on each page: the entries after one that grows in the editor "
             + "run on past its end, and an entry the editor moves onto another page stands off the rail there";
+    /** How a timeline's rail is drawn where it is not written as its cells' border, as the report says it. */
+    private static final String RAIL_DRAWN = "drawn as a filled bar the rail's width where the layout puts it, "
+            + ANCHORED_IN_ITS_ENTRY;
     /**
      * The report's subject for a translucent colour Word holds only opaque — a cell's shading, a
      * border — flattened against the colour under it (see {@link DocxTranslucency}).
@@ -337,6 +340,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // section they belong to: a section's pages are counted from its own first, and a page's
     // height is its section's.
     private final List<DrawnBehind> drawnBehind = new ArrayList<>();
+    /** The parts of rails that may be written as their cells' border, kept from {@link #drawnBehind} till known. */
+    private final java.util.Map<DocxDrawings.Shape, DrawnBehind> railsDrawnBehind = new java.util.IdentityHashMap<>();
+    /** The drawings named covered by a panel, by section and path ({@link #nameTheDrawingsAPaintedPanelCovers}). */
+    private final java.util.Set<String> coveredNamed = new java.util.HashSet<>();
     private final List<ShadedPanel> shadedPanels = new ArrayList<>();
     // How many overlays — layer stacks, canvases, shape containers — the node being written sits in.
     private int overlayDepth;
@@ -544,6 +551,36 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The note what is drawn now is drawn for: one the section's end finds nothing to carry is
     // named there instead (endSection). Null where no note names it.
     private DocxDrawingAnchors.Owner drawingFor;
+    /** The section's timelines whose entries are each a row alone ({@link DocxTimelineRails}). */
+    private List<DocxLayoutMetrics.RailedTimeline> railedTimelines = List.of();
+    /** Those timelines' entry rows, and the table each was written as. */
+    private final java.util.Set<RowNode> railedRows =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    private final java.util.Map<RowNode, XWPFTable> railedTables = new java.util.IdentityHashMap<>();
+    /** The shapes each part of those timelines' rails was queued as. */
+    private final java.util.Map<com.demcha.compose.document.layout.PlacedFragment, List<DocxDrawings.Shape>> railBars =
+            new java.util.IdentityHashMap<>();
+    /** The timelines to write along their cells at the end of the export, with their section. */
+    private final List<RailToWrite> railsToWrite = new ArrayList<>();
+    /**
+     * How far, in twips, each table's first row was lifted above where the layout puts it
+     * ({@link #raiseRows}): its top stands that much higher in the editor, its foot where it was.
+     */
+    private final java.util.Map<XWPFTable, Long> rowLifts = new java.util.IdentityHashMap<>();
+    /** The section and path of every rail note given, so a section names each rail once. */
+    private final java.util.Set<String> railNotes = new java.util.HashSet<>();
+
+    /**
+     * A timeline whose rail is written along its cells at the end of the export, where it can be.
+     *
+     * @param section the index of the section it is in
+     * @param path    the path its rail is named under
+     * @param plan    what to write, or null where its tables or its bars were not all written
+     * @param shapes  the shapes its rail was queued as, judged as drawings where it stays drawn
+     */
+    private record RailToWrite(int section, String path, DocxTimelineRails.Plan plan,
+                               List<DocxDrawings.Shape> shapes) {
+    }
     // The pages and node of each body element the section writes, where a page with other
     // margins starts (DocxPageMarginSections).
     private final java.util.Map<IBodyElement, DocxPageMarginSections.Owner> bodyOwners =
@@ -1214,6 +1251,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         chartWarned.set(false);
         containerRadiusWarned.set(false);
         warnedNodeKinds.clear();
+        rowLifts.clear();
+        railsDrawnBehind.clear();
+        coveredNamed.clear();
+        railsToWrite.clear();
+        railNotes.clear();
+        railedRows.clear();
+        railedTables.clear();
+        railBars.clear();
+        railedTimelines = List.of();
         zonePartsReported.clear();
         zoneLinesReported.clear();
         rightEnds.clear();
@@ -1374,15 +1420,39 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // there — a timeline's entry, or that entry's marker — so it waits for that block's
                 // paragraphs; one that starts in none waits for the paragraph nearest it. Every rail,
                 // and every page of one, is named under the pass's path, once.
-                java.util.Set<String> railsNamed = new java.util.HashSet<>();
+                // A timeline whose entries are each a row alone may have its rail written as the
+                // border of the cells it runs along instead (DocxTimelineRails), which only the end
+                // of the export can tell: its bar is drawn all the same, and its note waits.
+                railedTimelines = layout.railedTimelines();
+                railedRows.clear();
+                railedTables.clear();
+                railBars.clear();
+                java.util.Set<com.demcha.compose.document.layout.PlacedFragment> railedParts =
+                        java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+                for (DocxLayoutMetrics.RailedTimeline timeline : railedTimelines) {
+                    railedParts.addAll(timeline.rails());
+                    for (DocxLayoutMetrics.RailedEntry entry : timeline.entries()) {
+                        railedRows.add(entry.row());
+                    }
+                }
                 for (com.demcha.compose.document.layout.PlacedFragment pass : layout.passFragments()) {
                     String block = layout.anchoredBlockAt(pass);
                     drawingFor = new DocxDrawingAnchors.Owner("timeline rail", pass.path(), false,
                             block == null ? pass.path() : block);
-                    if (queueDrawing(pass, drawsInFront()) && railsNamed.add(pass.path())) {
-                        report.add(DocxExportReport.Severity.APPROXIMATED, "timeline rail", pass.path(),
-                                "drawn as a filled bar the rail's width where the layout puts it, "
-                                + ANCHORED_IN_ITS_ENTRY);
+                    if (railedParts.contains(pass) && !Double.isNaN(canvasHeight)) {
+                        List<DocxDrawings.Shape> shapes = DocxDrawings.of(pass, canvasHeight);
+                        if (drawsInFront()) {
+                            shapes = shapes.stream().map(DocxDrawings.Shape::inFront).toList();
+                        }
+                        anchors.watch(shapes);
+                        railBars.put(pass, shapes);
+                        queueDrawings(shapes, false, layout.paintIndexOf(pass));
+                    } else {
+                        boolean drawn = queueDrawing(pass, drawsInFront());
+                        if (drawn && railNotes.add(index + "\u0000" + pass.path())) {
+                            report.add(DocxExportReport.Severity.APPROXIMATED, "timeline rail", pass.path(),
+                                    RAIL_DRAWN);
+                        }
                     }
                     drawingFor = null;
                 }
@@ -1417,6 +1487,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // before a table is split for its pages' margins, which takes the rows it moves out
                 // of the table the paragraph holding a drawing was read from.
                 markTheBlocksOfDrawingsAlone();
+                planTheRailsAlongTheirCells(index);
                 DocxPageMarginSections.apply(document, margins);
                 dropTheGapWhereASectionOpens(document);
             }
@@ -1437,6 +1508,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (deterministicTimestamp != null) {
                 DocxDeterminism.pinCoreProperties(document, deterministicTimestamp);
             }
+            // Last of all, on the document's XML alone: it removes tables every pass above reads.
+            writeTheRailsAlongTheirCells();
             try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
                 document.write(output);
                 byte[] bytes = deterministicTimestamp == null
@@ -1838,6 +1911,117 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
             }
         }
+    }
+
+    /**
+     * Gathers, at the end of a section, what writing its timelines' rails along their cells takes:
+     * the table each entry was written as, where the layout put the entries and the rail, and the
+     * drawings the rail was written as. A timeline whose rail was queued as no shape at all — there is
+     * no page to draw it on — is left out, as it is named nowhere; one whose tables were not all written
+     * as rows is kept with no plan, and keeps its drawn rail and its note
+     * ({@link #writeTheRailsAlongTheirCells}).
+     *
+     * @param section the index of the section just written
+     */
+    private void planTheRailsAlongTheirCells(int section) {
+        for (DocxLayoutMetrics.RailedTimeline timeline : railedTimelines) {
+            List<com.demcha.compose.document.layout.PlacedFragment> rails = timeline.rails();
+            List<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing> bars = new ArrayList<>();
+            List<DocxDrawings.Shape> shapes = new ArrayList<>();
+            DocxDrawings.Shape bar = null;
+            for (com.demcha.compose.document.layout.PlacedFragment rail : rails) {
+                for (DocxDrawings.Shape shape : railBars.getOrDefault(rail, List.of())) {
+                    bars.add(anchors.writtenAs(shape));
+                    shapes.add(shape);
+                    bar = shape;
+                }
+            }
+            if (bar == null) {
+                continue;
+            }
+            List<XWPFTable> tables = new ArrayList<>();
+            // Each entry where its row stands as written: a row lifted into the space above it starts
+            // that much higher, and the rail's end inside it is that much further down from its top.
+            List<DocxLayoutMetrics.RailedEntry> entries = new ArrayList<>();
+            for (DocxLayoutMetrics.RailedEntry entry : timeline.entries()) {
+                XWPFTable table = railedTables.get(entry.row());
+                if (table == null) {
+                    tables = null;
+                    break;
+                }
+                tables.add(table);
+                double lifted = rowLifts.getOrDefault(table, 0L) / POINT_TO_TWIP;
+                entries.add(new DocxLayoutMetrics.RailedEntry(entry.row(), entry.page(), entry.left(),
+                        entry.top() + lifted, entry.bottom()));
+            }
+            com.demcha.compose.document.layout.PlacedFragment top = rails.get(0);
+            com.demcha.compose.document.layout.PlacedFragment foot = rails.get(rails.size() - 1);
+            // The rail is the left side of its fragment, drawn centred on that edge.
+            DocxTimelineRails.Plan plan = tables == null || bar.fill() == null ? null
+                    : new DocxTimelineRails.Plan(tables, entries, top.x(), top.y() + top.height(),
+                            top.pageIndex(), foot.y(), foot.pageIndex(), bar.fill(), bar.width(), bars);
+            railsToWrite.add(new RailToWrite(section, top.path(), plan, shapes));
+        }
+    }
+
+    /**
+     * Writes each timeline gathered by {@link #planTheRailsAlongTheirCells} as one table whose cells
+     * carry its rail as their border, removing the drawn rail; where one cannot be, it keeps its drawn
+     * rail, and the report names that rail as it names every drawn one. A rail written so is written as
+     * what it is, and named nowhere.
+     *
+     * <p>A timeline set in another one's entry is written first: the outer one's rows are copied into
+     * one table, and the inner one's tables with them, which the inner one's plan no longer holds. A
+     * table a later pass has removed or moved since the plan was made — a body table cut for a page's
+     * own margins — leaves its timeline drawn.</p>
+     */
+    private void writeTheRailsAlongTheirCells() {
+        List<RailToWrite> innermostFirst = new ArrayList<>(railsToWrite);
+        innermostFirst.sort(java.util.Comparator.comparingInt(DocxSemanticBackend::depthOf).reversed());
+        List<DrawnBehind> leftDrawn = new ArrayList<>();
+        for (RailToWrite rail : innermostFirst) {
+            boolean written;
+            try {
+                written = rail.plan() != null && DocxTimelineRails.apply(rail.plan());
+            } catch (org.apache.xmlbeans.impl.values.XmlValueDisconnectedException removed) {
+                written = false;
+            }
+            if (written) {
+                continue;
+            }
+            if (railNotes.add(rail.section() + "\u0000" + rail.path())) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, "timeline rail", rail.path(), RAIL_DRAWN);
+            }
+            for (DocxDrawings.Shape shape : rail.shapes()) {
+                DrawnBehind behind = railsDrawnBehind.get(shape);
+                if (behind != null) {
+                    leftDrawn.add(behind);
+                }
+            }
+        }
+        // A rail left drawn is judged now as every other drawing was: a panel beside it covers it.
+        if (!leftDrawn.isEmpty()) {
+            drawnBehind.clear();
+            drawnBehind.addAll(leftDrawn);
+            nameTheDrawingsAPaintedPanelCovers();
+        }
+    }
+
+    /** How deep in the document a timeline's first table stands, 0 where it has no plan or no place. */
+    private static int depthOf(RailToWrite rail) {
+        if (rail.plan() == null || rail.plan().tables().isEmpty()) {
+            return 0;
+        }
+        int depth = 0;
+        try {
+            for (org.w3c.dom.Node node = rail.plan().tables().get(0).getCTTbl().getDomNode(); node != null;
+                 node = node.getParentNode()) {
+                depth++;
+            }
+        } catch (org.apache.xmlbeans.impl.values.XmlValueDisconnectedException removed) {
+            return 0;
+        }
+        return depth;
     }
 
     /**
@@ -5607,8 +5791,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (shape.front()) {
                 continue;
             }
-            drawnBehind.add(new DrawnBehind(subject, path, sectionIndex, shape.page(),
-                    shape.x(), shape.top(), shape.width(), shape.height()));
+            DrawnBehind behind = new DrawnBehind(subject, path, sectionIndex, shape.page(),
+                    shape.x(), shape.top(), shape.width(), shape.height());
+            if (anchors.isWatched(shape)) {
+                // A rail that may yet be written as its cells' border: judged once that is known
+                // (writeTheRailsAlongTheirCells), since a border in a cell is no drawing a panel covers.
+                railsDrawnBehind.put(shape, behind);
+            } else {
+                drawnBehind.add(behind);
+            }
         }
     }
 
@@ -5648,7 +5839,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // it reaches. Keyed on the section as well as the path: each section's paths are built
         // from its own roots, so two sections of the same preset give their drawings one path,
         // and keying on the path alone would name the first section's loss and hide the rest.
-        java.util.Set<String> named = new java.util.HashSet<>();
+        java.util.Set<String> named = coveredNamed;
         for (DrawnBehind shape : drawnBehind) {
             String already = shape.section() + " " + shape.path();
             if (shape.path() == null || named.contains(already)) {
@@ -10884,6 +11075,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 if (lift > 0) {
                     holdTheLiftedRowTaller(table, lift);
                     liftEachCell(table, standing, firsts, lift);
+                    rowLifts.merge(table, lift, Long::sum);
                 }
                 continue;
             }
@@ -10899,6 +11091,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             holdTheLiftedRowTaller(table, lift);
             liftEachCell(table, standing, firsts, lift);
+            rowLifts.merge(table, lift, Long::sum);
         }
         raisedRows.clear();
         firstLinesUnderTheRow.clear();
@@ -18965,6 +19158,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         XWPFTable table = newTable(document, 1, node.children().size());
+        if (railedRows.contains(node)) {
+            railedTables.put(node, table);
+        }
         if (!rowOpeningItsPage) {
             rowsLiftedForTheirLines.add(table);
             rowsLiftedForTheirGaps.add(table);

@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 78,
-    "methods": 407,
+    "methods": 408,
     "constants": 21,
-    "generated": 209
+    "generated": 210
   },
   "packages": [
     {
@@ -6050,6 +6050,10 @@
                 {
                   "type": "LayoutGraph",
                   "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
                 }
               ]
             },
@@ -6154,6 +6158,16 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "LayoutGraph",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "layoutFailure",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
               "params": [],
               "stability": "beta"
             }

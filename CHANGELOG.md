@@ -8,6 +8,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export of a document the engine cannot lay out says why in its report.**
+  _(Experimental — see [API stability](docs/api-stability.md).)_
+  - Such a document still exports, as before. Its report already named what the editor is
+    left to do without a layout, and dropped each drawing for want of a place, but the
+    reason the layout failed went only to the log. A table wider than the page, for one, was
+    written with its last column past the page's edge in Word and LibreOffice, while the
+    report said only that the document "could not be laid out".
+  - `SemanticExportContext` carries a sixth component, `layoutFailure`: the message of the
+    failure that stopped the document being laid out, as the engine words it (its class name
+    when it carries no message), present only when a backend asked for
+    the layout and compiling it failed, and `null` otherwise. A context carrying both a layout
+    and a failure is refused. `requireLayoutGraph()` names the failure when there is one.
+  - The DOCX report's `measured geometry` note ends with it: `…; the layout failed: Table
+    'TableNode' width 1000.0 exceeds available width 360.0.` In a multi-section document only
+    the section that could not be laid out says so. A context built by hand with no layout
+    and no reason gives none, as before.
+  - The published three- and four-argument constructors are unchanged.
+
 - **A DOCX export writes a timeline's rail as the border of the cells it runs along, so it
   stretches with the entries when one is edited.**
   - The rail was drawn as a bar of the length the layout gives it on each page. An entry that grew
@@ -4717,12 +4735,13 @@ follow semantic versioning; release dates are ISO 8601.
   be created without it whatever a backend later asks for.
   <br><br>
   Binary compatibility is preserved: the four-argument `SemanticExportContext` constructor
-  is written out by hand rather than left to the record, since adding the component moved
-  the canonical constructor to five arguments and callers compiled against the published
+  is written out by hand rather than left to the record, since adding the components moved
+  the canonical constructor to six arguments (the sixth, `layoutFailure`, has its own entry
+  above) and callers compiled against the published
   descriptor would otherwise stop linking. **Source compatibility is not**, in two narrow
   ways — a record pattern that destructures the four-component form
   (`case SemanticExportContext(var canvas, var fonts, var out, var opts)`) no longer
-  compiles, and `getRecordComponents().length` is 5 rather than 4. `requireLayoutGraph()`
+  compiles, and `getRecordComponents().length` is 6 rather than 4. `requireLayoutGraph()`
   is there for a backend that asked and wants the absence to say why rather than hand back
   `null`.
   <br><br>

@@ -57,6 +57,7 @@ class SemanticExportContextTest {
         assertThat(context.layoutGraph())
                 .as("a caller that predates the layout component gets none")
                 .isNull();
+        assertThat(context.layoutFailure()).as("and no reason for it").isNull();
     }
 
     @Test
@@ -83,9 +84,29 @@ class SemanticExportContextTest {
         // could have been gutted to `return null` with nothing going red.
         LayoutGraph layout = new LayoutGraph(CANVAS, 1, List.of(), List.of());
         SemanticExportContext context = new SemanticExportContext(
-                CANVAS, List.of(), null, DocumentOutputOptions.EMPTY, layout);
+                CANVAS, List.of(), null, DocumentOutputOptions.EMPTY, layout, null);
 
         assertThat(context.requireLayoutGraph()).isSameAs(layout);
+    }
+
+    @Test
+    void askingForALayoutThatCouldNotBeCompiledShouldSayWhatStoppedIt() {
+        SemanticExportContext context = new SemanticExportContext(
+                CANVAS, List.of(), null, DocumentOutputOptions.EMPTY, null, "Table width 1000.0 exceeds 360.0");
+
+        assertThat(context.layoutFailure()).isEqualTo("Table width 1000.0 exceeds 360.0");
+        assertThatThrownBy(context::requireLayoutGraph)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("could not be laid out (Table width 1000.0 exceeds 360.0)");
+    }
+
+    @Test
+    void aContextShouldNotCarryBothALayoutAndAReasonThereIsNone() {
+        LayoutGraph layout = new LayoutGraph(CANVAS, 1, List.of(), List.of());
+
+        assertThatThrownBy(() -> new SemanticExportContext(
+                CANVAS, List.of(), null, DocumentOutputOptions.EMPTY, layout, "cannot be laid out"))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -94,7 +115,7 @@ class SemanticExportContextTest {
         // never exercised: a caller writing null explicitly would have handed a backend
         // outputOptions() == null and it would have failed inside the backend.
         SemanticExportContext context = new SemanticExportContext(
-                CANVAS, List.of(), null, null, null);
+                CANVAS, List.of(), null, null, null, null);
 
         assertThat(context.outputOptions()).isSameAs(DocumentOutputOptions.EMPTY);
     }
@@ -103,7 +124,7 @@ class SemanticExportContextTest {
     void theCustomFontCollectionShouldBeCopiedOutOfTheCallersHands() {
         List<com.demcha.compose.font.FontFamilyDefinition> mutable = new java.util.ArrayList<>();
         SemanticExportContext context = new SemanticExportContext(
-                CANVAS, mutable, null, DocumentOutputOptions.EMPTY, null);
+                CANVAS, mutable, null, DocumentOutputOptions.EMPTY, null, null);
 
         assertThatThrownBy(() -> context.customFontFamilies().add(null))
                 .isInstanceOf(UnsupportedOperationException.class);

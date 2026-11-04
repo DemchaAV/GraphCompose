@@ -228,7 +228,7 @@ class DocxBandTextReportTest {
         SemanticExportContext laidOut = context.get();
         AtomicReference<DocxExportReport> report = new AtomicReference<>();
         new DocxSemanticBackend(report::set).export(graph.get(), new SemanticExportContext(laidOut.canvas(),
-                laidOut.customFontFamilies(), laidOut.outputFile(), laidOut.outputOptions(), null));
+                laidOut.customFontFamilies(), laidOut.outputFile(), laidOut.outputOptions(), null, null));
         assertThat(report.get().notes()).anyMatch(note -> note.subject().equals("measured geometry"));
         return report.get().notes().stream().filter(note -> note.subject().startsWith("page ")).toList();
     }

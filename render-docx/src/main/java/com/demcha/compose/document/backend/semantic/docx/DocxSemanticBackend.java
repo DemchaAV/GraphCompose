@@ -1573,10 +1573,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // the line height is Word's, a lineSpacing is put between no lines, and every auto
             // column is Word's, and a caller comparing this file against the rendered page
             // deserves to know that before they look — and what else the section holds that
-            // only a layout places or keeps (DocxWithoutLayout).
+            // only a layout places or keeps (DocxWithoutLayout), and, where the session says,
+            // what stopped the document being laid out.
             report.add(DocxExportReport.Severity.APPROXIMATED, "measured geometry",
                     sectioned ? "section " + (index + 1) : null,
-                    DocxWithoutLayout.note(section.graph(), sectioned ? "this section" : "this document"));
+                    DocxWithoutLayout.note(section.graph(), sectioned ? "this section" : "this document",
+                            context.layoutFailure()));
         }
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;

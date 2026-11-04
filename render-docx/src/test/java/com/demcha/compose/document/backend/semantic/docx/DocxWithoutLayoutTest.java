@@ -1,5 +1,8 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.api.MultiSectionDocument;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.RowBuilder;
@@ -7,6 +10,7 @@ import com.demcha.compose.document.dsl.SpacerBuilder;
 import com.demcha.compose.document.node.HorizontalAlign;
 import com.demcha.compose.document.node.RowArrangement;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
@@ -31,7 +35,9 @@ class DocxWithoutLayoutTest {
 
     @Test
     void aDocumentOfParagraphsIsToldWhatItLeavesAndNoMore() throws Exception {
-        assertThat(sectionNote(page -> page.addParagraph("Plain text"))).isEqualTo(BASE);
+        assertThat(sectionNote(page -> page.addParagraph("Plain text")))
+                .as("an export handed no layout and no reason gives none")
+                .isEqualTo(BASE);
     }
 
     @Test
@@ -179,6 +185,73 @@ class DocxWithoutLayoutTest {
                     .containsPattern("</w:tblPr><w:tblGrid(/>|>)")
                     .matches("(?s).*<w:tblGrid.*?<w:tr[ >].*"));
         }
+    }
+
+    @Test
+    void aDocumentTheSessionCannotLayOutIsToldWhatStoppedIt() throws Exception {
+        // A list item of runs is laid out only with the marker column: without hangingIndent the
+        // engine refuses the document, and the export goes on without a layout.
+        Consumer<PageFlowBuilder> content = page -> page.addList(list -> list.bullet()
+                .addItem(rich -> rich.plain("Invoice ").bold("overdue")));
+        String failure;
+        try (DocumentSession session = session()) {
+            session.pageFlow(content::accept);
+            failure = layoutFailureOf(session);
+        }
+        assertThat(failure).as("the engine's own message").contains("hangingIndent(true)");
+
+        assertThat(sessionNotes(content))
+                .containsExactly(BASE + "; the layout failed: " + failure);
+    }
+
+    @Test
+    void onlyTheSectionThatCannotBeLaidOutIsToldWhy() throws Exception {
+        List<String> notes = new ArrayList<>();
+        String failure;
+        try (DocumentSession laidOut = session(); DocumentSession refused = session()) {
+            laidOut.pageFlow(page -> page.addParagraph("Laid out"));
+            refused.pageFlow(page -> page.addTable(t -> t
+                    .columns(DocumentTableColumn.fixed(900), DocumentTableColumn.fixed(100)).row("Hours", "12")));
+            failure = layoutFailureOf(refused);
+            try (MultiSectionDocument document = GraphCompose.documents()
+                    .section(laidOut).section(refused).create()) {
+                document.export(DocxSemanticBackend.builder().reportSink(report -> report.notes().stream()
+                        .filter(note -> note.subject().equals("measured geometry"))
+                        .forEach(note -> notes.add(note.path() + " | " + note.detail()))).build());
+            }
+        }
+        assertThat(failure).contains("exceeds available width");
+
+        assertThat(notes).containsExactly("section 2 | this section could not be laid out, so line heights, the "
+                + "space between lines and auto column widths are the editor's rather than the engine's; Word is "
+                + "not told to keep what the page keeps from a page break: a table's row in one piece; the layout "
+                + "failed: " + failure);
+    }
+
+    private static DocumentSession session() {
+        return GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create();
+    }
+
+    /** The message the engine refuses the session's layout with. */
+    private static String layoutFailureOf(DocumentSession session) {
+        try {
+            session.layoutGraph();
+        } catch (RuntimeException failure) {
+            return failure.getMessage();
+        }
+        throw new AssertionError("the document was laid out");
+    }
+
+    /** The section notes of a document exported through its session, as a caller exports it. */
+    private static List<String> sessionNotes(Consumer<PageFlowBuilder> content) throws Exception {
+        List<String> notes = new ArrayList<>();
+        try (DocumentSession session = session()) {
+            session.pageFlow(content::accept);
+            session.export(DocxSemanticBackend.builder().reportSink(report -> report.notes().stream()
+                    .filter(note -> note.subject().equals("measured geometry"))
+                    .forEach(note -> notes.add(note.detail()))).build());
+        }
+        return notes;
     }
 
     private static String sectionNote(Consumer<PageFlowBuilder> content) throws Exception {

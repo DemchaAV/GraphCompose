@@ -71,6 +71,45 @@ class SemanticExportLayoutResolutionTest {
                 .isNull();
     }
 
+    @Test
+    void aDocumentThatCannotBeLaidOutShouldHandTheBackendTheReason() throws Exception {
+        // Logged alone, the reason never reached a report: the backend saw only a missing
+        // layout, and could not say why the export it wrote is not the page.
+        CountingContext context = new CountingContext();
+        context.failure = new IllegalStateException("Table 'Totals' width 1000.0 exceeds available width 360.0.");
+        ProbeBackend backend = new ProbeBackend(true);
+
+        new DocumentRenderingFacade(context).export(backend, null);
+
+        assertThat(backend.seen.layoutGraph()).isNull();
+        assertThat(backend.seen.layoutFailure())
+                .isEqualTo("Table 'Totals' width 1000.0 exceeds available width 360.0.");
+    }
+
+    @Test
+    void aFailureWithoutAMessageShouldBeNamedByItsKind() throws Exception {
+        CountingContext context = new CountingContext();
+        context.failure = new IllegalStateException();
+        ProbeBackend backend = new ProbeBackend(true);
+
+        new DocumentRenderingFacade(context).export(backend, null);
+
+        assertThat(backend.seen.layoutFailure()).isEqualTo("java.lang.IllegalStateException");
+    }
+
+    @Test
+    void aLayoutThatCompilesOrWasNotAskedForShouldCarryNoFailure() throws Exception {
+        ProbeBackend asked = new ProbeBackend(true);
+        ProbeBackend quiet = new ProbeBackend(false);
+
+        new DocumentRenderingFacade(new CountingContext()).export(asked, null);
+        new DocumentRenderingFacade(new CountingContext()).export(quiet, null);
+
+        assertThat(asked.seen.layoutGraph()).isNotNull();
+        assertThat(asked.seen.layoutFailure()).isNull();
+        assertThat(quiet.seen.layoutFailure()).as("nothing was compiled, so nothing failed").isNull();
+    }
+
     /** Answers whatever it is asked, and counts how often the layout is wanted. */
     private static final class CountingContext implements DocumentRenderingFacade.Context {
 
@@ -142,6 +181,8 @@ class SemanticExportLayoutResolutionTest {
     private static final class ProbeBackend implements SemanticBackend<LayoutGraph> {
 
         private final boolean wantsLayout;
+        /** The context the export was handed. */
+        private SemanticExportContext seen;
 
         ProbeBackend(boolean wantsLayout) {
             this.wantsLayout = wantsLayout;
@@ -159,6 +200,7 @@ class SemanticExportLayoutResolutionTest {
 
         @Override
         public LayoutGraph export(DocumentGraph graph, SemanticExportContext context) {
+            seen = context;
             return context.layoutGraph();
         }
     }

@@ -42,11 +42,13 @@ final class DocxWithoutLayout {
     /**
      * The note on a section exported with no layout behind it.
      *
-     * @param graph the section's document
-     * @param what  how the note names the section: "this document", or "this section"
+     * @param graph   the section's document
+     * @param what    how the note names the section: "this document", or "this section"
+     * @param failure why the layout could not be compiled, or {@code null} when the export was
+     *                handed no layout and no reason — a context built without one
      * @return the note's text
      */
-    static String note(DocumentGraph graph, String what) {
+    static String note(DocumentGraph graph, String what, String failure) {
         Found found = new Found();
         for (DocumentNode root : graph.roots()) {
             found.look(root, false);
@@ -77,6 +79,10 @@ final class DocxWithoutLayout {
         if (!kept.isEmpty()) {
             note.append("; Word is not told to keep what the page keeps from a page break: ")
                     .append(String.join(", ", kept));
+        }
+        if (failure != null) {
+            // Last, so the note reads the same up to here whether a reason came with it or not.
+            note.append("; the layout failed: ").append(failure);
         }
         return note.toString();
     }

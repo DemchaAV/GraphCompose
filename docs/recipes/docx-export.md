@@ -1046,8 +1046,11 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
 - **A document the engine cannot lay out → the same export, without measured geometry.**
   The export asks the session for the resolved layout (see "Measured geometry" above). A
   document that the fixed-layout pipeline refuses — a list item made of inline runs
-  without marker geometry, for instance — still exports: the failure is logged once and
-  the writer falls back to what the document itself states. In that fallback a table's
+  without marker geometry, for instance — still exports: the failure is logged once, the
+  report's note on the section ends with what stopped the layout (`…; the layout failed:
+  Table 'TableNode' width 1000.0 exceeds available width 360.0.`), and the writer falls back
+  to what the document itself states. A backend reads the same reason from
+  `SemanticExportContext.layoutFailure()`. In that fallback a table's
   width is written only when the author stated one or every column is fixed, a row's
   columns only when they are weights, an even split or fixed, and no line height is
   written at all. An `auto` column and the flex path are measurements, and a guess in

@@ -108,14 +108,20 @@ final class DocumentRenderingFacade {
         // needed a FontMetricsProvider to be constructed at all.
         // The graph, the canvas and the layout all come off the same session state, so a
         // backend given both is given a layout compiled from the graph beside it.
-        LayoutGraph resolvedLayout = backend.requiresResolvedLayout() ? compiledLayout(backend) : null;
+        CompiledLayout compiled = backend.requiresResolvedLayout() ? compiledLayout(backend) : CompiledLayout.NOT_ASKED;
         return new SemanticSection(context.documentGraph(),
                 new SemanticExportContext(
                         context.canvas(),
                         context.customFontFamilies(),
                         outputFile,
                         context.outputOptions(),
-                        resolvedLayout));
+                        compiled.layout(),
+                        compiled.failure()));
+    }
+
+    /** The layout a backend asked for, or why there is none; neither when it did not ask. */
+    private record CompiledLayout(LayoutGraph layout, String failure) {
+        static final CompiledLayout NOT_ASKED = new CompiledLayout(null, null);
     }
 
     /**
@@ -129,22 +135,29 @@ final class DocumentRenderingFacade {
      * document from "exports" into "throws" would take something away that worked, in
      * exchange for a number the backend only wanted as an improvement.</p>
      *
-     * <p>So the layout is offered rather than imposed: what compiles is handed over, what
-     * does not is reported once and the export continues without it.
-     * {@code SemanticExportContext.layoutGraph()} is nullable for exactly this, and a
-     * backend that cannot proceed without it says so through
-     * {@code requireLayoutGraph()}.</p>
+     * <p>So the layout is offered rather than imposed: what compiles is handed over; when
+     * compiling fails, the failure is logged once, its message is handed to the backend, and
+     * the export continues without a layout. {@code SemanticExportContext.layoutGraph()} is
+     * nullable for exactly this, {@code layoutFailure()} says why it is missing so a backend's
+     * own report can name the cause, and a backend that cannot proceed without a layout says
+     * so through {@code requireLayoutGraph()}.</p>
      */
-    private LayoutGraph compiledLayout(SemanticBackend<?> backend) {
+    private CompiledLayout compiledLayout(SemanticBackend<?> backend) {
         try {
-            return context.layoutGraph();
+            return new CompiledLayout(context.layoutGraph(), null);
         } catch (RuntimeException failure) {
             LOG.warn("Backend '{}' asked for the resolved layout and this document cannot be "
                      + "laid out ({}); exporting without it — measured geometry is unavailable, "
                      + "so the export falls back to what the document itself states",
                     backend.name(), failure.toString());
-            return null;
+            return new CompiledLayout(null, reasonOf(failure));
         }
+    }
+
+    /** A failure's message, or its kind when it carries none. */
+    private static String reasonOf(RuntimeException failure) {
+        String message = failure.getMessage();
+        return message == null || message.isBlank() ? failure.getClass().getName() : message;
     }
 
     byte[] toPdfBytes() throws Exception {

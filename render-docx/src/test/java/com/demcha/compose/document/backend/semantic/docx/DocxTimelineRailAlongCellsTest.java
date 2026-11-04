@@ -224,8 +224,37 @@ class DocxTimelineRailAlongCellsTest {
             byte[] docx = session.export(new DocxSemanticBackend(report::set));
             try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
                 assertThat(document.getTables()).as("an entry a table").hasSize(3);
+                assertThat(document.getDocument().xmlText()).as("the rail drawn").contains("<a:alpha");
             }
             assertThat(report.get().notes()).anyMatch(note -> note.subject().equals("timeline rail"));
+        }
+    }
+
+    @Test
+    void aTimelineOfOneEntryKeptWithTheNextStaysATableThatMayBreak() throws Exception {
+        // One entry left whole is a table of one row, which LibreOffice keeps with nothing where its
+        // row may not break: the pass that lets such a table break is not undone. Read against the
+        // same timeline drawn see-through, which keeps its table as the export wrote it.
+        boolean drawn = oneEntryKeptWithTheNext(DocumentColor.rgba(0xC0, 0x30, 0x30, 102)).getRow(0).isCantSplitRow();
+        XWPFTable written = oneEntryKeptWithTheNext(RAIL);
+        assertThat(drawn).as("the table as written, its row let break").isFalse();
+        assertThat(written.getRows()).hasSize(1);
+        assertThat(written.getRow(0).isCantSplitRow()).as("as it was").isEqualTo(drawn);
+        assertThat(bordered(written, 0).contains(true) || bordered(written, 1).contains(true)).isTrue();
+    }
+
+    private static XWPFTable oneEntryKeptWithTheNext(DocumentColor rail) throws Exception {
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(30))
+                .create()) {
+            session.pageFlow(flow -> {
+                flow.addSection("Kept", kept -> kept.keepWithNext()
+                        .addTimeline(t -> t.markerOnRail().connector(rail, 1.5)
+                                .entry(TimelineMarker.dot(8, DOT), e -> e.content(section -> section
+                                        .addParagraph("Role 1").addParagraph("Built the export pipeline.")))));
+                flow.addParagraph("After the timeline.");
+            });
+            byte[] docx = session.export(new DocxSemanticBackend());
+            return new XWPFDocument(new ByteArrayInputStream(docx)).getTables().get(0);
         }
     }
 
@@ -414,6 +443,9 @@ class DocxTimelineRailAlongCellsTest {
             String before = document.getDocument().xmlText();
 
             assertThat(DocxTimelineRails.apply(plan(upper, lower, 0, 1, bar))).isFalse();
+            assertThat(document.getDocument().xmlText()).isEqualTo(before);
+            assertThat(DocxTimelineRails.apply(plan(upper, lower, 1, 0, bar))).as("nor starting on another")
+                    .isFalse();
             assertThat(document.getDocument().xmlText()).isEqualTo(before);
             assertThat(DocxTimelineRails.apply(plan(upper, lower, 0, 0, bar))).as("the same on one page")
                     .isTrue();

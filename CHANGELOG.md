@@ -56,10 +56,10 @@ follow semantic versioning; release dates are ISO 8601.
     in its blocks, so it moves with that entry when the text above it is edited. A timeline set
     right under another one has its rail in its own first entry, not in the last entry of the one
     above, at whose foot the rail starts.
-  - Where the rail is still drawn — a timeline whose entries have a body below their row (see the
-    entry above) — it keeps the length the layout gives it on each page: the entries after one that
-    grows in Word or LibreOffice run past its end, and an entry moved onto another page stands off
-    the rail there. The report says so in its note on the rail.
+  - Where the rail is still drawn (the entry above says where) it keeps the length the layout gives
+    it on each page: the entries after one that grows in Word or LibreOffice run past its end, and
+    an entry moved onto another page stands off the rail there. The report says so in its note on
+    the rail.
 
 - **A DOCX export keeps the gap below a table above a block the layout moves to a new page,
   where the editor breaks the page elsewhere.**

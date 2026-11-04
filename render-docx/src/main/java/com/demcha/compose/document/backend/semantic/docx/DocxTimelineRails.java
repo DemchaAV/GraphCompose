@@ -196,8 +196,10 @@ final class DocxTimelineRails {
             // An entry's row is one the page never breaks inside, as the row the layout placed it.
             // Its own table, of one row kept with the next, was let break for LibreOffice's sake
             // (letTheOneRowTablesKeptWithTheNextBreak); as a row among others it may not.
+            // A timeline of one entry left whole stays a table of one row, as it was let break.
+            boolean alone = tables.size() == 1 && !(above > EDGE) && !(below > EDGE);
             CTTrPr whole = row.isSetTrPr() ? row.getTrPr() : row.addNewTrPr();
-            if (whole.sizeOfCantSplitArray() == 0) {
+            if (!alone && whole.sizeOfCantSplitArray() == 0) {
                 whole.addNewCantSplit();
             }
             int rail = cutAtTheRail(row, column, cut);
@@ -331,11 +333,21 @@ final class DocxTimelineRails {
         return table.getTblPr() == null ? "" : table.getTblPr().xmlText();
     }
 
-    /** Whether a cell holds a run of text, a field or a link — anything a reader reads. */
+    /**
+     * Whether a cell holds what its line sets — text, a symbol, a tab, a field, a link, a content
+     * control, an object of the older kinds — or a table. A drawing is not counted, only text written
+     * in one: a marker drawn in its line stood where it did with the cell cut (measured,
+     * {@code SlateOrange}'s, in Word and LibreOffice).
+     */
     private static boolean holdsText(CTTc cell) {
         Node node = cell.getDomNode();
-        return hasDescendant(node, "t") || hasDescendant(node, "fldSimple") || hasDescendant(node, "instrText")
-               || hasDescendant(node, "hyperlink") || cell.sizeOfTblArray() > 0;
+        for (String name : List.of("t", "sym", "tab", "ptab", "fldSimple", "instrText", "hyperlink", "sdt",
+                "pict", "object")) {
+            if (hasDescendant(node, name)) {
+                return true;
+            }
+        }
+        return cell.sizeOfTblArray() > 0;
     }
 
     private static boolean hasDescendant(Node node, String name) {

@@ -575,7 +575,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * @param section the index of the section it is in
      * @param path    the path its rail is named under
-     * @param plan    what to write, or null where its tables or its bars were not all written
+     * @param plan    what to write, or null where its tables were not all written as rows (a plan whose
+     *                bars were not all written is refused when applied)
      * @param shapes  the shapes its rail was queued as, judged as drawings where it stays drawn
      */
     private record RailToWrite(int section, String path, DocxTimelineRails.Plan plan,

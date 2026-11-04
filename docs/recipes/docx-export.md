@@ -1780,13 +1780,20 @@ named in the report:
   - its rail stands beside the markers of a timeline set in a cell (a table there stays in its cell
     whatever its indent, so the gutter column would push the entries right);
   - its rail is see-through (a border has no translucency);
-  - the column the rail cuts holds text in any entry (a numbered marker's figure would no longer
-    stand where the page sets it);
-  - the drawn rail was not placed from a cell of its first entry, or the rail starts or ends on
-    another page than its first or last entry;
+  - the column the rail cuts holds text in any entry — a numbered marker's figure, a symbol, a tab,
+    a field, a content control — which would no longer stand where the page sets it, or, where the
+    rail stands on a cell's left edge, that cell holds anything at all (a marker drawn in its line
+    is kept in a cut cell: `SlateOrange`'s stood where it did in both editors);
+  - the drawn rail was not written, or was not placed from a cell of its first entry;
+  - the rail starts or ends on another page than its first or last entry, starts above the first
+    entry's top or ends below the last entry's foot, stands right of the entries' last column, or
+    starts and ends inside one entry;
   - its entries' tables are not each one row of plain cells, with the same grid and properties and
     only empty paragraphs of an exact height between them, or a later pass removed or moved them.
-  The report then names it as before.
+  The report then names it as before. Entries kept with what follows keep every row they become with
+  the next, and a gap row keeps with the entry after it as the gap paragraph did: measured with a
+  timeline pushed down past the foot of its page 3pt at a time, kept together or not, each entry
+  stood on the page it stands on in the drawn rail's export, in both editors.
 
 Polygons and paths — a star, a chevron, an SVG icon's layers, a portrait drawn as paths —
 are drawn the same way, as custom geometry through the same points and curves, their fill

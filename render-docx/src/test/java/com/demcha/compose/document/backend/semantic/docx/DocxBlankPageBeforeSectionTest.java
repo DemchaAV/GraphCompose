@@ -85,7 +85,7 @@ class DocxBlankPageBeforeSectionTest {
         SemanticExportContext laidOut = first.context();
         List<SemanticSection> sections = List.of(
                 new SemanticSection(first.graph(), new SemanticExportContext(laidOut.canvas(),
-                        laidOut.customFontFamilies(), laidOut.outputFile(), laidOut.outputOptions(), null)),
+                        laidOut.customFontFamilies(), laidOut.outputFile(), laidOut.outputOptions(), null, null)),
                 captured.sections.get(1));
         List<DocxExportReport.Note> notes = new ArrayList<>();
         DocxSemanticBackend.builder().reportSink(report -> notes.addAll(report.notes())).build()

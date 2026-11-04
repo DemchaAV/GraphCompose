@@ -279,7 +279,9 @@ class DocxNodeFieldLedgerTest {
             + "font; any other is embedded",
             "outputFile:INERT:where the bytes go, nothing in them",
             "outputOptions:WRITTEN:as its own entries",
-            "layoutGraph:WRITTEN:as its own entries");
+            "layoutGraph:WRITTEN:as its own entries",
+            "layoutFailure:REPORTED:as the end of the measured geometry note on the section that could not be "
+            + "laid out");
     private static final Map<String, Entry> LAYOUT = fields(
             "canvas:WRITTEN:the page's size",
             "totalPages:WRITTEN:as a page total field's placeholder, which Word counts again and LibreOffice "

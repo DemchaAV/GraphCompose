@@ -906,6 +906,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The last paragraph written into the body, so a container can hand it the space it
     // holds below itself once its children are done.
     private XWPFParagraph lastBodyParagraph;
+    /**
+     * The space the layout leaves at the foot of a page below a table, above a block it moves to
+     * the next page, which no paragraph above can carry: written above the line holding the
+     * block's top edge on its page ({@link #holdTheSpaceAboveOnItsPage}).
+     */
+    private double gapBelowTheTableAbove;
+    /** The lines holding a block's edge that carry {@link #gapBelowTheTableAbove} above them. */
+    private final List<XWPFParagraph> linesBelowATablesGap = new ArrayList<>();
     // The paragraph writeParagraph wrote last, and the Word paragraph it wrote it in: a paragraph
     // pulled up into it takes the pull off its foot (takeFromTheLineAbove), while nothing else has
     // been written since — lastBodyParagraph is that same Word paragraph then.
@@ -1400,6 +1408,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // of the table the paragraph holding a drawing was read from.
                 markTheBlocksOfDrawingsAlone();
                 DocxPageMarginSections.apply(document, margins);
+                dropTheGapWhereASectionOpens(document);
             }
             // Every bookmark is written now, those a reference on an earlier page reads included.
             nameTheBlocksNoBookmarkMarks();
@@ -1501,6 +1510,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         countsItsSectionPages = false;
         tableSeparators.clear();
         lastBodyParagraph = null;
+        gapBelowTheTableAbove = 0;
+        linesBelowATablesGap.clear();
         lastWrittenNode = null;
         lastWrittenParagraph = null;
         contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
@@ -7612,9 +7623,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // the layout moves to a new page (writeTableWithItsOwnSpacing): a band's first, where
                 // the band opens its page, the band's top edge with it (leaveThePageAboveTheBand).
                 if (bandOpensItsPage) {
-                    leaveThePageAboveTheBand(node);
+                    leaveThePageAboveTheBand(document, node);
                 } else {
-                    leaveThePageAboveForTheBlock(node);
+                    leaveThePageAboveForTheBlock(document, node);
                 }
                 onANewPage = true;
             }
@@ -16459,14 +16470,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * is written there rather than taken into the line below, the space owed below the last
      * block, and a border or a line hanging below it, as a page break leaves them
      * ({@link #writePageBreak}).
+     *
+     * <p>Below a table no paragraph carries that space, and it went nowhere. At the break that is
+     * what the page does; but where the editor breaks elsewhere, or an edit above moves the block
+     * up its page, the line holding the block's edge stands in the flow, and the gap was missing
+     * there: a row 12pt down a new page after a table with 4pt between them stood 3.7pt high in
+     * Word and 4pt in LibreOffice once the page grew to hold both. It is written above that line
+     * instead ({@link #holdTheSpaceAboveOnItsPage}), where both editors drop it at the top of a page
+     * they break to and keep it anywhere else.</p>
      */
-    private void leaveThePageAbove() {
+    private void leaveThePageAbove(XWPFDocument document) {
         // What a block on that page never took is named there.
         nameAHangLeftOver();
         resumeHere();
         // A line set high at the page's foot is lowered by what a block written under it there
         // gives, and with none, not into the space left at that foot (offerToLower).
         settleTheLineAbove();
+        // What the flow writes there: a panel's border below it takes its reach out of the gap, as
+        // a pull does (newBodyParagraph).
+        gapBelowTheTableAbove = currentCell == null && lastBodyParagraph == null
+                                && endsWithATable(document.getBodyElements())
+                ? Math.max(0, pendingSpacingAfter - borderBelow - pullBelow) : 0;
         flushSpacingAfter();
         borderBelow = 0;
         forgetTheHang();
@@ -16491,14 +16515,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * runs on past its first page has no place of its own on it ({@link #spaceAboveOnItsPage}),
      * and holds its own edge alone.</p>
      */
-    private void leaveThePageAboveForTheBlock(DocumentNode block) {
+    private void leaveThePageAboveForTheBlock(XWPFDocument document, DocumentNode block) {
         nameAHangLeftOver();
         resumeHere();
         double carried = spaceAboveOnItsPage(block) - block.margin().top() - carriedSpacingBefore
                          - layerOffsetNotWritten;
         double onItsPage = Double.isNaN(carried) ? 0 : Math.max(0, carried);
         pendingSpacingAfter -= onItsPage;
-        leaveThePageAbove();
+        leaveThePageAbove(document);
         carriedSpacingBefore += onItsPage;
     }
 
@@ -16517,14 +16541,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * the block writes itself: what the resume holds besides the gap and the edge is not owed
      * again. Without a canvas to say how much, the edge is all the band resumes past the gap.</p>
      */
-    private void leaveThePageAboveTheBand(DocumentNode block) {
+    private void leaveThePageAboveTheBand(XWPFDocument document, DocumentNode block) {
         double onItsPage = spaceAboveOnItsPage(block) - block.margin().top() - layerOffsetNotWritten;
         resumeHere();
         double owed = pendingSpacingAfter;
         double gap = Math.max(0, Math.min(owed, bandGapBefore));
         double edge = Double.isNaN(onItsPage) ? owed - gap : Math.max(0, onItsPage);
         pendingSpacingAfter = gap;
-        leaveThePageAbove();
+        leaveThePageAbove(document);
         carriedSpacingBefore += edge;
     }
 
@@ -16541,9 +16565,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean opensItsBand = currentCell == null && bandOpensItsPage;
         boolean onANewPage = currentCell == null && (opensItsBand || startsAPageOfItsOwn(node));
         if (opensItsBand) {
-            leaveThePageAboveTheBand(node);
+            leaveThePageAboveTheBand(document, node);
         } else if (onANewPage) {
-            leaveThePageAboveForTheBlock(node);
+            leaveThePageAboveForTheBlock(document, node);
         }
         // A table a band's or a column's layer opens is that layer's first block, so it starts
         // where the layer resumes, as a paragraph does, and its own top margin comes after:
@@ -18867,7 +18891,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         warnContainerRadiusDropped(row);
         boolean onANewPage = currentCell == null && startsAPageOfItsOwn(row);
         if (onANewPage) {
-            leaveThePageAboveForTheBlock(row);
+            leaveThePageAboveForTheBlock(document, row);
         }
         writePanelPiece(document, row, paint, () -> writeRow(document, row, true), true, true, onANewPage);
     }
@@ -21598,17 +21622,49 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * before it, at the foot of the page above, and the pair stood 12pt high. A paragraph's
      * space above at the top of a page Word drops too, measured; the height of a line it keeps.
      * So the space is the height of a line of its own, kept with the table.</p>
+     *
+     * <p>The gap the page leaves below a table above the block, at the foot of the page above
+     * ({@link #gapBelowTheTableAbove}), is the line's space above: Word and LibreOffice drop it
+     * where the line opens a page they break to, as the page does, and keep it where the line
+     * stands in the flow because the editor broke the page elsewhere. Written by hand above the
+     * line opening {@code MeteredInvoice}'s fourth page, 10pt of space moved nothing there in
+     * either editor. A section's first paragraph keeps it, so it is taken off where a page-margin
+     * section opens with the line ({@link #dropTheGapWhereASectionOpens}).</p>
      */
     private void holdTheSpaceAboveOnItsPage(XWPFDocument document) {
-        if (!(carriedSpacingBefore + pendingSpacingAfter - borderBelow - pullBelow > 0.01)) {
+        double gap = gapBelowTheTableAbove;
+        gapBelowTheTableAbove = 0;
+        if (!(carriedSpacingBefore + pendingSpacingAfter - borderBelow - pullBelow > 0.01) && !(gap > 0.01)) {
             return;
         }
         XWPFParagraph line = newBodyParagraph(document);
         CTPPr properties = line.getCTP().isSetPPr() ? line.getCTP().getPPr() : line.getCTP().addNewPPr();
         CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
         long held = twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null);
-        spacing.setBefore(BigInteger.ZERO);
+        spacing.setBefore(BigInteger.valueOf(toTwips(gap)));
         holdInALineKeptWithTheNext(line, held);
+        if (gap > 0.01) {
+            linesBelowATablesGap.add(line);
+        }
+    }
+
+    /**
+     * Takes the gap below a table off a line holding a block's edge where a page-margin section
+     * opens with the line ({@link DocxPageMarginSections}): Word and LibreOffice keep the space above
+     * a section's first paragraph, where they drop it at a page they break to. The section's break
+     * fixes the page the block opens, so the gap has no flow to stand in there; kept, a row moved
+     * after a table to a page with its own margins stood the 4pt gap low in both editors.
+     */
+    private void dropTheGapWhereASectionOpens(XWPFDocument document) {
+        List<IBodyElement> body = document.getBodyElements();
+        for (XWPFParagraph line : linesBelowATablesGap) {
+            int at = body.indexOf(line);
+            if (at > 0 && body.get(at - 1) instanceof XWPFParagraph before
+                && before.getCTP().isSetPPr() && before.getCTP().getPPr().isSetSectPr()) {
+                line.getCTP().getPPr().getSpacing().setBefore(BigInteger.ZERO);
+            }
+        }
+        linesBelowATablesGap.clear();
     }
 
     /** Makes a paragraph a line of exactly {@code twips} with no text, kept with what follows. */

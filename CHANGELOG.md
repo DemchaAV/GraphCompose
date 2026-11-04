@@ -8,6 +8,38 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export keeps the gap below a table above a block the layout moves to a new page,
+  where the editor breaks the page elsewhere.**
+  - A block the layout moves to a new page holds its top edge there in an empty line kept with
+    it, the gap between it and the block before left at the foot of the page above, on the
+    paragraph there. Below a table there is no such paragraph, and the gap was not written at
+    all: at the break that is what the page does, but where Word or LibreOffice broke the page
+    elsewhere, or an edit above moved the block up its page, the block stood the gap high — a
+    row after a table with 4pt between them stood 3.7pt high in Word and 4pt in LibreOffice 24.2.
+  - The gap is now the line's space above, less what a border below the table above reaches
+    into it, as in the flow. Both editors drop it where the line opens a page they break to, so a
+    page breaking where the layout breaks it is unchanged, and keep it in the flow: a row of text
+    within 0.3pt of the same document laid out on a page that needs no break. Neither the reach of
+    the moved block's own top border nor text hanging below a panel above comes out of the gap,
+    as it does in the flow, so such a block stands up to that much lower there (not measured). Where a page with margins of its
+    own opens a Word section with the line, the gap is not written: both editors keep a section's
+    first space above, and the section's break fixes the page anyway.
+  - A block with no edge of its own to hold, moved after a table, gets a line a twip tall for the
+    gap. That line also keeps the two tables apart, in place of the paragraph a tenth of a point
+    tall that did, and which the report named for setting the block 0.1pt low. Four templates open
+    their second page so, right after a table, with a block written as a table and nothing of its
+    own above it (`MintEditorial`, `TimelineMinimal`, `EditorialProposal`, `NorthlineProposal`):
+    the four notes are gone; LibreOffice 24.2 sets those pages where it did, and Word a step of its
+    line grid higher: every document's 90th percentile and three of its four medians nearer the
+    page, the fourth unchanged (of 84 lines, 69 nearer, 12 a step further). With their page made half as tall again, LibreOffice 24.2 now sets
+    the gap there, which it had lost: 11.95pt in `TimelineMinimal`, 4.95pt in `NorthlineProposal`.
+  - As before, the line takes no more room in the flow than the space it holds, whatever shape
+    opens the page — a paragraph, a row, a table, a list: seven documents of the fidelity corpus,
+    their page made half as tall again, drew the same to the pixel in Word and LibreOffice 24.2
+    with the line as with the line taken out and its height and space above written as plain
+    space between the two blocks. A test now holds each shape to the space the export writes for
+    it on a page with no break.
+
 - **A DOCX export keeps a page zone's row in its columns: each part of the row stands at a tab
   stop where the page sets it, so a label and the page number beside it no longer read as one
   word.**

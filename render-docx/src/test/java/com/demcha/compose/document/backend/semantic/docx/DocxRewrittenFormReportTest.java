@@ -259,6 +259,7 @@ class DocxRewrittenFormReportTest {
                         .bookmark(new com.demcha.compose.document.node.DocumentBookmarkOptions("London", 0))
                         .align(TextAlign.CENTER).build(), 0, 0, LayerAlign.CENTER)
                 .position(new ParagraphBuilder().name("Dates").text("2019 - 2023")
+                        .bookmark(new com.demcha.compose.document.node.DocumentBookmarkOptions("Dates", 0))
                         .align(TextAlign.RIGHT).build(), 0, 0, LayerAlign.CENTER_RIGHT)
                 .build());
         DocxExportReport report = reportOf(content);
@@ -268,10 +269,13 @@ class DocxRewrittenFormReportTest {
                            + "where the page sets it, at a tab holding its start, its middle or its end, "
                            + "and whatever else the layers hold drawn where the page draws it");
         assertThat(pathOf(report, "ShapeContainerNode")).isEqualTo("ContainerNode[0]/Head[0]");
-        // The line takes the title's heading; the caption between its ends is a part of it, and
-        // loses its own outline entry.
-        assertThat(notesOn(report, "ParagraphNode"))
-                .contains("written as one part of a line it shares; its outline entry is not written");
+        // The line takes the title's heading, listed by all three texts; its ends are its sides and
+        // the caption between them a part of it, each other one losing its own outline entry.
+        assertThat(notesOn(report, "ParagraphNode")).containsExactlyInAnyOrder(
+                "written as one side of a line it shares; its outline entry shows \"Engineer London 2019 - 2023\", "
+                + "not its title \"Engineer\"",
+                "written as one part of a line it shares; its outline entry is not written",
+                "written as one side of a line it shares; its outline entry is not written");
     }
 
     @Test

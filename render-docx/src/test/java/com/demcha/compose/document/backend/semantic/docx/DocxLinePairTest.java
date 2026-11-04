@@ -17,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Text an overlay sets at the left and the right of one line is one Word line, split by a tab.
+ * Text an overlay sets along one line — at its left, its right, and between — is one Word line,
+ * split by tabs.
  *
  * <p>A CV entry's head band puts its title at the left and its dates at the right, as two
  * layers of one container. Written one after the other, the dates took a line of their own

@@ -25,7 +25,9 @@ follow semantic versioning; release dates are ISO 8601.
   - A band of two is written as before, byte for byte. A band with a paragraph the page sets over
     two lines or more is written as before — as its layers, a band or a panel — and named as that
     form is.
-  - The report names a band of three or more as the line its paragraphs share.
+  - The report names a band of three or more as the line its paragraphs share, and a caption
+    between its ends, where it loses anything, as "one part of a line it shares"; the ends keep
+    "one side".
   - A badge's text is still drawn in its shape only up to four characters, now stated as the
     policy it is: initials are a mark, a word in a pill is content, and stays a paragraph of the
     flow.

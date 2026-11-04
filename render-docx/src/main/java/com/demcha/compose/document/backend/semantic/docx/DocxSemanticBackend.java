@@ -11903,9 +11903,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 paragraphLost(pair.left(), laysOutAPrefix(pair.left()),
                         heads == pair.left() ? line : null));
         boolean keepsWithNext = pair.left().keepWithNext() && layout.onOnePage(pair.left());
-        for (DocxLinePair.Stop stop : pair.stops()) {
+        for (int at = 0; at < pair.stops().size(); at++) {
+            DocxLinePair.Stop stop = pair.stops().get(at);
             // Its ends are its sides; a caption between them is a part of it.
-            reportWrittenWithout(stop.text(), stop.text() == pair.right()
+            reportWrittenWithout(stop.text(), at == pair.stops().size() - 1
                             ? "written as one side of a line it shares" : "written as one part of a line it shares",
                     paragraphLost(stop.text(), stop.tab() == DocxLinePair.Tab.LEFT && laysOutAPrefix(stop.text()),
                             heads == stop.text() ? line : null));

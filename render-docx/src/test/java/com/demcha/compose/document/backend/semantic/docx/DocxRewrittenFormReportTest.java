@@ -253,8 +253,10 @@ class DocxRewrittenFormReportTest {
         Consumer<PageFlowBuilder> content = page -> page.add(new ShapeContainerBuilder().name("Head")
                 .rectangle(360, 14).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
                 .position(new ParagraphBuilder().name("Title").text("Engineer")
+                        .bookmark(new com.demcha.compose.document.node.DocumentBookmarkOptions("Engineer", 0))
                         .align(TextAlign.LEFT).build(), 0, 0, LayerAlign.CENTER_LEFT)
                 .position(new ParagraphBuilder().name("Place").text("London")
+                        .bookmark(new com.demcha.compose.document.node.DocumentBookmarkOptions("London", 0))
                         .align(TextAlign.CENTER).build(), 0, 0, LayerAlign.CENTER)
                 .position(new ParagraphBuilder().name("Dates").text("2019 - 2023")
                         .align(TextAlign.RIGHT).build(), 0, 0, LayerAlign.CENTER_RIGHT)
@@ -266,6 +268,10 @@ class DocxRewrittenFormReportTest {
                            + "where the page sets it, at a tab holding its start, its middle or its end, "
                            + "and whatever else the layers hold drawn where the page draws it");
         assertThat(pathOf(report, "ShapeContainerNode")).isEqualTo("ContainerNode[0]/Head[0]");
+        // The line takes the title's heading; the caption between its ends is a part of it, and
+        // loses its own outline entry.
+        assertThat(notesOn(report, "ParagraphNode"))
+                .contains("written as one part of a line it shares; its outline entry is not written");
     }
 
     @Test

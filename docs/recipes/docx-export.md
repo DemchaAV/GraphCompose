@@ -1201,7 +1201,7 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   each (`layer offset`), but not a layer that only draws, which is drawn where the page
   draws it, nor one written where a band or a layer of a column sets the next block at the
   page's distance below what is above it: that distance holds the offset.
-- **Text at the left and the right of one band → one line split by a tab.** A
+- **Text at the left and the right of one band → one line split by tabs.** A
   container or a layer stack holding two or more single-line paragraphs, all level with
   one another and each at least 4pt apart from the next across the page — a CV entry's
   title and its dates, or a title, a place in the middle and dates — is one Word
@@ -1268,7 +1268,7 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   holds only drawing; a badge centring a few letters is drawn as one shape
   holding them, and a pill holding a title and its dates is written as one
   line (see "Text at the left and the right of one band → one line split by
-  a tab"). DOCX has no portable equivalent of
+  tabs"). DOCX has no portable equivalent of
   a graphics-state path clip, so the container's layers are written
   inline, in source order, without clipping — again with one warning per
   export, and a note on each container that writes a layer in the flow.

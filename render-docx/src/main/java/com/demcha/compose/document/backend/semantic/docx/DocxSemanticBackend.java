@@ -4925,7 +4925,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeNodeContentOf(XWPFDocument document, DocumentNode node) throws Exception {
-        // A title and its dates at either end of one band are one line before they are layers.
+        // A title and its dates at either end of one band, and any caption between them, are one
+        // line before they are layers.
         if (node instanceof com.demcha.compose.document.node.LayerStackNode
             || node instanceof ShapeContainerNode) {
             DocxLinePair.Pair pair = DocxLinePair.of(node, layout);
@@ -11903,7 +11904,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         heads == pair.left() ? line : null));
         boolean keepsWithNext = pair.left().keepWithNext() && layout.onOnePage(pair.left());
         for (DocxLinePair.Stop stop : pair.stops()) {
-            reportWrittenWithout(stop.text(), "written as one side of a line it shares",
+            // Its ends are its sides; a caption between them is a part of it.
+            reportWrittenWithout(stop.text(), stop.text() == pair.right()
+                            ? "written as one side of a line it shares" : "written as one part of a line it shares",
                     paragraphLost(stop.text(), stop.tab() == DocxLinePair.Tab.LEFT && laysOutAPrefix(stop.text()),
                             heads == stop.text() ? line : null));
             keepsWithNext |= stop.text().keepWithNext() && layout.onOnePage(stop.text());

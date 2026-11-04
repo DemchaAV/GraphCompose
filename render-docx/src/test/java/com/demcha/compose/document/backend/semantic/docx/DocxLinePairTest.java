@@ -509,6 +509,21 @@ class DocxLinePairTest {
     }
 
     @Test
+    void aLeftAlignedCaptionALayerSetsFromTheRightIsHeldByItsEnd() throws Exception {
+        // Placed from the right, its box shrunk to its text: the layer holds its end.
+        double end = widthOf("Left") + 120;
+        try (XWPFDocument document = export(threeCaptions("Middle", TextAlign.LEFT, LayerAlign.CENTER_RIGHT,
+                -(CONTENT - end)))) {
+            CTPPr properties = written(document).get(0).getCTP().getPPr();
+
+            assertThat(properties.getTabs().getTabArray(0).getVal().toString()).isEqualTo("right");
+            assertThat(DocxTwips.of(properties.getTabs().getTabArray(0).getPos()))
+                    .as("where the layer ends the caption on the page")
+                    .isCloseTo(Math.round(end * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
     void theLineTakesTheHeadingOfACaptionPastTheFirst() throws Exception {
         // A Word paragraph has one outline level: the first caption along the line that has one
         // gives it, the middle one here.

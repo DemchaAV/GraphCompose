@@ -859,8 +859,9 @@ class DocxDrawingsTest {
     void aBadgeOfAsManyCharactersAsTheLimitIsDrawnAndOneMoreIsWritten() throws Exception {
         // The limit is a policy — initials are a mark, a word is content — so it is held where
         // it falls, in a pill wide enough for either on one line.
-        String atTheLimit = "ABCDEFGH".substring(0, DocxSemanticBackend.BADGE_TEXT_LIMIT);
-        String pastIt = "ABCDEFGH".substring(0, DocxSemanticBackend.BADGE_TEXT_LIMIT + 1);
+        String atTheLimit = "ABCD";
+        String pastIt = "ABCDE";
+        assertThat(DocxSemanticBackend.BADGE_TEXT_LIMIT).as("the limit the docs state").isEqualTo(4);
         try (XWPFDocument drawn = export(null, session -> session.pageFlow(page -> page.add(pill(atTheLimit))));
              XWPFDocument written = export(null, session -> session.pageFlow(page -> page.add(pill(pastIt))))) {
             assertThat(anchors(drawn.getDocument().xmlText())).singleElement().asString()

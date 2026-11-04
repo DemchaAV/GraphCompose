@@ -80,9 +80,9 @@ class TimelineRailAcrossBackendsTest {
             try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
                     session.export(new DocxSemanticBackend())))) {
                 assertThat(document.getDocument().xmlText())
-                        .as("the rail, a bar filled with the rail's colour")
-                        .contains("prst=\"rect\"")
-                        .contains("<a:solidFill><a:srgbClr val=\"969EAC\"/></a:solidFill>");
+                        .as("the rail, one drawing: a bar filled with the rail's colour")
+                        .containsPattern("(?s)<wp:anchor (?:(?!</wp:anchor>).)*prst=\"rect\""
+                                         + "(?:(?!</wp:anchor>).)*<a:solidFill><a:srgbClr val=\"969EAC\"/></a:solidFill>");
             }
         }
     }

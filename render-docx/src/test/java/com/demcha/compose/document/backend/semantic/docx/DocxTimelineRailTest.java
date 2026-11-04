@@ -190,6 +190,39 @@ class DocxTimelineRailTest {
         }
     }
 
+    @Test
+    void aTimelineRightUnderAnotherHasItsRailInItsOwnFirstEntry() throws Exception {
+        // Nothing between the two timelines: the second rail starts at the foot of the first
+        // timeline's last entry, which is shorter than the second's first. A block whose foot the
+        // rail starts at does not hold it; counted as holding it, the smaller one took the rail.
+        DocumentColor second = DocumentColor.rgb(0x30, 0x30, 0xC0);
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        byte[] docx;
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 400).margin(DocumentInsets.of(30))
+                .create()) {
+            session.pageFlow(flow -> flow.spacing(0)
+                    .addTimeline(t -> t.connector(RAIL, 1.5)
+                            .entry(TimelineMarker.dot(8, DOT), e -> e.title("Role A1").body("First."))
+                            .entry(TimelineMarker.dot(8, DOT), e -> e.title("Role A2")))
+                    .addTimeline(t -> t.connector(second, 1.5)
+                            .entry(TimelineMarker.dot(8, DOT), e -> e.title("Role B1")
+                                    .body("Built the export pipeline and its tests, then carried it through "
+                                          + "three releases with every document re-measured line by line."))
+                            .entry(TimelineMarker.dot(8, DOT), e -> e.title("Role B2"))));
+            docx = session.export(new DocxSemanticBackend(report::set));
+        }
+        assertThat(report.get().bySubject()).as("laid out, so the rails are drawn at all")
+                .containsKey("timeline rail");
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            XWPFTable holding = innermostTableHolding(document.getTables(), "3030C0");
+            assertThat(holding).as("a table carries the second rail").isNotNull();
+            assertThat(holding.getText()).as("the second timeline's first entry, not the first one's last")
+                    .contains("Role B1").doesNotContain("Role A2");
+        }
+    }
+
     /** The innermost table, nested ones searched first, whose markup holds a bar of the colour. */
     private static XWPFTable innermostTableHolding(List<XWPFTable> tables, String colour) {
         for (XWPFTable table : tables) {

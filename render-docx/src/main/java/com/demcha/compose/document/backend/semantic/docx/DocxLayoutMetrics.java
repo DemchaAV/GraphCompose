@@ -2092,13 +2092,15 @@ final class DocxLayoutMetrics {
 
     /**
      * The block the layout anchors that a drawing of its own pass starts in on its page: the
-     * innermost anchored node whose slice on that page holds the drawing's top-left corner, edges
-     * included. A timeline's rail on a page starts at the top of the first of the timeline's
-     * entries there, or at its first marker, on that entry's left edge where it runs beside the
-     * markers and through the markers where it runs through them. Each entry and each marker is
-     * an anchored node, so the block is the entry the rail starts in, or that entry's marker where
-     * the rail starts in or on it: the innermost, and a block the entry holds. A timeline in
-     * another one's entry is held by its own entry or marker before the outer entry.
+     * innermost anchored node whose slice on that page holds the drawing's top-left corner and runs
+     * on below it — its top and side edges included, its foot not, since a block above whose foot
+     * the drawing starts at does not hold it. A timeline's rail on a page starts at the top of the
+     * first of the timeline's entries there, or at its first marker, on that entry's left edge
+     * where it runs beside the markers and through the markers where it runs through them. Each
+     * entry and each marker is an anchored node, so the block is the entry the rail starts in, or
+     * that entry's marker where the rail starts in or on it: the innermost, and a block the entry
+     * holds. A timeline in another one's entry is held by its own entry or marker before the outer
+     * entry.
      *
      * @param pass a fragment of a pass of the layout's own ({@link #passFragments})
      * @return that block's path, or {@code null} where no anchored node's slice holds the corner
@@ -2116,7 +2118,7 @@ final class DocxLayoutMetrics {
                 continue;
             }
             boolean holds = x >= fragment.x() - edge && x <= fragment.x() + fragment.width() + edge
-                            && top >= fragment.y() - edge && top <= fragment.y() + fragment.height() + edge;
+                            && top > fragment.y() + edge && top <= fragment.y() + fragment.height() + edge;
             double area = fragment.width() * fragment.height();
             if (holds && area < smallest) {
                 innermost = fragment.path();

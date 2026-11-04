@@ -238,10 +238,12 @@ only in the degenerate case of a single marker row taller than a whole page.
 | **DOCX** | ⚠️ drawn as shapes, anchored beside the entries' text | ✅ entries, titles, meta and bodies all export |
 
 DOCX is a semantic export: it writes the entries as text from the document tree, and reads the
-rail from the resolved layout, drawing it on each page as a line anchored where the layout put
-it, behind the text, with the markers as the shapes they are. A marker or a rail standing beside an entry's
-text is anchored in that entry's paragraph and moves with it when the text above is edited;
-one beside no text stays where the page puts it. See the
+rail from the resolved layout, drawing it on each page as a filled bar the rail's width where the
+layout put it, behind the text, with the markers as the shapes they are. Each page's part of the
+rail is anchored in the entry it starts in there, and a marker beside an entry's text in that
+entry's paragraph, so both move with the entry when the text above is edited; one beside no text
+stays where the page puts it. The rail keeps the length the layout gives it on each page: the
+entries after one that grows in Word or LibreOffice run past its end. See the
 [backend capability matrix](../architecture/backend-capability-matrix.md).
 
 ## Text styles

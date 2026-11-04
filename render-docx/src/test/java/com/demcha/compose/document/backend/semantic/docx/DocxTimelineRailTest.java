@@ -21,6 +21,7 @@ import java.awt.Color;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -164,8 +165,7 @@ class DocxTimelineRailTest {
         // the inner timeline's, and the one level with the rail's top is taken from either, so this
         // holds the outcome rather than which of the two blocks is asked.
         DocumentColor inner = DocumentColor.rgb(0x30, 0xA0, 0x30);
-        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report =
-                new java.util.concurrent.atomic.AtomicReference<>();
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
         byte[] docx;
         try (DocumentSession session = GraphCompose.document().pageSize(400, 400).margin(DocumentInsets.of(30))
                 .create()) {
@@ -196,8 +196,7 @@ class DocxTimelineRailTest {
         // timeline's last entry, which is shorter than the second's first. A block whose foot the
         // rail starts at does not hold it; counted as holding it, the smaller one took the rail.
         DocumentColor second = DocumentColor.rgb(0x30, 0x30, 0xC0);
-        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report =
-                new java.util.concurrent.atomic.AtomicReference<>();
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
         byte[] docx;
         try (DocumentSession session = GraphCompose.document().pageSize(400, 400).margin(DocumentInsets.of(30))
                 .create()) {

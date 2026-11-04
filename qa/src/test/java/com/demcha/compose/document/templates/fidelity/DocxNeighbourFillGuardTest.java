@@ -183,8 +183,8 @@ class DocxNeighbourFillGuardTest {
             List<String> seen = scan.covered().stream().sorted().toList();
             // Every drawing the export names is checked against this test's own geometry, one by
             // one. Not through the scan: the scan knows a drawing by the wording of its note, and
-            // the export names drawings whose notes it does not know — a timeline's rail, or a
-            // picture over a badge, which says so instead. Those land in namedButUnplaceable rather
+            // the export names drawings whose notes it does not know — a timeline's rail, and a
+            // picture over a badge, whose note says so instead. Those land in namedButUnplaceable rather
             // than being read as a disagreement.
             for (String path : named) {
                 if (!scan.placed().containsKey(path)) {

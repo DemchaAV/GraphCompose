@@ -14,8 +14,8 @@ follow semantic versioning; release dates are ISO 8601.
     LibreOffice 24.2 turns such a line a quarter round its middle at some places on the page and
     not others: three of the ten rails of the fidelity corpus (`CharcoalGold`'s, and both of
     `TerracottaRail`'s) came out as horizontal strokes across the page. A side is now a rectangle
-    the stroke's width, centred on it and filled with its colour: both editors draw all ten rails
-    upright, where the page does across and down as far as each sets the text beside them, and no
+    the stroke's width, centred on it and filled with its colour. Both editors now draw all ten
+    rails upright: across, where the page does; down, beside the text as each editor sets it. No
     line of text moves. Word drew the line there already. The corpus draws no side but a rail this
     way, so the others were not measured.
   - Each page's part of the rail was anchored in the paragraph nearest its top, which, under a

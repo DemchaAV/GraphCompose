@@ -40,9 +40,9 @@ import java.util.function.Supplier;
  * that holds the shape across takes it — a timeline's dot in a column of its own beside its entry —
  * placed from that cell's first paragraph (see {@link Seat#placeHeld}). A shape no node draws —
  * a timeline's rail — is held on each page by the timeline entry it starts in there, or by that
- * entry's marker ({@link DocxLayoutMetrics#anchoredBlockAt}). One whose holders write no paragraph on its page
- * goes to the paragraph nearest it there. What a table's composed cell draws has no node of its own — such a cell's
- * content is laid out under its table — so the cell found by the box the layout placed it in
+ * entry's marker ({@link DocxLayoutMetrics#anchoredBlockAt}). One whose holders write no
+ * paragraph on its page goes to the paragraph nearest it there. What a table's composed cell
+ * draws has no node of its own — such a cell's content is laid out under its table — so the cell found by the box the layout placed it in
  * stands for the block holding it: it goes to the paragraph of that cell which places it nearest
  * and can place it, ordered as a holder's paragraphs are ({@link #placeInItsCell}). One no cell's
  * box holds, or whose cell's paragraphs cannot place it, goes to the paragraph whose text is
@@ -559,9 +559,8 @@ final class DocxDrawingAnchors {
      * it stands: where it stands gives only its offset. A holder that writes no paragraph there,
      * or only ones that cannot place it, passes it on to the next one up. A timeline's rail, which
      * no node draws, comes with the entry it starts in on its page, or that entry's marker, as its
-     * node. A shape no holder
-     * carries — one whose holders' text is a list or a table, or a rail no entry holds — goes to
-     * the paragraph nearest it.</p>
+     * node. A shape no holder carries — one whose holders' text is a list or a table, or a rail no
+     * entry holds — goes to the paragraph nearest it.</p>
      *
      * <p>Which of a holder's paragraphs is only the offset, so the shape is placed out of the one
      * whose offset is the smallest of those it stands below ({@link #asTheShapeStandsTo}) — usually

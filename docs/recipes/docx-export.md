@@ -1770,15 +1770,23 @@ named in the report:
   Measured on the ten rails of the fidelity corpus, in Word 16 and LibreOffice 24.2: one unbroken
   line, within 0.35pt of the page at both ends in Word and where LibreOffice sets the text there; after
   an entry's text grows, its foot at the last entry's marker within 0.12pt, where the drawn rail ended
-  10 to 38pt short; no line of text moved. A gap is a row and not a margin of the row above: of two
+  10 to 38pt short; no line of text moved more than 0.05pt. A gap is a row and not a margin of the row above: of two
   cells merged down two rows, Word reads a cell's bottom margin off the lower one and LibreOffice off
   the upper one. Unkept, a page breaking between the two rows of a cut entry left its marker and text
   at the foot of one page in Word, the rail starting above nothing on the next, and in LibreOffice
   started the rail above the marker (measured, a timeline pushed down past the foot of its page 3pt at
-  a time). A timeline keeps its drawn rail, and its note, where any entry has a body laid out below
-  its row, where its rail stands beside the markers of a timeline set in a cell (a table there stays
-  in its cell whatever its indent), or where the drawn rail was not placed from a cell of its first
-  entry.
+  a time). A timeline keeps its drawn rail, and its note, where:
+  - any entry has a body laid out below its row;
+  - its rail stands beside the markers of a timeline set in a cell (a table there stays in its cell
+    whatever its indent, so the gutter column would push the entries right);
+  - its rail is see-through (a border has no translucency);
+  - the column the rail cuts holds text in any entry (a numbered marker's figure would no longer
+    stand where the page sets it);
+  - the drawn rail was not placed from a cell of its first entry, or the rail starts or ends on
+    another page than its first or last entry;
+  - its entries' tables are not each one row of plain cells, with the same grid and properties and
+    only empty paragraphs of an exact height between them, or a later pass removed or moved them.
+  The report then names it as before.
 
 Polygons and paths — a star, a chevron, an SVG icon's layers, a portrait drawn as paths —
 are drawn the same way, as custom geometry through the same points and curves, their fill

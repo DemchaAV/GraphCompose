@@ -33,11 +33,12 @@ follow semantic versioning; release dates are ISO 8601.
     page 3pt at a time, Word otherwise left an entry's marker and text at the foot of one page and
     the rest of its row on the next, the rail starting above nothing there, and LibreOffice started
     the rail above the marker.
-  - A timeline keeps its drawn rail, and its note, where any entry has a body laid out below its row
-    (`entry.body(...)`), where its rail stands beside the markers of a timeline set in a cell — a
-    table there stays in its cell whatever its indent, so the gutter column would push the entries
-    right — or where the export did not place the rail from a cell of its first entry. The corpus
-    has none of these: nine of its 1696 notes go.
+  - A timeline keeps its drawn rail, and its note, where it cannot be written so — among others,
+    where any entry has a body laid out below its row (`entry.body(...)`), where its rail stands
+    beside the markers of a timeline set in a cell (a table there stays in its cell whatever its
+    indent, so the gutter column would push the entries right), where the rail is see-through, or
+    where a numbered marker's figure stands in the column the rail cuts. The DOCX recipe lists every
+    case. The corpus has none of them: nine of its 1696 notes go.
 
 - **A DOCX export draws a timeline's rail as a bar LibreOffice draws upright, held by the entry
   it starts in.**

@@ -1956,9 +1956,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             com.demcha.compose.document.layout.PlacedFragment top = rails.get(0);
             com.demcha.compose.document.layout.PlacedFragment foot = rails.get(rails.size() - 1);
-            // The rail is the left side of its fragment, drawn centred on that edge.
             DocxTimelineRails.Plan plan = tables == null || bar.fill() == null ? null
-                    : new DocxTimelineRails.Plan(tables, entries, top.x(), top.y() + top.height(),
+                    : new DocxTimelineRails.Plan(tables, entries, top.y() + top.height(),
                             top.pageIndex(), foot.y(), foot.pageIndex(), bar.fill(), bar.width(), bars);
             railsToWrite.add(new RailToWrite(section, top.path(), plan, shapes));
         }
@@ -1970,16 +1969,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * rail, and the report names that rail as it names every drawn one. A rail written so is written as
      * what it is, and named nowhere.
      *
-     * <p>A timeline set in another one's entry is written first: the outer one's rows are copied into
-     * one table, and the inner one's tables with them, which the inner one's plan no longer holds. A
-     * table a later pass has removed or moved since the plan was made — a body table cut for a page's
-     * own margins — leaves its timeline drawn.</p>
+     * <p>A table a later pass has removed or moved since the plan was made — a body table cut for a
+     * page's own margins — leaves its timeline drawn.</p>
      */
     private void writeTheRailsAlongTheirCells() {
-        List<RailToWrite> innermostFirst = new ArrayList<>(railsToWrite);
-        innermostFirst.sort(java.util.Comparator.comparingInt(DocxSemanticBackend::depthOf).reversed());
         List<DrawnBehind> leftDrawn = new ArrayList<>();
-        for (RailToWrite rail : innermostFirst) {
+        for (RailToWrite rail : railsToWrite) {
             boolean written;
             try {
                 written = rail.plan() != null && DocxTimelineRails.apply(rail.plan());
@@ -2005,23 +2000,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             drawnBehind.addAll(leftDrawn);
             nameTheDrawingsAPaintedPanelCovers();
         }
-    }
-
-    /** How deep in the document a timeline's first table stands, 0 where it has no plan or no place. */
-    private static int depthOf(RailToWrite rail) {
-        if (rail.plan() == null || rail.plan().tables().isEmpty()) {
-            return 0;
-        }
-        int depth = 0;
-        try {
-            for (org.w3c.dom.Node node = rail.plan().tables().get(0).getCTTbl().getDomNode(); node != null;
-                 node = node.getParentNode()) {
-                depth++;
-            }
-        } catch (org.apache.xmlbeans.impl.values.XmlValueDisconnectedException removed) {
-            return 0;
-        }
-        return depth;
     }
 
     /**

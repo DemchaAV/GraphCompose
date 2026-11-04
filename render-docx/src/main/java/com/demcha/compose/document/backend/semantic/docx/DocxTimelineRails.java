@@ -58,10 +58,14 @@ import java.util.List;
  * <p>The tables are taken as written, at the end of the export: the rewrite is done on the document's
  * XML once nothing else will read the tables it removes. Anything other than what is described here —
  * a table of other than one row, a cell spanning or merged, anything between two entries but empty
- * paragraphs of an exact height, a part of the rail not written as a drawing, a drawn rail placed from no
- * cell of the first entry, a rail beside the markers of a table nested in a cell (which stays in its cell
- * whatever its indent), a rail ending on another page than its entry — leaves the timeline as it is, its
- * rail drawn.</p>
+ * paragraphs of an exact height, tables of different grids or properties, a part of the rail not written
+ * as a drawing, a drawn rail placed from no cell of the first entry, a rail beside the markers of a table
+ * nested in a cell (which stays in its cell whatever its indent), a rail ending on another page than its
+ * entry, a see-through rail (a border has no translucency), text in the column the rail cuts, one entry
+ * the rail both starts and ends inside — leaves the timeline as it is, its rail drawn.</p>
+ *
+ * <p>An entry whose row's paragraphs all keep with the next, and a gap whose paragraph did, keep every
+ * row they become with the next, so a timeline kept together stays so.</p>
  */
 final class DocxTimelineRails {
 
@@ -80,8 +84,6 @@ final class DocxTimelineRails {
      * @param tables      the tables its entries were written as, in order
      * @param entries     where those entries' rows stand as written: where the layout put them, a row's
      *                    top raised by what the export lifted it into the gap above
-     * @param railX       the rail's centre, in points from the page's left, read where the drawn rail
-     *                    gives no place in a cell
      * @param railTop     the rail's top, measured up from the page's foot, on {@code topPage}
      * @param topPage     the page the rail starts on
      * @param railBottom  the rail's foot, measured the same way, on {@code bottomPage}
@@ -90,7 +92,7 @@ final class DocxTimelineRails {
      * @param width       the rail's width, in points
      * @param bars        the drawings the rail was written as, one a page
      */
-    record Plan(List<XWPFTable> tables, List<DocxLayoutMetrics.RailedEntry> entries, double railX,
+    record Plan(List<XWPFTable> tables, List<DocxLayoutMetrics.RailedEntry> entries,
                 double railTop, int topPage, double railBottom, int bottomPage, Color colour, double width,
                 List<CTDrawing> bars) {
     }
@@ -106,15 +108,23 @@ final class DocxTimelineRails {
         for (XWPFTable table : plan.tables()) {
             tables.add(table.getCTTbl());
         }
-        List<Integer> gaps = gapsBetween(tables);
+        List<Gap> gaps = gapsBetween(tables);
         if (gaps == null || plan.bars().isEmpty() || plan.bars().stream().anyMatch(bar -> bar == null
                 || bar.getDomNode().getParentNode() == null)) {
             return false;
         }
+        // A border has no translucency: a rail drawn see-through stays drawn, as its note says.
+        if (plan.colour().getAlpha() < 255) {
+            return false;
+        }
         int[] grid = gridOf(tables.get(0));
+        String properties = propertiesOf(tables.get(0));
+        if (java.util.Arrays.stream(grid).anyMatch(width -> width <= 0)) {
+            return false;
+        }
         for (CTTbl table : tables) {
             if (table.sizeOfTrArray() != 1 || !java.util.Arrays.equals(gridOf(table), grid)
-                || !plainCells(table.getTrArray(0), grid.length)) {
+                || !properties.equals(propertiesOf(table)) || !plainCells(table.getTrArray(0), grid.length)) {
                 return false;
             }
         }
@@ -158,8 +168,14 @@ final class DocxTimelineRails {
                 return false;
             }
             cut = offset - start;
-            if (cut == 0 && !empty(tables.get(0).getTrArray(0).getTcArray(column), plan.bars())) {
-                return false;
+            // The cell the rail stands on, in every entry: cut at its left edge it carries the border
+            // itself and must hold nothing; cut inside, it keeps its content in the part left of the
+            // rail, which a line of text would not keep where the page sets it.
+            for (CTTbl table : tables) {
+                CTTc cell = table.getTrArray(0).getTcArray(column);
+                if (cut == 0 ? !empty(cell, plan.bars()) : holdsText(cell)) {
+                    return false;
+                }
             }
         }
 
@@ -173,6 +189,10 @@ final class DocxTimelineRails {
         BigInteger eighths = BigInteger.valueOf(Math.max(2, Math.min(96, Math.round(plan.width() * 8))));
         for (int index = 0; index < tables.size(); index++) {
             CTRow row = (CTRow) tables.get(index).getTrArray(0).copy();
+            // An entry kept with what follows — every paragraph of its row kept with the next, as a
+            // timeline kept together keeps all but its last — keeps every row it becomes so.
+            boolean kept = everyParagraphKeptWithTheNext(row);
+            int from = rows.size();
             // An entry's row is one the page never breaks inside, as the row the layout placed it.
             // Its own table, of one row kept with the next, was let break for LibreOffice's sake
             // (letTheOneRowTablesKeptWithTheNextBreak); as a row among others it may not.
@@ -191,8 +211,18 @@ final class DocxTimelineRails {
                 border(row.getTcArray(rail), colour, eighths);
                 rows.add(row);
             }
+            if (kept) {
+                for (CTRow written : rows.subList(from, rows.size())) {
+                    keepEveryParagraphWithTheNext(written);
+                }
+            }
             if (!isLast) {
-                rows.add(gapRow(row, rail, gaps.get(index), colour, eighths));
+                CTRow gap = gapRow(row, rail, gaps.get(index).height(), colour, eighths);
+                // The gap paragraph it stands for kept with the next entry; so does the row.
+                if (gaps.get(index).kept()) {
+                    keepEveryParagraphWithTheNext(gap);
+                }
+                rows.add(gap);
             }
         }
 
@@ -287,6 +317,66 @@ final class DocxTimelineRails {
         return width == null ? -1 : width;
     }
 
+    /** Whether an on/off element is there and on: no value, or a value other than false, 0 or off. */
+    private static boolean on(Node element) {
+        if (element == null) {
+            return false;
+        }
+        String value = attribute(element, "val");
+        return value == null || !("false".equals(value) || "0".equals(value) || "off".equals(value));
+    }
+
+    /** The table's properties as written, to tell the entries' tables apart by. */
+    private static String propertiesOf(CTTbl table) {
+        return table.getTblPr() == null ? "" : table.getTblPr().xmlText();
+    }
+
+    /** Whether a cell holds a run of text, a field or a link — anything a reader reads. */
+    private static boolean holdsText(CTTc cell) {
+        Node node = cell.getDomNode();
+        return hasDescendant(node, "t") || hasDescendant(node, "fldSimple") || hasDescendant(node, "instrText")
+               || hasDescendant(node, "hyperlink") || cell.sizeOfTblArray() > 0;
+    }
+
+    private static boolean hasDescendant(Node node, String name) {
+        for (Node child = node.getFirstChild(); child != null; child = child.getNextSibling()) {
+            if (child.getNodeType() == Node.ELEMENT_NODE
+                && (name.equals(child.getLocalName()) && W.equals(child.getNamespaceURI())
+                    || hasDescendant(child, name))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether every paragraph a row's cells hold, directly, keeps with the next. */
+    private static boolean everyParagraphKeptWithTheNext(CTRow row) {
+        boolean any = false;
+        for (CTTc cell : row.getTcArray()) {
+            for (CTP paragraph : cell.getPArray()) {
+                Node properties = child(paragraph.getDomNode(), "pPr");
+                if (properties == null || !on(child(properties, "keepNext"))) {
+                    return false;
+                }
+                any = true;
+            }
+        }
+        return any;
+    }
+
+    /** Keeps every paragraph a row's cells hold, directly, with the next. */
+    private static void keepEveryParagraphWithTheNext(CTRow row) {
+        for (CTTc cell : row.getTcArray()) {
+            for (CTP paragraph : cell.getPArray()) {
+                org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr properties =
+                        paragraph.isSetPPr() ? paragraph.getPPr() : paragraph.addNewPPr();
+                if (!properties.isSetKeepNext()) {
+                    properties.addNewKeepNext();
+                }
+            }
+        }
+    }
+
     /** The nearest ancestor element of a WordprocessingML name, or null. */
     private static Node enclosing(Node node, String name) {
         for (Node up = node == null ? null : node.getParentNode(); up != null; up = up.getParentNode()) {
@@ -299,11 +389,18 @@ final class DocxTimelineRails {
     }
 
     /**
-     * The heights of the gaps between consecutive tables, in twips: each an empty paragraph of an exact
-     * height, or several, and nothing else; null where the tables are not that.
+     * A gap between two entries: its height in twips, and whether the paragraphs it was written as all
+     * kept with the next entry.
      */
-    private static List<Integer> gapsBetween(List<CTTbl> tables) {
-        List<Integer> gaps = new ArrayList<>();
+    private record Gap(int height, boolean kept) {
+    }
+
+    /**
+     * The gaps between consecutive tables: each an empty paragraph of an exact height, or several, and
+     * nothing else; null where the tables are not that.
+     */
+    private static List<Gap> gapsBetween(List<CTTbl> tables) {
+        List<Gap> gaps = new ArrayList<>();
         for (int index = 0; index + 1 < tables.size(); index++) {
             Node from = tables.get(index).getDomNode();
             Node to = tables.get(index + 1).getDomNode();
@@ -312,6 +409,7 @@ final class DocxTimelineRails {
             }
             int gap = 0;
             boolean any = false;
+            boolean kept = true;
             for (Node node = from.getNextSibling(); node != to; node = node.getNextSibling()) {
                 if (node == null) {
                     return null;
@@ -325,11 +423,13 @@ final class DocxTimelineRails {
                 }
                 gap += height;
                 any = true;
+                Node properties = child(node, "pPr");
+                kept &= properties != null && on(child(properties, "keepNext"));
             }
             if (!any) {
                 return null;
             }
-            gaps.add(gap);
+            gaps.add(new Gap(gap, kept));
         }
         if (!tables.isEmpty() && tables.get(0).getDomNode().getParentNode() == null) {
             return null;
@@ -411,6 +511,10 @@ final class DocxTimelineRails {
             if (properties == null || properties.isSetGridSpan() || properties.isSetVMerge()
                 || properties.isSetHMerge() || properties.getTcW() == null
                 || properties.getTcW().getType() != STTblWidth.DXA) {
+                return false;
+            }
+            Long width = twipsOf(properties.getTcW().getW());
+            if (width == null || width <= 0) {
                 return false;
             }
         }

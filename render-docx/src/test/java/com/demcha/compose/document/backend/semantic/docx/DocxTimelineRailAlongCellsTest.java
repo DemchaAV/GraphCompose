@@ -180,8 +180,8 @@ class DocxTimelineRailAlongCellsTest {
             BigInteger lower = (BigInteger) table.getRow(1).getCtRow().getTrPr().getTrHeightArray(0).getVal();
             assertThat(table.getRow(1).getCtRow().getTrPr().getTrHeightArray(0).getHRule())
                     .isEqualTo(STHeightRule.AT_LEAST);
-            assertThat(upper + lower.intValue()).as("the two hold the marker's 30pt between them")
-                    .isGreaterThanOrEqualTo(twips(30) - 2);
+            assertThat(upper + lower.intValue()).as("the two hold the marker's 30pt between them, no more")
+                    .isCloseTo(twips(30), org.assertj.core.data.Offset.offset(2));
         }
     }
 
@@ -205,6 +205,111 @@ class DocxTimelineRailAlongCellsTest {
             for (XWPFTableRow row : table.getRows()) {
                 assertThat(row.isCantSplitRow()).as("a row the page never breaks inside").isTrue();
             }
+            // Every entry but the last, and every gap, kept with what follows, as the paragraphs
+            // they were written as were: the timeline stays on one page in Word.
+            List<XWPFTableRow> rows = table.getRows();
+            for (XWPFTableRow row : rows.subList(0, rows.size() - 1)) {
+                assertThat(keptWithTheNext(row)).as("kept with the next row").containsOnly(true);
+            }
+        }
+    }
+
+    @Test
+    void aSeeThroughRailKeepsItsDrawnRail() throws Exception {
+        // A border has no translucency: written as one, a rail drawn at 40% would show solid.
+        try (DocumentSession session = timelineOfColour(DocumentColor.rgba(0xC0, 0x30, 0x30, 102))) {
+            DocxLayoutMetrics layout = DocxLayoutMetrics.of(session.documentGraph(), session.layoutGraph());
+            assertThat(layout.railedTimelines()).hasSize(1);
+            AtomicReference<DocxExportReport> report = new AtomicReference<>();
+            byte[] docx = session.export(new DocxSemanticBackend(report::set));
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+                assertThat(document.getTables()).as("an entry a table").hasSize(3);
+            }
+            assertThat(report.get().notes()).anyMatch(note -> note.subject().equals("timeline rail"));
+        }
+    }
+
+    @Test
+    void aMarkerOfTextTheRailWouldCutKeepsTheDrawnRail() throws Exception {
+        // A numbered marker's figure stands in the column the rail cuts: kept in the part left of
+        // the rail, it would no longer stand where the page sets it.
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(30))
+                .create()) {
+            session.pageFlow(flow -> flow.addTimeline(t -> {
+                t.markerOnRail().connector(RAIL, 1.5);
+                for (int index = 1; index <= 3; index++) {
+                    int n = index;
+                    t.entry(TimelineMarker.numbered(n, 16, DOT, DocumentColor.WHITE),
+                            e -> e.content(section -> section.addParagraph("Role " + n)));
+                }
+            }));
+            AtomicReference<DocxExportReport> report = new AtomicReference<>();
+            byte[] docx = session.export(new DocxSemanticBackend(report::set));
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+                assertThat(document.getDocument().xmlText()).contains(RAIL_HEX + "\"/></a:solidFill>");
+            }
+            assertThat(report.get().notes()).anyMatch(note -> note.subject().equals("timeline rail"));
+        }
+    }
+
+    @Test
+    void aTimelineInAnotherOnesBodyIsWrittenAlongItsCellsTheOuterOneDrawn() throws Exception {
+        // A row cannot stand in a row, so a timeline is set in another one's entry only below its row,
+        // which keeps the outer rail drawn; the inner timeline, its entries rows alone, is written
+        // along its cells all the same.
+        DocumentColor inner = DocumentColor.rgb(0x30, 0x80, 0x30);
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(30))
+                .create()) {
+            session.pageFlow(flow -> flow.addTimeline(outer -> {
+                outer.markerOnRail().connector(RAIL, 1.5);
+                outer.entry(TimelineMarker.dot(8, DOT), e -> e.title("Role 1").add(below -> below
+                        .addTimeline(nested -> {
+                            nested.markerOnRail().connector(inner, 1);
+                            for (int index = 1; index <= 2; index++) {
+                                int n = index;
+                                nested.entry(TimelineMarker.dot(6, DOT),
+                                        step -> step.content(s -> s.addParagraph("Step " + n)));
+                            }
+                        })));
+                outer.entry(TimelineMarker.dot(8, DOT), e -> e.title("Role 2"));
+            }));
+            DocxLayoutMetrics layout = DocxLayoutMetrics.of(session.documentGraph(), session.layoutGraph());
+            assertThat(layout.railedTimelines()).as("the inner one alone").hasSize(1);
+            AtomicReference<DocxExportReport> report = new AtomicReference<>();
+            byte[] docx = session.export(new DocxSemanticBackend(report::set));
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+                String xml = document.getDocument().xmlText();
+                assertThat(xml).as("the outer rail drawn").contains(RAIL_HEX + "\"/></a:solidFill>");
+                assertThat(xml).as("the inner rail a border").doesNotContain("308030\"/></a:solidFill>")
+                        .contains("w:color=\"308030\"");
+            }
+            assertThat(report.get().notes()).filteredOn(note -> note.subject().equals("timeline rail")
+                    && note.detail().startsWith("drawn as a filled bar")).hasSize(1);
+        }
+    }
+
+    @Test
+    void twoRailsLeftDrawnInOneSectionAreNamedOnce() throws Exception {
+        // Both rails stand beside the markers of a timeline in a card, so both are left drawn at the
+        // end of the export; sharing the pass's path, they are named once, as drawn rails always were.
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(30))
+                .create()) {
+            session.pageFlow(flow -> {
+                for (String name : List.of("First", "Second")) {
+                    flow.addSection(name, card -> card.fillColor(DocumentColor.rgb(238, 243, 249))
+                            .addTimeline(t -> {
+                                t.connector(RAIL, 1.5);
+                                for (int index = 1; index <= 2; index++) {
+                                    int n = index;
+                                    t.entry(TimelineMarker.dot(8, DOT), e -> e.title("Role " + n).meta("2020"));
+                                }
+                            }));
+                }
+            });
+            AtomicReference<DocxExportReport> report = new AtomicReference<>();
+            session.export(new DocxSemanticBackend(report::set));
+            assertThat(report.get().notes()).filteredOn(note -> note.subject().equals("timeline rail")
+                    && note.detail().startsWith("drawn as a filled bar")).hasSize(1);
         }
     }
 
@@ -280,6 +385,26 @@ class DocxTimelineRailAlongCellsTest {
     }
 
     @Test
+    void entriesWrittenAsTablesOfDifferentPropertiesAreLeftAsTheyWere() throws Exception {
+        // The merged rows would take the first table's indent and margins, and the second entry
+        // would no longer stand where it was written.
+        try (XWPFDocument document = new XWPFDocument()) {
+            XWPFTable upper = entryTable(document);
+            gapParagraph(document);
+            XWPFTable lower = entryTable(document);
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblWidth indent =
+                    lower.getCTTbl().getTblPr().addNewTblInd();
+            indent.setType(org.openxmlformats.schemas.wordprocessingml.x2006.main.STTblWidth.DXA);
+            indent.setW(BigInteger.valueOf(240));
+            CTDrawing bar = barInFirstCell(upper);
+            String before = document.getDocument().xmlText();
+
+            assertThat(DocxTimelineRails.apply(plan(upper, lower, 0, 0, bar))).isFalse();
+            assertThat(document.getDocument().xmlText()).isEqualTo(before);
+        }
+    }
+
+    @Test
     void aRailEndingOnAnotherPageThanItsLastEntryLeavesTheTimelineAsItWas() throws Exception {
         try (XWPFDocument document = new XWPFDocument()) {
             XWPFTable upper = entryTable(document);
@@ -316,7 +441,7 @@ class DocxTimelineRailAlongCellsTest {
             DocxLayoutMetrics.RailedEntry entry = new DocxLayoutMetrics.RailedEntry(null, 0, 100, 500, 480);
             DocxLayoutMetrics.RailedEntry next = new DocxLayoutMetrics.RailedEntry(null, 0, 100, 470, 450);
             boolean written = DocxTimelineRails.apply(new DocxTimelineRails.Plan(List.of(upper, lower),
-                    List.of(entry, next), 105, 500, 0, 450, 0, Color.RED, 1, List.of(bar)));
+                    List.of(entry, next), 500, 0, 450, 0, Color.RED, 1, List.of(bar)));
 
             assertThat(written).isTrue();
             List<Integer> grid = new ArrayList<>();
@@ -341,7 +466,7 @@ class DocxTimelineRailAlongCellsTest {
             DocxLayoutMetrics.RailedEntry entry = new DocxLayoutMetrics.RailedEntry(null, 0, 100, 500, 480);
             DocxLayoutMetrics.RailedEntry next = new DocxLayoutMetrics.RailedEntry(null, 0, 100, 470, 450);
             boolean written = DocxTimelineRails.apply(new DocxTimelineRails.Plan(List.of(upper, lower),
-                    List.of(entry, next), 105, 500, 0, 450, 0, Color.RED, 1, List.of(bar)));
+                    List.of(entry, next), 500, 0, 450, 0, Color.RED, 1, List.of(bar)));
 
             assertThat(written).isFalse();
             assertThat(document.getDocument().xmlText()).isEqualTo(before);
@@ -388,6 +513,19 @@ class DocxTimelineRailAlongCellsTest {
         return session;
     }
 
+    /** Three content-only entries through their markers, the rail of a colour. */
+    private static DocumentSession timelineOfColour(DocumentColor colour) {
+        DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(30)).create();
+        session.pageFlow(flow -> flow.addTimeline(t -> {
+            t.markerOnRail().connector(colour, 1.5);
+            for (int index = 1; index <= 3; index++) {
+                int n = index;
+                t.entry(TimelineMarker.dot(8, DOT), e -> e.content(section -> section.addParagraph("Role " + n)));
+            }
+        }));
+        return session;
+    }
+
     /** An empty paragraph one exact line tall with space after it, as the export keeps two entries apart. */
     private static void gapParagraph(XWPFDocument document) {
         XWPFParagraph gap = document.createParagraph();
@@ -412,7 +550,7 @@ class DocxTimelineRailAlongCellsTest {
                                                CTDrawing bar) {
         DocxLayoutMetrics.RailedEntry entry = new DocxLayoutMetrics.RailedEntry(null, 0, 100, 500, 480);
         DocxLayoutMetrics.RailedEntry next = new DocxLayoutMetrics.RailedEntry(null, 0, 100, 470, 450);
-        return new DocxTimelineRails.Plan(List.of(upper, lower), List.of(entry, next), 105, 500, topPage, 450,
+        return new DocxTimelineRails.Plan(List.of(upper, lower), List.of(entry, next), 500, topPage, 450,
                 bottomPage, Color.RED, 1, List.of(bar));
     }
 

@@ -856,6 +856,30 @@ class DocxDrawingsTest {
     }
 
     @Test
+    void aBadgeOfAsManyCharactersAsTheLimitIsDrawnAndOneMoreIsWritten() throws Exception {
+        // The limit is a policy — initials are a mark, a word is content — so it is held where
+        // it falls, in a pill wide enough for either on one line.
+        String atTheLimit = "ABCDEFGH".substring(0, DocxSemanticBackend.BADGE_TEXT_LIMIT);
+        String pastIt = "ABCDEFGH".substring(0, DocxSemanticBackend.BADGE_TEXT_LIMIT + 1);
+        try (XWPFDocument drawn = export(null, session -> session.pageFlow(page -> page.add(pill(atTheLimit))));
+             XWPFDocument written = export(null, session -> session.pageFlow(page -> page.add(pill(pastIt))))) {
+            assertThat(anchors(drawn.getDocument().xmlText())).singleElement().asString()
+                    .as("%d characters, set in the shape", atTheLimit.length())
+                    .contains("<w:txbxContent>").contains(">" + atTheLimit + "</w:t>");
+            assertThat(written.getDocument().xmlText())
+                    .as("%d characters, a paragraph of the flow", pastIt.length())
+                    .doesNotContain("txbxContent");
+            assertThat(allText(written)).contains(pastIt);
+        }
+    }
+
+    private static com.demcha.compose.document.node.DocumentNode pill(String text) {
+        return new ShapeContainerBuilder().name("Pill").roundedRect(120, 24, 12).fillColor(ACCENT)
+                .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text(text).build())
+                .build();
+    }
+
+    @Test
     void aLaterSectionOpeningWithATableGetsItsBodyParagraphBeforeThatTable() throws Exception {
         DocumentSession first = GraphCompose.document().pageSize(400, 400).margin(DocumentInsets.of(20)).create();
         first.pageFlow(page -> page.addParagraph(p -> p.text("Cover")));

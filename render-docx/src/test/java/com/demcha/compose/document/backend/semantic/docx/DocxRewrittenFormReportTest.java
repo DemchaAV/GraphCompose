@@ -249,6 +249,44 @@ class DocxRewrittenFormReportTest {
     }
 
     @Test
+    void threeCaptionsOnOneLineAreNamedAsTheLineTheyShare() throws Exception {
+        Consumer<PageFlowBuilder> content = page -> page.add(new ShapeContainerBuilder().name("Head")
+                .rectangle(360, 14).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(new ParagraphBuilder().name("Title").text("Engineer")
+                        .align(TextAlign.LEFT).build(), 0, 0, LayerAlign.CENTER_LEFT)
+                .position(new ParagraphBuilder().name("Place").text("London")
+                        .align(TextAlign.CENTER).build(), 0, 0, LayerAlign.CENTER)
+                .position(new ParagraphBuilder().name("Dates").text("2019 - 2023")
+                        .align(TextAlign.RIGHT).build(), 0, 0, LayerAlign.CENTER_RIGHT)
+                .build());
+        DocxExportReport report = reportOf(content);
+
+        assertThat(detailOf(report, "ShapeContainerNode"))
+                .isEqualTo("written as one line that 3 paragraphs share, each one after the first set "
+                           + "where the page sets it, at a tab holding its start, its middle or its end, "
+                           + "and whatever else the layers hold drawn where the page draws it");
+        assertThat(pathOf(report, "ShapeContainerNode")).isEqualTo("ContainerNode[0]/Head[0]");
+    }
+
+    @Test
+    void threeCaptionsOneOfWhichWrapsAreNamedAsTheBandTheyAreWrittenAs() throws Exception {
+        // A paragraph the page sets over two lines is no part of one line: the stack is written
+        // as before, and named as the form it is written in.
+        Consumer<PageFlowBuilder> content = page -> page.addLayerStack(stack -> stack.name("Head")
+                .layer(new ParagraphBuilder().name("Title").text("Engineer").align(TextAlign.LEFT).build(),
+                        LayerAlign.TOP_LEFT)
+                .layer(new ParagraphBuilder().name("Place").text("A place in the middle that runs onto a second line")
+                        .align(TextAlign.CENTER).padding(new DocumentInsets(0, 130, 0, 130)).build(),
+                        LayerAlign.TOP_CENTER)
+                .layer(new ParagraphBuilder().name("Dates").text("2019 - 2023").align(TextAlign.RIGHT).build(),
+                        LayerAlign.TOP_RIGHT));
+        DocxExportReport report = reportOf(content);
+
+        assertThat(detailOf(report, "LayerStackNode"))
+                .startsWith("written as a band of its layers: what they write goes one after another");
+    }
+
+    @Test
     void aBoxOfNothingButDrawingIsNamedAsDrawingAlone() throws Exception {
         DocxExportReport report = reportOf(page -> page
                 .addLayerStack(stack -> stack.name("Ornament")

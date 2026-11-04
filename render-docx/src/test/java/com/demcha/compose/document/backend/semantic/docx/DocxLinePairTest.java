@@ -449,19 +449,132 @@ class DocxLinePairTest {
     }
 
     @Test
-    void threeParagraphsInABandStayOneAfterTheOther() throws Exception {
-        try (XWPFDocument document = DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, page -> page
-                .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(12)))
-                .addContainer(head -> head
-                        .name("Band")
-                        .rectangle(CONTENT, 20)
-                        .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
-                        .position(paragraph("Left", TextAlign.LEFT), 0, 0, LayerAlign.CENTER_LEFT)
-                        .position(paragraph("Middle", TextAlign.CENTER), 0, 0, LayerAlign.CENTER)
-                        .position(paragraph("Right", TextAlign.RIGHT), 0, 0, LayerAlign.CENTER_RIGHT)))) {
+    void threeParagraphsInABandAreOneLineWithATabEach() throws Exception {
+        // A title at the left, a place in the middle, dates at the right: one line on the page,
+        // and three lines in Word and four in LibreOffice when written one after the other.
+        try (XWPFDocument document = export(threeCaptions("Middle", TextAlign.CENTER, LayerAlign.CENTER))) {
+            List<XWPFParagraph> paragraphs = written(document);
+
+            assertThat(paragraphs).hasSize(1);
+            assertThat(paragraphs.get(0).getText()).isEqualTo("Left\tMiddle\tRight");
+            CTPPr properties = paragraphs.get(0).getCTP().getPPr();
+            assertThat(properties.getTabs().sizeOfTabArray()).isEqualTo(2);
+            assertThat(properties.getTabs().getTabArray(0).getVal().toString())
+                    .as("the middle caption held by its middle").isEqualTo("center");
+            assertThat(DocxTwips.of(properties.getTabs().getTabArray(0).getPos()))
+                    .as("at the band's middle, where the page centres it")
+                    .isCloseTo(Math.round(CONTENT / 2 * 20), org.assertj.core.data.Offset.offset(2L));
+            assertThat(properties.getTabs().getTabArray(1).getVal().toString())
+                    .as("the last caption held by its end").isEqualTo("right");
+            assertThat(DocxTwips.of(properties.getTabs().getTabArray(1).getPos()))
+                    .isCloseTo(Math.round(CONTENT * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
+    void aCaptionBetweenTheFirstAndTheLastIsHeldAsItIsAligned() throws Exception {
+        // Set from a column across the band, a left-aligned caption holds its start; a
+        // right-aligned one its end, where an editor's narrower setting of it would move its start.
+        double place = widthOf("Left") + 80;
+        try (XWPFDocument fromItsStart = export(threeCaptions("Middle", TextAlign.LEFT, LayerAlign.CENTER_LEFT, place));
+             XWPFDocument fromItsEnd = export(threeCaptions("Middle", TextAlign.RIGHT, LayerAlign.CENTER_RIGHT,
+                     -(CONTENT - place - widthOf("Middle"))))) {
+            CTPPr start = written(fromItsStart).get(0).getCTP().getPPr();
+            CTPPr end = written(fromItsEnd).get(0).getCTP().getPPr();
+
+            assertThat(start.getTabs().getTabArray(0).getVal().toString()).isEqualTo("left");
+            assertThat(DocxTwips.of(start.getTabs().getTabArray(0).getPos()))
+                    .as("where the caption starts on the page")
+                    .isCloseTo(Math.round(place * 20), org.assertj.core.data.Offset.offset(2L));
+            assertThat(end.getTabs().getTabArray(0).getVal().toString()).isEqualTo("right");
+            assertThat(DocxTwips.of(end.getTabs().getTabArray(0).getPos()))
+                    .as("where the caption ends on the page")
+                    .isCloseTo(Math.round((place + widthOf("Middle")) * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
+    void aLeftAlignedCaptionACentredLayerSetsIsHeldByItsMiddle() throws Exception {
+        // The layout shrinks a left-aligned paragraph's box to its text, and the layer centres the
+        // box: the page centres the text, and a left stop at its start would let an editor's wider
+        // setting of it run off to the right only.
+        try (XWPFDocument document = export(threeCaptions("Middle", TextAlign.LEFT, LayerAlign.CENTER))) {
+            CTPPr properties = written(document).get(0).getCTP().getPPr();
+
+            assertThat(properties.getTabs().getTabArray(0).getVal().toString()).isEqualTo("center");
+            assertThat(DocxTwips.of(properties.getTabs().getTabArray(0).getPos()))
+                    .as("at the band's middle, where the layer centres it")
+                    .isCloseTo(Math.round(CONTENT / 2 * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
+    void theLineTakesTheHeadingOfACaptionPastTheFirst() throws Exception {
+        // A Word paragraph has one outline level: the first caption along the line that has one
+        // gives it, the middle one here.
+        DocumentNode band = new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("Band")
+                .rectangle(CONTENT, 20)
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(paragraph("Left", TextAlign.LEFT), 0, 0, LayerAlign.CENTER_LEFT)
+                .position(new ParagraphBuilder().text("Middle").align(TextAlign.CENTER)
+                        .bookmark(new com.demcha.compose.document.node.DocumentBookmarkOptions("Middle", 0))
+                        .textStyle(DocumentTextStyle.DEFAULT.withSize(9)).build(), 0, 0, LayerAlign.CENTER)
+                .position(paragraph("Right", TextAlign.RIGHT), 0, 0, LayerAlign.CENTER_RIGHT)
+                .build();
+        try (XWPFDocument document = export(band)) {
+            XWPFParagraph line = written(document).get(0);
+
+            assertThat(line.getText()).isEqualTo("Left\tMiddle\tRight");
+            assertThat(line.getStyleID()).as("the middle caption's outline level").isEqualTo("Heading1");
+        }
+    }
+
+    @Test
+    void threeCaptionsTwoOfWhichNearlyMeetStayOneAfterTheOther() throws Exception {
+        // Each caption leaves the next the room an editor's wider setting may need, or none is
+        // set on the line: a middle caption 2pt short of the right one's start keeps all three apart.
+        double middle = CONTENT - widthOf("Right") - 2 - widthOf("Middle");
+        try (XWPFDocument document = export(threeCaptions("Middle", TextAlign.LEFT, LayerAlign.CENTER_LEFT, middle))) {
             assertThat(written(document)).extracting(XWPFParagraph::getText)
                     .containsExactly("Left", "Middle", "Right");
         }
+    }
+
+    @Test
+    void aCaptionTheBandSetsOverTwoLinesKeepsItsBandOneAfterTheOther() throws Exception {
+        // One line holds no paragraph the page wraps: a band of three whose middle caption runs
+        // onto a second line is written as before.
+        DocumentNode band = new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("Band")
+                .rectangle(CONTENT, 40)
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(paragraph("Left", TextAlign.LEFT), 0, 0, LayerAlign.TOP_LEFT)
+                .position(new ParagraphBuilder().text("A note in the middle that runs onto a second line")
+                        .align(TextAlign.CENTER).textStyle(DocumentTextStyle.DEFAULT.withSize(9))
+                        .padding(new DocumentInsets(0, 130, 0, 130)).build(), 0, 0, LayerAlign.TOP_CENTER)
+                .position(paragraph("Right", TextAlign.RIGHT), 0, 0, LayerAlign.TOP_RIGHT)
+                .build();
+        try (XWPFDocument document = export(band)) {
+            assertThat(written(document)).first().extracting(XWPFParagraph::getText).isEqualTo("Left");
+            assertThat(written(document)).noneMatch(paragraph -> paragraph.getText().contains("\t"));
+        }
+    }
+
+    /** A band of three 9pt captions, the middle one set by {@code align} in a layer at {@code layer}. */
+    private static DocumentNode threeCaptions(String middle, TextAlign align, LayerAlign layer) {
+        return threeCaptions(middle, align, layer, 0);
+    }
+
+    private static DocumentNode threeCaptions(String middle, TextAlign align, LayerAlign layer, double offset) {
+        return new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("Band")
+                .rectangle(CONTENT, 20)
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(paragraph("Left", TextAlign.LEFT), 0, 0, LayerAlign.CENTER_LEFT)
+                .position(paragraph(middle, align), offset, 0, layer)
+                .position(paragraph("Right", TextAlign.RIGHT), 0, 0, LayerAlign.CENTER_RIGHT)
+                .build();
     }
 
     @Test

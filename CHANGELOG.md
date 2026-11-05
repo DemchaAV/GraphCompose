@@ -10,13 +10,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 - **A DOCX export's embedded faces survive a save in LibreOffice.**
   - The export shipped the document's faces but did not ask for embedded fonts in its settings,
-    and LibreOffice saves a document's faces back only when asked. Measured with faces installed
-    nowhere on the machine, a save left every face behind. LibreOffice 26.8 reopened the document
+    and LibreOffice 24.2 and 26.8 save a document's faces back only when asked. Measured with
+    faces installed nowhere on the machine, a save left every face behind. LibreOffice 26.8 reopened the document
     in Liberation Serif, with Bodoni MT Black for the bold. LibreOffice 24.2 reopened it in DejaVu
     Sans, and the italic was lost.
   - A document that ships at least one face now states `w:embedTrueTypeFonts`, and its faces stay
-    through a save in both. Word 16 opened an export that did not ask with the request on all the
-    same, and kept the faces through a save. The export does not ask for subset fonts
+    through a save in both builds. Word 16 turned the request on by itself when it opened an
+    export without it, and kept the faces through a save. The export does not ask for subset fonts
     (`w:saveSubsetFonts`): with that request, Word 16 saved only the characters typed so far, and
     characters typed after a reopen were set in Cambria. A document that ships no face states
     nothing.

@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -111,8 +112,8 @@ class DocxFontTableTest {
     @Test
     void aDocumentThatShipsNoFaceAsksForNoneOnSave() throws Exception {
         // The request is for the faces the document carries. With it on, an editor's save embeds
-        // faces of its own as well, as Word 16 added its theme's Aptos to a document that shipped
-        // faces; asked for here, the document would start carrying faces it never shipped.
+        // faces of its own as well (Word 16 added Aptos to a document that shipped faces), which a
+        // document that shipped none would then carry.
         try (XWPFDocument document = export(page -> page.addParagraph("Set in Helvetica", face(FontName.HELVETICA)))) {
             assertThat(fontParts(document)).isEmpty();
             assertThat(DocxSettings.xmlOf(document)).doesNotContain("embedTrueTypeFonts");
@@ -133,8 +134,7 @@ class DocxFontTableTest {
         Path previewOnly = Files.write(folder.resolve("PreviewOnly.ttf"), font);
 
         byte[] docx;
-        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report =
-                new java.util.concurrent.atomic.AtomicReference<>();
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
         try (DocumentSession session = GraphCompose.document().pageSize(400, 600)
                 .margin(DocumentInsets.of(20))
                 .registerFontFamily("Preview Only", previewOnly).create()) {

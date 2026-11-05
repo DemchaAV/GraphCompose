@@ -629,7 +629,7 @@ class DocxValueFieldLedgerTest {
                 "sliceGapDegrees:REPORTED:in the chart's note: Word sets slices edge to edge",
                 "donutCenterTextStyle:WRITTEN:as the centre text's run");
         value(com.demcha.compose.document.chart.ChartStyle.GridStyle.class,
-                "horizontal:WRITTEN:as the value axis's grid lines",
+                "horizontal:WRITTEN:as the value axis's grid lines, the plot pinned to the rectangle they span",
                 "vertical:WRITTEN:as the category axis's grid lines");
         value(com.demcha.compose.document.chart.ChartSpec.Bar.class,
                 "data:WRITTEN:in the embedded workbook and the chart's own copy of it",
@@ -654,7 +654,8 @@ class DocxValueFieldLedgerTest {
                 "data:WRITTEN:in the embedded workbook and the chart's own copy of it; a zero, which the page "
                 + "draws no slice for, as no value",
                 "donutRatio:REPORTED:as the hole's size; one below Word's least, at the least, named",
-                "startAngleDegrees:WRITTEN:as the first slice's angle",
+                "startAngleDegrees:REPORTED:as the first slice's angle, to the nearest whole degree; a "
+                + "fraction of one, named",
                 "clockwise:REPORTED:counterclockwise, written clockwise and named",
                 "sliceLabels:REPORTED:as its constants' entries say",
                 "valueFormat:REPORTED:as the slice labels' number format, as its parts' entries say",
@@ -721,9 +722,10 @@ class DocxValueFieldLedgerTest {
                 "showTickLabels:WRITTEN:as the value axis's labels");
         value(com.demcha.compose.document.chart.LegendPosition.class,
                 "NONE:WRITTEN:as no legend",
-                "BOTTOM:WRITTEN:as the legend's side",
-                "RIGHT:WRITTEN:as the legend's side",
-                "TOP:WRITTEN:as the legend's side");
+                "BOTTOM:REPORTED:as the legend's side; its keys Word's own, named",
+                "RIGHT:REPORTED:as the legend's side; its keys Word's own, and beside a stack of columns listed from "
+                + "the top of the stack down, named",
+                "TOP:REPORTED:as the legend's side; its keys Word's own, named");
         value(com.demcha.compose.document.chart.ValueLabelMode.class,
                 "NONE:WRITTEN:as no labels",
                 "OUTSIDE:REPORTED:outside a bar's end or above a point; a stack's totals, named",
@@ -734,11 +736,14 @@ class DocxValueFieldLedgerTest {
                 "MONOTONE:REPORTED:as straight segments, named: Word's smoothing passes beyond the points");
         value(com.demcha.compose.document.chart.SliceLabelMode.class,
                 "NONE:WRITTEN:as no labels",
-                "VALUE:REPORTED:as each slice's value, outside a pie's slice; on a donut's ring, named",
-                "PERCENT:REPORTED:as each slice's share, outside a pie's slice; on a donut's ring, named",
-                "CATEGORY:REPORTED:as each slice's category, outside a pie's slice; on a donut's ring, named",
-                "CATEGORY_PERCENT:REPORTED:as each slice's category and share, outside a pie's slice; on a donut's "
-                + "ring, named");
+                "VALUE:REPORTED:as each slice's value, outside its slice; a donut's where the page sets it, nearer the "
+                + "hole in LibreOffice, named",
+                "PERCENT:REPORTED:as each slice's share, outside its slice; a donut's where the page sets it, nearer "
+                + "the hole in LibreOffice, named",
+                "CATEGORY:REPORTED:as each slice's category, outside its slice; a donut's where the page sets it, "
+                + "nearer the hole in LibreOffice, named",
+                "CATEGORY_PERCENT:REPORTED:as each slice's category and share, outside its slice; a donut's where "
+                + "the page sets it, nearer the hole in LibreOffice, named");
         value(com.demcha.compose.document.chart.NumberFormatSpec.class,
                 "pattern:REPORTED:as an Excel format code; where all its decimals are optional and the numbers "
                 + "shown are whole and fractional both, with fixed decimals, named; grouping other than by "

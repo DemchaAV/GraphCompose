@@ -99,7 +99,7 @@ pagination or backend limits behave when they apply.
 | [PDF chrome](recipes/pdf-chrome.md) | Metadata, watermarks, running header/footer with `{page}/{pages}/{date}`, protection, links and outline bookmarks |
 | [In-PDF navigation](recipes/in-pdf-navigation.md) | Named `anchor(...)` destinations + internal `linkTo(...)` links: clickable tables of contents, `#heading`-style jumps, bidirectional footnotes, inline-graphic links — native PDF GoTo actions |
 | [Translucency](recipes/translucency.md) | `DocumentColor.rgba` / `withOpacity`: which primitives honour alpha, byte-identity for opaque colours, layered tints |
-| [DOCX export](recipes/docx-export.md) | Semantic DOCX export: 1:1 node mapping, chart/shape-container fallbacks, skipped kinds |
+| [DOCX export](recipes/docx-export.md) | Semantic DOCX export: 1:1 node mapping, Word charts, shape-container fallbacks, skipped kinds |
 | [Snapshot testing](recipes/snapshot-testing.md) | Layout-snapshot regression testing in consumer projects, baseline update flow |
 | [Streaming and output](recipes/streaming.md) | `buildPdf` / `writePdf` / `toPdfBytes`, DOCX export, layout snapshots, header / footer chrome, guide lines |
 | [Extending GraphCompose](recipes/extending.md) | New semantic node, fluent setter, render backend, snapshot-based regression tests |

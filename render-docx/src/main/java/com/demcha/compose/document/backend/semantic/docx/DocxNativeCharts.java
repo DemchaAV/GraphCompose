@@ -108,18 +108,21 @@ final class DocxNativeCharts {
     /**
      * Writes {@code node} into {@code run} as a Word chart {@code width} by {@code height} points.
      *
-     * @param ring      where the page draws a pie's disc in the chart's box, as fractions of its width
-     *                  and height from its top left corner, or {@code null} where the layout gives none
-     * @param drawingId the drawing's id in the document, unique among its drawings
-     * @param family    the Word family a text style's font is written in, as the document's runs
-     * @param pinned    the instant the embedded workbook's clocks are set to ({@link #workbookOf})
+     * @param plot        where the page draws the chart's plot in its box — a pie's disc, the rectangle
+     *                    its value grid spans — as fractions of the box's width and height from its top
+     *                    left corner, or {@code null} where the layout gives none
+     * @param sliceLabels where the page centres each category's slice label, as fractions of the box,
+     *                    {@code null} for a category it labels nowhere; or {@code null} for none at all
+     * @param drawingId   the drawing's id in the document, unique among its drawings
+     * @param family      the Word family a text style's font is written in, as the document's runs
+     * @param pinned      the instant the embedded workbook's clocks are set to ({@link #workbookOf})
      * @return what the chart part does not carry, phrased for the chart's note; empty when nothing
      */
     static List<String> write(XWPFDocument document, XWPFRun run, ChartNode node, double width, double height,
-                              Rectangle2D ring, long drawingId, Function<FontName, String> family, Instant pinned)
-            throws IOException {
+                              Rectangle2D plot, List<java.awt.geom.Point2D> sliceLabels, long drawingId,
+                              Function<FontName, String> family, Instant pinned) throws IOException {
         ChartStyle style = ChartDefaults.DEFAULT_THEME.toChartStyle().mergedUnder(node.style());
-        Part part = new Part(style, family, width, height, ring);
+        Part part = new Part(style, family, width, height, plot, sliceLabels);
         String chartXml = part.chartSpace(node.spec());
 
         OPCPackage pack = document.getPackage();
@@ -189,8 +192,9 @@ final class DocxNativeCharts {
     /**
      * The workbook a reader edits the chart's numbers in: the categories down column A, a series a
      * column from B with its name at the head, as Word lays out a chart's data itself. Its clocks —
-     * its core properties and its entries' times — are set to {@code pinned}, so the workbook is
-     * the same bytes for the same numbers.
+     * its core properties and its entries' times — are set to {@code pinned} and its entries are
+     * stored ({@link #stored}), so the workbook is the same bytes for the same numbers on any
+     * machine.
      */
     static byte[] workbookOf(ChartData data, Instant pinned) throws IOException {
         Objects.requireNonNull(pinned, "pinned");
@@ -218,7 +222,36 @@ final class DocxNativeCharts {
             book.write(out);
             bytes = out.toByteArray();
         }
-        return DocxDeterminism.normalizeZipEntries(bytes, pinned);
+        return stored(bytes, pinned);
+    }
+
+    /**
+     * The workbook rewritten with every entry stored rather than deflated, its time pinned. A
+     * deflater's bytes differ from one zlib to another — the JDK on Linux takes the system's, on
+     * Windows its own — and the workbook is one part of the document, held in it as these bytes,
+     * so deflated it was a different part on each machine. Stored, it is the same everywhere.
+     */
+    private static byte[] stored(byte[] zip, Instant pinned) throws IOException {
+        java.time.LocalDateTime at = java.time.LocalDateTime.ofInstant(pinned, java.time.ZoneOffset.UTC);
+        ByteArrayOutputStream out = new ByteArrayOutputStream(zip.length * 4);
+        try (java.util.zip.ZipInputStream in = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(zip));
+             java.util.zip.ZipOutputStream rewritten = new java.util.zip.ZipOutputStream(out)) {
+            for (java.util.zip.ZipEntry entry; (entry = in.getNextEntry()) != null; ) {
+                byte[] data = in.readAllBytes();
+                java.util.zip.CRC32 crc = new java.util.zip.CRC32();
+                crc.update(data);
+                java.util.zip.ZipEntry copy = new java.util.zip.ZipEntry(entry.getName());
+                copy.setMethod(java.util.zip.ZipEntry.STORED);
+                copy.setSize(data.length);
+                copy.setCompressedSize(data.length);
+                copy.setCrc(crc.getValue());
+                copy.setTimeLocal(at);
+                rewritten.putNextEntry(copy);
+                rewritten.write(data);
+                rewritten.closeEntry();
+            }
+        }
+        return out.toByteArray();
     }
 
     /** One chart part being written. */
@@ -227,19 +260,22 @@ final class DocxNativeCharts {
         private final Function<FontName, String> family;
         private final double width;
         private final double height;
-        private final Rectangle2D ring;
+        private final Rectangle2D plot;
+        private final List<java.awt.geom.Point2D> sliceLabelsAt;
         // Once each: an axis and every labelled series may lose the same thing to one format.
         private final java.util.Set<String> lost = new java.util.LinkedHashSet<>();
         private final StringBuilder xml = new StringBuilder(4096);
         /** The chart's own drawing part, a donut's centre text, or {@code null} when it has none. */
         private String shapes;
 
-        Part(ChartStyle style, Function<FontName, String> family, double width, double height, Rectangle2D ring) {
+        Part(ChartStyle style, Function<FontName, String> family, double width, double height, Rectangle2D plot,
+             List<java.awt.geom.Point2D> sliceLabelsAt) {
             this.style = style;
             this.family = family;
             this.width = width;
             this.height = height;
-            this.ring = ring;
+            this.plot = plot;
+            this.sliceLabelsAt = sliceLabelsAt;
         }
 
         String chartSpace(ChartSpec spec) {
@@ -250,14 +286,21 @@ final class DocxNativeCharts {
                     .append("<c:date1904 val=\"0\"/><c:lang val=\"en-US\"/><c:roundedCorners val=\"0\"/>")
                     // No title: Word otherwise titles a chart of one series with the series' name.
                     .append("<c:chart><c:autoTitleDeleted val=\"1\"/><c:plotArea>");
-            if (spec instanceof ChartSpec.Pie && ring != null) {
-                // A pie's disc stands where the page draws it, so a text set over its hole meets it.
+            if (plot != null) {
+                // The plot stands where the page draws it: left to itself, Word's was 16pt shorter
+                // than the page's on a 483pt bar chart, and a text set over a donut's hole meets it.
                 xml.append("<c:layout><c:manualLayout><c:layoutTarget val=\"inner\"/><c:xMode val=\"edge\"/>")
-                        .append("<c:yMode val=\"edge\"/><c:x val=\"").append(fraction(ring.getX()))
-                        .append("\"/><c:y val=\"").append(fraction(ring.getY()))
-                        .append("\"/><c:w val=\"").append(fraction(ring.getWidth()))
-                        .append("\"/><c:h val=\"").append(fraction(ring.getHeight()))
+                        .append("<c:yMode val=\"edge\"/><c:x val=\"").append(fraction(plot.getX()))
+                        .append("\"/><c:y val=\"").append(fraction(plot.getY()))
+                        .append("\"/><c:w val=\"").append(fraction(plot.getWidth()))
+                        .append("\"/><c:h val=\"").append(fraction(plot.getHeight()))
                         .append("\"/></c:manualLayout></c:layout>");
+                if (!(spec instanceof ChartSpec.Pie)) {
+                    // Measured: where the page leaves its axes' labels less room than Word wants, Word
+                    // takes it from the plot — 4.4pt at the left and 3.9pt at the foot of a 483pt chart.
+                    lost.add("Word keeps room for the axes' labels inside the chart's box, so its plot can stand a "
+                             + "few points short of the page's where the page leaves them less");
+                }
             } else {
                 xml.append("<c:layout/>");
             }
@@ -440,6 +483,9 @@ final class DocxNativeCharts {
             if (!pie.clockwise()) {
                 lost.add("its slices are written clockwise: Word draws a pie only that way");
             }
+            if (pie.startAngleDegrees() != Math.rint(pie.startAngleDegrees())) {
+                lost.add("its first slice starts at the nearest whole degree: Word takes no fraction of one");
+            }
             if (pie.centerText() != null) {
                 centreText(pie);
             }
@@ -457,10 +503,10 @@ final class DocxNativeCharts {
             double centreX = 0.5;
             double centreY = 0.5;
             double holeWide = pie.donutRatio() * Math.min(width, height) / width;
-            if (ring != null) {
-                centreX = ring.getCenterX();
-                centreY = ring.getCenterY();
-                holeWide = pie.donutRatio() * ring.getWidth();
+            if (plot != null) {
+                centreX = plot.getCenterX();
+                centreY = plot.getCenterY();
+                holeWide = pie.donutRatio() * plot.getWidth();
             } else {
                 lost.add("the layout gives no place of its disc here — composed in a table cell, or with no "
                          + "layout behind the export — so the text in its hole is set in the middle of its box, "
@@ -500,25 +546,67 @@ final class DocxNativeCharts {
             double[] shares = java.util.Arrays.stream(values).map(v -> v / total * 100).toArray();
             String code = percent ? percentCode(pie.percentFormat(), shares)
                     : value ? excelCode(pie.valueFormat(), values) : null;
-            xml.append("<c:dLbls>");
+            StringBuilder settings = new StringBuilder();
             if (code != null) {
-                xml.append("<c:numFmt formatCode=\"").append(escaped(code)).append("\" sourceLinked=\"0\"/>");
+                settings.append("<c:numFmt formatCode=\"").append(escaped(code)).append("\" sourceLinked=\"0\"/>");
             }
-            xml.append(labelChip()).append(textBody(style.valueLabelTextStyle()));
+            settings.append(labelChip()).append(textBody(style.valueLabelTextStyle()));
             if (!donut) {
-                xml.append("<c:dLblPos val=\"outEnd\"/>");
+                settings.append("<c:dLblPos val=\"outEnd\"/>");
             }
-            xml.append("<c:showLegendKey val=\"0\"/><c:showVal val=\"").append(value ? 1 : 0).append("\"/>")
+            settings.append("<c:showLegendKey val=\"0\"/><c:showVal val=\"").append(value ? 1 : 0).append("\"/>")
                     .append("<c:showCatName val=\"").append(category ? 1 : 0).append("\"/>")
                     .append("<c:showSerName val=\"0\"/><c:showPercent val=\"").append(percent ? 1 : 0).append("\"/>")
                     .append("<c:showBubbleSize val=\"0\"/>");
             if (category && percent) {
-                xml.append("<c:separator> </c:separator>");
+                settings.append("<c:separator> </c:separator>");
             }
-            xml.append("<c:showLeaderLines val=\"0\"/></c:dLbls>");
-            if (donut) {
-                lost.add("its slice labels are written on the ring: Word sets a donut's labels on its slices, not "
-                         + "outside them");
+            xml.append("<c:dLbls>");
+            boolean placed = donut && plot != null && sliceLabelsAt != null;
+            if (placed) {
+                placeDonutLabels(pie, settings.toString());
+                lost.add("LibreOffice sets its slice labels nearer the hole than the page does: about 11pt on a "
+                         + "donut 450pt across");
+            } else if (donut) {
+                lost.add("its slice labels are written on the ring, where Word sets a donut's: the layout gives no "
+                         + "place of them here");
+            }
+            xml.append(settings).append("<c:showLeaderLines val=\"0\"/></c:dLbls>");
+        }
+
+        /**
+         * A donut's slice labels where the page sets them, outside its ring. Word has no such position
+         * for a donut and sets each label at its slice's middle, half way between the hole and the rim,
+         * and a label laid out by hand is moved from there: measured, Word then sets each where the
+         * page does.
+         */
+        private void placeDonutLabels(ChartSpec.Pie pie, String settings) {
+            List<Double> values = pie.data().series().get(0).values();
+            double total = values.stream().filter(v -> v != null && v > 0).mapToDouble(Double::doubleValue).sum();
+            double centreX = plot.getCenterX() * width;
+            double centreY = plot.getCenterY() * height;
+            double rim = plot.getWidth() * width / 2;
+            double hole = rim * Math.max(LEAST_HOLE, Math.min(LARGEST_HOLE, Math.round(pie.donutRatio() * 100))) / 100.0;
+            double middle = (rim + hole) / 2;
+            double before = 0;
+            for (int c = 0; c < values.size() && c < sliceLabelsAt.size(); c++) {
+                Double v = values.get(c);
+                if (v == null || v <= 0) {
+                    continue;
+                }
+                // Word turns clockwise from twelve o'clock, from the first slice's angle.
+                double angle = Math.toRadians(firstSliceAngle(pie) + (before + v / 2) / total * 360);
+                before += v;
+                java.awt.geom.Point2D at = sliceLabelsAt.get(c);
+                if (at == null) {
+                    continue;
+                }
+                double wordX = centreX + middle * Math.sin(angle);
+                double wordY = centreY - middle * Math.cos(angle);
+                xml.append("<c:dLbl><c:idx val=\"").append(c).append("\"/><c:layout><c:manualLayout><c:x val=\"")
+                        .append(fraction(at.getX() - wordX / width)).append("\"/><c:y val=\"")
+                        .append(fraction(at.getY() - wordY / height)).append("\"/></c:manualLayout></c:layout>")
+                        .append(settings).append("</c:dLbl>");
             }
         }
 
@@ -627,6 +715,16 @@ final class DocxNativeCharts {
             if (spec.legend() == LegendPosition.NONE) {
                 return;
             }
+            // Measured: Word draws a 4.5pt key, LibreOffice 5.4pt, beside the page's 9pt swatch, and a
+            // line series' key as a stroke through its marker. A chart part has no setting for either.
+            lost.add("its legend's keys are Word's own, about half the page's square swatch"
+                     + (spec instanceof ChartSpec.Line ? ", and a line's is its stroke through a marker" : ""));
+            if (spec instanceof ChartSpec.Bar bar && bar.grouping() == BarGrouping.STACKED && !bar.horizontal()
+                && spec.legend() == LegendPosition.RIGHT) {
+                // Measured in both editors: a legend beside a stack of columns lists it from the top down.
+                lost.add("its legend beside the stack lists the series from the top of the stack down, the last "
+                         + "first: Word and LibreOffice list a stack of columns so");
+            }
             String side = switch (spec.legend()) {
                 case TOP -> "t";
                 case RIGHT -> "r";
@@ -728,9 +826,13 @@ final class DocxNativeCharts {
             if (least > 0) {
                 code = whole + "." + fraction;
             } else if (!fraction.isEmpty()) {
-                int needed = decimalsNeeded(shown, fraction.length());
-                boolean someWhole = java.util.Arrays.stream(shown).anyMatch(v -> decimalsNeeded(new double[]{v}, 1) == 0);
-                boolean someNot = java.util.Arrays.stream(shown).anyMatch(v -> decimalsNeeded(new double[]{v}, 1) > 0);
+                // As the page shows them: rounded to the pattern's decimals, half to even as
+                // DecimalFormat rounds. A share of 10.04 under "#,##0.#" is a whole "10" there.
+                double[] rounded = java.util.Arrays.stream(shown).map(v -> java.math.BigDecimal.valueOf(v)
+                        .setScale(fraction.length(), java.math.RoundingMode.HALF_EVEN).doubleValue()).toArray();
+                int needed = decimalsNeeded(rounded, fraction.length());
+                boolean someWhole = java.util.Arrays.stream(rounded).anyMatch(v -> v == Math.rint(v));
+                boolean someNot = java.util.Arrays.stream(rounded).anyMatch(v -> v != Math.rint(v));
                 if (someWhole && someNot) {
                     code = whole + "." + "0".repeat(needed);
                     lost.add("its numbers are shown with " + needed + (needed == 1 ? " decimal" : " decimals")
@@ -751,8 +853,10 @@ final class DocxNativeCharts {
             }
             NumberFormatSpec bare = new NumberFormatSpec(format.pattern(), format.locale(), format.prefix(),
                     "", format.scaleDivisor());
+            // A pattern Excel cannot hold is named by excelCode, and no code is written: Word shows the
+            // shares as it would any.
             String code = excelCode(bare, shares);
-            return code == null ? "0%" : code + "%" + quoted(suffix.substring(1));
+            return code == null ? null : code + "%" + quoted(suffix.substring(1));
         }
     }
 

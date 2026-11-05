@@ -159,7 +159,10 @@ class DocxChartInACellTest {
 
     @Test
     void aChartInTheFlowOrWithNoLayoutIsAWordChart() throws Exception {
-        assertThat(details(laidOut(page -> page.add(new ChartNode(BARS))), "chart")).containsExactly(WORD_CHART);
+        // In the flow the layout places it, and its plot stands where the page draws it.
+        assertThat(details(laidOut(page -> page.add(new ChartNode(BARS))), "chart")).singleElement().asString()
+                .startsWith("written as a Word chart, its numbers in the workbook embedded with it; Word lays the "
+                            + "chart out in its box itself round its plot area, which stands where the page draws it");
         Consumer<PageFlowBuilder> besideADisc = beside(new SectionBuilder()
                 .add(new EllipseBuilder().circle(12).fillColor(DocumentColor.BLACK).build())
                 .add(new ChartNode(BARS)).build());

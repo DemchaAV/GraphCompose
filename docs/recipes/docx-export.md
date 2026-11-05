@@ -1139,13 +1139,21 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
     its number format, its grid lines and tick labels, the legend's side, and the axis, legend
     and label text styles.
 
-  Measured in Word 16 and LibreOffice 24.2 against the PDF on every kind: the text after a
-  chart stands within 0.1pt of where the page puts it, and a chart the page moves to the next
-  page moves there in both. Word lays the chart out in its box itself, so its labels and legend
-  stand where Word puts them, and the chart's report note says so. A pie's disc is pinned where
-  the page draws it, and a donut's centre text is a text box of the chart's own over its hole —
-  within 0.4pt of the hole's centre in Word and 0.1pt in LibreOffice. The note also names what
-  Word's chart has no setting for:
+  Measured in Word 16 and LibreOffice 24.2 against the PDF on one chart of each kind: the text
+  after a chart stands within 0.1pt of where the page puts it, and a chart the page moves to the
+  next page moves there in both. Where a paragraph near a page's foot leaves one line on the
+  next page, Word carries a second with it: the export writes no widow control.
+
+  The chart's plot is pinned where the page draws it — a pie's disc, the rectangle a bar or line
+  chart's value grid spans — so its grid lines stand where the page's do in both editors; left
+  to itself, Word set a 483pt bar chart's plot 16pt shorter. Where the page leaves the axes'
+  labels less room than Word wants, Word takes a few points from the plot (4.4pt and 3.9pt
+  measured). A donut's slice labels are laid out by hand where the page sets them, outside its
+  ring, and Word sets them there; LibreOffice sets them about 11pt nearer the hole. A donut's
+  centre text is a text box of the chart's own over its hole — within 0.4pt of the hole's centre
+  in Word and 0.1pt in LibreOffice. Word lays the rest of the chart out itself — its legend, its
+  axes' labels — and the chart's report note says so. The note also names what Word's chart has
+  no setting for:
   - a monotone curve is written as straight segments between its points: Word's and
     LibreOffice's smoothing passes beyond the points (below a point's value, measured in both),
     which a monotone curve is chosen not to do;
@@ -1155,8 +1163,11 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
     fills down to the axis;
   - a stacked bar chart's totals, rounded bar corners, a gradient series paint (written as its
     first colour), bars so many that the gap between their groups passes the widest Word takes, a
-    gap between slices, a counterclockwise pie (written clockwise), a donut's slice labels (set on
-    its ring) and point markers that are not round;
+    gap between slices, a counterclockwise pie (written clockwise) and point markers that are not
+    round;
+  - Word's legend keys, about half the page's square swatch, a line series' a stroke through a
+    marker; and a legend beside a stack of columns, which Word and LibreOffice list from the top of
+    the stack down;
   - a number format with a divisor, separators other than `.` and `,`, grouping other than by
     thousands, or more than digits, grouping and decimals. An Excel format code's optional
     decimals (`#`) show as the page's do, but where no decimal must show, Excel keeps a whole
@@ -2121,5 +2132,5 @@ The rule of thumb: if the document leans on geometry — shapes, layered
 designs, precise placement — export PDF for the reader and DOCX only as
 an editable companion.
 
-Round-trip coverage (paragraphs, tables, metadata, chart fallback) lives in
+Round-trip coverage (paragraphs, tables, metadata, a Word chart and its workbook) lives in
 [`DocxSemanticBackendTest`](../../render-docx/src/test/java/com/demcha/compose/document/backend/semantic/docx/DocxSemanticBackendTest.java).

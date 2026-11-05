@@ -7655,50 +7655,141 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFParagraph para = newBodyParagraph(document);
         applyVerticalSpacing(para, node);
         XWPFRun run = para.createRun();
-        java.awt.geom.Rectangle2D ring = ringOf(node, laidOut, width, height);
+        java.awt.geom.Rectangle2D plot = plotOf(node, laidOut, width, height);
         List<String> lost = new ArrayList<>(DocxNativeCharts.write(document, run, node, width, height,
-                ring, nextDrawingId++, this::wordFamilyOf,
+                plot, sliceLabelsOf(node, laidOut, width, height), nextDrawingId++, this::wordFamilyOf,
                 // The workbook's own clocks say nothing a reader uses; pinned always, it is the same
                 // bytes for the same numbers, and a committed document's preview does not drift.
                 deterministicTimestamp == null ? DEFAULT_DETERMINISTIC_INSTANT : deterministicTimestamp));
         lost.addAll(sidesLost(node, true, false));
         report.add(DocxExportReport.Severity.APPROXIMATED, "chart", layout.pathOf(node),
                 "written as a Word chart, its numbers in the workbook embedded with it; Word lays the chart "
-                + (ring == null
+                + (plot == null
                    ? "out in its box itself, so the plot area, the labels and the legend stand where Word puts "
                      + "them rather than where the page does"
-                   : "out in its box itself round its disc, which stands where the page draws it, so the labels "
-                     + "and the legend stand where Word puts them rather than where the page does")
+                   : "out in its box itself round its plot area, which stands where the page draws it: its legend "
+                     + "and the labels Word sets stand where Word puts them rather than where the page does")
                 + (lost.isEmpty() ? "" : "; " + String.join("; ", lost)));
     }
 
     /**
-     * Where the page draws a pie's disc in its chart's box, as fractions of the box from its top
-     * left corner: the box of the slices the layout placed, each sector's own being the whole disc's.
+     * Where the page draws a chart's plot in its box, as fractions of the box from its top left
+     * corner: for a pie the box of the slices the layout placed, each sector's own being the whole
+     * disc's; for bars and lines the rectangle the value axis's grid lines span, which the page draws
+     * from its lowest tick to its highest and across the plot's whole width (or, for horizontal bars,
+     * height).
      *
-     * @return the disc, or {@code null} for a chart that is no pie or that the layout placed no slice of
+     * @return the plot, or {@code null} where the layout placed no slice, or no two grid lines
      */
-    private java.awt.geom.Rectangle2D ringOf(ChartNode node, com.demcha.compose.document.layout.PlacedNode laidOut,
+    private java.awt.geom.Rectangle2D plotOf(ChartNode node, com.demcha.compose.document.layout.PlacedNode laidOut,
                                              double width, double height) {
-        if (!(node.spec() instanceof com.demcha.compose.document.chart.ChartSpec.Pie) || laidOut == null) {
+        if (laidOut == null) {
             return null;
         }
-        java.awt.geom.Rectangle2D disc = null;
-        for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
-            if (fragment.payload() instanceof com.demcha.compose.document.layout.payloads.PolygonFragmentPayload) {
-                java.awt.geom.Rectangle2D box = new java.awt.geom.Rectangle2D.Double(
-                        fragment.x(), fragment.y(), fragment.width(), fragment.height());
-                disc = disc == null ? box : disc.createUnion(box);
+        java.awt.geom.Rectangle2D plot = null;
+        if (node.spec() instanceof com.demcha.compose.document.chart.ChartSpec.Pie) {
+            for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
+                if (fragment.payload() instanceof com.demcha.compose.document.layout.payloads.PolygonFragmentPayload) {
+                    java.awt.geom.Rectangle2D box = new java.awt.geom.Rectangle2D.Double(
+                            fragment.x(), fragment.y(), fragment.width(), fragment.height());
+                    plot = plot == null ? box : plot.createUnion(box);
+                }
             }
+        } else {
+            plot = valueGridOf(node);
         }
-        if (disc == null) {
+        if (plot == null) {
             return null;
         }
         // The layout counts up from the page's foot; the chart part from its box's top left corner.
         double left = laidOut.placementX() + node.padding().left();
         double top = laidOut.placementY() + laidOut.placementHeight() - node.padding().top();
-        return new java.awt.geom.Rectangle2D.Double((disc.getX() - left) / width,
-                (top - disc.getMaxY()) / height, disc.getWidth() / width, disc.getHeight() / height);
+        return new java.awt.geom.Rectangle2D.Double((plot.getX() - left) / width,
+                (top - plot.getMaxY()) / height, plot.getWidth() / width, plot.getHeight() / height);
+    }
+
+    /**
+     * The rectangle a bar or line chart's value grid lines span, in the layout's own coordinates: the
+     * lines across the plot (down it, for horizontal bars), all as long as the plot and set from one
+     * edge, at two values at least. A line of the data itself is shorter, or set elsewhere.
+     *
+     * @return the rectangle, or {@code null} where the chart draws no such grid
+     */
+    private java.awt.geom.Rectangle2D valueGridOf(ChartNode node) {
+        boolean down = node.spec() instanceof com.demcha.compose.document.chart.ChartSpec.Bar bar && bar.horizontal();
+        List<com.demcha.compose.document.layout.PlacedFragment> lines = new ArrayList<>();
+        double longest = 0;
+        for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
+            if (fragment.payload() instanceof com.demcha.compose.document.layout.payloads.LineFragmentPayload) {
+                double along = down ? fragment.height() : fragment.width();
+                double across = down ? fragment.width() : fragment.height();
+                if (along > across) {
+                    lines.add(fragment);
+                    longest = Math.max(longest, along);
+                }
+            }
+        }
+        double full = longest;
+        lines.removeIf(line -> Math.abs((down ? line.height() : line.width()) - full) > 0.01);
+        if (lines.size() < 2) {
+            return null;
+        }
+        double from = down ? lines.get(0).y() : lines.get(0).x();
+        if (lines.stream().anyMatch(line -> Math.abs((down ? line.y() : line.x()) - from) > 0.01)) {
+            return null;
+        }
+        // Each line's centre is its tick's value; the outermost two are the plot's ends.
+        double least = Double.POSITIVE_INFINITY;
+        double most = Double.NEGATIVE_INFINITY;
+        for (com.demcha.compose.document.layout.PlacedFragment line : lines) {
+            double centre = down ? line.x() + line.width() / 2 : line.y() + line.height() / 2;
+            least = Math.min(least, centre);
+            most = Math.max(most, centre);
+        }
+        if (most - least < 1) {
+            return null;
+        }
+        return down ? new java.awt.geom.Rectangle2D.Double(least, from, most - least, full)
+                : new java.awt.geom.Rectangle2D.Double(from, least, full, most - least);
+    }
+
+    /**
+     * Where the page centres a pie's slice labels in its chart's box, as fractions of the box from its
+     * top left corner, a category to an entry: the page lays a label out for each slice it draws, in
+     * the categories' order, before its centre text and its legend.
+     *
+     * @return the labels' centres, {@code null} for a category the page labels nowhere; or {@code null}
+     *         for a chart that is no pie with slice labels, or whose labels the layout did not place
+     */
+    private List<java.awt.geom.Point2D> sliceLabelsOf(ChartNode node,
+                                                       com.demcha.compose.document.layout.PlacedNode laidOut,
+                                                       double width, double height) {
+        if (!(node.spec() instanceof com.demcha.compose.document.chart.ChartSpec.Pie pie)
+            || pie.sliceLabels() == com.demcha.compose.document.chart.SliceLabelMode.NONE || laidOut == null) {
+            return null;
+        }
+        List<com.demcha.compose.document.layout.PlacedFragment> texts = layout.ownFragments(node).stream()
+                .filter(f -> f.payload() instanceof com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload)
+                .toList();
+        List<Double> values = pie.data().series().get(0).values();
+        long drawn = values.stream().filter(v -> v != null && v > 0).count();
+        if (texts.size() < drawn) {
+            return null;
+        }
+        double left = laidOut.placementX() + node.padding().left();
+        double top = laidOut.placementY() + laidOut.placementHeight() - node.padding().top();
+        List<java.awt.geom.Point2D> centres = new ArrayList<>();
+        int next = 0;
+        for (Double v : values) {
+            if (v == null || v <= 0) {
+                centres.add(null);
+                continue;
+            }
+            com.demcha.compose.document.layout.PlacedFragment text = texts.get(next++);
+            centres.add(new java.awt.geom.Point2D.Double((text.x() + text.width() / 2 - left) / width,
+                    (top - (text.y() + text.height() / 2)) / height));
+        }
+        return centres;
     }
 
     /**

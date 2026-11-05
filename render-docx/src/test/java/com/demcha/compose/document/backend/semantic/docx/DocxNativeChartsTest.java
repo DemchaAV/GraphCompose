@@ -68,13 +68,74 @@ class DocxNativeChartsTest {
         assertThat(chart).contains("<c:v>Q1</c:v>", "<c:v>Sales</c:v>", "<c:v>210</c:v>");
 
         // The drawing is the size the page draws the chart, its padding taken off the box.
-        PlacedNode placed = placement(content, node);
+        PlacedNode placed = placement(content);
         String body = bodyXml(content);
         assertThat(body).contains("<wp:extent cx=\"" + org.apache.poi.util.Units.toEMU(placed.placementWidth() - 20)
                                   + "\" cy=\"" + org.apache.poi.util.Units.toEMU(placed.placementHeight() - 20) + "\"/>");
         assertThat(note(content)).isEqualTo("written as a Word chart, its numbers in the workbook embedded with it; "
-                + "Word lays the chart out in its box itself, so the plot area, the labels and the legend stand where "
-                + "Word puts them rather than where the page does; its left padding is not in the file");
+                + "Word lays the chart out in its box itself round its plot area, which stands where the page draws "
+                + "it: its legend and the labels Word sets stand where Word puts them rather than where the page "
+                + "does; Word keeps room for the axes' labels inside the chart's box, so its plot can stand a few "
+                + "points short of the page's where the page leaves them less; its legend's keys are Word's own, "
+                + "about half the page's square swatch; its left padding is not in the file");
+    }
+
+    @Test
+    void aBarChartsPlotIsPinnedToTheRectangleItsValueGridSpans() throws Exception {
+        for (boolean horizontal : new boolean[]{false, true}) {
+            ChartNode node = new ChartNode("", ChartSpec.bar().data(QUARTERS).horizontal(horizontal)
+                    .legend(LegendPosition.BOTTOM).build(), null, DocumentInsets.zero(), new DocumentInsets(12, 8, 4, 16));
+            Consumer<PageFlowBuilder> content = page -> page.add(node);
+            double[] pinned = numbers(chartXml(content), "<c:x val=\"([0-9.]+)\"/><c:y val=\"([0-9.]+)\"/>"
+                                                         + "<c:w val=\"([0-9.]+)\"/><c:h val=\"([0-9.]+)\"/>");
+            try (DocumentSession session = GraphCompose.document().pageSize(500, 500).margin(DocumentInsets.of(30))
+                    .create()) {
+                session.pageFlow(content::accept);
+                var graph = session.layoutGraph();
+                PlacedNode chart = graph.nodes().stream().filter(n -> n.path().contains("Chart")).findFirst().orElseThrow();
+                // The value grid's lines: across the plot for columns, down it for horizontal bars.
+                List<com.demcha.compose.document.layout.PlacedFragment> grid = graph.fragments().stream()
+                        .filter(f -> f.path().equals(chart.path()))
+                        .filter(f -> f.payload() instanceof com.demcha.compose.document.layout.payloads.LineFragmentPayload)
+                        .filter(f -> horizontal ? f.height() > f.width() : f.width() > f.height())
+                        .toList();
+                assertThat(grid).as("horizontal %s", horizontal).hasSizeGreaterThanOrEqualTo(2);
+                double width = chart.placementWidth() - 24;
+                double height = chart.placementHeight() - 16;
+                double boxLeft = chart.placementX() + 16;
+                double boxTop = chart.placementY() + chart.placementHeight() - 12;
+                double left = grid.stream().mapToDouble(f -> horizontal ? f.x() + f.width() / 2 : f.x()).min().orElseThrow();
+                double right = grid.stream().mapToDouble(f -> horizontal ? f.x() + f.width() / 2 : f.x() + f.width())
+                        .max().orElseThrow();
+                double low = grid.stream().mapToDouble(f -> horizontal ? f.y() : f.y() + f.height() / 2).min().orElseThrow();
+                double high = grid.stream().mapToDouble(f -> horizontal ? f.y() + f.height() : f.y() + f.height() / 2)
+                        .max().orElseThrow();
+                assertThat(pinned[0]).as("horizontal %s", horizontal).isCloseTo((left - boxLeft) / width, within(1e-4));
+                assertThat(pinned[1]).isCloseTo((boxTop - high) / height, within(1e-4));
+                assertThat(pinned[2]).isCloseTo((right - left) / width, within(1e-4));
+                assertThat(pinned[3]).isCloseTo((high - low) / height, within(1e-4));
+            }
+        }
+        // With no value grid there is nothing to pin it to, and Word lays the plot out itself.
+        Consumer<PageFlowBuilder> gridless = page -> page.add(new ChartNode(ChartSpec.bar().data(QUARTERS)
+                .valueAxis(AxisSpec.builder().showGridLines(false).build()).build()));
+        assertThat(chartXml(gridless)).contains("<c:plotArea><c:layout/>");
+        assertThat(note(gridless)).contains("so the plot area, the labels and the legend stand where Word puts them");
+    }
+
+    @Test
+    void aLegendNamesWordsOwnKeysAndAStackOfColumnsListedFromTheTop() throws Exception {
+        assertThat(note(line(LineInterpolation.LINEAR, false)))
+                .contains("its legend's keys are Word's own, about half the page's square swatch, and a line's is its "
+                          + "stroke through a marker");
+        Consumer<PageFlowBuilder> beside = page -> page.add(new ChartNode(ChartSpec.bar().data(QUARTERS)
+                .grouping(BarGrouping.STACKED).legend(LegendPosition.RIGHT).build()));
+        assertThat(note(beside)).contains("its legend beside the stack lists the series from the top of the stack down");
+        assertThat(note(page -> page.add(new ChartNode(ChartSpec.bar().data(QUARTERS)
+                .grouping(BarGrouping.STACKED).legend(LegendPosition.BOTTOM).build()))))
+                .as("a legend under the stack lists it in order").doesNotContain("top of the stack");
+        assertThat(note(page -> page.add(new ChartNode(ChartSpec.bar().data(QUARTERS).build()))))
+                .as("no legend, no key").doesNotContain("legend's keys");
     }
 
     @Test
@@ -151,6 +212,23 @@ class DocxNativeChartsTest {
         // 45 and 20 of 65: 69.2% and 30.8%, neither whole, so the format's optional decimal as it is.
         assertThat(chart).contains("<c:numFmt formatCode=\"#,##0.#%\" sourceLinked=\"0\"/>",
                 "<c:showPercent val=\"1\"/>", "<c:dLblPos val=\"outEnd\"/>");
+
+        // 251 and 2249 of 2500: 10.04% and 89.96%, which the page shows rounded, "10%" and "90%".
+        // Read as fractional, "#,##0.#%" would have Word show "10.%".
+        ChartData nearlyWhole = ChartData.builder().categories("A", "B").series("Share", 251, 2249).build();
+        Consumer<PageFlowBuilder> rounded = page -> page.add(new ChartNode(ChartSpec.pie().data(nearlyWhole)
+                .sliceLabels(SliceLabelMode.PERCENT).build()));
+        assertThat(chartXml(rounded)).contains("<c:numFmt formatCode=\"#,##0%\" sourceLinked=\"0\"/>");
+        assertThat(note(rounded)).doesNotContain("decimal");
+        // A pattern Excel cannot hold writes no code at all, and is named.
+        Consumer<PageFlowBuilder> scientific = page -> page.add(new ChartNode(ChartSpec.pie().data(SHARES)
+                .sliceLabels(SliceLabelMode.PERCENT)
+                .percentFormat(NumberFormatSpec.pattern("0.#E0").withSuffix("%")).build()));
+        assertThat(chartXml(scientific)).doesNotContain("<c:dLbls><c:numFmt");
+        assertThat(note(scientific)).contains("its number format \"0.#E0\" is not written");
+        // A start between two whole degrees is named.
+        assertThat(note(pie(SHARES, 90.5))).contains("its first slice starts at the nearest whole degree");
+        assertThat(note(pie(SHARES, 90))).doesNotContain("whole degree");
     }
 
     @Test
@@ -171,8 +249,42 @@ class DocxNativeChartsTest {
         assertThat((from[0] + to[0]) / 2).as("centred on the disc").isCloseTo(disc[0] + disc[2] / 2, within(1e-4));
         assertThat((from[1] + to[1]) / 2).isCloseTo(disc[1] + disc[3] / 2, within(1e-4));
         assertThat(to[0] - from[0]).as("as wide as the hole").isCloseTo(0.6 * disc[2], within(1e-4));
-        assertThat(note(content)).contains("round its disc, which stands where the page draws it")
-                .contains("its slice labels are written on the ring").doesNotContain("hole is set in the middle");
+        assertThat(note(content)).contains("round its plot area, which stands where the page draws it")
+                .contains("LibreOffice sets its slice labels nearer the hole than the page does")
+                .doesNotContain("hole is set in the middle");
+
+        // Each slice's label laid out by hand, from the middle of its slice's ring to where the page sets
+        // it: worked out here from the page's own label boxes and Word's rule for a donut's labels.
+        try (DocumentSession session = GraphCompose.document().pageSize(500, 500).margin(DocumentInsets.of(30))
+                .create()) {
+            session.pageFlow(content::accept);
+            var graph = session.layoutGraph();
+            PlacedNode node = graph.nodes().stream().filter(n -> n.path().contains("Chart")).findFirst().orElseThrow();
+            List<com.demcha.compose.document.layout.PlacedFragment> labels = graph.fragments().stream()
+                    .filter(f -> f.path().equals(node.path()))
+                    .filter(f -> f.payload() instanceof com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload)
+                    .limit(4).toList();
+            double width = node.placementWidth();
+            double height = node.placementHeight();
+            double top = node.placementY() + height;
+            double centreX = (disc[0] + disc[2] / 2) * width;
+            double centreY = (disc[1] + disc[3] / 2) * height;
+            double middle = (disc[2] * width / 2) * (1 + 0.6) / 2;
+            double[] shares = {45, 25, 20, 10};
+            double before = 0;
+            for (int c = 0; c < 4; c++) {
+                double angle = Math.toRadians((before + shares[c] / 2) / 100 * 360);
+                before += shares[c];
+                var label = labels.get(c);
+                double pageX = label.x() + label.width() / 2 - node.placementX();
+                double pageY = top - (label.y() + label.height() / 2);
+                double[] offset = numbers(chart, "<c:dLbl><c:idx val=\"" + c + "\"/><c:layout><c:manualLayout>"
+                                                 + "<c:x val=\"(-?[0-9.]+)\"/><c:y val=\"(-?[0-9.]+)\"/>");
+                assertThat(offset[0]).as("slice %s", c)
+                        .isCloseTo((pageX - (centreX + middle * Math.sin(angle))) / width, within(1e-4));
+                assertThat(offset[1]).isCloseTo((pageY - (centreY - middle * Math.cos(angle))) / height, within(1e-4));
+            }
+        }
 
         assertThat(DocxExports.reportWithoutLayout(500, 500, 30, content).bySubject().get("chart").get(0).detail())
                 .contains("the layout gives no place of its disc here");
@@ -314,6 +426,11 @@ class DocxNativeChartsTest {
             java.util.zip.ZipEntry entry = zip.getNextEntry();
             assertThat(entry).isNotNull();
             assertThat(entry.getTimeLocal()).isEqualTo(java.time.LocalDateTime.of(2000, 1, 1, 0, 0));
+            // Stored, not deflated: one zlib deflates the same bytes differently from another, and the
+            // workbook is a part of the document as these bytes.
+            for (; entry != null; entry = zip.getNextEntry()) {
+                assertThat(entry.getMethod()).as(entry.getName()).isEqualTo(java.util.zip.ZipEntry.STORED);
+            }
         }
         try (XWPFDocument document = new XWPFDocument(new java.io.ByteArrayInputStream(first));
              org.apache.poi.xssf.usermodel.XSSFWorkbook book = document.getCharts().get(0).getWorkbook()) {
@@ -357,7 +474,7 @@ class DocxNativeChartsTest {
         }
     }
 
-    private static PlacedNode placement(Consumer<PageFlowBuilder> content, ChartNode node) {
+    private static PlacedNode placement(Consumer<PageFlowBuilder> content) {
         try (DocumentSession session = GraphCompose.document().pageSize(500, 500).margin(DocumentInsets.of(30))
                 .create()) {
             session.pageFlow(content::accept);
@@ -389,7 +506,12 @@ class DocxNativeChartsTest {
         assertThat(matcher.find()).as("%s in the part", regex).isTrue();
         double[] numbers = new double[matcher.groupCount()];
         for (int i = 0; i < numbers.length; i++) {
-            numbers[i] = Double.parseDouble(matcher.group(i + 1));
+            String number = matcher.group(i + 1);
+            try {
+                numbers[i] = Double.parseDouble(number);
+            } catch (NumberFormatException notANumber) {
+                throw new AssertionError("\"" + number + "\" in " + regex + " is no number", notANumber);
+            }
         }
         return numbers;
     }

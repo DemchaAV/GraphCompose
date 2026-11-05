@@ -6077,6 +6077,32 @@ follow semantic versioning; release dates are ISO 8601.
   `deterministic(true)`, and bookmarks a barcode's anchor, naming a drawing's. The two link rows
   are ⚠️ for the blocks that carry none.
 
+- **The capability matrix's DOCX column agrees with the code, and lists every subject the export
+  report names.**
+  - The ServiceLoader row said discovery was n/a for DOCX, and the convenience row that the
+    backend is named rather than discovered. `DocxBackendProvider` is registered as a
+    `SemanticBackendProvider`, and `buildDocx` / `writeDocx` / `toDocxBytes` find it through
+    `SemanticBackendProviders.forFormat("docx")`. Those methods take a default backend: no report
+    sink, and live dates.
+  - The table-cell direction row said a cell's `textAnchor` reaches no cell. It is written as
+    `w:vAlign` and `w:jc`, as the Table rows row says.
+  - Four other claims were wrong:
+    - a rectangle's side border is a filled bar the stroke's width, not a line;
+    - a rounded panel's lost corner radius is named in the report for each panel, not only logged
+      once;
+    - a shape or path painted only with a gradient is reported `DROPPED`, not only logged;
+    - a chip's left padding is written in the fill of a chip right before it.
+  - Ten marks follow the legend now. A ✅ whose capability the report names a loss for is ⚠️:
+    anchors, bookmarks, fonts, images, the timeline rail, headers and footers, page zones, keeps,
+    and several sections. Viewer preferences are ❌, since the option does reach the export.
+  - The outline row is ⚠️ rather than ❌: the bookmarks' levels become `HeadingN` styles, from
+    which Word builds its Navigation Pane.
+  - The gradient rows say what the export does with a gradient.
+  - New: a row for a node kind of the caller's own, and a table mapping each report subject to
+    its severity, what the file holds instead, and its row.
+  - The DOCX recipe no longer lists a panel's corner radius as left undone rather than
+    approximated: the report names it on each panel.
+
 ## v2.4.1 — 2026-09-21
 
 ### Performance

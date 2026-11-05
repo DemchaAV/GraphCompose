@@ -900,10 +900,11 @@ How it lands:
   from a filled panel's text stand where the page sets them in Word 16 and LibreOffice on
   Windows, as far as the left edge and the right end above say.
 
-Not representable, and left undone rather than approximated:
+Not representable:
 
-- **The corner radius.** A cell is rectangular. The panel renders with square corners and
-  the export logs one warning per document.
+- **The corner radius.** A cell is rectangular. The panel renders with square corners, the
+  report names it on each panel (`corner radius`, `APPROXIMATED`), and the export logs one
+  warning per export.
 
 ## Pictures and icons in a line
 

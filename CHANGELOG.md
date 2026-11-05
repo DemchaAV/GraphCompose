@@ -8,6 +8,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export keeps Word and LibreOffice from breaking a line at a hyphen where the page
+  does not.**
+  - The page breaks a line only at a space, and at a hyphen only inside a word wider than the
+    whole line. Word 16 and LibreOffice 24.2 also break after a hyphen between two letters or
+    digits. So where the page carried `developer-facing` or `2023-2024` whole to its next line,
+    both editors set the first part at the end of the line above, and every line of the
+    paragraph after it broke at other words. Measured on the fidelity corpus, 34 of the 58 lines
+    Word did not find came from this, in 12 documents. Five CVs and a cover letter fell short of
+    95% of their lines found in Word because of it alone.
+  - A hyphen between two letters or digits in the first word of every line of the page but the
+    paragraph's first is now written as Word's non-breaking hyphen (`w:noBreakHyphen`), read from
+    the lines the page laid the paragraph or the list item out in. Both editors draw it as a hyphen
+    and carry it into their PDF as an ordinary one, and Word's Find matches it when a plain
+    hyphen is typed. No other hyphen is touched, and a paragraph whose runs do not hold its
+    lines' letters is written as before.
+  - Word now sets 77 of the corpus's 82 documents within its acceptance limits, where it set 71:
+    the six that fell short of their lines pass, five of them with every line found and
+    `cv-nordic_clean` with 61 of 63, the other two broken where Word sets a line wider. Across the
+    corpus Word finds 32 lines more, and none stands further from the page.
+  - A text extractor reading the file sees the held hyphens as the non-breaking hyphen: Apache
+    POI reads U+2011, and Word's own text reads character 30. That is the one place a reader of
+    the DOCX's text sees anything but `-`: 42 hyphens in 32 of the corpus's 82 documents, at most
+    six in one.
+
 - **A DOCX export's embedded faces survive a save in LibreOffice.**
   - The export shipped the document's faces but did not ask for embedded fonts in its settings,
     and LibreOffice 24.2 and 26.8 save a document's faces back only when asked. Measured with

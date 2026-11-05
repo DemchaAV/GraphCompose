@@ -490,6 +490,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // How tall Word stands each written paragraph's line, and where its text stands in it, by the
     // faces the export ships (DocxGrownLines).
     private DocxGrownLines grownLines = DocxGrownLines.NONE;
+    // The paragraphs written with the lines the page set them in, whose line-starting words keep
+    // their hyphens from an editor's line break (DocxLineStartHyphens), held once a section is
+    // written, before its tables are cut at their pages.
+    private final DocxLineStartHyphens lineStartHyphens = new DocxLineStartHyphens();
     // The part a panel's table being written holds of each container a page break cuts it at
     // (DocxPanelPieces), by node, taken by the container's writer.
     private final java.util.Map<DocumentNode, DocxPanelPieces.Part> panelWindows = new java.util.IdentityHashMap<>();
@@ -1252,6 +1256,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         chartWarned.set(false);
         containerRadiusWarned.set(false);
         warnedNodeKinds.clear();
+        lineStartHyphens.clear();
         rowLifts.clear();
         railsDrawnBehind.clear();
         coveredNamed.clear();
@@ -1489,6 +1494,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // of the table the paragraph holding a drawing was read from.
                 markTheBlocksOfDrawingsAlone();
                 planTheRailsAlongTheirCells(index);
+                // Before a table is cut at its pages — for their margins here, a panel's below — so
+                // that the paragraphs a cut copies carry their held hyphens, and the ones it takes
+                // out are not read once they are gone.
+                lineStartHyphens.hold();
                 DocxPageMarginSections.apply(document, margins);
                 dropTheGapWhereASectionOpens(document);
             }
@@ -6963,6 +6972,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         writeItemText(para, style, numId != null ? "" : "  ".repeat(depth) + marker, label, reading, laidOut);
         styleTheMark(para, style);
         seatTheItem(para, laidOut, numId != null);
+        lineStartHyphens.record(para.getCTP(), lines);
     }
 
     /**
@@ -7452,6 +7462,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         makeRoomForPicturesInItsLines(para, pictures);
         styleTheMark(para, markStyle);
         seatTheItem(para, laidOut, false);
+        lineStartHyphens.record(para.getCTP(), laidOut == null ? null : laidOut.lines());
         return atItsText || textTab || pictureTab || depth == 0 && drawsNoMarker(marker);
     }
 
@@ -14322,6 +14333,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         seatInTheLine(para, node, runsBefore, lineTopAbove + heldAbove, cutToTheInk, ownLine);
+        lineStartHyphens.record(para.getCTP(), lines);
     }
 
     /**

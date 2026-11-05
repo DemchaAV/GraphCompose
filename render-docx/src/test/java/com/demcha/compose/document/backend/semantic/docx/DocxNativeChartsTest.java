@@ -17,6 +17,7 @@ import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.node.ChartNode;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.jupiter.api.Test;
@@ -86,8 +87,31 @@ class DocxNativeChartsTest {
     void aLegendStandsWhereThePageDrawsIt() throws Exception {
         ChartNode node = new ChartNode(ChartSpec.bar().data(QUARTERS).legend(LegendPosition.BOTTOM).build());
         Consumer<PageFlowBuilder> content = page -> page.add(node);
-        double[] at = numbers(chartXml(content), "<c:legend><c:legendPos val=\"b\"/><c:layout><c:manualLayout>"
-                + "<c:xMode val=\"edge\"/><c:yMode val=\"edge\"/><c:x val=\"(-?[0-9.]+)\"/><c:y val=\"(-?[0-9.]+)\"/>");
+        assertLegendAtItsEntriesBox(content, "b");
+        // Labels taller than their swatches: the legend's top is a label's, not the first swatch's.
+        ChartStyle tall = ChartStyle.builder().legendTextStyle(DocumentTextStyle.builder().size(24).build()).build();
+        assertLegendAtItsEntriesBox(page -> page.add(new ChartNode("", ChartSpec.bar().data(QUARTERS)
+                .legend(LegendPosition.RIGHT).build(), tall, DocumentInsets.zero(), DocumentInsets.zero())), "r");
+        assertThat(note(page -> page.add(new ChartNode(ChartSpec.line().data(QUARTERS).legend(LegendPosition.TOP)
+                .build())))).contains("its legend stands about 9pt lower than the page's");
+        assertThat(note(content)).doesNotContain("9pt lower").doesNotContain("LibreOffice sets its legend higher");
+        assertThat(note(page -> page.add(new ChartNode(ChartSpec.pie().data(SHARES).legend(LegendPosition.BOTTOM)
+                .build())))).contains("LibreOffice sets its legend higher than the page does, the more the taller "
+                                      + "the chart: 4pt on a pie 302pt tall, 16pt on one 483pt tall");
+        assertThat(note(page -> page.add(new ChartNode(ChartSpec.pie().data(SHARES).legend(LegendPosition.RIGHT)
+                .build())))).doesNotContain("LibreOffice sets its legend higher");
+        assertThat(chartXml(page -> page.add(new ChartNode(ChartSpec.bar().data(QUARTERS).build()))))
+                .as("no legend, nothing to place").doesNotContain("<c:legend>");
+    }
+
+    /**
+     * The legend's corner written in the part is that of the box round all its entries, the swatch and
+     * the label of each series, framed by 3pt: worked out here from the layout's own fragments.
+     */
+    private static void assertLegendAtItsEntriesBox(Consumer<PageFlowBuilder> content, String side) throws Exception {
+        double[] at = numbers(chartXml(content), "<c:legend><c:legendPos val=\"" + side + "\"/><c:layout>"
+                + "<c:manualLayout><c:xMode val=\"edge\"/><c:yMode val=\"edge\"/><c:x val=\"(-?[0-9.]+)\"/>"
+                + "<c:y val=\"(-?[0-9.]+)\"/>");
         try (DocumentSession session = GraphCompose.document().pageSize(500, 500).margin(DocumentInsets.of(30))
                 .create()) {
             session.pageFlow(content::accept);
@@ -104,16 +128,6 @@ class DocxNativeChartsTest {
             assertThat(at[0]).isCloseTo((left - 3 - chart.placementX()) / chart.placementWidth(), within(1e-4));
             assertThat(at[1]).isCloseTo((top - high - 3) / chart.placementHeight(), within(1e-4));
         }
-        assertThat(note(page -> page.add(new ChartNode(ChartSpec.line().data(QUARTERS).legend(LegendPosition.TOP)
-                .build())))).contains("its legend stands about 9pt lower than the page's");
-        assertThat(note(content)).doesNotContain("9pt lower").doesNotContain("LibreOffice sets its legend higher");
-        assertThat(note(page -> page.add(new ChartNode(ChartSpec.pie().data(SHARES).legend(LegendPosition.BOTTOM)
-                .build())))).contains("LibreOffice sets its legend higher than the page does, the more the taller "
-                                      + "the chart: 4pt on a pie 302pt tall, 16pt on one 483pt tall");
-        assertThat(note(page -> page.add(new ChartNode(ChartSpec.pie().data(SHARES).legend(LegendPosition.RIGHT)
-                .build())))).doesNotContain("LibreOffice sets its legend higher");
-        assertThat(chartXml(page -> page.add(new ChartNode(ChartSpec.bar().data(QUARTERS).build()))))
-                .as("no legend, nothing to place").doesNotContain("<c:legend>");
     }
 
     @Test

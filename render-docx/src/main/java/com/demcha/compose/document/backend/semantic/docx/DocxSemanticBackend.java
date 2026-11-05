@@ -7777,12 +7777,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (entries == 0 || fragments.size() < 2 * entries) {
             return null;
         }
-        java.awt.geom.Rectangle2D box = null;
-        for (com.demcha.compose.document.layout.PlacedFragment fragment
-                : fragments.subList(fragments.size() - (int) (2 * entries), fragments.size())) {
-            java.awt.geom.Rectangle2D part = new java.awt.geom.Rectangle2D.Double(
-                    fragment.x(), fragment.y(), fragment.width(), fragment.height());
-            box = box == null ? part : box.createUnion(part);
+        List<com.demcha.compose.document.layout.PlacedFragment> legend =
+                fragments.subList(fragments.size() - (int) (2 * entries), fragments.size());
+        com.demcha.compose.document.layout.PlacedFragment first = legend.get(0);
+        java.awt.geom.Rectangle2D box = new java.awt.geom.Rectangle2D.Double(
+                first.x(), first.y(), first.width(), first.height());
+        for (com.demcha.compose.document.layout.PlacedFragment fragment : legend) {
+            box.add(new java.awt.geom.Rectangle2D.Double(
+                    fragment.x(), fragment.y(), fragment.width(), fragment.height()));
         }
         double left = laidOut.placementX() + node.padding().left();
         double top = laidOut.placementY() + laidOut.placementHeight() - node.padding().top();

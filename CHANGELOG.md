@@ -43,7 +43,8 @@ follow semantic versioning; release dates are ISO 8601.
     LibreOffice draws that line straight as well. Stack totals, rounded bar corners, a gradient
     series paint, bars too many for Word's widest gap, gaps between slices, a counterclockwise
     pie, Word's legend keys and spacing (a key about half the page's swatch, a line's a stroke
-    through a marker, so a legend row starts where the page's does and ends short of it), a legend beside a stack of columns (listed from the top of the stack down in both
+    through a marker, so a legend row starts where the page's does and ends short of it, its last entry 18 to 23pt
+    left of the page's in a row of two and 41 to 47pt in a row of four), a legend beside a stack of columns (listed from the top of the stack down in both
     editors), an area's missing value (a gap in Word, as on the
     page, but filled down to the axis in LibreOffice), and a number format with a divisor, other
     separators or grouping, or more than digits, grouping and decimals are named too. Excel keeps a

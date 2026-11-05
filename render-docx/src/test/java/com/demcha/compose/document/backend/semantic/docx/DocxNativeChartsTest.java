@@ -78,7 +78,8 @@ class DocxNativeChartsTest {
                 + "does; Word keeps room for the axes' labels inside the chart's box, so its plot can stand a few "
                 + "points short of the page's where the page leaves them less; its legend's keys and spacing are "
                 + "Word's own, a key about half the page's square swatch, so its row starts where the page's does "
-                + "and ends short of it; its left padding is not in the file");
+                + "and ends short of it: its last entry 18 to 23pt left of the page's in a row of two and 41 to "
+                + "47pt in a row of four, in Word and LibreOffice; its left padding is not in the file");
     }
 
     @Test

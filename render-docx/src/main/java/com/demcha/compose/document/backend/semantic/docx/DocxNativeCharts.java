@@ -753,7 +753,9 @@ final class DocxNativeCharts {
             lost.add("its legend's keys and spacing are Word's own, a key about half the page's square swatch"
                      + (spec instanceof ChartSpec.Line ? ", and a line's its stroke through a marker" : "")
                      + (legendAt != null && spec.legend() != LegendPosition.RIGHT
-                        ? ", so its row starts where the page's does and ends short of it" : ""));
+                        ? ", so its row starts where the page's does and ends short of it: its last entry "
+                          + "18 to 23pt left of the page's in a row of two and 41 to 47pt in a row of four, "
+                          + "in Word and LibreOffice" : ""));
             if (legendAt != null && spec.legend() == LegendPosition.TOP) {
                 // Measured: set where the page draws it, both editors keep a legend at the top inside
                 // the chart's own frame, 8.8pt lower in Word and 8.2pt in LibreOffice.

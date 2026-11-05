@@ -1170,7 +1170,7 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
     round;
   - Word's legend keys and spacing, a key about half the page's square swatch, a line series' a
     stroke through a marker, so a legend above or below the plot starts where the page's does and
-    ends short of it; and a legend at the top set about 9pt lower; a pie's legend at the foot, which LibreOffice sets 4 to 16pt higher; and a legend beside a stack of columns, which Word and LibreOffice list from the top of
+    ends short of it, its last entry 18 to 23pt left of the page's in a row of two and 41 to 47pt in a row of four in both editors; and a legend at the top set about 9pt lower; a pie's legend at the foot, which LibreOffice sets 4 to 16pt higher; and a legend beside a stack of columns, which Word and LibreOffice list from the top of
     the stack down;
   - a number format with a divisor, separators other than `.` and `,`, grouping other than by
     thousands, or more than digits, grouping and decimals. An Excel format code's optional

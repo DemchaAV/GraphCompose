@@ -66,6 +66,7 @@ proposal-northline	2	2	132	132	0.11	0.17	0
 receipt-modern	1	1	57	57	0.04	0.09	0
 rota-cobalt	1	1	154	151	0.20	0.47	0
 synthetic-banner_and_initials	1	1	14	14	0.02	0.02	0
+synthetic-bar_and_line_charts	4	4	68	65	2.89	11.98	37
 synthetic-break_in_column	1	1	7	7	0.02	0.02	0
 synthetic-break_in_panel	3	3	8	8	3.02	5.02	5
 synthetic-card_over_pages	3	3	114	114	0.98	1.08	0
@@ -78,6 +79,7 @@ synthetic-links_and_toc	3	3	81	78	0.02	0.02	0
 synthetic-long_free_text	5	5	154	147	0.02	11.98	22
 synthetic-narrow_container	1	1	6	6	0.52	1.02	0
 synthetic-nested_rows	1	1	24	24	0.02	0.02	0
+synthetic-pie_and_donut_charts	2	2	30	30	0.78	7.50	8
 synthetic-rotated_image_and_shape	1	1	9	5	0.02	0.02	0
 synthetic-rounded_card	1	1	7	7	0.02	0.62	0
 synthetic-rtl_paragraphs	1	1	11	10	0.01	0.01	0

@@ -489,6 +489,29 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
 Each face is stored the way Word stores one: the font with its first 32 bytes scrambled
 against a key the font table states beside it.
 
+A shipped face is the whole font, not the characters the document happens to use, so a
+reader without the family installed can type a character the document never had and still
+get it in the document's face. Measured with faces installed nowhere on the machine and not
+among Word's cloud fonts, in Word 16 and LibreOffice 26.8, by typing letters, a digit and a
+sign into each paragraph.
+
+The faces also stay through a save. When the export ships a face, the settings ask for
+embedded fonts (`w:embedTrueTypeFonts`). LibreOffice 24.2 and 26.8 save a document's faces
+back only when that request is there: without it, a document they saved reopened in
+substitutes. Word 16 turned the request on by itself when it opened an export without it, and
+kept the faces through a save. A document that ships no face asks for nothing: with the request
+on, an editor's save also embeds faces of its own, which such a document would then carry.
+
+The export never asks for subset fonts (`w:saveSubsetFonts`). With that request Word 16 saved
+only the characters typed so far, cutting each face to a fraction of its size (Crimson Text's
+from about 110 KB to 28 KB), and characters typed after the document was reopened were set in
+Cambria.
+
+With the request on, each editor's own save adds what it embeds by its own rules. Word 16
+added Aptos and Aptos Display, and LibreOffice 24.2 added DejaVu Serif and DejaVu Sans.
+LibreOffice 26.8 filled a missing bold or bold-italic slot with a face the family does have.
+The document grows by these, and the faces the export shipped are all still there.
+
 A run names the **family**, not the face. `FontName.HELVETICA_BOLD` is a face, and Word
 resolves families and takes the weight from `w:b`; asked for a family by that name it finds
 none and substitutes. The face is resolved to its family exactly as the layout resolves it,

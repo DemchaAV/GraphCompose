@@ -19,11 +19,15 @@ import com.demcha.compose.font.FontName;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -88,6 +92,68 @@ class DocxFontTableTest {
             assertThat(partNames(document))
                     .as("and no font table either, rather than an empty one")
                     .noneMatch(name -> name.contains("fontTable"));
+        }
+    }
+
+    @Test
+    void aDocumentThatShipsAFaceAsksTheEditorToSaveItBackWhole() throws Exception {
+        // LibreOffice writes the faces back on save only when the settings ask for embedded fonts;
+        // measured, its save of a document without the request reopened in substitutes. Subset
+        // fonts are never asked for: measured, Word then saved only the characters typed so far,
+        // and characters typed after a reopen fell to another face.
+        try (XWPFDocument document = export(page -> page.addParagraph("Set in Lato", face(FontName.LATO)))) {
+            String settings = DocxSettings.xmlOf(document);
+
+            assertThat(settings).contains("<w:embedTrueTypeFonts/>");
+            assertThat(settings).doesNotContain("saveSubsetFonts");
+        }
+    }
+
+    @Test
+    void aDocumentThatShipsNoFaceAsksForNoneOnSave() throws Exception {
+        // The request is for the faces the document carries. With it on, an editor's save embeds
+        // faces of its own as well (Word 16 added Aptos to a document that shipped faces), which a
+        // document that shipped none would then carry.
+        try (XWPFDocument document = export(page -> page.addParagraph("Set in Helvetica", face(FontName.HELVETICA)))) {
+            assertThat(fontParts(document)).isEmpty();
+            assertThat(DocxSettings.xmlOf(document)).doesNotContain("embedTrueTypeFonts");
+        }
+    }
+
+    @Test
+    void aFaceThatMayNotTravelLeavesNoRequestToSaveFacesEither(@TempDir Path folder) throws Exception {
+        // A face that may only be previewed and printed is named and refused, so the document
+        // ships nothing, and the settings say nothing about keeping it.
+        byte[] font = latoRegular();
+        int os2 = DocxFontEmbedding.tableOffset(font, "OS/2", 10);
+        font[os2 + 8] = 0x00;
+        font[os2 + 9] = 0x04;
+        assertThat(DocxFontEmbedding.permissionOf(font))
+                .as("the fixture's face is the preview-only one the export refuses")
+                .isEqualTo(DocxFontEmbedding.Permission.PREVIEW_ONLY);
+        Path previewOnly = Files.write(folder.resolve("PreviewOnly.ttf"), font);
+
+        byte[] docx;
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 600)
+                .margin(DocumentInsets.of(20))
+                .registerFontFamily("Preview Only", previewOnly).create()) {
+            session.pageFlow(page -> page.addParagraph("Set in a face that stays home",
+                    DocumentTextStyle.builder().fontName(FontName.of("Preview Only")).size(10).build()));
+            docx = session.export(new DocxSemanticBackend(report::set));
+        }
+        // Refused, not missed: a family that never resolved would ship nothing and ask for
+        // nothing as well, without passing the face's terms at all.
+        assertThat(report.get().notes())
+                .filteredOn(note -> note.subject().equals("embedded font"))
+                .singleElement()
+                .satisfies(note -> {
+                    assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.DROPPED);
+                    assertThat(note.detail()).contains("'Preview Only'").contains("reading and printing only");
+                });
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            assertThat(fontParts(document)).as("the face was refused").isEmpty();
+            assertThat(DocxSettings.xmlOf(document)).doesNotContain("embedTrueTypeFonts");
         }
     }
 

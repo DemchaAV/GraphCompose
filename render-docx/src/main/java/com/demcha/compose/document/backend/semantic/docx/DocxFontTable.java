@@ -41,7 +41,7 @@ import java.util.Set;
 
 /**
  * Puts the document's own faces inside the package, so it reads in the font it was
- * written in.
+ * written in, and still does after an editor saves it.
  *
  * <p>A face was named and never shipped: the export declared {@code Lato} on its runs and
  * embedded nothing, so on a machine without Lato installed — which is most of them — Word
@@ -81,7 +81,8 @@ final class DocxFontTable {
     }
 
     /**
-     * Writes a font table for every family the document uses that can be embedded.
+     * Writes a font table for every family the document uses that can be embedded, and, when
+     * it ships at least one face, asks in the settings for embedded fonts to be saved back.
      *
      * @param document  the document being written
      * @param graph     the document's own tree, read for the faces it names
@@ -127,7 +128,30 @@ final class DocxFontTable {
         try (OutputStream out = table.getOutputStream()) {
             out.write(toXml(embedded).getBytes(StandardCharsets.UTF_8));
         }
+        keepTheFacesWhenTheDocumentIsSaved(document);
         return lines;
+    }
+
+    /**
+     * Asks the editor that saves the document to write its faces back into it.
+     *
+     * <p>In LibreOffice a face in the package travels only as far as the first save. LibreOffice
+     * 24.2 and 26.8 read the faces a document ships, but save them again only when the settings
+     * ask for embedded fonts. Without that request their save leaves every face behind, and the
+     * document reopens in substitutes. Word 16 turned the request on by itself when it opened an
+     * export without it, and kept the faces through a save.</p>
+     *
+     * <p>The request is the whole of it. {@code w:saveSubsetFonts} is never written: with it,
+     * Word saved only the characters typed so far, and characters typed after the document was
+     * reopened, on a machine without the family, were set in another face.</p>
+     *
+     * @param document the document whose faces were just written
+     */
+    private static void keepTheFacesWhenTheDocumentIsSaved(XWPFDocument document) {
+        var settings = document.getSettings().getCTSettings();
+        if (!settings.isSetEmbedTrueTypeFonts()) {
+            settings.addNewEmbedTrueTypeFonts();
+        }
     }
 
     /**

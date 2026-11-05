@@ -4859,6 +4859,43 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **An editing protocol runs the DOCX fidelity corpus through LibreOffice, as one already runs
+  it through Word.**
+  - `scripts/docx-visual/edit-protocol-libreoffice.py` does through LibreOffice what
+    `edit-protocol-corpus.ps1` does through Word, which until now was the only editor anything
+    was edited in. For each document it saves a copy with no edit and makes six edits, each on a
+    copy it saves as DOCX, reopens and sets as a PDF: a sentence added to a table cell and to the
+    text a drawing holds, words put into the footer, typing at the end until a new page opens,
+    the largest picture given another image, and typing inside a link. Four of them — the text in
+    a drawing, the footer, the picture and the link — are edits the Word protocol does not make.
+  - Every verdict is read from the PDF: the save with no edit against the PDF of the document as
+    exported, every edit against the PDF of that unedited save. Each edit is held to the text it
+    added being readable whole, to every other line still being found, to no letters standing on
+    others that did not before, and to what it promises of its own: the footer edit on every page
+    that showed the footer's text, page numbers right in every header and footer after a new page
+    opens, the new image drawn where the old one was, the link's address kept.
+  - Run over the 82 documents of the corpus in LibreOffice 24.2.7.2, the build the DOCX fidelity
+    job runs, it records what LibreOffice does with the export today. The export does not change.
+    - A save with no edit keeps 50 documents as they were. In 22 it moves lines by more than half
+      a point, at most 25.4pt; in 9 it loses links; `invoice-merchant` comes back a page longer.
+      Each of the 9 has a drawing in a link's paragraph, but so do 12 documents whose links the save
+      keeps: what loses them is not established.
+    - Text added to a drawing is cut off in 9 documents of 9. Added to a table cell it is readable
+      in 56 of 57, and runs into other text in 5.
+    - Typing at the end of 15 documents sets the new lines a point apart. All 15 end on a closing
+      paragraph of exact lines of two points or less, as 12 documents that do not do this also do.
+    - Edited in the footer the first page shows, `invoice-obsidian_long` and
+      `synthetic-sections_and_fields` carry the edit in their first section alone. Every section of
+      both names the same footer part, and LibreOffice gives each section a footer of its own when
+      it opens the file.
+    - Every picture replaced, in 25 documents, keeps its place; every link edited, in 48, keeps
+      its address.
+  - It runs under a Python that imports LibreOffice's UNO bridge and a PyMuPDF that leaves
+    clipped text out — Ubuntu 24.04's `python3-fitz` 1.23.7 does not, and the script refuses it —
+    and is run by hand, not by the build. `--self-check` breaks each verdict's rule once in a
+    probe PDF only that rule can fail, and holds each limit from both sides: 61 checks, which need
+    no LibreOffice.
+
 - **The DOCX fidelity gate holds each line to its width as well as its place, and is fed a
   document of short lines set in another face.**
   - A line set in another face that is too short to break at other words keeps its first letter

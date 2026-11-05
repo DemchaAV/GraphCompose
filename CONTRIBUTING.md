@@ -551,6 +551,49 @@ Choose the smallest tests that match the change:
   judges whether a page still looks right. It takes about a minute a document; `-Scenario`
   runs only the scenarios named, by the names the JSON records.
 
+  The corpus answers for how a document edits in LibreOffice as well.
+  `scripts/docx-visual/edit-protocol-libreoffice.py` runs over the same exported DOCX under a
+  Python that imports LibreOffice's UNO bridge and a PyMuPDF that leaves clipped text out, and
+  starts its own headless `soffice`. On Ubuntu 24.04, the LibreOffice the fidelity job runs:
+  `apt-get install libreoffice-writer python3-uno python3-venv`, then
+  `python3 -m venv --system-site-packages /opt/lo-edit && /opt/lo-edit/bin/pip install pymupdf`
+  — Ubuntu's own `python3-fitz` 1.23.7 reads clipped text as if it showed. The script tries
+  PyMuPDF on a clipped probe before it reads anything, and does not run where the hidden text
+  comes back. For each document it saves a copy with no edit and makes six edits, each on a copy
+  that it saves as DOCX, reopens and sets as a PDF:
+  - add a sentence to the longest paragraph in a table cell, and to the longest text a drawing
+    holds;
+  - put a few words at the start of the footer the first page shows;
+  - type at the end until a new page opens;
+  - give the largest picture another image;
+  - type inside the first link that a save with no edit keeps at its address.
+
+  The save with no edit is read against the PDF LibreOffice sets from the document as exported,
+  and every edit against the PDF of that unedited save, so each scenario answers for its own edit
+  and what the save changes is reported once. The verdicts, in `edit-protocol-libreoffice.json`:
+  - the save keeps the pages, finds every line within 0.525pt down and across, and keeps every
+    link, as many times as the document links to it;
+  - an added sentence is readable whole;
+  - the edited footer shows on every page that showed its text, another section's pages included,
+    though LibreOffice gives each section a footer of its own when it opens a file;
+  - the saved document has grown, the last line typed stands on its last page, typed lines stand
+    at least their size apart, and every page whose header or footer read "Page i of n" or
+    "i / n" before, and every page added, reads its own number and the new total there;
+  - the new image is drawn, every picture is drawn where it was, and no more of them;
+  - the edited link keeps its address, and every link is kept;
+  - after every edit, each line of text from before it is still found on its own page or the
+    next, whitespace and page numbers aside and every other digit kept — the link edit undone
+    first — and no two lines' letters stand on one another more often than before.
+
+  The move limit is 0.525pt rather than 0.5 because LibreOffice writes positions on a grid of
+  0.05pt, where a limit of 0.5 is a difference two readings can produce exactly. A scenario a
+  document has nothing to edit for is recorded `N/A` with what it lacks. `--self-check` needs
+  that PyMuPDF but no LibreOffice: it breaks every rule once, in a probe PDF only that rule can fail,
+  and holds each limit from both sides. Run it after changing how a verdict is read or a limit
+  it is read by. Like the Word protocol, this one is run by hand and is not part of the build.
+  Without the UNO bridge, a PyMuPDF that leaves clipped text out, or `soffice`, it records
+  `NOT_RUN` and exits 2.
+
 If a change affects public docs, examples, or screenshots, update those assets in the same PR so the repository stays internally consistent.
 
 If a change affects resolved geometry, pagination, or ordering, prefer adding or updating a layout snapshot test as well. Snapshot coverage is debug-only and test-oriented: it should validate layout state without being wired into the normal production PDF pipeline.

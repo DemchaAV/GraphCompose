@@ -2,6 +2,9 @@
 # the contributor's core.autocrlf setting (a CRLF shebang breaks on Unix).
 *.sh text eol=lf
 
+# Python scripts are copied into Linux containers to run there: keep the shebang LF too.
+*.py text eol=lf
+
 # Maven wrapper: the POSIX `mvnw` must stay LF to execute on Linux/macOS/WSL
 # (a CRLF shebang is unrunnable there); the Windows `mvnw.cmd` batch stays CRLF.
 mvnw text eol=lf

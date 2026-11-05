@@ -136,7 +136,7 @@ Run within 1 hour of the tag push. Independent steps can run in parallel.
 6b. **Run the external release-smoke suite** — once Central has indexed the train, dispatch the **Release Smoke** workflow ([`.github/workflows/release-smoke.yml`](../../.github/workflows/release-smoke.yml)) with `version=<target>`, or run `bash scripts/release-smoke/run.sh --version <target>`. This resolves every published coordinate from Maven Central in a clean, GraphCompose-evicted repository (no reactor / local install) and exercises the documented consumer scenarios — the wrapper renders PDF, `graph-compose-core` alone throws `MissingBackendException`, core+render-pdf renders, and templates/testing/bundle perform their roles. It is the authoritative "a real user can install and use this" check; the minimal step-5 snippet resolve is a faster subset. (Release smoke tests **published** artifacts, so it necessarily runs post-publish, not pre-tag.)
 7. **Open the next development line** — `pwsh ./scripts/cut-release.ps1 -PostReleaseOnly`. This bumps the train poms to the next patch `-SNAPSHOT` (so develop builds are distinguishable from the release and the japicmp gate compares against it), moves the `graph-compose-templates` japicmp previous-release pin (`japicmp.baseline.previous` in `templates/pom.xml`) onto the release just published, **and** restores linkable "View Code" buttons by flipping ShowcaseMetadata back to `/blob/develop`. The README/showcase install snippets stay on the just-published release.
 8. **GitHub Release — automated.** Pushing the `v<target>` tag triggers [`.github/workflows/release.yml`](../../.github/workflows/release.yml): it re-runs `./mvnw clean verify` over the whole reactor against the tagged commit, then creates the Release with that version's CHANGELOG section as the body (hyphenated tags like `v1.7.0-rc.1` ship as pre-releases; the step is idempotent — it edits the notes if the Release already exists). GitHub refuses a Release body over 125 000 characters, so the section first goes through [`scripts/release-notes.mjs`](../../scripts/release-notes.mjs): one that fits is published as written, and a longer one is published as its subsection headings and each entry's bold lead, with a link to the full section at the tag. The 2.4.0 section, at over 156 000 characters, failed its tag's Release before this existed. The workflow titles it `GraphCompose v<target>`; for a **minor** release, edit the title to add the codename (`v1.4`=cinematic, `v1.5`=intuitive, `v1.6`=expressive; patches drop it). Create the Release by hand (`gh release create v<target> --notes-file <CHANGELOG section>`) only if the workflow is unavailable.
-9. **Maven Central publish — automated (from v1.6.6).** The same `v<target>` tag push triggers [`.github/workflows/publish.yml`](../../.github/workflows/publish.yml): it re-runs `mvnw verify` at the tagged commit, signs each module's artefacts (main / sources / javadoc / pom &mdash; the `graph-compose` wrapper has no sources of its own, so it publishes no sources jar) with the repo's GPG key, and uploads to Maven Central via the `central-publishing-maven-plugin`. Hyphenated tags (`-rc`, `-alpha`, `-beta`, `-snapshot`) are skipped — those go only to the GitHub Release pre-release surface. `autoPublish=false` in the plugin config means the artefact lands in the Central validation queue; the maintainer flips the switch on [central.sonatype.com](https://central.sonatype.com) for the first publish, then can opt into auto-release in a follow-up. Verify via `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graph-compose -Dversion=<target>` once the artifact appears (usually 5–15 minutes after the workflow turns green).
+9. **Maven Central publish — automated (from v1.6.6).** The same `v<target>` tag push triggers [`.github/workflows/publish.yml`](../../.github/workflows/publish.yml): it re-runs `mvnw verify` at the tagged commit, signs each module's artefacts (main / sources / javadoc / pom &mdash; the `graph-compose` wrapper has no sources of its own, so it publishes no sources jar) with the repo's GPG key, and uploads the whole train to Maven Central via the `central-publishing-maven-plugin` as **one deployment** (§2.F), named `GraphCompose v<target>` in the Central portal. Hyphenated tags (`-rc`, `-alpha`, `-beta`, `-snapshot`) are skipped — those go only to the GitHub Release pre-release surface. `autoPublish=false` in the plugin config means the deployment stops at `VALIDATED`; the maintainer publishes it with **one** click on [central.sonatype.com](https://central.sonatype.com) (Deployments → `GraphCompose v<target>` → Publish), which releases all eight components together. The run keeps the uploaded `central-bundle.zip` as the workflow artifact `central-bundle-v<target>-attempt-<N>`; before pressing Publish, download it (`gh run download <run-id>`), unzip the `central-bundle.zip` inside it into a directory and run `bash scripts/release-smoke/run.sh --staged-repo <dir>` to prove every coordinate in the deployment resolves and works for a consumer. Verify via `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graph-compose -Dversion=<target>` once the artifact appears (usually 5–15 minutes after the deployment is published), and check that the [Usage Center](https://central.sonatype.com/publishing/usage) Release Count moved by one for the release.
 10. **Optional**: GitHub Discussions announcement (mirror the prior release's style; close with *"author intent, not coordinates"*), LinkedIn post, r/java post.
 
 The release is **done** only when steps 1–7 are all green; step 9 adds Maven Central availability once the D-track of v1.6.6 has shipped.
@@ -153,7 +153,8 @@ is a convenience aggregate `io.github.demchaav:graph-compose-bundle` (under
   `${project.version}`, its `graph-compose` dependency). `VersionConsistencyGuardTest`
   enforces `bundle == engine`. The engine `v<target>` tag's
   [`publish.yml`](../../.github/workflows/publish.yml) deploys the engine **and**
-  the bundle. Nothing extra to do for the bundle at release time.
+  the bundle, in the same Central deployment (§2.F). Nothing extra to do for the
+  bundle at release time.
 - **The fonts artifact is NOT bumped by the engine release.** It carries its own
   version line (started at `1.0.0`) and is bumped **only when the font set
   changes**. `cut-release.ps1` deliberately does not touch `fonts/pom.xml`, and
@@ -246,6 +247,52 @@ aggregate. They all carry the **same** version.
   the whole train to the **GitHub Release pre-release surface only** — `publish.yml`
   skips Central for hyphenated tags (§2.B step 9). A beta is therefore installable from
   the GitHub pre-release (and from JitPack, which builds any tag), not from Central.
+- **One Central deployment per train release.** Maven Central counts every distinct
+  publish operation against the organisation's monthly Release Count (the
+  [Usage Center](https://central.sonatype.com/publishing/usage) is the source of truth
+  for the limits). `publish.yml` therefore ships the train in a single reactor run,
+  `./mvnw -P release deploy -pl <the eight train artifacts>`: the
+  `central-publishing-maven-plugin` stages every selected module into one directory,
+  and the last one bundles them into `central-bundle.zip` and uploads it once. One
+  version is one deployment holding eight components; each stays its own coordinate
+  for consumers. The deployment validates and publishes as a unit, so a train can no
+  longer end up split across several deployments in different states. Fonts and emoji are not selected — they keep their own
+  tags and single-module workflows. `PublishTrainGuardTest` holds the `-pl` list to
+  the lockstep modules derived from the poms, forbids `-am` (which would pull fonts and
+  emoji in), and requires the eight `release` profiles to declare the plugin
+  identically, because the upload runs with the settings of whichever module the
+  reactor orders last.
+
+#### Dry-running the Central deployment
+
+To see exactly what a tag would upload — without credentials, and without anything
+reaching Central — build the bundle locally against a dead endpoint. Use a throwaway
+worktree and a separate local repository, because the flip below writes a fake final
+version that must never land in your `~/.m2`. Run it from **Linux or WSL**: the plugin
+writes the zip with the platform's path separator, and a Windows-built zip carries
+backslash paths.
+
+```bash
+# in a throwaway worktree at the commit to release
+sed -i 's/<X.Y.Z>-SNAPSHOT/<X.Y.Z>/g' pom.xml core/pom.xml render-pdf/pom.xml wrapper/pom.xml render-docx/pom.xml render-pptx/pom.xml templates/pom.xml testing/pom.xml bundle/pom.xml examples/pom.xml benchmarks/pom.xml qa/pom.xml coverage/pom.xml
+R=$PWD/../m2-dryrun
+TRAIN=:graph-compose-core,:graph-compose-render-pdf,:graph-compose,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose-bundle
+./mvnw -B -ntp -Dmaven.repo.local=$R -f fonts/pom.xml -DskipTests install
+./mvnw -B -ntp -Dmaven.repo.local=$R -f emoji/pom.xml -DskipTests install
+./mvnw -B -ntp -Dmaven.repo.local=$R -DskipTests install -pl $TRAIN
+./mvnw -B -ntp -Dmaven.repo.local=$R -s <settings with a dummy server id=central> \
+  -P release -DskipTests -DcentralBaseUrl=http://127.0.0.1:9 deploy -pl $TRAIN
+```
+
+The last command fails at the upload with `Connection refused` — that is the point.
+Before it does, the log shows each module `Staging …` and then a single
+`Created bundle successfully … central-bundle.zip` and a single `Going to upload`.
+The zip lands under `core/target/central-publishing/`. Unzip it into a directory and
+run the release smoke against it before any upload:
+`bash scripts/release-smoke/run.sh --staged-repo <dir>` (see
+[`scripts/release-smoke/README.md`](../../scripts/release-smoke/README.md)). GPG signing is
+skipped in the dry run (`gpg.skip` defaults to true), so the zip carries no `.asc`
+files; the tagged run signs every file with the same `release` profile.
 
 ### 2.G Branch flow
 
@@ -257,8 +304,8 @@ guard skips `core/pom.xml` on the older 1.x layout, so the same script serves bo
 - **Release candidate:** `pwsh ./scripts/cut-release.ps1 -Version <X.Y.Z>-rc.1`.
   The hyphenated `-rc` tag ships to the GitHub pre-release surface only (Central skipped, §2.F).
 - **GA:** `pwsh ./scripts/cut-release.ps1 -Version <X.Y.Z>`. The plain `v<X.Y.Z>` tag fires
-  `publish.yml`, which deploys the eight-module train to Maven Central in dependency order
-  — that sequence is version-agnostic and needs no per-release change.
+  `publish.yml`, which deploys the eight-module train to Maven Central as one deployment
+  (§2.F) — that run is version-agnostic and needs no per-release change.
 - **1.9.x backport:** `pwsh ./scripts/cut-release.ps1 -Version 1.9.<n> -Branch 1.x`.
 
 After a GA the branches settle back into their standing roles: `main` is fast-forwarded
@@ -329,11 +376,22 @@ The published jar is final. **Never force-move a tag** that Maven Central has al
 
 The GitHub Release ([`release.yml`](../../.github/workflows/release.yml)) and the Maven Central publish ([`publish.yml`](../../.github/workflows/publish.yml)) run independently off the same `v*` tag, so one can fail without the other. Recovery never mutates the tag.
 
+Two rules govern every `publish.yml` recovery below:
+
+- **Run the tag's own workflow.** A `workflow_dispatch` runs the workflow file of the ref it is dispatched *from* — the `tag` input only chooses what is checked out. The Actions UI defaults to `main`, and `main` is merged after the tag (§2.B step 3), so dispatching from it can run a different publish workflow. Either use **Re-run failed jobs** on the tag's own run (a re-run reuses that run's workflow file), or dispatch from the tag:
+  `gh workflow run publish.yml --ref v<X.Y.Z> -f tag=v<X.Y.Z>` (add `-f skip_published=true` only where a row says so).
+- **Once the log shows `deploymentId`, never run the deploy again** — neither a dispatch nor a re-run. `Uploaded bundle successfully, deployment name: …, deploymentId: …` means a deployment exists, whatever turned the job red afterwards (a validation timeout, a transient error while the plugin polls the status — it does not retry). Running the deploy again would upload a **second** deployment of the same coordinates. Act on the deployment's state in the portal instead: `VALIDATED` → smoke the bundle artifact and publish it; `FAILED` → see *Central validation failed*.
+
 | Symptom | Recovery |
 |---|---|
 | **GitHub Release not created** (release.yml failed or unavailable) | Re-run the workflow, or create it by hand: `gh release create v<X.Y.Z> --notes-file <changelog-section>`. The step is idempotent — safe to re-run. |
-| **Central validation failed** (publish.yml red at a deploy/validate step) | The train deploys in dependency order — **core → render-pdf → wrapper → render-docx → render-pptx → templates → testing → bundle** — and each isolated deploy resolves inter-module deps from the local m2 the `clean install` preflight seeds (that is why the preflight uses `install`, not `verify`). Read the failing module's log, fix the cause (commonly a missing signature/sources jar or POM metadata). If it failed at **core**, re-dispatch `publish.yml` with `tag=v<X.Y.Z>` (a full re-run). If earlier modules already validated, re-dispatch with `tag=v<X.Y.Z>` **and `start_at=<the failed module>`** — the deploys always begin at core, and Central rejects re-uploading an already-validated coordinate, so a full re-run would choke on the first already-published module. |
-| **Partial module publication** (some coordinates on Central, some not) | Do **not** blindly re-dispatch — the deploys always start at core, and Central rejects re-uploading an already-validated coordinate, so a full re-run fails at the first already-published module before ever reaching the missing ones. Inspect Central state (`mvn dependency:get` per coordinate, or the published-artifact matrix) to find the first **unpublished** module, then re-dispatch `publish.yml` with `tag=v<X.Y.Z>` and `start_at=<that module>` to resume from there. Never bump the tag to force a re-publish. |
+| **publish.yml red before the upload** (build, test, javadoc or signing failed; no `deploymentId` in the log) | Nothing was uploaded: a failing module stops the build before the last module, which is the one that uploads. Fix the cause (an environment one — an expired GPG key — is fixed in the repo secrets) and dispatch from the tag. |
+| **Upload rejected** (the upload itself errors — network, Portal outage, a rotated or wrong `CENTRAL_TOKEN` — and the log has no `deploymentId`) | Check the portal's Deployments page to be sure no deployment was created. Fix the cause (a token in the repo secrets) and dispatch from the tag. If a deployment *was* created, the `deploymentId` rule applies. |
+| **Red after the upload** (`deploymentId` in the log, then a timeout on the plugin's 1800 s `waitMaxTime`, which the whole train shares, or a status-polling error) | Do **not** dispatch or re-run the deploy (rule above). Watch the deployment in the portal: `VALIDATED` → smoke and publish it; `FAILED` → *Central validation failed*. |
+| **Central validation failed** (deployment `FAILED`) | The deployment is one unit, so **nothing** was published. The portal (and the run log) list the errors per component. An environment cause (the signing key not on a keyserver): fix it, drop the `FAILED` deployment, dispatch from the tag. A content cause (POM metadata, a missing sources/javadoc jar) needs a commit, and the tag is immutable, so fix forward with a patch version. The run's workflow artifact holds the exact zip that was rejected. |
+| **Validated but wrong** (deployment `VALIDATED`, not yet published) | Drop it in the portal — nothing reaches Central until the maintainer publishes. An environment cause: fix it and dispatch from the tag. A content cause: fix forward with a patch version, as for a failed validation. |
+| **Partial module publication** (some coordinates of the version on Central, some not — after a manual portal upload, or for a version a pre-consolidation run left partly published) | Confirm what is live (`mvn dependency:get` per coordinate, or the release-smoke matrix) and make sure no deployment for the version is still `VALIDATED` (publish or drop it first — an unpublished deployment does not count as published). **A tag cut with the single-deployment workflow:** dispatch from the tag **with `-f skip_published=true`**. The plugin asks the Portal which components are already published, leaves those out, and uploads the rest as one deployment, which stops at `VALIDATED` for the usual Publish click; a run in which everything is already published stages nothing and stops. Such a bundle omits the live modules, so the staged smoke cannot consume it — smoke the version from Central after publishing instead. **A tag cut before it (v2.4.1 and earlier):** that tag's workflow has no `skip_published` input (GitHub rejects it as unexpected); dispatch from the tag with its own `-f start_at=<first unpublished module>`, which deploys from that module onwards module by module. Never bump the tag to force a re-publish, and never set `skip_published` on a normal release. |
+| **Re-dispatch of an already-published version** | Without `skip_published`, Central rejects re-uploading the published coordinates and the deployment fails without changing anything. With it, the run is a no-op. |
 | **Stale documentation discovered after the tag** | The tag is immutable — do NOT move it. Fix forward on `develop`, fast-forward to `main`; the deployed site and the `main` README correct themselves. If the stale text lives inside the immutable tag's README, clarify it in the GitHub Release body rather than re-tagging. Prose is never grounds for a patch release. |
 | **When a patch release IS required** | A published coordinate is missing and cannot be completed via re-dispatch; a published POM has wrong dependencies; the default `graph-compose` wrapper does not render PDF; or a confirmed runtime defect affects normal users. Keep the patch minimal (no features/refactors), explain the exact fix in the CHANGELOG, and repeat the full release verification (including the release-smoke suite, §2.B step 6b). |
 

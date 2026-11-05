@@ -45,7 +45,7 @@ import java.nio.file.Path;
  * things that call does not give: {@code reportSink} hands over what Word
  * could not carry as authored, which {@code printReport} prints, and
  * {@code deterministic(true)} pins the package's clocks, so the committed
- * preview comes out as the same bytes on every run.</p>
+ * preview comes out as the same bytes on every run on one platform.</p>
  *
  * <p>Requires {@code io.github.demchaav:graph-compose-render-docx} on the
  * classpath, which brings Apache POI with it.</p>
@@ -183,7 +183,7 @@ public final class WordExportExample {
                     .addParagraph("Drawing becomes Word's own", heading)
                     .addParagraph("In Word the divider below is a paragraph border, and the "
                             + "badge a drawn shape that holds its letters. The export report "
-                            + "names both, since neither is the kind of node it was authored as.",
+                            + "names both, as each is written in a form of Word's own.",
                             caption)
                     .addDivider(d -> d.width(420).thickness(2).color(GOLD))
                     .addCircle(72, TEAL, c -> c
@@ -202,7 +202,7 @@ public final class WordExportExample {
 
             // document.buildDocx(docxFile) is the one-call export. A configured backend adds
             // the report of what Word could not carry as authored, and pinned clocks, so the
-            // same document exports to the same bytes on every run.
+            // same document exports to the same bytes on every run on one platform.
             document.export(DocxSemanticBackend.builder()
                     .deterministic(true)
                     .reportSink(WordExportExample::printReport)
@@ -213,11 +213,13 @@ public final class WordExportExample {
     }
 
     /**
-     * Prints what the Word export could not carry as authored. A note that is
-     * {@code DROPPED} is not in the file; one that is {@code APPROXIMATED} is
-     * there as the nearest thing Word has. Each says where it was: a node's
-     * layout path, which traces it back to the code that authored it, a page,
-     * or no path at all for a note about the whole document or a page zone.
+     * Lists, by subject, what the Word export could not carry as authored. A
+     * note that is {@code DROPPED} is not in the file; one that is
+     * {@code APPROXIMATED} is there as the nearest thing Word has. Each line
+     * gives a note's severity and where it was: a node's layout path, which
+     * traces it back to the code that authored it, a page, or no path at all
+     * for a note about the whole document or a page zone. Each note's
+     * {@code detail()} says what it means for the document.
      */
     private static void printReport(DocxExportReport report) {
         if (report.isEmpty()) {
@@ -229,7 +231,7 @@ public final class WordExportExample {
                 report.count(DocxExportReport.Severity.APPROXIMATED));
         report.bySubject().forEach((subject, notes) -> {
             System.out.println("  " + subject + " (" + notes.size() + ")");
-            notes.forEach(note -> System.out.println("    "
+            notes.forEach(note -> System.out.println("    " + note.severity() + " "
                     + (note.path() == null ? "(no path)" : note.path())));
         });
     }

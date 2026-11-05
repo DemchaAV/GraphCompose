@@ -58,8 +58,9 @@ try (var doc = GraphCompose.document().create()) {
 }
 ```
 
-`buildDocx(Path)`, `writeDocx(OutputStream)` and `toDocxBytes()` find this module on the
-classpath and build a default backend for each export. So they hand back no report, and they
+`buildDocx(Path)`, `writeDocx(OutputStream)` and `toDocxBytes()` (Experimental, as are the
+backend's builder and its report) find this module on the classpath and build a default
+backend for each export. So they hand back no report, and they
 stamp the export with the date it was made. For either, configure the backend and export
 through the session — which writes the file directly, not through the replace-on-success
 `buildDocx` uses, and throws a plain `Exception` rather than `DocumentRenderingException`:
@@ -79,14 +80,17 @@ try (var doc = GraphCompose.document().create()) {
 when everything was. Each note is `DROPPED` — the page draws it and the file does not have it —
 or `APPROXIMATED` — it is in the file as the nearest thing Word has, such as a panel with square
 corners where the page rounds them. A note also carries a subject (`chart`, `corner radius`),
-where it was (the authored node's path as the layout graph addresses it, a page, or none for
-the whole document), and what it means for the document. `bySubject()` and `count(severity)` summarise it. The sink is called
-once, after the bytes are complete; an export that cannot proceed throws instead. See
+where it was, and what it means for the document. Where it was is the authored node's path as
+the layout graph addresses it, or `page N` — `section N` and `section N, page N` in a document
+of several sections — or none, for the whole document or a page zone. `bySubject()` and
+`count(severity)` summarise it. The sink is called once, after the bytes are complete; an
+export that cannot proceed throws instead. See
 [finding out what the export could not carry](../docs/recipes/docx-export.md#finding-out-what-the-export-could-not-carry).
 
 **Deterministic output** pins the package's created and modified dates and every zip entry's
-time, so the same document exports to the same bytes on every run and machine;
-`deterministic(Instant)` pins them to a date of your own. A `{date}` token in a header or footer
+time, so the same document exports to the same bytes on every run on one platform. Across
+platforms the bytes still differ where Apache POI ends an XML declaration with the platform's
+line separator. `deterministic(Instant)` pins the dates to one of your own. A `{date}` token in a header or footer
 still changes with the day unless `-Dgraphcompose.renderDate` pins it, as for the PDF.
 
 [`WordExportExample`](../examples/src/main/java/com/demcha/examples/features/docx/WordExportExample.java)
@@ -121,18 +125,20 @@ What maps:
   so.
 - **Images.** A block image keeps its size and fit mode. Pictures, SVG icons, emoji and
   shapes — dots, arrows, chevrons, checkboxes — in a line are inline pictures, placed where
-  the page's alignment puts them; an icon's text is the picture's description. Code and badge chips keep their fill as run shading, without
-  the shape.
+  the page's alignment puts them; an icon's text is the picture's description. Code and badge
+  chips keep their fill as run shading, without the shape.
 - **Links and navigation.** A link is a `w:hyperlink`, to an address or to one of the
   document's anchors; an `anchor(...)` is a bookmark; a `bookmark(...)` outline level is
   Word's `HeadingN` style, so the paragraph is in the Navigation Pane, listed by the text of its
   Word paragraph.
-- **Horizontal rules.** A level line with no transform, no thicker than 12pt, or an `addDivider` bar of
-  plain fill no taller than 12pt, in the flow is Word's own rule: a paragraph whose bottom border
-  is the stroke. Any other line, and one laid over others in a layer stack, is drawn as a shape.
+- **Horizontal rules.** A level line with no transform, no thicker than 12pt, or an
+  `addDivider` bar of plain fill no taller than 12pt, in the flow is Word's own rule: a
+  paragraph whose bottom border is the stroke. Any other line, and one laid over others in a
+  layer stack, is drawn as a shape.
 - **Drawing.** Boxes, rounded boxes, ellipses, lines, polygons and paths are floating shapes
   placed where the page draws them, anchored in a paragraph of the block they belong to so they
-  move with it; one that no paragraph on its page can carry stays at its place on the page. What
+  move with it. One whose block writes no paragraph on its page is carried by another paragraph
+  there and placed from the page's edges. What
   a drawing loses — a transform, a gradient, a dash pattern, a link or an outline entry — is
   named in a report note, on its table for one composed in a table cell.
 - **Barcodes and QR codes** are pictures of the same matrix the PDF draws, so they scan.

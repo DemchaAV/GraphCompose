@@ -1180,7 +1180,7 @@ The semantic backend walks the document graph and writes **editable
 Word content**, which Word paginates and re-flows after an edit. One
 session, two outputs:
 
-<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
+<!-- doc-example-ignore: abridges a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 try (DocumentSession document = GraphCompose.document(pdfFile)
         .pageSize(595, 842)
@@ -1210,8 +1210,9 @@ try (DocumentSession document = GraphCompose.document(pdfFile)
 `document.buildDocx(docxFile)` exports in one call. It has no report and
 stamps the file with the date of the export, so the example configures
 the backend: the report says what Word could not carry as authored, each
-note naming its node's path, and `deterministic(true)` makes the committed
-preview the same bytes on every run.
+note naming where it was (a node's path, a page, or none), and
+`deterministic(true)` makes the committed preview the same bytes on every
+run on one platform.
 
 Paragraphs (inline runs included), lists, tables, side-by-side rows,
 images, spacers and page breaks become Word's own; session metadata lands

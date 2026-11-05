@@ -5996,10 +5996,14 @@ follow semantic versioning; release dates are ISO 8601.
     lines, polygons and paths are drawn as floating shapes where the page draws them, not
     left out; what is still dropped is a drawing painted only with a gradient, one with no
     layout or no paragraph on its page, and one in a page zone. A layer stack takes more Word
-    forms than side-by-side columns. A line becomes a paragraph border only when it is level
-    and no thicker than 12pt.
+    forms than side-by-side columns. A line becomes a paragraph border only when it is level,
+    untransformed, no thicker than 12pt and in the flow.
+  - The README and the recipe said deterministic output is the same bytes "on every run and
+    machine". It is on every run on one platform; across platforms the parts Apache POI writes
+    still end their XML declaration with the platform's line separator, and both now say so.
   - `WordExportExample` exports through that configured backend and prints its report, so the
-    committed `word-export-companion.docx` comes out as the same bytes on every run. The
+    committed `word-export-companion.docx` comes out as the same bytes on every run on one
+    platform. The
     document's own captions said the divider and the badge stay PDF-only and that a nested list
     indents two spaces a level; in Word they are a paragraph border, a drawn shape holding its
     letters and a Word list level, and the captions say so. The title and the nested markers no

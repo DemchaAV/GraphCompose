@@ -66,7 +66,7 @@
     left out.
 
 .PARAMETER Python
-    The Python the verdicts read from a PDF are run under: one that imports a PyMuPDF that leaves
+    The Python the verdicts read from a PDF are run under: 3.10 or later, importing a PyMuPDF that leaves
     clipped text out, as PyMuPDF 1.27 and 2.1 from pip do. `python` on the PATH when left out.
 
 .PARAMETER SelfCheck
@@ -142,6 +142,7 @@ $WD_TEXT_RECTANGLE = 0
 $WD_MAIN_TEXT_STORY = 1
 $WD_RELATIVE_VERTICAL_PAGE = 1
 $WD_RELATIVE_VERTICAL_PARAGRAPH = 2
+$WD_FIELD_HYPERLINK = 88
 
 # What Word calls each thing a floating drawing can be placed down from, for a message naming one
 # this scenario does not know what to ask of. The export writes only the paragraph and the page.
@@ -1036,13 +1037,16 @@ function Export-Pdf {
 # whose PyMuPDF leaves clipped text out, held first by their own self-check. Null when they can,
 # else why not and whether that is a failure (exit 1) or a want (exit 2).
 function Test-PdfVerdicts {
+    # What Python writes to stderr is read, not raised: Windows PowerShell 5.1 turns it into an
+    # error under Stop. This function's own preference only.
+    $ErrorActionPreference = 'Continue'
     # A Python that runs at all, asked first: on Windows without one, `python` on the PATH is a
     # stub that exits 9009, which must read as a Python wanted, not as verdicts that failed.
-    try {
+    # A command that is not there leaves the last exit code as it was, so it is looked for first.
+    $runs = $false
+    if (Get-Command $Python -ErrorAction SilentlyContinue) {
         & $Python -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' *> $null
         $runs = $LASTEXITCODE -eq 0
-    } catch {
-        $runs = $false
     }
     if (-not $runs) { return @{ code = 2; why = "no Python 3.10 or later at '$Python' to read the PDF verdicts with" } }
     $output = & $Python $JUDGE --self-check 2>&1
@@ -1057,6 +1061,8 @@ function Test-PdfVerdicts {
 # is written beside the edited PDF, so a verdict can be read again by hand.
 function Invoke-Judge {
     param([string]$Name, [string]$Reference, [string]$Edited, $Facts)
+    # Python's stderr is read as text here, as in Test-PdfVerdicts.
+    $ErrorActionPreference = 'Continue'
     $job = $Edited -replace '\.pdf$', '.judge.json'
     [ordered]@{ scenario = $Name; reference = $Reference; edited = $Edited; facts = $Facts } |
         ConvertTo-Json -Depth 4 | Set-Content -Path $job -Encoding utf8
@@ -1724,9 +1730,10 @@ function Invoke-Protocol {
         $state.facts.textBefore = $target.text
         # Typed after half the letters Word shows, as the LibreOffice protocol types it. A link's
         # range spans its field code as well as its text, so its middle by position falls in the
-        # address: the letters are the field's result.
+        # address: the letters are the link field's result.
         $range = $target.hyperlink.Range
-        if ($range.Fields.Count -gt 0) { $range = $range.Fields(1).Result }
+        $field = @($range.Fields | Where-Object { $_.Type -eq $WD_FIELD_HYPERLINK } | Select-Object -First 1)
+        if ($field.Count -gt 0) { $range = $field[0].Result }
         $letters = $range.Characters
         $letters.Item([Math]::Max(1, [int][Math]::Floor($letters.Count / 2))).InsertAfter($LINK_EDIT)
     } -Verify {

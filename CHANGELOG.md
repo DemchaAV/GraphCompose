@@ -4872,9 +4872,10 @@ follow semantic versioning; release dates are ISO 8601.
     read against the document as exported, and every edit against the save. Both editors are now
     held to one set of verdicts. A save or a typed page still has to pass what Word itself reports,
     as before.
-  - A Python whose PyMuPDF leaves clipped text out is checked before Word is started, by its own
-    self-check (`-Python`, `python` on the PATH by default). Without one the protocol records
-    `NOT_RUN` and exits 2, unless every scenario named reads nothing from a PDF.
+  - A Python 3.10 or later whose PyMuPDF leaves clipped text out is checked before Word is
+    started, by the verdicts' own self-check (`-Python`, `python` on the PATH by default). Without
+    one the protocol records `NOT_RUN` and exits 2; where that self-check fails it records `FAILED`
+    and exits 1. A run naming only scenarios that read nothing from a PDF needs no Python.
   - A footer is now found word for word, in any order, anywhere in a page's header and footer
     bands, each word as many times as the footer has it. A footer of two cells, text over two lines
     beside a page number, reads its lines interleaved there, and was not found on any page. Run

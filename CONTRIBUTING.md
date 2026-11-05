@@ -453,7 +453,7 @@ Choose the smallest tests that match the change:
   also read from Word's own PDFs, by that protocol's verdicts: the script sets the document as
   exported, the save and each edited copy as PDFs and hands each pair to
   `edit-protocol-libreoffice.py --judge`, so both editors are held to one set of verdicts. That
-  wants a Python whose PyMuPDF leaves clipped text out (`-Python`, `python` on the PATH when left
+  wants a Python 3.10 or later whose PyMuPDF leaves clipped text out (`-Python`, `python` on the PATH when left
   out), whose self-check the protocol runs before it asks for Word; without one it records
   `NOT_RUN` and exits 2, and where that self-check fails it records `FAILED` and exits 1, unless
   only scenarios that do not read a PDF were named.
@@ -563,8 +563,8 @@ Choose the smallest tests that match the change:
   The protocol reads the letters' size and visibility from the text, without the paragraph
   mark. Beside the lengthened copy and the new-page copy it writes PDFs, from which a person
   judges whether a page still looks right. The six scenarios read from a PDF took 32 minutes over
-  the corpus's 82 documents in Word 16, and 58 with LibreOffice running beside it; the others
-  took about four minutes a document over five of its longer ones; `-Scenario`
+  the corpus's 82 documents in Word 16, and 58 with LibreOffice running beside it; all of them
+  take a few minutes a document; `-Scenario`
   runs only the scenarios named, by the names the JSON records.
 
   The corpus answers for how a document edits in LibreOffice as well.

@@ -307,6 +307,10 @@ guard skips `core/pom.xml` on the older 1.x layout, so the same script serves bo
   `publish.yml`, which deploys the eight-module train to Maven Central as one deployment
   (§2.F) — that run is version-agnostic and needs no per-release change.
 - **1.9.x backport:** `pwsh ./scripts/cut-release.ps1 -Version 1.9.<n> -Branch 1.x`.
+- **Release line branch (`2.5-dev`):** the 2.5 work lands on `2.5-dev` through pull requests,
+  and `ci.yml` and `codeql.yml` also run on every push to it, as on `main` and `develop`. The
+  cut still runs from `develop`, so the line has to reach `develop` first; once it has and the
+  branch is deleted, remove `2.5-dev` from both workflows' `push.branches`.
 
 After a GA the branches settle back into their standing roles: `main` is fast-forwarded
 to the release, `develop` carries on as the 2.x working branch, and `1.x` continues to

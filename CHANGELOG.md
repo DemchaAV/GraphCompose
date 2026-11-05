@@ -4880,21 +4880,26 @@ follow semantic versioning; release dates are ISO 8601.
       a point, at most 25.4pt; in 9 it loses links; `invoice-merchant` comes back a page longer.
       Each of the 9 has a drawing in a link's paragraph, but so do 12 documents whose links the save
       keeps: what loses them is not established.
-    - Text added to a drawing is cut off in 9 documents of 9. Added to a table cell it is readable
-      in 56 of 57, and runs into other text in 5.
+    - Text added to a drawing is cut off in 9 documents of 9. Added to a table cell it runs into
+      other text in 5 documents of 57; in `invoice-luma_studio` two lines of the page are no longer
+      drawn after it, and in `synthetic-clipped_container`, whose card clips what it holds, it is
+      cut off.
     - Typing at the end of 15 documents sets the new lines a point apart. All 15 end on a closing
       paragraph of exact lines of two points or less, as 12 documents that do not do this also do.
+      In `invoice-luma_studio_long` the typed lines run into the page's text; `invoice-obsidian_long`
+      had a page more while it was typed into and has none once saved and reopened.
     - Edited in the footer the first page shows, `invoice-obsidian_long` and
       `synthetic-sections_and_fields` carry the edit in their first section alone. Every section of
       both names the same footer part, and LibreOffice gives each section a footer of its own when
-      it opens the file.
+      it opens the file. In `invoice-luma_studio` the edited footer runs into the page's text.
     - Every picture replaced, in 25 documents, keeps its place; every link edited, in 48, keeps
       its address.
   - It runs under a Python that imports LibreOffice's UNO bridge and a PyMuPDF that leaves
     clipped text out — Ubuntu 24.04's `python3-fitz` 1.23.7 does not, and the script refuses it —
     and is run by hand, not by the build. `--self-check` breaks each verdict's rule once in a
-    probe PDF only that rule can fail, and holds each limit from both sides: 61 checks, which need
-    no LibreOffice.
+    probe PDF only that rule can fail, and holds the limits for a move, a crossing, the spacing of
+    typed lines and the header and footer bands from both sides: 66 checks, which need no
+    LibreOffice.
 
 - **The DOCX fidelity gate holds each line to its width as well as its place, and is fed a
   document of short lines set in another face.**

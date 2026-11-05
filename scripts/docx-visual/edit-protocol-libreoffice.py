@@ -15,15 +15,17 @@ what the save itself changes is the round trip's to report:
   lengthen-in-a-drawing    add a sentence to the longest text a drawing holds
                            — both: the whole sentence readable, nothing else lost, no text over text
   edit-the-footer          put a few words at the start of the footer the first page shows: the
-                           edit on every page that showed that footer's text, nothing else lost,
-                           no text over text
-  add-a-page               type at the end until a new page opens: the saved document has grown,
-                           the last line typed stands on its last page, typed lines stand at least
-                           their size apart, nothing else lost, no text over text, and every page
-                           whose header or footer read "Page i of n" or "i / n" before, and every
-                           page added, reads its own number and the new total there
-  replace-a-picture        give the largest picture a 300 x 60 image: the new image drawn, every
-                           picture drawn where it was and as many of them, nothing else lost
+                           edit on every page whose header or footer showed that footer's text,
+                           nothing else lost, no text over text
+  add-a-page               type at the end until a new page opens, 300 lines at most: the saved
+                           document has grown, the last line typed stands on its last page, typed
+                           lines stand at least their size apart, nothing else lost, no text over
+                           text, and every page whose header or footer read "Page i of n" or
+                           "i / n" before, and every page added, reads its own number and the new
+                           total there
+  replace-a-picture        give the largest picture a 300 x 60 image: the new image drawn once more
+                           than an image of its pixels was before, every picture drawn where it was
+                           and as many of them, nothing else lost
   edit-a-link              type inside the first link the save with no edit keeps at its address:
                            that address kept, every link still a link, nothing else lost
 
@@ -40,8 +42,9 @@ script tries PyMuPDF on a clipped probe before it reads anything, and does not r
 text comes back — as it does from Ubuntu 24.04's python3-fitz 1.23.7, and not from PyMuPDF 1.27
 or 2.1 from pip. Typed lines are found with their spaces ignored: typing on from a
 letter-spaced line, LibreOffice spaces the typed letters too. An address is compared without a
-trailing slash, which LibreOffice adds to a bare host on its save. The edited footer is held to
-every page that showed its text, another section's pages included: LibreOffice gives each section a
+trailing slash, which LibreOffice adds to a bare host on its save. The footer is read in the
+bands, and the edited footer is held to every page whose band showed its text, another section's
+pages included: LibreOffice gives each section a
 footer of its own when it opens a file, even where the file names one footer part for every
 section, and a person editing the footer they see expects it to change wherever it reads the same.
 
@@ -63,9 +66,10 @@ error, or a run that stops, exits 1. The JSON is written after every document. A
 is started again for the next document; one that hangs is not caught.
 
 --self-check holds every verdict to probe PDFs it writes with PyMuPDF: each rule is broken once, in
-a probe only that rule can fail, and each limit is held from both sides. It needs a PyMuPDF that
-leaves clipped text out, and no LibreOffice; without one it exits 2. Run it after changing how a verdict is read or a limit it is read by. Exits 1 if a
-check fails.
+a probe only that rule can fail, and the limits a move, a crossing, the spacing of typed lines and
+the header and footer bands are read by are each held from both sides. It needs a PyMuPDF that
+leaves clipped text out, and no LibreOffice; without one it exits 2. Run it after changing how a
+verdict is read or a limit it is read by. Exits 1 if a check fails.
 
 Examples:
   # Export the corpus once, then run the protocol over it.
@@ -260,15 +264,7 @@ def lost_lines(reference, edited, undo=None):
 def page_numbers(pdf):
     """Each page's "Page i of n" and "i / n" readings, taken from its header and footer bands only:
     an "a / b" in the body is no page number."""
-    bands = [[] for _ in range(len(pdf))]
-    for line in read_lines(pdf):
-        if in_band(pdf, line):
-            bands[line["page"]].append(line)
-    readings = []
-    for band in bands:
-        text = " ".join(l["text"] for l in sorted(band, key=lambda l: (l["y"], l["x"])))
-        readings.append([(int(a or c), int(b or d)) for a, b, c, d in PAGE_NUMBER.findall(text)])
-    return readings
+    return [[(int(a or c), int(b or d)) for a, b, c, d in PAGE_NUMBER.findall(text)] for text in band_texts(pdf)]
 
 
 def numbering(readings):
@@ -330,9 +326,18 @@ def judge_lengthened(scenario, reference, edited):
     return result(scenario, "PASS" if whole and not lost and not new else "FAIL", detail)
 
 
+def band_texts(pdf):
+    """Each page's header and footer text: its lines in the top and bottom BAND, in reading order."""
+    bands = [[] for _ in range(len(pdf))]
+    for line in read_lines(pdf):
+        if in_band(pdf, line):
+            bands[line["page"]].append(line)
+    return [" ".join(l["text"] for l in sorted(b, key=lambda l: (l["y"], l["x"]))) for b in bands]
+
+
 def judge_footer(reference, edited, footer):
     marker = squash(footer)
-    before, after = page_texts(reference), page_texts(edited)
+    before, after = band_texts(reference), band_texts(edited)
     showing = [i for i, t in enumerate(before) if marker in squash(t)]
     if not showing:
         return result("edit-the-footer", "FAIL", "the footer's text '%s' was found on no page before the edit" % footer)
@@ -355,7 +360,8 @@ def judge_add_a_page(reference, edited, typed, pages_typed=None):
     ours = [l for l in lines if "Protocolline" in flat(l["text"]) or "ontoanewpage" in flat(l["text"])]
     squeezed = []
     for a, b in zip(ours, ours[1:]):
-        if a["page"] == b["page"] and b["y"] - a["y"] + GRID / 2 < min(a["size"], b["size"]):
+        # Down the page only: a typed line that turns to a column's top is no line set close.
+        if a["page"] == b["page"] and b["y"] >= a["y"] and b["y"] - a["y"] + GRID / 2 < min(a["size"], b["size"]):
             squeezed.append(round(b["y"] - a["y"], 2))
     new = new_crossings(reference, edited)
     lost = lost_lines(reference, edited)
@@ -378,9 +384,11 @@ def judge_picture(reference, edited, facts):
     ref, new = read_pictures(reference), read_pictures(edited)
     unplaced = [(p, r) for p, r, _ in ref
                 if not any(q == p and all(abs(u - v) <= MOVE_LIMIT for u, v in zip(r, s)) for q, s, _ in new)]
-    drawn = sum(1 for _, _, pixels in new if pixels == REPLACEMENT_PIXELS)
+    # An image of the replacement's pixels the document drew before the edit is not the replacement.
+    drawn = (sum(1 for _, _, pixels in new if pixels == REPLACEMENT_PIXELS)
+             - sum(1 for _, _, pixels in ref if pixels == REPLACEMENT_PIXELS))
     lost = lost_lines(reference, edited)
-    detail = ("pictures drawn %d -> %d, the new image drawn %d times, not drawn where they were %s, lines lost %s;"
+    detail = ("pictures drawn %d -> %d, the new image drawn %d more times, not drawn where they were %s, lines lost %s;"
               " '%s' sized %s -> %s (1/100 mm)"
               % (len(ref), len(new), drawn, [(p + 1, [round(v, 1) for v in r]) for p, r in unplaced[:3]], lost[:3],
                  facts.get("name"), facts.get("sizeBefore"), facts.get("sizeAfter")))
@@ -516,7 +524,15 @@ def text_drawings(doc):
 
 def first_page_footer(doc):
     """The footer the first page shows: its own where the first page has one, else the page style's."""
-    name = next(paragraphs(doc.getText())).getPropertyValue("PageStyleName") or "Standard"
+    # The first page's style, read where the first page is: a document that opens with a table
+    # has no paragraph of its own text there to read it from.
+    try:
+        cursor = doc.getCurrentController().getViewCursor()
+        cursor.jumpToFirstPage()
+        name = cursor.getPropertyValue("PageStyleName")
+    except Exception:
+        name = next(paragraphs(doc.getText())).getPropertyValue("PageStyleName")
+    name = name or "Standard"
     style = doc.getStyleFamilies().getByName("PageStyles").getByName(name)
     if not style.getPropertyValue("FooterIsOn"):
         return None
@@ -853,6 +869,10 @@ def run_self_check(scratch):
     check("footer gone from the second page", judge_footer(three, probe_pdf(3, body + [foot3(0, True), foot3(2, True)]), footer), "FAIL")
     check("footer edited over the body", judge_footer(two, probe_pdf(2, body + [foot(0, True), foot(1, True), (0, 72, 755, "Body text above the footer.", 9)]), footer), "FAIL")
     check("footer edited, a line of the page lost", judge_footer(two, probe_pdf(2, body[:1] + [foot(0, True), foot(1, True)]), footer), "FAIL")
+    # A body that reads like the footer is not the footer: only the bands are read for it.
+    check("footer edited, its words in the body of a page with none",
+          judge_footer(probe_pdf(2, body + [foot(0, False), (1, 72, 300, "Northwind Ltd Page of the report", 10)]),
+                       probe_pdf(2, body + [foot(0, True), (1, 72, 300, "Northwind Ltd Page of the report", 10)]), footer), "PASS")
     check("footer not found before the edit", judge_footer(two, probe_pdf(2, body + [foot(0, True), foot(1, True)]), "Southwind Ltd"), "FAIL")
 
     # Typing onto a new page.
@@ -882,6 +902,14 @@ def run_self_check(scratch):
     rating = (0, 72, 400, "Rating 4 / 5", 10)
     check("a page added, a body 'a / b' and the footers left as they were",
           add(probe_pdf(1, body + [rating] + numbered(1, 1)), probe_pdf(2, body + [rating] + numbered(2, 1) + typed(14))), "FAIL")
+    # The band's edge, 15% of 792pt = 118.8pt down: an "a / b" just inside it is read as a number,
+    # one just outside is not.
+    edge = lambda y: (0, 300, y, "Rating 4 / 5", 10)
+    stale = lambda y: add(probe_pdf(1, body + [edge(y)] + numbered(1, 1)), probe_pdf(2, body + [edge(y)] + numbered(2, 1) + typed(14)))
+    check("a page added, footers left as they were, an 'a / b' just below the top band", stale(120), "FAIL")
+    check("a page added, an 'a / b' just inside the top band, numbering not each page's own", stale(117.5), "PASS")
+    turned = [(1, 72, 600, TYPED.format(1), 10), (1, 72, 614, TYPED.format(2), 10), (1, 320, 100, TYPED.format(3), 10)]
+    check("a page added, the typed lines turning to a column's top", add(one, probe_pdf(2, body + numbered(2, 2) + turned)), "PASS")
     cover = probe_pdf(2, body + [(1, 72, 760, "Page 2 of 2", 9)])
     check("a page added after an unnumbered cover, renumbered",
           add(cover, probe_pdf(3, body + [(1, 72, 760, "Page 2 of 3", 9), (2, 72, 760, "Page 3 of 3", 9)]
@@ -905,6 +933,10 @@ def run_self_check(scratch):
     check("picture replaced, one more drawn", pic((0, at, new_png), (0, (300, 200, 400, 300), new_png)), "FAIL")
     check("picture replaced, the old image still drawn", pic((0, at, old_png)), "FAIL")
     check("picture replaced, a line of the page lost", pic((0, at, new_png), lines=body[:1]), "FAIL")
+    elsewhere = (300, 200, 400, 300)
+    check("picture not replaced, an image like the new one drawn before",
+          judge_picture(probe_pdf(1, body, pictures_at=[(0, at, old_png), (0, elsewhere, new_png)]),
+                        probe_pdf(1, body, pictures_at=[(0, at, old_png), (0, elsewhere, new_png)]), facts), "FAIL")
 
     # Editing a link.
     linked = {"urlBefore": "mailto:a@example.com", "urlAfter": "mailto:a@example.com",
@@ -999,6 +1031,12 @@ def main():
     # from under it.
     inputs = os.path.join(output, "input")
     os.makedirs(inputs, exist_ok=True)
+    names = [os.path.basename(path) for path in args.docx]
+    missing = [path for path in args.docx if not os.path.isfile(path)]
+    if missing:
+        parser.error("no such file: %s" % ", ".join(missing))
+    if len(set(names)) != len(names):
+        parser.error("two inputs share a file name, and one copy would overwrite the other")
     sources = [shutil.copy(path, inputs) for path in args.docx]
 
     try:

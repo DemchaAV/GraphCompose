@@ -5963,6 +5963,12 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Build
 
+- **CI and CodeQL run on every push to `2.5-dev`.** The 2.5 line was checked only through its
+  pull requests, so no commit merged into it had a CI run of its own, and its pull requests had
+  no CodeQL analysis of their base branch. `ci.yml` and `codeql.yml` now list `2.5-dev` beside
+  `main` and `develop` under `push.branches`; the trigger is removed with the branch once the
+  line has reached `develop` for its cut. `ci.yml` drops `2.0-dev`, a branch that no longer
+  exists.
 - **A release reaches Maven Central as one deployment instead of eight.** Central now counts
   every distinct publish operation against an organisation's monthly Release Count, and
   `publish.yml` deployed the train as eight separate `-f <module>/pom.xml deploy` runs — eight

@@ -5,7 +5,9 @@ on:
     branches:
       - main
       - develop
-      - 2.0-dev
+      # The 2.5 release line. Drop it here and in codeql.yml once the line has
+      # reached `develop` for its cut and the branch is gone.
+      - 2.5-dev
   pull_request:
     # Run CI for any incoming PR regardless of the base branch so
     # feature branches targeting `develop` (e.g. v1.7 prep) also
@@ -19,9 +21,12 @@ permissions:
 
 # Collapse superseded runs. On a pull request, a new push cancels the still-
 # running CI for the previous commit on the same PR — the common case where
-# rapid iteration would otherwise queue several full matrix builds. Pushes to
-# the integration branches (main / develop / 2.0-dev) are never cancelled, so
-# every merged commit keeps a complete, recorded CI run.
+# rapid iteration would otherwise queue several full matrix builds. A push to
+# a branch listed under `push:` above does not cancel the run in progress, so
+# a merge normally leaves a complete, recorded run on that branch's head.
+# GitHub still keeps only one pending run per group: when several merges land
+# while a run is going, the older pending ones are cancelled and only the
+# newest head is built. A branch not listed there gets no push run.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}

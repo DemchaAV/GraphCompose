@@ -464,6 +464,21 @@ indented to its column, therefore carries the page's left inset as `w:right`, an
 the edge the page ends it at. Tables are not turned: the export writes no `w:bidiVisual`,
 so a table runs left to right and its `w:tblInd` and cell margins are page sides.
 
+Where a line breaks is left to the editor, and an editor breaks at more places than the page:
+Word 16 and LibreOffice 24.2 also break after a hyphen between two letters or digits, which the
+page breaks at only inside a word wider than the whole line. Where the page carries a hyphenated
+word whole to its next line, the export writes that word's hyphens as Word's non-breaking hyphen
+(`w:noBreakHyphen`), so the editor carries it whole too: only in the first word of each of the
+page's lines after the paragraph's first, read from the lines the page laid the paragraph or the
+list item out in. Both editors draw it as a hyphen and put an ordinary hyphen in their PDF; a text
+extractor reading the file sees the non-breaking one (U+2011 in Apache POI). A paragraph laid out
+on one line, or with no layout behind the export, keeps every hyphen as written, as does a list
+item the export does not match to the lines the page laid it out in (see "What a list becomes"),
+a paragraph whose runs do not hold the letters of its lines, and a paragraph written into a text
+box over the flow. A word the page breaks itself, too wide for its line, keeps its hyphens, as an
+editor then breaks it its own way. A break after an en dash (`£1m–£3m`) is not held, because
+WordprocessingML has no non-breaking en dash.
+
 Asking for the layout costs a measurement and pagination pass over the document, the same
 work a PDF render does, and it reads each image a second time.
 

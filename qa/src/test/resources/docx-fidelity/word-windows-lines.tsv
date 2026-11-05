@@ -52,6 +52,8 @@ cv-blue_banner	0:b56776d153e9	0.10	-0.08	-7.77	templatestudio(kotlin,composedes
 cv-blue_banner	0:88b226d51fe1	0.42	-0.08	-4.32	pngdiffing,side-by-sidelayout,ba
 cv-blue_banner	0:339245d63103	-0.36	-0.08	-10.01	layoutlint(java21,javaparser,spo
 cv-blue_banner	0:8c87b84946f3	-0.02	-0.08	-2.64	beforetheyshiptoproduction.
+cv-blue_banner	1:17b6a91b1874	-0.26	-0.08	-8.35	chromeforge(java,graphcompose,pa
+cv-blue_banner	1:80d867ac3c67	-0.06	-0.08	-3.05	multi-columnflow,sidebarcallouts
 cv-boxed_sections	0:8f1010120ed6	0.06	0.10	-4.45	jordanrivera
 cv-boxed_sections	0:8d7a2cca3060	0.08	-0.05	-0.03	+442055551000|jordan.rivera@exam
 cv-boxed_sections	0:b944906ed84c	0.10	0.56	-2.83	professionalsummary
@@ -115,6 +117,8 @@ cv-centered_headline	0:87ca614d0eab	-0.03	0.41	-2.54	professionaltitle
 cv-centered_headline	0:8d7a2cca3060	-0.05	0.60	-1.22	+442055551000|jordan.rivera@exam
 cv-centered_headline	0:b944906ed84c	0.04	-0.04	-2.12	professionalsummary
 cv-centered_headline	0:f43d42692f27	0.03	-0.04	-12.15	platformengineerwith10+yearsbuil
+cv-centered_headline	0:2a7cf457b7ff	0.02	-0.04	-10.98	specialisedinhigh-throughputpdfr
+cv-centered_headline	0:95a43d7b3df0	0.13	-0.04	-3.05	snapshot-testedlibrariesthatscal
 cv-centered_headline	0:5f94c50dc5bf	-0.02	-0.04	-2.16	technicalskills
 cv-centered_headline	0:eea537278f83	0.09	-0.04	-4.35	•languages:java21,kotlin,groovy,
 cv-centered_headline	0:9c2cd7231a53	0.15	-0.04	-9.59	•document&print:pdfbox,apachepoi
@@ -252,6 +256,9 @@ cv-charcoal_gold	0:eb04bd42c7fb	-0.14	-1.03	2.17	microsoft365|jira|confluence|as
 cv-classic_serif	0:8f1010120ed6	0.07	0.09	-5.40	jordanrivera
 cv-classic_serif	0:8d7a2cca3060	0.15	-0.53	1.26	+442055551000|jordan.rivera@exam
 cv-classic_serif	0:3c69d6bb4892	0.16	1.37	-4.26	professionalprofile
+cv-classic_serif	0:e9b75496bfb4	-0.01	-4.56	9.11	platformengineerwith10+yearsbuil
+cv-classic_serif	0:4e14279f15fe	-0.03	-4.89	9.80	developer-facingtemplatesystems.
+cv-classic_serif	0:b1e498da33d5	-0.04	-3.72	7.63	turningbrittleproduction-opsscri
 cv-classic_serif	0:32c1cf49a2fe	0.19	0.04	-2.33	skills
 cv-classic_serif	0:873a24d153c8	0.13	0.04	0.03	languages:java21,kotlin,groovy,p
 cv-classic_serif	0:05e907ef2b18	0.05	0.04	-0.20	document&print:pdfbox,apachepoi(
@@ -618,6 +625,8 @@ cv-midnight_navy	0:f7d1049ec64b	-0.31	-0.46	0.54	2018–2021
 cv-midnight_navy	0:4b8292fda43e	-0.22	0.02	1.33	brightlinetechnologies
 cv-midnight_navy	0:a246f7ba3f71	0.08	0.02	4.44	·executedmulti-channelmarketingc
 cv-midnight_navy	0:58b162e46dda	0.14	0.10	1.11	engagementby30%.
+cv-midnight_navy	0:681738b6a8c8	0.21	0.02	4.25	·conductedmarketresearchanddataa
+cv-midnight_navy	0:9d0aeedb645b	0.15	0.10	0.86	decision-making.
 cv-midnight_navy	0:ef77f2daef0f	-0.16	0.02	5.12	·managedsocialmediachannelsandco
 cv-midnight_navy	0:a112a7b3c16b	-0.10	0.02	4.75	·coordinatedwithcreativeteamstod
 cv-midnight_navy	0:990b9f22bb48	0.14	0.02	-2.28	marketingcoordinator
@@ -766,6 +775,8 @@ cv-modern_professional	0:89ff05847e96	0.12	0.03	0.02	london,uk|+442055551000
 cv-modern_professional	0:8817bf9310b6	0.19	0.13	0.08	jordan.rivera@example.com|linked
 cv-modern_professional	0:b944906ed84c	0.02	0.00	1.13	professionalsummary
 cv-modern_professional	0:6fbdc8b79878	-0.01	0.00	0.14	platformengineerwith10+yearsbuil
+cv-modern_professional	0:67b8febffcd4	0.08	0.00	-0.08	templatesystems.specialisedinhig
+cv-modern_professional	0:3be7f615205f	0.03	0.00	-0.12	production-opsscriptsintotyped,s
 cv-modern_professional	0:5f94c50dc5bf	-0.01	0.00	0.71	technicalskills
 cv-modern_professional	0:eea537278f83	0.09	0.00	-0.26	•languages:java21,kotlin,groovy,
 cv-modern_professional	0:9c2cd7231a53	0.12	0.00	-0.37	•document&print:pdfbox,apachepoi
@@ -862,6 +873,9 @@ cv-monogram_sidebar	0:e77e909f6ff5	0.18	0.05	0.11	builtbackendservicesandproduct
 cv-monogram_sidebar	0:97c59b2fdb55	0.17	0.05	-0.05	drovethemigrationfromitexttoacus
 cv-monogram_sidebar	0:2c2b19cf214d	0.26	0.05	0.03	latencyfrom1.4sto380ms.
 cv-monogram_sidebar	0:2577c0f557b2	0.26	0.05	-1.90	projects
+cv-monogram_sidebar	0:a2502feb9c55	0.16	0.05	2.89	graphcompose(java21,pdfbox,maven
+cv-monogram_sidebar	0:690c2f217188	0.43	0.05	-0.03	slot-basedtemplates,snapshottest
+cv-monogram_sidebar	0:de1af4623873	0.88	0.05	0.04	andbillingsystems.(opensource)
 cv-monogram_sidebar	0:abdcacccefe1	0.10	0.05	3.47	templatestudio(kotlin,composedes
 cv-monogram_sidebar	0:041a43f9a663	0.37	0.05	0.11	andinvoiceoutputacross14designpr
 cv-monogram_sidebar	0:f87e2f0c02dc	0.07	0.05	2.15	layoutlint(java21,javaparser,spo
@@ -967,6 +981,8 @@ cv-nordic_clean	0:904a600c3869	0.10	0.08	-1.23	msccomputerscience/universityofm
 cv-nordic_clean	0:3fa772117260	0.27	0.08	0.77	2019-2021
 cv-nordic_clean	0:78a380e4d1f0	0.05	0.08	-1.19	bscsoftwareengineering/imperialc
 cv-nordic_clean	0:30f9262640a0	0.22	0.08	0.77	2015-2019
+cv-nordic_clean	0:7816e7a28b71	0.12	0.08	-0.90	oraclejavacertification/professi
+cv-nordic_clean	0:d40b22f00acb	0.29	0.08	0.77	2023-2024
 cv-nordic_clean	0:7b476727faf3	0.07	0.08	-0.40	additional
 cv-nordic_clean	0:3b0f5db9217f	0.08	0.08	-2.30	languages:english(fluent),german
 cv-nordic_clean	0:d8a971cea795	0.11	0.08	-0.71	spanish(basic)
@@ -991,6 +1007,7 @@ cv-nordic_clean	0:ef148f221e31	0.11	0.07	-1.27	helixprintco
 cv-nordic_clean	0:41d451f465c2	0.11	0.07	2.20	maintainedahigh-volumeinvoice-pr
 cv-nordic_clean	0:6859fed08b66	0.01	0.07	0.91	harnessthatgatedeverytemplatecha
 cv-nordic_clean	0:d94eccbb1fbe	-0.02	0.07	-1.02	selectedprojects
+cv-nordic_clean	0:a2502feb9c55	0.11	0.07	-3.17	graphcompose(java21,pdfbox,maven
 cv-nordic_clean	0:643428f0ebf8	0.17	0.07	-2.31	templatestudio(kotlin,composedes
 cv-nordic_clean	0:c259a0e7581e	0.25	0.07	-8.16	invoiceoutputacross14designprese
 cv-nordic_clean	0:f87e2f0c02dc	0.11	0.07	-4.93	layoutlint(java21,javaparser,spo
@@ -1052,6 +1069,8 @@ cv-orange_ops	0:8225f209e334	-0.23	0.00	1.23	rtitb–2019
 cv-orange_ops	0:afcc559aff07	-0.10	-0.33	-1.33	firstaidatwork
 cv-orange_ops	0:2eff3c9d0161	-0.36	0.00	2.34	stjohnambulance–2019
 cv-orange_ops	0:3c69d6bb4892	0.11	0.18	4.18	professionalprofile
+cv-orange_ops	0:7caef47cb1a7	0.11	0.18	-7.65	results-drivenwarehouseoperation
+cv-orange_ops	0:5df082a2ec4c	0.13	0.18	-7.68	high-performingteamsandoptimisin
 cv-orange_ops	0:41fad67acd21	0.15	0.18	-7.99	environments.proventrackrecordof
 cv-orange_ops	0:08fe5844eac2	0.16	0.18	-7.95	accuracy,anddeliveringexcellents
 cv-orange_ops	0:b1f2a388d597	0.18	0.18	-7.49	andsafety.adeptatusingdatatodriv
@@ -1119,6 +1138,8 @@ cv-panel	0:ebc70ed9b71b	0.25	0.04	2.46	•layoutengines:customdsldesign,s
 cv-panel	0:dd4f24d85605	0.25	0.04	1.84	pagination,snapshottesting,visua
 cv-panel	0:f5f76d479ec8	0.33	0.04	2.19	•build&infrastructure:maven,grad
 cv-panel	0:656a2a3e57e0	0.33	0.04	1.39	jitpack,docker,jmhbenchmarking
+cv-panel	0:ef9698b62dc9	0.17	0.04	2.03	•testing:junit5,assertj,pdfbox-b
+cv-panel	0:2ec2836b6df6	0.17	0.04	1.84	layout-graphsnapshots,mutationte
 cv-panel	0:9a6921f79b7d	0.25	0.04	2.50	•distribution:mavencentral,sonat
 cv-panel	0:77a74982066f	0.25	0.04	1.51	jitpack,semanticversioningdiscip
 cv-panel	0:68bf0109c6f8	0.37	0.04	0.74	education
@@ -1163,6 +1184,9 @@ cv-panel	0:090e2184c17b	0.35	0.05	2.24	pdfs/year)andauthoredthecomplian
 cv-panel	0:6f071fdf7529	0.35	0.05	1.16	gatedeverytemplatechange.
 cv-panel	0:2577c0f557b2	0.47	0.05	0.70	projects
 cv-panel	0:b2b029995203	0.07	0.05	2.05	•graphcompose(java21,pdfbox,mave
+cv-panel	0:a0e82cab2f27	0.31	0.07	1.98	declarativejavapdflayoutengine.s
+cv-panel	0:702d1fd5cbdb	0.31	0.07	2.32	slot-basedtemplates,snapshottest
+cv-panel	0:3976b89c6a21	0.43	0.07	2.38	cv/invoice/proposalpipelinesforh
 cv-panel	0:81c8132f9792	0.43	0.07	0.85	systems.(opensource)
 cv-panel	0:753f46e4e01b	0.46	0.05	2.39	•templatestudio(kotlin,composede
 cv-panel	0:6eb35b5b9a91	0.46	0.07	0.06	diff)
@@ -1208,6 +1232,10 @@ cv-professional_sidebar	0:aa304b5d1d72	0.14	-0.04	-0.45	russian
 cv-professional_sidebar	0:22f6e39681dd	0.08	0.03	-5.07	yourname
 cv-professional_sidebar	0:ce613d3da423	0.00	0.03	-2.27	yourprofessionaltitle
 cv-professional_sidebar	0:1900eab6c028	0.10	0.03	-2.12	profile
+cv-professional_sidebar	0:b5976c54efe7	0.15	0.03	-4.40	javabackendengineerexperiencedin
+cv-professional_sidebar	0:85a80abc0908	0.17	0.03	-3.75	data-drivenproducts.deliversclea
+cv-professional_sidebar	0:22e692b5f83b	0.19	0.03	-4.60	persistencelayerswithpostgresql,
+cv-professional_sidebar	0:eafe704d7be1	0.09	0.03	-3.02	designthroughdocker-baseddeliver
 cv-professional_sidebar	0:53e5e7c5a884	0.08	0.03	-2.61	experience
 cv-professional_sidebar	0:59d596674b3e	-0.15	0.03	-0.05	javabackenddeveloper
 cv-professional_sidebar	0:50c8c8fd14da	-0.04	1.44	-1.35	2023–present
@@ -1686,6 +1714,8 @@ cv-timeline_minimal	0:de1af4623873	0.08	-0.04	0.07	andbillingsystems.(opensource
 cv-timeline_minimal	0:ae7902eee4b2	0.08	-0.04	-0.06	templatestudio(kotlin,composedes
 cv-timeline_minimal	0:f15436034237	0.04	-0.04	-0.11	pdfboxpngdiff):internaltoolfor
 cv-timeline_minimal	0:24a195694090	0.00	-0.04	-0.03	evaluatingcv,proposal,andinvoice
+cv-timeline_minimal	0:f0754bcd4693	0.08	-0.04	-0.18	across14designpresets.pngdiffing
+cv-timeline_minimal	0:2e2f8dd919a3	0.04	-0.04	-0.06	side-by-sidelayout,baselinefreez
 cv-timeline_minimal	0:dbcc5c321887	0.04	-0.04	-0.08	layoutlint(java21,javaparser,spo
 cv-timeline_minimal	0:a1446929a276	0.00	-0.04	-0.06	staticanalyserthatflagsfragileau
 cv-timeline_minimal	0:d91205080ec3	0.08	-0.04	-0.06	patterns(deeplynestedrows,untype
@@ -4286,6 +4316,8 @@ letter-compact_mono	0:8f1010120ed6	0.01	-0.02	0.04	jordanrivera
 letter-compact_mono	0:8f1010120ed6#1	0.08	0.00	-0.48	jordanrivera
 letter-compact_mono	0:f9e4560bd641	-0.04	-0.02	7.90	london,uk/+442055551000/jordan.r
 letter-compact_mono	0:bef81b541365	0.06	0.00	-1.78	dearhiringteamatnorthwindsystems
+letter-compact_mono	0:ab54410ead82	0.01	0.00	-5.12	iamexcitedtosharemyinterestinthe
+letter-compact_mono	0:9185168d2cf8	-0.07	0.00	-4.31	document-generationsystemsthatba
 letter-compact_mono	0:1382a6e37675	0.01	0.00	-5.90	ienjoytranslatingfuzzyworkflowre
 letter-compact_mono	0:d8e633770b49	-0.07	0.00	-1.44	easierfortherestoftheteam.
 letter-compact_mono	0:a71e98216baa	0.12	0.00	-5.42	iwouldwelcometheopportunitytobri

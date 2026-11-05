@@ -904,7 +904,7 @@ Not representable:
 
 - **The corner radius.** A cell is rectangular. The panel renders with square corners, the
   report names it on each panel (`corner radius`, `APPROXIMATED`), and the export logs one
-  warning per document.
+  warning per export.
 
 ## Pictures and icons in a line
 

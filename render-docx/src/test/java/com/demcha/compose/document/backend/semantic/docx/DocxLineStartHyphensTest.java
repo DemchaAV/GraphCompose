@@ -338,8 +338,8 @@ class DocxLineStartHyphensTest {
             card.addParagraph(closing);
         }))) {
             assertThat(document.getTables()).as("the premise: the panel is cut at its page").hasSizeGreaterThan(1);
-            String written = document.getTables().stream()
-                    .flatMap(table -> table.getRows().stream())
+            // The last part, which the cut copies the text after the table into.
+            String written = document.getTables().get(document.getTables().size() - 1).getRows().stream()
                     .flatMap(row -> row.getTableCells().stream())
                     .flatMap(cell -> cell.getParagraphs().stream())
                     .filter(paragraph -> paragraph.getText().startsWith("Closing"))
@@ -347,6 +347,40 @@ class DocxLineStartHyphensTest {
                     .findFirst().orElseThrow();
             assertThat(written.chars().filter(c -> c == '~').count()).isPositive();
             assertThat(written.replace('~', '-')).isEqualTo(closing);
+        }
+    }
+
+    @Test
+    void aTableSplitForItsPagesMarginsKeepsTheHyphensOfTheRowsItMoves() throws Exception {
+        // A page with margins of its own starts a section, and a table running onto it is split
+        // there: the rows of the later page move to a table of their own. Held before the split,
+        // the moved row's paragraph carries its held hyphen with it.
+        String text = String.join(" ", java.util.Collections.nCopies(12, "data-driven"));
+        byte[] docx;
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 400).margin(com.demcha.compose.document.style.DocumentInsets.of(36)).create()) {
+            session.pageMargins(List.of(com.demcha.compose.document.api.PageMarginRule.from(2,
+                    new com.demcha.compose.document.style.DocumentInsets(36, 36, 136, 36))));
+            session.pageFlow(page -> page.addTable(table -> {
+                table.autoColumns(1);
+                for (int row = 1; row <= 30; row++) {
+                    table.row("Item " + row);
+                }
+                table.rowCells(com.demcha.compose.document.table.DocumentTableCell.node(
+                        new com.demcha.compose.document.dsl.ParagraphBuilder().text(text).build()));
+            }));
+            docx = session.export(new DocxSemanticBackend());
+        }
+        try (XWPFDocument document = new XWPFDocument(new java.io.ByteArrayInputStream(docx))) {
+            assertThat(document.getTables()).as("the premise: the table is split at page 2").hasSizeGreaterThan(1);
+            XWPFParagraph moved = document.getTables().get(document.getTables().size() - 1).getRows().stream()
+                    .flatMap(row -> row.getTableCells().stream())
+                    .flatMap(cell -> cell.getParagraphs().stream())
+                    .filter(paragraph -> paragraph.getText().contains("data"))
+                    .findFirst().orElseThrow();
+            String written = written(moved.getCTP());
+            assertThat(written.chars().filter(c -> c == '~').count()).isPositive();
+            assertThat(written.replace('~', '-')).isEqualTo(text);
         }
     }
 

@@ -474,9 +474,10 @@ list item out in. Both editors draw it as a hyphen and put an ordinary hyphen in
 extractor reading the file sees the non-breaking one (U+2011 in Apache POI). A paragraph laid out
 on one line, or with no layout behind the export, keeps every hyphen as written, as does a list
 item the export does not match to the lines the page laid it out in (see "What a list becomes"),
-and a paragraph whose runs do not hold the letters of its lines. A word the page breaks itself,
-too wide for its line, keeps its hyphens, as an editor then breaks it its own way. A break after
-an en dash (`£1m–£3m`) is not held, because WordprocessingML has no non-breaking en dash.
+a paragraph whose runs do not hold the letters of its lines, and a paragraph written into a text
+box over the flow. A word the page breaks itself, too wide for its line, keeps its hyphens, as an
+editor then breaks it its own way. A break after an en dash (`£1m–£3m`) is not held, because
+WordprocessingML has no non-breaking en dash.
 
 Asking for the layout costs a measurement and pagination pass over the document, the same
 work a PDF render does, and it reads each image a second time.

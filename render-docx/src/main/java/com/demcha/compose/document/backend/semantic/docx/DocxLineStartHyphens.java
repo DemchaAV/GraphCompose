@@ -29,14 +29,15 @@ import java.util.Locale;
  * but the paragraph's first is written as Word's non-breaking hyphen ({@code w:noBreakHyphen}),
  * which both editors draw as the hyphen and do not break at, and which Word's and LibreOffice's
  * PDFs carry as an ordinary hyphen. No other hyphen is touched: a reader of the file's text sees
- * a non-breaking hyphen only where an editor would otherwise break the line the page does not
- * (POI's text extractor reads it as U+2011, Word's own text as 0x1E). A word the page breaks
+ * a non-breaking hyphen only in a word that starts one of the page's lines (POI's text extractor
+ * reads it as U+2011, Word's own text as 0x1E). A word the page breaks
  * itself, at a hyphen or anywhere, because it is wider than the line, is not held anywhere: not on
  * the line it starts, which it runs off the end of, nor on the line it runs on into.</p>
  *
  * <p>The hyphens are held once a section is written and before any of its tables is cut at its
  * pages, so a paragraph a cut copies carries them; a paragraph taken out of the document after it
- * was written holds none. Two paragraphs written into one Word paragraph — a line pair's halves —
+ * was written holds none, and neither does a paragraph written into a text box over the flow,
+ * whose box takes a copy of it as soon as it is written. Two paragraphs written into one Word paragraph — a line pair's halves —
  * are each read against the whole of it, and the second is left as written where the first's held
  * hyphens leave its letters standing other than once.</p>
  *

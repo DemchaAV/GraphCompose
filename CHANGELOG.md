@@ -4859,6 +4859,72 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **Word's editing protocol makes the edits the LibreOffice one makes, and reads them by the same
+  verdicts.**
+  - `edit-protocol-corpus.ps1` adds four scenarios: a sentence added to the longest paragraph in a
+    table cell and to the longest text a drawing holds, words put at the start of the footer the
+    first page shows, and typing inside the first link that a save with no edit keeps at its
+    address. These are the LibreOffice protocol's edits, except replacing a picture, which Word's
+    COM cannot do.
+  - Those four, the save with no edit and typing onto a new page are now also read from Word's own
+    PDFs. Word sets the document as exported, the unedited save and each edited copy as PDFs, and
+    `edit-protocol-libreoffice.py --judge` gives each scenario its verdict from them. The save is
+    read against the document as exported, and every edit against the save. Both editors are now
+    held to one set of verdicts. A save or a typed page still has to pass what Word itself reports,
+    as before.
+  - A Python 3.10 or later whose PyMuPDF leaves clipped text out is checked before Word is
+    started, by the verdicts' own self-check (`-Python`, `python` on the PATH by default). Without
+    one the protocol records `NOT_RUN` and exits 2; where that self-check fails it records `FAILED`
+    and exits 1. A run naming only scenarios that read nothing from a PDF needs no Python.
+  - A footer is now found word for word, in any order, anywhere in a page's header and footer
+    bands, each word as many times as the footer has it. A footer of two cells, text over two lines
+    beside a page number, reads its lines interleaved there, and was not found on any page. Run
+    again over the 82 documents of the corpus in LibreOffice 24.2.7.2, the LibreOffice protocol
+    gives the same verdict as before for every document and scenario. That run does not reach the
+    new match where it matters: LibreOffice edits no footer in the two `invoice-metered`
+    documents, whose footers are of two cells.
+  - The two editors do not always find the same thing to edit. Word finds a footer with text on
+    the first page in 20 documents, LibreOffice in 16: `invoice-merchant`, `invoice-metered`,
+    `invoice-metered_long` and `invoice-subscription` are edited in Word alone. Word also looks
+    for text in the drawings of a group and in the headers' and footers' drawings; the corpus has
+    text in neither, and both editors find the same 9 drawings.
+  - Run over the 82 documents of the corpus in Word 16.0.20527, the six scenarios read from a PDF
+    record what Word does with the export today. The export does not change.
+
+    | Scenario | PASS | FAIL | N/A |
+    |---|---|---|---|
+    | save with no edit | 82 | 0 | 0 |
+    | type onto a new page | 64 | 18 | 0 |
+    | sentence in a table cell | 53 | 4 | 25 |
+    | sentence in a drawing | 0 | 9 | 73 |
+    | footer | 17 | 3 | 62 |
+    | edit a link | 55 | 0 | 27 |
+
+    - Word's save with no edit keeps every page, every line within 0.525pt and every link, in
+      every document. Every edited link keeps its address.
+    - Text added to a drawing is cut off in all 9 documents that have one: the drawing does not
+      grow with its text, as in LibreOffice.
+    - `invoice-obsidian_long` and `synthetic-sections_and_fields` show a footer edit only in the
+      first section. Word gives each later section a footer of its own, as LibreOffice does. In
+      `invoice-luma_studio` the edited footer runs into the page's text, and the sentence added
+      in its panel pushes two lines of the page off it, found on neither page; in
+      `invoice-luma_studio_long` the panel grown by it sets two lines of the page on one another.
+    - In `invoice-subscription` the panel text added in a cell reads "adde" where "added" was
+      typed: the saved file holds the whole word, and Word does not draw its last letter. In
+      `synthetic-clipped_container`, whose card clips what it holds, the added text is cut off.
+    - Typing at the end of 15 documents goes into the cell of the table they end with, as the
+      protocol already reported. In `synthetic-card_over_pages` Word counts 4 pages after the
+      typing and sets 7 in its PDF: the table starts on the second page and leaves one row on a
+      page of its own each time it breaks. In `cv-editorial_blue` a line moves from the foot of
+      the first page to the second and runs into another; in `invoice-luma_studio_long` the
+      typed lines run into the page's text.
+    - A second run, after the footer was matched word for word, gave the same verdict for every
+      document and scenario apart from the two `invoice-metered` footers, which then pass.
+  - The LibreOffice script's self-check rises to 81 checks. It holds `judge()` given another
+    editor's words for an added sentence and for the footer, `--judge` itself run on a job file,
+    a footer of two cells read out of order, and a footer word lost, once or one of two, where
+    only the footer's own word count can see it.
+
 - **An editing protocol runs the DOCX fidelity corpus through LibreOffice, as one already runs
   it through Word.**
   - `scripts/docx-visual/edit-protocol-libreoffice.py` does through LibreOffice what

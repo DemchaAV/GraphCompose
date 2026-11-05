@@ -27,6 +27,21 @@
     it. Whether an edited page still looks right is read by a person from the PDFs written
     beside the lengthened copy and the new-page copy.
 
+    Four scenarios make the edits edit-protocol-libreoffice.py makes through LibreOffice, a
+    picture's replacement aside, which Word's COM cannot make: a sentence added to the longest
+    paragraph in a table cell and to the longest text a drawing holds, words put at the start of
+    the footer the first page shows, and typing inside the first link the save with no edit keeps.
+    What each edits is found through Word, so it can differ from what LibreOffice finds: Word looks
+    in a group's drawings and in the headers' and footers' too, and finds a footer on some first
+    pages where LibreOffice finds none.
+    Those four, the save with no edit and typing onto a new page are read from Word's own PDFs by
+    that script's verdicts (its --judge), under the Python -Python names: the save against the
+    document as exported, every edit against the save, so both editors are held to one set of
+    verdicts. The save with no edit is made first, whichever of them run. Where those verdicts
+    cannot be read — no Python, or none whose PyMuPDF leaves clipped text out — the protocol
+    records NOT_RUN and exits 2 before asking for Word, and exits 1 where their own self-check
+    fails; run without any of those six scenarios, it needs no Python.
+
     A scenario a document has nothing to edit for — no table, no list, no drawing — is recorded
     N/A with what the document lacks. Word is not installed by the build. When it is absent the
     protocol records NOT_RUN and the script exits 2; a scenario that neither passes nor is N/A
@@ -50,6 +65,10 @@
     The scenarios to run, by the names the protocol records them under; all of them when
     left out.
 
+.PARAMETER Python
+    The Python the verdicts read from a PDF are run under: 3.10 or later, importing a PyMuPDF that leaves
+    clipped text out, as PyMuPDF 1.27 and 2.1 from pip do. `python` on the PATH when left out.
+
 .PARAMETER SelfCheck
     Runs the protocol against probe documents it writes itself, instead of over a corpus. It
     holds where it reads a drawing's place to where Word's own PDF puts the same drawing, holds
@@ -67,7 +86,7 @@
     written. Keep it outside a module's target directory: a build's clean removes it.
 
 .EXAMPLE
-    # Export the corpus once, then run the protocol over it (about a minute a document).
+    # Export the corpus once, then run the protocol over it (a few minutes a document).
     ./mvnw -B -ntp test -f qa/pom.xml -Dtest=DocxFidelityCorpusTest -Dgraphcompose.docxFidelity=export
     ./scripts/docx-visual/edit-protocol-corpus.ps1 -Docx (Get-ChildItem qa/target/docx-fidelity/engine/*.docx).FullName -OutputDir $env:TEMP/docx-edit
 
@@ -80,13 +99,19 @@ param(
     [Parameter(Mandatory = $true, ParameterSetName = 'Corpus')][string[]]$Docx,
     [Parameter(Mandatory = $true)][string]$OutputDir,
     [Parameter(ParameterSetName = 'Corpus')][string[]]$Scenario,
+    [Parameter(ParameterSetName = 'Corpus')][string]$Python = 'python',
     [Parameter(Mandatory = $true, ParameterSetName = 'SelfCheck')][switch]$SelfCheck
 )
 
 $ErrorActionPreference = 'Stop'
 
-$SCENARIOS = 'lengthen-a-paragraph', 'shorten-a-paragraph', 'insert-a-paragraph', 'restyle-body-through-normal',
-    'insert-a-table-row', 'delete-a-table-row', 'continue-a-list', 'add-a-page', 'drawings-follow-text', 'round-trip'
+$SCENARIOS = 'round-trip', 'lengthen-a-paragraph', 'shorten-a-paragraph', 'insert-a-paragraph', 'restyle-body-through-normal',
+    'insert-a-table-row', 'delete-a-table-row', 'continue-a-list', 'add-a-page', 'drawings-follow-text',
+    'lengthen-in-a-panel', 'lengthen-in-a-drawing', 'edit-the-footer', 'edit-a-link'
+# The scenarios whose verdict is read from Word's PDFs, by the LibreOffice protocol's own verdicts:
+# the save with no edit against the document as exported, every edit against that save.
+$PDF_JUDGED = 'round-trip', 'add-a-page', 'lengthen-in-a-panel', 'lengthen-in-a-drawing', 'edit-the-footer', 'edit-a-link'
+$JUDGE = Join-Path $PSScriptRoot 'edit-protocol-libreoffice.py'
 # `-File` hands "a,b" over as one string: split it, and refuse a name no scenario has rather
 # than run nothing and report an empty protocol.
 $Scenario = @($Scenario | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
@@ -117,6 +142,7 @@ $WD_TEXT_RECTANGLE = 0
 $WD_MAIN_TEXT_STORY = 1
 $WD_RELATIVE_VERTICAL_PAGE = 1
 $WD_RELATIVE_VERTICAL_PARAGRAPH = 2
+$WD_FIELD_HYPERLINK = 88
 
 # What Word calls each thing a floating drawing can be placed down from, for a message naming one
 # this scenario does not know what to ask of. The export writes only the paragraph and the page.
@@ -243,9 +269,19 @@ $NOT_APPLICABLE = @{
     'delete-a-table-row'          = 'no table of three rows or more whose rows Word reaches one by one'
     'continue-a-list'             = 'no list item with text'
     'drawings-follow-text'        = 'no paragraph of 40 characters or more outside a field or a frame, or no floating drawing beside text'
+    'lengthen-in-a-panel'         = 'no table cell holds a paragraph of 40 characters or more'
+    'lengthen-in-a-drawing'       = 'no drawing holds text'
+    'edit-the-footer'             = 'the first page shows no footer with text in it'
+    'edit-a-link'                 = 'the text and its tables hold no link with four characters or more of text that a save with no edit keeps at its address'
 }
 
 $ADDED = ' The editing protocol appended this sentence to make the paragraph about twice as long, so that it has to rewrap and whatever stands below it has to move down to make room for it.'
+
+# What the scenarios read from the PDF type: the words the LibreOffice protocol types for the same
+# edits, so that the two editors are given one edit. Each is handed to the verdict with the facts.
+$PANEL_ADDED = ' The protocol added this sentence so the text grows, and whatever stands below it has to move down to make room.'
+$FOOTER_EDIT = 'Edited footer. '
+$LINK_EDIT = 'EDIT'
 
 function New-Result {
     param([string]$Name, [string]$Status, [string]$Detail)
@@ -534,6 +570,68 @@ function Get-FooterOn {
         $kind = $WD_HEADER_FOOTER_EVEN_PAGES
     }
     return ($Section.Footers($kind).Range.Text -replace "[`r`a0-9]", '').Trim()
+}
+
+# The footer the first page shows: the first section's own first-page footer where it has one,
+# else its footer for odd pages.
+function Get-FirstPageFooter {
+    param($Doc)
+    $section = $Doc.Sections(1)
+    if ($section.PageSetup.DifferentFirstPageHeaderFooter) { return $section.Footers($WD_HEADER_FOOTER_FIRST_PAGE) }
+    return $section.Footers($WD_HEADER_FOOTER_PRIMARY)
+}
+
+# The longest paragraph in a table cell, at any depth of tables, of 40 characters or more — a
+# panel's, a card's, a column of a row — or null. A table's range holds the tables nested in it.
+function Find-CellParagraph {
+    param($Doc)
+    $best = $null; $bestLength = 39
+    foreach ($table in $Doc.Tables) {
+        foreach ($p in $table.Range.Paragraphs) {
+            $length = (Get-Text $p).Length
+            if ($length -gt $bestLength) { $best = $p; $bestLength = $length }
+        }
+    }
+    return $best
+}
+
+# Every drawing that holds text, with its name, in one order a reopened document repeats: those of
+# the main text, each drawing of a group among them, then those of the headers and footers, which
+# Word keeps in one collection of their own.
+function Get-DrawingTexts {
+    param($Doc)
+    $found = New-Object System.Collections.Generic.List[object]
+    foreach ($story in @(@('drawing', $Doc.Shapes), @('header drawing', $Doc.Sections(1).Headers(1).Shapes))) {
+        for ($k = 1; $k -le $story[1].Count; $k++) {
+            $shape = $story[1].Item($k)
+            $members = @(, @("$($story[0]) $k", $shape))
+            # A shape that is not a group says so by throwing.
+            try { for ($g = 1; $g -le $shape.GroupItems.Count; $g++) { $members += , @("$($story[0]) $k.$g", $shape.GroupItems.Item($g)) } } catch { }
+            foreach ($member in $members) {
+                # A picture has no text frame to ask, and says so by throwing.
+                try { if ($member[1].TextFrame.HasText) { $found.Add([pscustomobject]@{ name = $member[0]; frame = $member[1].TextFrame }) } } catch { }
+            }
+        }
+    }
+    # The comma keeps a single drawing a list: PowerShell would hand back the drawing itself.
+    return ,$found
+}
+
+# Each link of the main text and its tables with four characters or more of text, in the order the
+# document has them: the text, the address it goes to — '#' and the bookmark for a link within the
+# document — and the two as one key, the address without a trailing slash.
+function Get-Links {
+    param($Doc)
+    $found = New-Object System.Collections.Generic.List[object]
+    foreach ($hyperlink in $Doc.Hyperlinks) {
+        $text = ($hyperlink.Range.Text -replace '[\x00-\x1f]', ' ').Trim()
+        if ($text.Length -lt 4) { continue }
+        $address = $hyperlink.Address
+        if (-not $address) { $address = '#' + $hyperlink.SubAddress }
+        $found.Add([pscustomobject]@{ hyperlink = $hyperlink; text = $text; address = $address; key = "$text`n$($address.TrimEnd('/'))" })
+    }
+    # One by one, for a foreach to walk: a list handed back whole would be walked as one link.
+    return $found.ToArray()
 }
 
 # Word's page geometry for the main story, read in one walk of the pages and handed back as
@@ -929,22 +1027,76 @@ function Measure-Following {
     return $m
 }
 
+# Sets a document Word has open as a PDF, as Word draws it.
+function Export-Pdf {
+    param($Doc, [string]$Path)
+    $Doc.ExportAsFixedFormat($Path, $WD_EXPORT_PDF)
+}
+
+# Whether the verdicts read from a PDF can be had: the LibreOffice protocol's own, under a Python
+# whose PyMuPDF leaves clipped text out, held first by their own self-check. Null when they can,
+# else why not and whether that is a failure (exit 1) or a want (exit 2).
+function Test-PdfVerdicts {
+    # What Python writes to stderr is read, not raised: Windows PowerShell 5.1 turns it into an
+    # error under Stop. This function's own preference only.
+    $ErrorActionPreference = 'Continue'
+    # A Python that runs at all, asked first: on Windows without one, `python` on the PATH is a
+    # stub that exits 9009, which must read as a Python wanted, not as verdicts that failed.
+    # A command that is not there leaves the last exit code as it was, so it is looked for first.
+    $runs = $false
+    if (Get-Command $Python -ErrorAction SilentlyContinue) {
+        & $Python -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' *> $null
+        $runs = $LASTEXITCODE -eq 0
+    }
+    if (-not $runs) { return @{ code = 2; why = "no Python 3.10 or later at '$Python' to read the PDF verdicts with" } }
+    $output = & $Python $JUDGE --self-check 2>&1
+    $code = $LASTEXITCODE
+    if ($code -eq 0) { return $null }
+    $last = @($output | Where-Object { "$_".Trim() } | Select-Object -Last 1)
+    if ($code -eq 2) { return @{ code = 2; why = "the PDF verdicts want a Python with a PyMuPDF that leaves clipped text out: $last" } }
+    return @{ code = 1; why = "the PDF verdicts fail their own self-check under '$Python': $last" }
+}
+
+# A scenario's verdict read from two PDFs Word set, by the LibreOffice protocol's verdicts. The job
+# is written beside the edited PDF, so a verdict can be read again by hand.
+function Invoke-Judge {
+    param([string]$Name, [string]$Reference, [string]$Edited, $Facts)
+    # Python's stderr is read as text here, as in Test-PdfVerdicts.
+    $ErrorActionPreference = 'Continue'
+    $job = $Edited -replace '\.pdf$', '.judge.json'
+    [ordered]@{ scenario = $Name; reference = $Reference; edited = $Edited; facts = $Facts } |
+        ConvertTo-Json -Depth 4 | Set-Content -Path $job -Encoding utf8
+    $output = & $Python $JUDGE --judge $job 2>&1
+    # The verdict is the one line of JSON the script prints; a warning on stderr is not it.
+    $line = @($output | Where-Object { "$_".StartsWith('{') } | Select-Object -Last 1)
+    if ($LASTEXITCODE -ne 0 -or $line.Count -eq 0) { throw "the verdict could not be read from the PDF: $(($output | Select-Object -Last 3) -join ' ')" }
+    $verdict = $line[0] | ConvertFrom-Json
+    return New-Result $Name $verdict.status $verdict.detail
+}
+
 # An edit Word refuses is a result of that scenario, not the end of the document's protocol.
+# A scenario read from the PDF is given the PDF it is read against, or why there is none.
 function Invoke-Scenario {
-    param($Word, $Source, [string]$Name, [scriptblock]$Edit, [scriptblock]$Verify, [switch]$Pdf)
+    param($Word, $Source, [string]$Name, [scriptblock]$Edit, [scriptblock]$Verify, [switch]$Pdf, $Reference)
     if ($Scenario -and $Name -notin $Scenario) { return $null }
+    if ($Name -in $PDF_JUDGED -and -not $Reference.pdf) { return New-Result $Name 'ERROR' $Reference.why }
     try {
-        return Invoke-ScenarioOnce $Word $Source $Name $Edit $Verify -Pdf:$Pdf
+        return Invoke-ScenarioOnce $Word $Source $Name $Edit $Verify -Pdf:$Pdf -Reference $Reference.pdf
     } catch {
         return New-Result $Name 'ERROR' $_.Exception.Message
     }
 }
 
+# Edits a copy, saves it, reopens it and verifies it. With a reference PDF the reopened copy is set
+# as a PDF too and read against it, with the facts the edit and its verification recorded: the
+# scenario passes when both what Word reports and what its PDF shows hold, and one that verifies
+# nothing through Word is judged by its PDF alone.
 function Invoke-ScenarioOnce {
-    param($Word, $Source, [string]$Name, [scriptblock]$Edit, [scriptblock]$Verify, [switch]$Pdf)
+    param($Word, $Source, [string]$Name, [scriptblock]$Edit, [scriptblock]$Verify, [switch]$Pdf, [string]$Reference)
     $copy = Join-Path $OutputDir ($Source.BaseName + '-' + $Name + '.docx')
+    $pdfPath = $copy -replace '\.docx$', '.pdf'
     Copy-Item $Source.FullName $copy -Force
-    $state = @{}
+    $state = @{ facts = [ordered]@{} }
     $doc = $Word.Documents.Open($copy, [ref]$false, [ref]$false)
     try {
         $state.pagesBefore = $doc.ComputeStatistics($WD_STATISTIC_PAGES)
@@ -971,12 +1123,19 @@ function Invoke-ScenarioOnce {
         $state.paragraphsAfter = $reopened.Paragraphs.Count
         $state.tablesAfter = $reopened.Tables.Count
         $result = & $Verify $reopened $state
-        if ($Pdf) {
-            $reopened.ExportAsFixedFormat(($copy -replace '\.docx$', '.pdf'), $WD_EXPORT_PDF)
-        }
+        if ($Pdf -or $Reference) { Export-Pdf $reopened $pdfPath }
     } finally {
         $reopened.Close([ref]$false)
         [Runtime.InteropServices.Marshal]::ReleaseComObject($reopened) | Out-Null
+    }
+    if ($Reference) {
+        $judged = Invoke-Judge $Name $Reference $pdfPath $state.facts
+        if ($null -eq $result) {
+            $result = $judged
+        } else {
+            $status = if ($result.status -eq 'PASS' -and $judged.status -eq 'PASS') { 'PASS' } else { 'FAIL' }
+            $result = New-Result $Name $status "$($result.detail); read from the PDF ($($judged.status)): $($judged.detail)"
+        }
     }
     $result.file = Split-Path $copy -Leaf
     return $result
@@ -985,6 +1144,51 @@ function Invoke-ScenarioOnce {
 function Invoke-Protocol {
     param($Word, $Source)
     $results = @()
+
+    # 0. The PDFs the scenarios read from a PDF are read against, made first whichever of those
+    #    scenarios run: the document as exported, set as Word opens it, and the save with no edit,
+    #    which is the round trip. The round trip is read against the first, every edit against the
+    #    second, so a scenario answers for its own edit and what the save changes is reported once.
+    #    The links the save keeps at their address are what the link edit may choose from.
+    $saved = @{ why = 'the save with no edit, which the edit is read against, did not come to a verdict' }
+    $script:keptLinks = @{}
+    if (@($PDF_JUDGED | Where-Object { -not $Scenario -or $_ -in $Scenario }).Count -gt 0) {
+        $exported = @{ pdf = Join-Path $OutputDir ($Source.BaseName + '.pdf') }
+        try {
+            $doc = $Word.Documents.Open($Source.FullName, [ref]$false, [ref]$true)
+            try { Export-Pdf $doc $exported.pdf } finally {
+                $doc.Close([ref]$false)
+                [Runtime.InteropServices.Marshal]::ReleaseComObject($doc) | Out-Null
+            }
+        } catch {
+            $exported = @{ why = "the document as exported could not be set as a PDF: $($_.Exception.Message)" }
+        }
+        # Save and reopen with no edit: the same paragraphs, tables, characters and pages, and the
+        # PDF of the save holding every line and link of the PDF of the document as exported.
+        $roundTrip = if (-not $exported.pdf) { New-Result 'round-trip' 'ERROR' $exported.why } else {
+            try {
+                Invoke-ScenarioOnce $Word $Source 'round-trip' -Reference $exported.pdf -Edit {
+                    param($doc, $state)
+                } -Verify {
+                    param($doc, $state)
+                    $script:keptLinks = @{}
+                    foreach ($link in Get-Links $doc) { $script:keptLinks[$link.key] = 1 + $script:keptLinks[$link.key] }
+                    $same = $state.paragraphsAfter -eq $state.paragraphsBefore -and $state.tablesAfter -eq $state.tablesBefore `
+                        -and $state.charactersAfter -eq $state.charactersBefore -and $state.pagesAfter -eq $state.pagesBefore
+                    $detail = "paragraphs $($state.paragraphsBefore) -> $($state.paragraphsAfter), pages $($state.pagesBefore) -> $($state.pagesAfter)"
+                    New-Result 'round-trip' $(if ($same) { 'PASS' } else { 'FAIL' }) $detail
+                }
+            } catch {
+                New-Result 'round-trip' 'ERROR' $_.Exception.Message
+            }
+        }
+        if ($roundTrip.status -ne 'ERROR') {
+            $saved = @{ pdf = Join-Path $OutputDir ($Source.BaseName + '-round-trip.pdf') }
+        } else {
+            $saved.why += ": $($roundTrip.detail)"
+        }
+        if (-not $Scenario -or 'round-trip' -in $Scenario) { $results += $roundTrip }
+    }
 
     # 1. Lengthen the longest paragraph about twofold: nothing is lost, it grows, no exact row
     #    height hides what was added, and it still ends above the block after it. A paragraph
@@ -1176,8 +1380,12 @@ function Invoke-Protocol {
     #    What was typed stands below everything else, outside any table, visible, and the page
     #    count follows. Typing on from a paragraph's text, the letters are in that text's size,
     #    on the lines the page set it on; typing in an empty paragraph, they fit its lines. The
-    #    footer the new page shows is recorded.
-    $results += Invoke-Scenario $Word $Source 'add-a-page' -Pdf -Edit {
+    #    footer the new page shows is recorded. Read from the PDF against the save with no edit:
+    #    the last line typed stands on the last page, typed lines stand at least their size apart,
+    #    nothing else is lost or set over other text, and every page whose header or footer read
+    #    "Page i of n" or "i / n" before, and every page added, reads its own number and the new
+    #    total there.
+    $results += Invoke-Scenario $Word $Source 'add-a-page' -Pdf -Reference $saved -Edit {
         param($doc, $state)
         $last = $doc.Paragraphs($doc.Paragraphs.Count)
         if ((Get-Text $last).Length -gt 0) {
@@ -1201,6 +1409,8 @@ function Invoke-Protocol {
             }
             if ($doc.ComputeStatistics($WD_STATISTIC_PAGES) -gt $state.pagesBefore) { break }
         }
+        $state.facts.typed = $state.lines
+        $state.facts.pagesTyped = $doc.ComputeStatistics($WD_STATISTIC_PAGES)
     } -Verify {
         param($doc, $state)
         # Read hidden text too: Word leaves it out of a range's text, and hidden is a finding.
@@ -1440,16 +1650,104 @@ function Invoke-Protocol {
         New-Result 'drawings-follow-text' 'PASS' $detail
     }
 
-    # 9. Save and reopen with no edit.
-    $results += Invoke-Scenario $Word $Source 'round-trip' -Edit {
+    # 9-12. The LibreOffice protocol's edits, made through Word and read from Word's PDF against
+    #    the save with no edit by that protocol's verdicts. After each, every line of text from
+    #    before it is still found on its own page or the next, whitespace and page numbers aside
+    #    and every other digit kept, and no two lines' letters stand on one another more often
+    #    than before. What Word itself reports is recorded beside the verdict, not in it.
+    #
+    # 9. A sentence added to the longest paragraph in a table cell — a panel, a card, a column of a
+    #    row — is readable whole.
+    $results += Invoke-Scenario $Word $Source 'lengthen-in-a-panel' -Reference $saved -Edit {
         param($doc, $state)
+        $p = Find-CellParagraph $doc
+        if (-not $p) { return $false }
+        $state.target = (Get-Text $p).Substring(0, 30)
+        $state.exactRow = Test-ExactRow $p.Range
+        $state.facts.added = $PANEL_ADDED
+        (Get-TextRange $p).InsertAfter($PANEL_ADDED)
     } -Verify {
         param($doc, $state)
-        $same = $state.paragraphsAfter -eq $state.paragraphsBefore -and $state.tablesAfter -eq $state.tablesBefore `
-            -and $state.charactersAfter -eq $state.charactersBefore -and $state.pagesAfter -eq $state.pagesBefore
-        $detail = "paragraphs $($state.paragraphsBefore) -> $($state.paragraphsAfter), pages $($state.pagesBefore) -> $($state.pagesAfter)"
-        if (-not $same) { return New-Result 'round-trip' 'FAIL' $detail }
-        New-Result 'round-trip' 'PASS' $detail
+        New-Result 'lengthen-in-a-panel' 'PASS' "'$($state.target)…' lengthened, in a row of exact height=$($state.exactRow)"
+    }
+
+    # 10. The same sentence added to the longest text a drawing holds is readable whole.
+    $results += Invoke-Scenario $Word $Source 'lengthen-in-a-drawing' -Reference $saved -Edit {
+        param($doc, $state)
+        $frames = Get-DrawingTexts $doc
+        if ($frames.Count -eq 0) { return $false }
+        $state.frame = 0
+        for ($k = 1; $k -lt $frames.Count; $k++) {
+            if ($frames[$k].frame.TextRange.Text.Length -gt $frames[$state.frame].frame.TextRange.Text.Length) { $state.frame = $k }
+        }
+        $frame = $frames[$state.frame]
+        $state.name = $frame.name
+        $state.target = ($frame.frame.TextRange.Text -replace '[\x00-\x1f]', ' ').Trim() -replace '^(.{0,30}).*', '$1'
+        $state.facts.added = $PANEL_ADDED
+        $paragraphs = $frame.frame.TextRange.Paragraphs
+        (Get-TextRange $paragraphs.Item($paragraphs.Count)).InsertAfter($PANEL_ADDED)
+    } -Verify {
+        param($doc, $state)
+        $frames = Get-DrawingTexts $doc
+        $frame = if ($state.frame -lt $frames.Count) { $frames[$state.frame].frame }
+        $reads = if ($frame) { "grows with its text=$($frame.AutoSize -ne 0), its text runs past it=$($frame.Overflowing)" } else { 'no longer found' }
+        New-Result 'lengthen-in-a-drawing' 'PASS' "'$($state.target)…' in $($state.name) lengthened; Word says the drawing $reads"
+    }
+
+    # 11. A few words put at the start of the footer the first page shows stand on every page
+    #     whose header or footer band showed that footer's text, another section's pages included.
+    $results += Invoke-Scenario $Word $Source 'edit-the-footer' -Reference $saved -Edit {
+        param($doc, $state)
+        $footer = Get-FirstPageFooter $doc
+        $text = ($footer.Range.Text -replace '[\x00-\x1f]', ' ').Trim()
+        if (($text -replace '[\s\d]', '').Length -eq 0) { return $false }
+        $state.facts.footer = $text
+        $state.facts.footerEdit = $FOOTER_EDIT
+        $footer.Range.InsertBefore($FOOTER_EDIT)
+    } -Verify {
+        param($doc, $state)
+        # Which sections Word gives the edited footer, of those after the first: a section that
+        # repeats the one before it shows the edit, one with a footer of its own does not.
+        $own = @(if ($doc.Sections.Count -gt 1) {
+            2..$doc.Sections.Count | Where-Object { -not $doc.Sections($_).Footers($WD_HEADER_FOOTER_PRIMARY).LinkToPrevious }
+        })
+        $after = ((Get-FirstPageFooter $doc).Range.Text -replace '[\x00-\x1f]', ' ').Trim()
+        New-Result 'edit-the-footer' 'PASS' "the first page's footer now reads '$after'; $($doc.Sections.Count) sections, those after the first with a footer of their own: $(if ($own.Count) { $own -join ', ' } else { 'none' })"
+    }
+
+    # 12. Typed inside the first link the save with no edit keeps at its address, the link keeps
+    #     that address, and every link of the document is still a link, as many times as before.
+    $results += Invoke-Scenario $Word $Source 'edit-a-link' -Reference $saved -Edit {
+        param($doc, $state)
+        $seen = @{}
+        $target = $null
+        foreach ($link in Get-Links $doc) {
+            $seen[$link.key] = 1 + $seen[$link.key]
+            if ($script:keptLinks[$link.key] -ge $seen[$link.key]) { $target = $link; break }
+        }
+        if (-not $target) { return $false }
+        $state.facts.urlBefore = $target.address
+        $state.facts.textBefore = $target.text
+        # Typed after half the letters Word shows, as the LibreOffice protocol types it. A link's
+        # range spans its field code as well as its text, so its middle by position falls in the
+        # address: the letters are the link field's result.
+        $range = $target.hyperlink.Range
+        $field = @($range.Fields | Where-Object { $_.Type -eq $WD_FIELD_HYPERLINK } | Select-Object -First 1)
+        if ($field.Count -gt 0) { $range = $field[0].Result }
+        $letters = $range.Characters
+        $letters.Item([Math]::Max(1, [int][Math]::Floor($letters.Count / 2))).InsertAfter($LINK_EDIT)
+    } -Verify {
+        param($doc, $state)
+        $want = $state.facts.textBefore -replace '\s', ''
+        foreach ($link in Get-Links $doc) {
+            $at = $link.text.IndexOf($LINK_EDIT)
+            if ($at -ge 0 -and ($link.text.Remove($at, $LINK_EDIT.Length) -replace '\s', '') -eq $want) {
+                $state.facts.textAfter = $link.text
+                $state.facts.urlAfter = $link.address
+                break
+            }
+        }
+        $null
     }
     return @($results | Where-Object { $_ })
 }
@@ -2147,6 +2445,18 @@ if ($SelfCheck) {
 $inputs = Join-Path $OutputDir 'input'
 New-Item -ItemType Directory -Force $inputs | Out-Null
 $sources = @($Docx | ForEach-Object { Copy-Item $_ $inputs -Force -PassThru })
+# The PDF verdicts are held before Word is asked for, where a scenario that reads them runs: one
+# that cannot be read is not run at all, rather than recorded as an error on every document.
+if (@($PDF_JUDGED | Where-Object { -not $Scenario -or $_ -in $Scenario }).Count -gt 0) {
+    $verdicts = Test-PdfVerdicts
+    if ($verdicts) {
+        $status = if ($verdicts.code -eq 2) { 'NOT_RUN' } else { 'FAILED' }
+        @{ status = $status; reason = $verdicts.why } |
+            ConvertTo-Json | Set-Content -Path (Join-Path $OutputDir 'edit-protocol-corpus.json') -Encoding utf8
+        Write-Warning "${status}: $($verdicts.why)"
+        exit $verdicts.code
+    }
+}
 try {
     $word = New-Object -ComObject Word.Application
 } catch {

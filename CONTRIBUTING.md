@@ -434,7 +434,8 @@ Choose the smallest tests that match the change:
   The corpus also answers for how a document edits in Word.
   `scripts/docx-visual/edit-protocol-corpus.ps1` runs over the DOCX that
   `-Dgraphcompose.docxFidelity=export` leaves in `qa/target/docx-fidelity/engine`. For each
-  document it makes ten edits, each on a copy that it saves and reopens:
+  document it saves a copy with no edit and makes thirteen edits, each on a copy that it saves and
+  reopens:
   - lengthen the longest paragraph, and shorten it;
   - press Enter after it and type;
   - restyle Normal;
@@ -442,7 +443,20 @@ Choose the smallest tests that match the change:
   - continue a list;
   - type at the end until a new page opens;
   - lengthen the first paragraph of body text, watching the drawings;
-  - save with no edit.
+  - add a sentence to the longest paragraph in a table cell, and to the longest text a drawing
+    holds;
+  - put a few words at the start of the footer the first page shows;
+  - type inside the first link that the save with no edit keeps at its address.
+
+  The last four are the LibreOffice protocol's edits (below), all but its picture replacement,
+  which Word's COM cannot make. They, the save with no edit and the typing onto a new page are
+  also read from Word's own PDFs, by that protocol's verdicts: the script sets the document as
+  exported, the save and each edited copy as PDFs and hands each pair to
+  `edit-protocol-libreoffice.py --judge`, so both editors are held to one set of verdicts. That
+  wants a Python 3.10 or later whose PyMuPDF leaves clipped text out (`-Python`, `python` on the PATH when left
+  out), whose self-check the protocol runs before it asks for Word; without one it records
+  `NOT_RUN` and exits 2, and where that self-check fails it records `FAILED` and exits 1, unless
+  only scenarios that do not read a PDF were named.
 
   It records what it can decide alone in `edit-protocol-corpus.json`:
   - text kept, and a paragraph grown or shrunk and still above the block after it;
@@ -548,7 +562,9 @@ Choose the smallest tests that match the change:
 
   The protocol reads the letters' size and visibility from the text, without the paragraph
   mark. Beside the lengthened copy and the new-page copy it writes PDFs, from which a person
-  judges whether a page still looks right. It takes about a minute a document; `-Scenario`
+  judges whether a page still looks right. The six scenarios read from a PDF took 32 minutes over
+  the corpus's 82 documents in Word 16, and 58 with LibreOffice running beside it; all of them
+  take a few minutes a document; `-Scenario`
   runs only the scenarios named, by the names the JSON records.
 
   The corpus answers for how a document edits in LibreOffice as well.
@@ -578,7 +594,9 @@ Choose the smallest tests that match the change:
   - an added sentence is readable whole;
   - the edited footer shows on every page whose header or footer band showed its text, another
     section's pages included, though LibreOffice gives each section a footer of its own when it
-    opens a file;
+    opens a file; the footer is matched word for word, in any order, anywhere in the page's
+    header and footer bands, each word as many times as the footer has it, since a footer of two
+    cells — text over two lines beside a page number — reads its lines interleaved there;
   - the saved document has grown, the last line typed stands on its last page, typed lines stand
     at least their size apart, and every page whose header or footer read "Page i of n" or
     "i / n" before, and every page added, reads its own number and the new total there;

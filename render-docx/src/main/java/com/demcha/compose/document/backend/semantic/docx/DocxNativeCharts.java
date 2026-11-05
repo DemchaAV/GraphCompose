@@ -760,6 +760,13 @@ final class DocxNativeCharts {
                 lost.add("its legend stands about 9pt lower than the page's: Word keeps a legend at the top "
                          + "inside the chart's frame");
             }
+            if (legendAt != null && spec instanceof ChartSpec.Pie && spec.legend() == LegendPosition.BOTTOM) {
+                // Measured: Word sets a pie's legend at the foot within half a point of the page's;
+                // LibreOffice 4pt higher on a pie 302pt tall, 7pt at 328pt and 16pt at 483pt. A bar's
+                // or a line's legend at the foot stands within about 2pt in both.
+                lost.add("LibreOffice sets its legend higher than the page does, the more the taller the "
+                         + "chart: 4pt on a pie 302pt tall, 16pt on one 483pt tall");
+            }
             if (spec instanceof ChartSpec.Bar bar && bar.grouping() == BarGrouping.STACKED && !bar.horizontal()
                 && spec.legend() == LegendPosition.RIGHT) {
                 // Measured in both editors: a legend beside a stack of columns lists it from the top down.

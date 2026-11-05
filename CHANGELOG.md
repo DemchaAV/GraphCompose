@@ -32,7 +32,8 @@ follow semantic versioning; release dates are ISO 8601.
     11pt nearer the hole. A donut's centre text is a text box of the chart's own over its hole,
     within 0.4pt of the hole's centre in Word and 0.1pt in LibreOffice. The legend is placed where
     the page draws it too: left to Word, a legend under a pinned plot stood on the category labels.
-    Word keeps a legend at the top inside the chart's frame, about 9pt lower, which is named. Word
+    Word keeps a legend at the top inside the chart's frame, about 9pt lower, and LibreOffice sets
+    a pie's legend at the foot 4 to 16pt higher, the taller the pie the more; both are named. Word
     lays the rest out itself — the axes' labels, the legend's keys and spacing — and the chart's
     report note says so.
   - The note names what Word's chart has no setting for. A monotone curve is written as straight

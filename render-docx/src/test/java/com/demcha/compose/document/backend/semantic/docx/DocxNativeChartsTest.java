@@ -105,7 +105,12 @@ class DocxNativeChartsTest {
         }
         assertThat(note(page -> page.add(new ChartNode(ChartSpec.line().data(QUARTERS).legend(LegendPosition.TOP)
                 .build())))).contains("its legend stands about 9pt lower than the page's");
-        assertThat(note(content)).doesNotContain("9pt lower");
+        assertThat(note(content)).doesNotContain("9pt lower").doesNotContain("LibreOffice sets its legend higher");
+        assertThat(note(page -> page.add(new ChartNode(ChartSpec.pie().data(SHARES).legend(LegendPosition.BOTTOM)
+                .build())))).contains("LibreOffice sets its legend higher than the page does, the more the taller "
+                                      + "the chart: 4pt on a pie 302pt tall, 16pt on one 483pt tall");
+        assertThat(note(page -> page.add(new ChartNode(ChartSpec.pie().data(SHARES).legend(LegendPosition.RIGHT)
+                .build())))).doesNotContain("LibreOffice sets its legend higher");
         assertThat(chartXml(page -> page.add(new ChartNode(ChartSpec.bar().data(QUARTERS).build()))))
                 .as("no legend, nothing to place").doesNotContain("<c:legend>");
     }

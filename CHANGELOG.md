@@ -53,7 +53,9 @@ follow semantic versioning; release dates are ISO 8601.
     and writing a bar overlap through those classes failed at run time. No dependency is added.
     The embedded workbook's own clocks are pinned whether or not the output is deterministic, and
     its entries are stored rather than deflated, since one zlib deflates the same bytes
-    differently from another, so it is the same bytes for the same numbers on any machine.
+    differently from another, with a plain line feed after each part's declaration, where POI
+    writes the platform's line separator, so it is the same bytes for the same numbers on any
+    machine.
 
 - **A DOCX export keeps Word and LibreOffice from breaking a line at a hyphen where the page
   does not.**

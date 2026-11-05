@@ -430,6 +430,11 @@ class DocxNativeChartsTest {
             // workbook is a part of the document as these bytes.
             for (; entry != null; entry = zip.getNextEntry()) {
                 assertThat(entry.getMethod()).as(entry.getName()).isEqualTo(java.util.zip.ZipEntry.STORED);
+                // A line feed after the declaration, as on every platform: Windows wrote CR LF there.
+                String text = new String(zip.readAllBytes(), StandardCharsets.UTF_8);
+                if (text.startsWith("<?xml")) {
+                    assertThat(text).as(entry.getName()).doesNotContain("?>\r\n");
+                }
             }
         }
         try (XWPFDocument document = new XWPFDocument(new java.io.ByteArrayInputStream(first));

@@ -226,6 +226,30 @@ final class DocxNativeCharts {
     }
 
     /**
+     * An XML entry with a plain line feed after its declaration. POI writes the platform's line
+     * separator there — CR LF on Windows, LF on Linux — and the workbook is one part of the
+     * document as these bytes, so it came out a different part on each machine.
+     */
+    private static byte[] oneBreakAfterTheDeclaration(byte[] data) {
+        if (data.length < 5 || data[0] != '<' || data[1] != '?') {
+            return data;
+        }
+        // The declaration's end, within its first line; then CR LF, or it is left as it is.
+        for (int at = 2; at + 3 < data.length && at < 200; at++) {
+            if (data[at] == '?' && data[at + 1] == '>') {
+                if (data[at + 2] != '\r' || data[at + 3] != '\n') {
+                    return data;
+                }
+                byte[] plain = new byte[data.length - 1];
+                System.arraycopy(data, 0, plain, 0, at + 2);
+                System.arraycopy(data, at + 3, plain, at + 2, data.length - at - 3);
+                return plain;
+            }
+        }
+        return data;
+    }
+
+    /**
      * The workbook rewritten with every entry stored rather than deflated, its time pinned. A
      * deflater's bytes differ from one zlib to another — the JDK on Linux takes the system's, on
      * Windows its own — and the workbook is one part of the document, held in it as these bytes,
@@ -237,7 +261,7 @@ final class DocxNativeCharts {
         try (java.util.zip.ZipInputStream in = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(zip));
              java.util.zip.ZipOutputStream rewritten = new java.util.zip.ZipOutputStream(out)) {
             for (java.util.zip.ZipEntry entry; (entry = in.getNextEntry()) != null; ) {
-                byte[] data = in.readAllBytes();
+                byte[] data = oneBreakAfterTheDeclaration(in.readAllBytes());
                 java.util.zip.CRC32 crc = new java.util.zip.CRC32();
                 crc.update(data);
                 java.util.zip.ZipEntry copy = new java.util.zip.ZipEntry(entry.getName());

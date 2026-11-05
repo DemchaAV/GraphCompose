@@ -43,8 +43,9 @@ text comes back — as it does from Ubuntu 24.04's python3-fitz 1.23.7, and not 
 or 2.1 from pip. Typed lines are found with their spaces ignored: typing on from a
 letter-spaced line, LibreOffice spaces the typed letters too. An address is compared without a
 trailing slash, which LibreOffice adds to a bare host on its save. The footer is read in the
-bands, and the edited footer is held to every page whose band showed its text, another section's
-pages included: LibreOffice gives each section a
+bands, word for word in any order and anywhere in the two bands of its page — a footer of two
+cells reads its lines interleaved there — and the edited footer is held to every page whose bands
+showed all its words, as many times as the footer has each, another section's pages included: LibreOffice gives each section a
 footer of its own when it opens a file, even where the file names one footer part for every
 section, and a person editing the footer they see expects it to change wherever it reads the same.
 
@@ -56,7 +57,7 @@ A move is read within 0.525 of a point rather than 0.5: LibreOffice writes posit
 0.05 of a point, so a limit of 0.5 is a difference two readings can produce exactly, and the verdict
 would then turn on the float noise under the grid instead of on where LibreOffice set a line.
 
-The script needs a Python that imports both LibreOffice's UNO bridge (`uno`) and PyMuPDF, and starts
+The script needs Python 3.10 or later that imports both LibreOffice's UNO bridge (`uno`) and PyMuPDF, and starts
 `soffice` itself. On Ubuntu 24.04 — the LibreOffice the DOCX fidelity job runs:
   apt-get install libreoffice-writer python3-uno python3-venv
   python3 -m venv --system-site-packages /opt/lo-edit && /opt/lo-edit/bin/pip install pymupdf
@@ -64,6 +65,13 @@ and run it with /opt/lo-edit/bin/python. Without the bridge, PyMuPDF that leaves
 `soffice`, it records NOT_RUN and exits 2; a scenario that neither passes nor is N/A, a usage
 error, or a run that stops, exits 1. The JSON is written after every document. A soffice that dies
 is started again for the next document; one that hangs is not caught.
+
+--judge JOB gives one scenario's verdict from two PDFs another editor set, and prints it as JSON:
+JOB is a JSON file of the scenario, the reference PDF, the edited PDF and the facts the edit
+recorded (what --judge needs of each scenario is what Protocol.edit and Protocol.reread record,
+plus the words typed where they are not this script's). edit-protocol-corpus.ps1 makes the same
+edits through Word and reads them this way, so both editors are held to one set of verdicts. It
+needs the PyMuPDF the self-check does, and exits 2 without one.
 
 --self-check holds every verdict to probe PDFs it writes with PyMuPDF: each rule is broken once, in
 a probe only that rule can fail, and the limits a move, a crossing, the spacing of typed lines and
@@ -314,10 +322,10 @@ def judge_round_trip(reference, edited):
     return result("round-trip", "PASS" if held else "FAIL", detail)
 
 
-def judge_lengthened(scenario, reference, edited):
+def judge_lengthened(scenario, reference, edited, added=ADDED):
     text = " ".join(" ".join(l["text"] for l in read_lines(edited)).split())
-    whole = ADDED.strip() in text
-    words = ADDED.split()
+    whole = added.strip() in text
+    words = added.split()
     seen = sum(1 for w in words if w in text)
     lost = lost_lines(reference, edited)
     new = new_crossings(reference, edited)
@@ -335,14 +343,21 @@ def band_texts(pdf):
     return [" ".join(l["text"] for l in sorted(b, key=lambda l: (l["y"], l["x"]))) for b in bands]
 
 
-def judge_footer(reference, edited, footer):
-    marker = squash(footer)
+def words(text):
+    """A text's words, digits left out, as many times as it has each: a footer is matched to a band
+    word for word, since a band's lines are read top to bottom and a footer of two cells — text
+    running over two lines beside a page number between them — reads in another order there."""
+    return collections.Counter(w for w in (squash(w) for w in text.split()) if w)
+
+
+def judge_footer(reference, edited, footer, typed=FOOTER_EDIT):
+    marker = words(footer)
     before, after = band_texts(reference), band_texts(edited)
-    showing = [i for i, t in enumerate(before) if marker in squash(t)]
+    showing = [i for i, t in enumerate(before) if marker <= words(t)]
     if not showing:
         return result("edit-the-footer", "FAIL", "the footer's text '%s' was found on no page before the edit" % footer)
-    edit = flat(FOOTER_EDIT)
-    missing = [i + 1 for i in showing if i >= len(after) or marker not in squash(after[i]) or edit not in flat(after[i])]
+    edit = flat(typed)
+    missing = [i + 1 for i in showing if i >= len(after) or not marker <= words(after[i]) or edit not in flat(after[i])]
     lost = lost_lines(reference, edited)
     new = new_crossings(reference, edited)
     detail = ("the footer showed on pages %s; pages without it and the edit %s; lines lost %s; text over text %s"
@@ -404,6 +419,26 @@ def judge_link(reference, edited, facts):
               % (facts.get("textBefore"), facts.get("textAfter"), facts.get("urlBefore"), facts.get("urlAfter"),
                  lost_links, lost[:3]))
     return result("edit-a-link", "PASS" if kept and not lost_links and not lost else "FAIL", detail)
+
+
+def judge(scenario, reference, edited, facts):
+    """A scenario's verdict from the PDFs before and after its edit, whichever editor set them: the
+    round trip's reference is the document as exported, every edit's the save with no edit. The
+    text an edit typed is taken from the facts where the editor typed other words than this
+    script's."""
+    if scenario == "round-trip":
+        return judge_round_trip(reference, edited)
+    if scenario in ("lengthen-in-a-panel", "lengthen-in-a-drawing"):
+        return judge_lengthened(scenario, reference, edited, facts.get("added", ADDED))
+    if scenario == "edit-the-footer":
+        return judge_footer(reference, edited, facts["footer"], facts.get("footerEdit", FOOTER_EDIT))
+    if scenario == "add-a-page":
+        return judge_add_a_page(reference, edited, facts["typed"], facts.get("pagesTyped"))
+    if scenario == "replace-a-picture":
+        return judge_picture(reference, edited, facts)
+    if scenario == "edit-a-link":
+        return judge_link(reference, edited, facts)
+    raise ValueError("no scenario is called %s" % scenario)
 
 
 # --- LibreOffice --------------------------------------------------------------------------------
@@ -689,17 +724,6 @@ class Protocol:
             facts["textAfter"] = portion.getString() if portion is not None else None
             facts["urlAfter"] = portion.getPropertyValue("HyperLinkURL") if portion is not None else None
 
-    def judge(self, scenario, reference, edited, facts):
-        if scenario in ("lengthen-in-a-panel", "lengthen-in-a-drawing"):
-            return judge_lengthened(scenario, reference, edited)
-        if scenario == "edit-the-footer":
-            return judge_footer(reference, edited, facts["footer"])
-        if scenario == "add-a-page":
-            return judge_add_a_page(reference, edited, facts["typed"], facts.get("pagesTyped"))
-        if scenario == "replace-a-picture":
-            return judge_picture(reference, edited, facts)
-        return judge_link(reference, edited, facts)
-
     def copy(self, source, name, scenario, facts):
         """Edits a copy, saves it, reopens it and sets it as a PDF; the PDF's path, or None when the
         document has nothing the scenario edits."""
@@ -744,7 +768,7 @@ class Protocol:
         for scenario in scenarios:
             if scenario == "round-trip":
                 try:
-                    verdict = judge_round_trip(fitz.open(exported_pdf), saved)
+                    verdict = judge(scenario, fitz.open(exported_pdf), saved, {})
                     verdict["file"] = "%s-round-trip.docx" % name
                 except Exception as e:
                     verdict = result(scenario, "ERROR", repr(e)[:400])
@@ -756,7 +780,7 @@ class Protocol:
                 if pdf is None:
                     results.append(result(scenario, "N/A", NOT_APPLICABLE[scenario]))
                     continue
-                verdict = self.judge(scenario, saved, fitz.open(pdf), facts)
+                verdict = judge(scenario, saved, fitz.open(pdf), facts)
                 verdict["file"] = os.path.basename(pdf)[:-4] + ".docx"
                 results.append(verdict)
             except Exception as e:
@@ -874,6 +898,33 @@ def run_self_check(scratch):
           judge_footer(probe_pdf(2, body + [foot(0, False), (1, 72, 300, "Northwind Ltd Page of the report", 10)]),
                        probe_pdf(2, body + [foot(0, True), (1, 72, 300, "Northwind Ltd Page of the report", 10)]), footer), "PASS")
     check("footer not found before the edit", judge_footer(two, probe_pdf(2, body + [foot(0, True), foot(1, True)]), "Southwind Ltd"), "FAIL")
+    # A footer of two cells: two lines of text on the left, the page number on the right between
+    # them, so the band reads it in another order than the footer's own.
+    cells = "Northwind Cloud Ltd is a subsidiary\tof Northwind Group plc\tPage 1 of 1"
+    cell = lambda edited: [(0, 72, 756, (FOOTER_EDIT if edited else "") + "Northwind Cloud Ltd is a subsidiary", 9),
+                           (0, 72, 768, "of Northwind Group plc", 9), (0, 450, 762, "Page 1 of 1", 9)]
+    check("footer of two cells, read in another order in the band, edited",
+          judge_footer(probe_pdf(1, body + cell(False)), probe_pdf(1, body + cell(True)), cells), "PASS")
+    check("footer of two cells, read in another order in the band, not edited",
+          judge_footer(probe_pdf(1, body + cell(False)), probe_pdf(1, body + cell(False)), cells), "FAIL")
+    # A page whose band holds some of the footer's words does not show that footer: here it never
+    # takes the edit, which fails only if it is counted.
+    check("footer edited, a page whose band holds only part of the footer's words",
+          judge_footer(probe_pdf(2, body + [foot(0, False), (1, 72, 760, "Northwind", 9)]),
+                       probe_pdf(2, body + [foot(0, True), (1, 72, 760, "Northwind", 9)]), footer), "PASS")
+    check("footer edited, a word of the footer lost",
+          judge_footer(two, probe_pdf(2, body + [foot(0, True), (1, 72, 760, FOOTER_EDIT + "Northwind     Page 2 of 2", 9)]), footer), "FAIL")
+    # Three pages, the third keeping the whole footer, so the search for lost lines finds the
+    # second page's footer line there: only the footer's own word count can fail these two.
+    lost_word = [foot3(0, True), (1, 72, 760, FOOTER_EDIT + "Northwind     Page 2 of 3", 9), foot3(2, True)]
+    check("footer edited, a word of the footer lost, the line found on the next page",
+          judge_footer(three, probe_pdf(3, body + lost_word), footer), "FAIL")
+    twice = "Northwind Ltd Northwind\tPage 1 of 3"
+    foot_twice = lambda p, text: (p, 72, 760, text + "     Page %d of 3" % (p + 1), 9)
+    check("footer edited, one of a word that stands twice lost, the line found on the next page", judge_footer(
+        probe_pdf(3, body + [foot_twice(p, "Northwind Ltd Northwind") for p in range(3)]),
+        probe_pdf(3, body + [foot_twice(0, FOOTER_EDIT + "Northwind Ltd Northwind"), foot_twice(1, FOOTER_EDIT + "Northwind Ltd"),
+                             foot_twice(2, FOOTER_EDIT + "Northwind Ltd Northwind")]), twice), "FAIL")
 
     # Typing onto a new page.
     numbered = lambda pages, total, form="Page %d of %d": [(p, 72, 760, form % (p + 1, total), 9) for p in range(pages)]
@@ -966,6 +1017,43 @@ def run_self_check(scratch):
         probe_pdf(1, line("See example.com"), links=[(0, (72, 90, 200, 102), "https://example.com")]),
         probe_pdf(1, line("See examEDITple.com"), links=[(0, (72, 90, 200, 102), "https://example.com/")]), host), "PASS")
 
+    # The verdicts as --judge gives them, for another editor that typed words of its own.
+    other = "Another editor typed these words into the text it was asked to lengthen."
+    typed_other = [(0, 72, 128, other, 10)]
+    check("judged, another editor's sentence whole", judge(
+        "lengthen-in-a-drawing", ref, probe_pdf(1, body + typed_other, links=[link]), {"added": other}), "PASS")
+    check("judged, another editor's sentence whole in a panel", judge(
+        "lengthen-in-a-panel", ref, probe_pdf(1, body + typed_other, links=[link]), {"added": other}), "PASS")
+    check("judged, another editor's sentence read as this script's", judge(
+        "lengthen-in-a-drawing", ref, probe_pdf(1, body + typed_other, links=[link]), {}), "FAIL")
+    other_foot = lambda p, edited: (p, 72, 760, ("Footer edited. " if edited else "") + "Northwind Ltd     Page %d of 2" % (p + 1), 9)
+    check("judged, another editor's footer words on every page", judge(
+        "edit-the-footer", two, probe_pdf(2, body + [other_foot(0, True), other_foot(1, True)]),
+        {"footer": footer, "footerEdit": "Footer edited. "}), "PASS")
+    check("judged, another editor's footer words read as this script's", judge(
+        "edit-the-footer", two, probe_pdf(2, body + [other_foot(0, True), other_foot(1, True)]), {"footer": footer}), "FAIL")
+    # --judge itself, as another editor's protocol runs it: a job file written with a byte-order
+    # mark and a word that is not ASCII, read back from the verdict this script prints.
+    def judged_by_the_command(name, edited, facts):
+        paths = {}
+        for which, pdf in (("reference", ref), ("edited", edited)):
+            paths[which] = os.path.join(scratch, "judge-%s-%s.pdf" % (name, which))
+            pdf.save(paths[which])
+        job = os.path.join(scratch, "judge-%s.json" % name)
+        with open(job, "w", encoding="utf-8-sig") as f:
+            json.dump(dict(scenario="lengthen-in-a-panel", facts=facts, **paths), f, ensure_ascii=False)
+        run = subprocess.run([sys.executable, os.path.abspath(__file__), "--judge", job], capture_output=True, text=True)
+        if run.returncode != 0:
+            return result("lengthen-in-a-panel", "ERROR", "exit %d: %s" % (run.returncode, run.stderr.strip()[-200:]))
+        return json.loads(run.stdout.strip().splitlines()[-1])
+    crème = "Crème brûlée is the word another editor typed."
+    check("--judge, another editor's sentence whole", judged_by_the_command(
+        "whole", probe_pdf(1, body + [(0, 72, 128, crème, 10)], links=[link]), {"added": crème}), "PASS")
+    check("--judge, another editor's sentence cut short", judged_by_the_command(
+        "short", probe_pdf(1, body + [(0, 72, 128, crème[:20], 10)], links=[link]), {"added": crème}), "FAIL")
+    check("judged, a round trip that kept everything", judge("round-trip", ref, shifted(0, 0), {}), "PASS")
+    check("judged, a round trip that moved a line", judge("round-trip", ref, shifted(0, 0.55), {}), "FAIL")
+
     failed = 0
     for name, status, expected, detail in checks:
         ok = status == expected
@@ -992,16 +1080,30 @@ def main():
     parser.add_argument("--scenario", action="append", help="a scenario to run, by name; all of them when left out")
     parser.add_argument("--soffice", default="soffice", help="the soffice to start (default: soffice on the PATH)")
     parser.add_argument("--self-check", action="store_true", help="check the verdicts against probe PDFs and exit")
+    parser.add_argument("--judge", metavar="JOB",
+                        help="give one scenario's verdict from two PDFs another editor set, and exit: JOB is a JSON"
+                             " file of scenario, reference, edited and facts; the verdict is printed as JSON")
     args = parser.parse_args()
 
-    if args.self_check:
+    if args.self_check or args.judge:
         if fitz is None or not clip_honoured():
             print("NOT_RUN: this Python has no PyMuPDF that leaves clipped text out (TEXT_CLIP)")
             return 2
+    if args.self_check:
         return 1 if self_check() else 0
+    if args.judge:
+        # Word's protocol makes its edits through Word and hands the PDFs here, so both editors are
+        # held to one set of verdicts.
+        with open(args.judge, encoding="utf-8-sig") as f:
+            job = json.load(f)
+        if job.get("scenario") not in SCENARIOS:
+            parser.error("no scenario is called %s; the scenarios are %s" % (job.get("scenario"), ", ".join(SCENARIOS)))
+        verdict = judge(job["scenario"], fitz.open(job["reference"]), fitz.open(job["edited"]), job.get("facts") or {})
+        print(json.dumps(verdict))
+        return 0
 
     if not args.docx or not args.output_dir:
-        parser.error("give the .docx files and --output-dir, or --self-check")
+        parser.error("give the .docx files and --output-dir, or --judge, or --self-check")
     scenarios = [s.strip() for item in (args.scenario or SCENARIOS) for s in item.split(",") if s.strip()]
     if not scenarios:
         parser.error("no scenario named: the scenarios are %s" % ", ".join(SCENARIOS))

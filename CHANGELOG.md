@@ -8,6 +8,42 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export writes a chart as a Word chart.**
+  - A chart was exported as a table of its data: the export wrote no Word chart. It is now
+    Word's own chart, a chart part drawn inline at the size the page draws the chart, with its
+    numbers in a workbook embedded with it, so a reader edits them in Word through *Edit Data*
+    and the chart redraws. LibreOffice opens and draws it as well.
+  - The part carries what the page's chart is built from: bars vertical or horizontal, grouped
+    or stacked; lines straight or smoothed, with point markers, value labels and an area fill;
+    pies and donuts with the page's start angle, hole and slice labels; the series' colours, the
+    value axis's bounds, step and number format as the page computes them, grid lines, the
+    legend's side and the text styles. Measured in Word 16 and LibreOffice 24.2 on every kind,
+    the text after a chart stands within 0.1pt of where the page puts it, and a chart the page
+    moves to the next page moves there in both.
+  - Word lays the chart out in its box itself, so its labels and legend stand where Word puts
+    them; the chart's report note says so. A pie's disc is pinned where the page draws it, and a
+    donut's centre text is a text box of the chart's own over its hole, within 0.4pt of the
+    hole's centre in Word and 0.1pt in LibreOffice.
+  - The note names what Word's chart has no setting for. A monotone curve is written as straight
+    segments: Word's and LibreOffice's smoothing passes beyond the points, measured below a
+    point's value in both, which a monotone curve is chosen not to do. A smoothed line over an
+    area fill keeps Word's smoothing while the fill runs straight between the points, and
+    LibreOffice draws that line straight as well. Stack totals, rounded bar corners, a gradient
+    series paint, bars too many for Word's widest gap, gaps between slices, a counterclockwise
+    pie, a donut's labels outside its ring, an area's missing value (a gap in Word, as on the
+    page, but filled down to the axis in LibreOffice), and a number format with a divisor, other
+    separators or grouping, or more than digits, grouping and decimals are named too. Excel keeps a
+    whole number's decimal point under a format whose decimals are all optional, so numbers shown
+    both whole and fractional are written with fixed decimals, and that is named as well.
+  - A chart beside other drawings in its table cell, or in a table composed in a cell, is still
+    written as its data table and drawn over it: the export cannot tell its strokes from the
+    others'.
+  - The chart part is written as text rather than through POI's chart classes. The
+    `poi-ooxml-lite` schemas this module ships hold only the chart types POI's own tests use,
+    and writing a bar overlap through those classes failed at run time. No dependency is added.
+    The embedded workbook's own clocks are pinned whether or not the output is deterministic, so
+    it is the same bytes for the same numbers.
+
 - **A DOCX export keeps Word and LibreOffice from breaking a line at a hyphen where the page
   does not.**
   - The page breaks a line only at a space, and at a hyphen only inside a word wider than the

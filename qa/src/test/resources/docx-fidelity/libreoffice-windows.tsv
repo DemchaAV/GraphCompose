@@ -76,6 +76,8 @@ synthetic-kept_blocks_over_pages	3	3	107	107	0.02	0.02	0
 synthetic-kept_icon_panel	2	2	38	38	0.02	0.02	0
 synthetic-links_and_toc	3	3	81	78	0.02	0.02	0
 synthetic-long_free_text	5	5	154	147	0.02	11.98	22
+synthetic-bar_and_line_charts	4	4	68	65	2.89	11.98	37
+synthetic-pie_and_donut_charts	2	2	30	30	0.78	7.53	8
 synthetic-narrow_container	1	1	6	6	0.02	0.02	0
 synthetic-nested_rows	1	1	24	24	0.02	0.02	0
 synthetic-rotated_image_and_shape	1	1	9	5	0.02	0.02	0

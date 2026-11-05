@@ -1125,18 +1125,51 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   where the layout puts it, has no place and is dropped, each with a note of its own saying so;
   a rule is written as one still.
 
-- **Charts → data table.** A chart compiles to vector geometry, of which this
-  export writes no Word chart. Its *semantic*
-  content is its data, so the backend writes a categories-by-series table
-  (values formatted with the chart's own axis format) and logs **one
-  capability warning per export**. The chart's margin and padding above, below
-  and on its left are not written round the table; its report note says so. A chart that is
-  all a table cell draws — alone, or with text, lists and wrappers that paint nothing beside
-  it — is its data table there too, and nothing of its drawing is drawn: drawn, its bars stood
-  over the table and hid its numbers, without its labels (measured in Word and LibreOffice on
-  Windows). One beside other drawings in its cell, whose drawings the export cannot tell its
-  own from, or in a table composed in a cell, is drawn as well, over its table, and its note
-  says so. See [charts.md](charts.md).
+- **Charts → Word charts.** A chart is written as Word's own chart: a chart part drawn inline,
+  in a paragraph of its own, at the size the page draws it, with its numbers in a workbook
+  embedded with it, so a reader edits them in Word through *Edit Data* and the chart redraws.
+  LibreOffice opens and draws it as well. The part carries what the page's chart is built from:
+  - bars vertical or horizontal (the first category at the top, as on the page), grouped or
+    stacked, their gap and overlap taken from the page's bar width;
+  - lines straight or smoothed, with point markers, value labels and an area fill;
+  - pies and donuts with the page's start angle and hole size, a slice's label as value,
+    percentage or category, and a legend listing only the slices the page draws, a zero or
+    missing one left out;
+  - each series' or slice's colour, the value axis's bounds and step as the page computes them,
+    its number format, its grid lines and tick labels, the legend's side, and the axis, legend
+    and label text styles.
+
+  Measured in Word 16 and LibreOffice 24.2 against the PDF on every kind: the text after a
+  chart stands within 0.1pt of where the page puts it, and a chart the page moves to the next
+  page moves there in both. Word lays the chart out in its box itself, so its labels and legend
+  stand where Word puts them, and the chart's report note says so. A pie's disc is pinned where
+  the page draws it, and a donut's centre text is a text box of the chart's own over its hole —
+  within 0.4pt of the hole's centre in Word and 0.1pt in LibreOffice. The note also names what
+  Word's chart has no setting for:
+  - a monotone curve is written as straight segments between its points: Word's and
+    LibreOffice's smoothing passes beyond the points (below a point's value, measured in both),
+    which a monotone curve is chosen not to do;
+  - a smoothed line over an area fill: Word fills under straight lines between the points, so
+    the fill stands off the curve in wedges, and LibreOffice draws the line straight as well;
+  - an area chart's missing value, which Word leaves as a gap as the page does and LibreOffice
+    fills down to the axis;
+  - a stacked bar chart's totals, rounded bar corners, a gradient series paint (written as its
+    first colour), bars so many that the gap between their groups passes the widest Word takes, a
+    gap between slices, a counterclockwise pie (written clockwise), a donut's slice labels (set on
+    its ring) and point markers that are not round;
+  - a number format with a divisor, separators other than `.` and `,`, grouping other than by
+    thousands, or more than digits, grouping and decimals. An Excel format code's optional
+    decimals (`#`) show as the page's do, but where no decimal must show, Excel keeps a whole
+    number's decimal point (1 reads "1."): numbers shown both whole and fractional — an axis's
+    ticks 0, 0.5, 1 — are written with as many fixed decimals as they need, and the note says so.
+
+  The chart's left margin and padding are not in the file, as a picture's are not. A chart that
+  is all a table cell draws — alone, or with text, lists and wrappers that paint nothing beside
+  it — is a Word chart in that cell, and nothing of its drawing is drawn there. One beside other
+  drawings in its cell, whose strokes the export cannot tell from the others', or in a table
+  composed in a cell, is still written as its data table, a categories-by-series table in the
+  chart's own value format, and is drawn as well, over that table; its note says so. See
+  [charts.md](charts.md).
 - **A canvas → its contents.** A canvas's drawings stand where it places them; what it
   writes — text, pictures, tables — is written one block after another inside its margin and
   padding. The places it gives them and the width its text wraps at are not carried, and the

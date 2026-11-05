@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DocxSemanticBackendTest {
 
     @Test
-    void chartExportsAsItsDataTable() throws Exception {
+    void chartExportsAsAWordChartWithItsDataInTheEmbeddedWorkbook() throws Exception {
         com.demcha.compose.document.chart.ChartData data =
                 com.demcha.compose.document.chart.ChartData.builder()
                         .categories("Q1", "Q2")
@@ -49,17 +49,19 @@ class DocxSemanticBackendTest {
             docxBytes = session.export(new DocxSemanticBackend());
         }
 
+        // Read back through POI, as a reader of the file would: the chart part and its workbook.
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
-            List<XWPFTable> tables = document.getTables();
-            assertThat(tables).hasSize(1);
-            XWPFTable table = tables.get(0);
-            // Header (blank corner + series names) plus one row per category.
-            assertThat(table.getRows()).hasSize(3);
-            assertThat(table.getRow(0).getCell(1).getText()).isEqualTo("2024");
-            assertThat(table.getRow(0).getCell(2).getText()).isEqualTo("2025");
-            assertThat(table.getRow(1).getCell(0).getText()).isEqualTo("Q1");
-            assertThat(table.getRow(1).getCell(1).getText()).isEqualTo("12.4");
-            assertThat(table.getRow(2).getCell(2).getText()).isEqualTo("18.2");
+            assertThat(document.getTables()).as("no data table").isEmpty();
+            assertThat(document.getCharts()).hasSize(1);
+            try (org.apache.poi.xssf.usermodel.XSSFWorkbook book = document.getCharts().get(0).getWorkbook()) {
+                org.apache.poi.xssf.usermodel.XSSFSheet sheet = book.getSheetAt(0);
+                // Series names across the head, then a row per category, as Word lays out a chart's data.
+                assertThat(sheet.getRow(0).getCell(1).getStringCellValue()).isEqualTo("2024");
+                assertThat(sheet.getRow(0).getCell(2).getStringCellValue()).isEqualTo("2025");
+                assertThat(sheet.getRow(1).getCell(0).getStringCellValue()).isEqualTo("Q1");
+                assertThat(sheet.getRow(1).getCell(1).getNumericCellValue()).isEqualTo(12.4);
+                assertThat(sheet.getRow(2).getCell(2).getNumericCellValue()).isEqualTo(18.2);
+            }
         }
     }
 

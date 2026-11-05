@@ -56,7 +56,8 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
     /**
      * Number format for the chart's data values. Axis-based kinds delegate to
      * their value axis; a pie has no axis and carries its own format. Used by
-     * value labels and by semantic exports that render the chart's data table.
+     * value labels and by semantic exports, which write it as the chart's number
+     * format.
      *
      * @return value number format
      */

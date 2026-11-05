@@ -25,32 +25,37 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * A chart that is all a table cell draws is written there as its data table, as anywhere else, and
- * none of its drawing is drawn over that table; one beside other drawings in its cell, or in a
- * table composed in a cell, is drawn among the cell's drawings, and its note says so.
+ * A chart that is all a table cell draws is written there as a Word chart, as anywhere else, and
+ * none of its drawing is drawn over it; one beside other drawings in its cell, or in a table
+ * composed in a cell, is drawn among the cell's drawings, which the export cannot tell its own
+ * from, and is written as its data table under them, and its note says so.
  */
 class DocxChartInACellTest {
 
     private static final ChartSpec BARS = ChartSpec.bar().data(ChartData.builder().categories("Q1", "Q2", "Q3")
             .series("Sales", 3.0, 5.0, 4.0).series("Costs", 2.0, 2.5, 3.5).build()).build();
-    private static final String TABLE = "exported as its data table — a categories-by-series table in the chart's "
-                                        + "own value format — because the drawn chart is layout geometry";
-    private static final String DRAWN_TOO = TABLE + "; composed in a table cell where the export does not find it "
-                                            + "drawing alone — beside other drawings, or in a table composed in a "
-                                            + "cell — its bars, lines and slices are drawn as well, where the page "
-                                            + "draws them, over the table and without its text";
+    private static final String WORD_CHART = "written as a Word chart, its numbers in the workbook embedded with it; "
+                                             + "Word lays the chart out in its box itself, so the plot area, the "
+                                             + "labels and the legend stand where Word puts them rather than where "
+                                             + "the page does";
+    private static final String DRAWN_TOO = "exported as its data table — a categories-by-series table in the "
+                                            + "chart's own value format — and not as a Word chart: composed in a "
+                                            + "table cell where the export does not find it drawing alone — beside "
+                                            + "other drawings, or in a table composed in a cell — its bars, lines "
+                                            + "and slices are drawn where the page draws them, over the table and "
+                                            + "without its text, and a Word chart would stand over them";
 
     @Test
-    void aChartACellIsBuiltFromIsItsDataTableThereAndNothingIsDrawn() throws Exception {
+    void aChartACellIsBuiltFromIsAWordChartThereAndNothingIsDrawn() throws Exception {
         Consumer<PageFlowBuilder> content = beside(new ChartNode(BARS));
         try (XWPFDocument document = DocxExports.withLayout(500, 400, 30, content)) {
             XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(1);
-            assertThat(cell.getTables()).as("its data table").hasSize(1);
-            assertThat(cell.getTables().get(0).getRow(0).getCell(1).getText()).isEqualTo("Sales");
+            assertThat(cell.getTables()).as("no data table").isEmpty();
+            assertThat(charts(cell.getCTTc().xmlText())).as("the Word chart, in its cell").isEqualTo(1);
             assertThat(drawings(document)).as("no bar or grid line drawn over it").isZero();
         }
         DocxExportReport report = laidOut(content);
-        assertThat(details(report, "chart")).containsExactly(TABLE);
+        assertThat(details(report, "chart")).containsExactly(WORD_CHART);
         assertThat(report.bySubject()).as("nothing drawn to name").doesNotContainKey("cell drawing");
     }
 
@@ -62,18 +67,23 @@ class DocxChartInACellTest {
             Consumer<PageFlowBuilder> content = beside(built);
             try (XWPFDocument document = DocxExports.withLayout(500, 400, 30, content)) {
                 assertThat(drawings(document)).as("%s", built).isZero();
+                assertThat(charts(document)).as("%s", built).isEqualTo(1);
             }
-            assertThat(details(laidOut(content), "chart")).containsExactly(TABLE);
+            assertThat(details(laidOut(content), "chart")).containsExactly(WORD_CHART);
         }
     }
 
     @Test
-    void aChartBesideAnotherDrawingInItsCellIsDrawnTooAndItsNoteSaysSo() throws Exception {
+    void aChartBesideAnotherDrawingInItsCellIsDrawnOverItsDataTableAndItsNoteSaysSo() throws Exception {
         Consumer<PageFlowBuilder> content = beside(new SectionBuilder()
                 .add(new EllipseBuilder().circle(12).fillColor(DocumentColor.BLACK).build())
                 .add(new ChartNode(BARS)).build());
         try (XWPFDocument document = DocxExports.withLayout(500, 400, 30, content)) {
             assertThat(drawings(document)).as("the disc, and its bars and grid lines").isGreaterThan(1);
+            assertThat(charts(document)).as("no Word chart under the drawn one").isZero();
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(1);
+            assertThat(cell.getTables()).as("its data table").hasSize(1);
+            assertThat(cell.getTables().get(0).getRow(0).getCell(1).getText()).isEqualTo("Sales");
         }
         assertThat(details(laidOut(content), "chart")).containsExactly(DRAWN_TOO);
     }
@@ -91,8 +101,9 @@ class DocxChartInACellTest {
             try (XWPFDocument document = DocxExports.withLayout(500, 400, 30, content)) {
                 assertThat(drawings(document)).as("the tile with a right margin of %spt, and nothing of the chart",
                         right).isEqualTo(1);
+                assertThat(charts(document)).isEqualTo(1);
             }
-            assertThat(details(laidOut(content), "chart")).containsExactly(TABLE);
+            assertThat(details(laidOut(content), "chart")).containsExactly(WORD_CHART);
         }
     }
 
@@ -104,6 +115,7 @@ class DocxChartInACellTest {
             Consumer<PageFlowBuilder> content = beside(built);
             try (XWPFDocument document = DocxExports.withLayout(500, 400, 30, content)) {
                 assertThat(drawings(document)).as("%s", built).isPositive();
+                assertThat(charts(document)).as("%s", built).isZero();
             }
             assertThat(details(laidOut(content), "chart")).as("%s", built).isNotEmpty().allMatch(DRAWN_TOO::equals);
         }
@@ -121,6 +133,7 @@ class DocxChartInACellTest {
         try (XWPFDocument document = DocxExports.withLayout(500, 400, 30, header)) {
             assertThat(document.getTables().get(0).getRows()).as("a table over pages").hasSizeGreaterThan(20);
             assertThat(drawings(document)).as("nothing of the chart on any page it repeats on").isZero();
+            assertThat(charts(document)).as("one Word chart, which Word repeats with its row").isEqualTo(1);
         }
         assertThat(laidOut(header).bySubject()).doesNotContainKey("cell drawing");
         Consumer<PageFlowBuilder> spanning = page -> page.addTable(t -> t
@@ -129,8 +142,9 @@ class DocxChartInACellTest {
                 .row("Left", "Right"));
         try (XWPFDocument document = DocxExports.withLayout(500, 400, 30, spanning)) {
             assertThat(drawings(document)).as("a chart across two columns").isZero();
+            assertThat(charts(document)).isEqualTo(1);
         }
-        assertThat(details(laidOut(spanning), "chart")).containsExactly(TABLE);
+        assertThat(details(laidOut(spanning), "chart")).containsExactly(WORD_CHART);
     }
 
     @Test
@@ -144,12 +158,18 @@ class DocxChartInACellTest {
     }
 
     @Test
-    void aChartInTheFlowOrWithNoLayoutIsItsDataTableAlone() throws Exception {
-        assertThat(details(laidOut(page -> page.add(new ChartNode(BARS))), "chart")).containsExactly(TABLE);
-        DocxExportReport withoutLayout = DocxExports.reportWithoutLayout(500, 400, 30, beside(new SectionBuilder()
+    void aChartInTheFlowOrWithNoLayoutIsAWordChart() throws Exception {
+        assertThat(details(laidOut(page -> page.add(new ChartNode(BARS))), "chart")).containsExactly(WORD_CHART);
+        Consumer<PageFlowBuilder> besideADisc = beside(new SectionBuilder()
                 .add(new EllipseBuilder().circle(12).fillColor(DocumentColor.BLACK).build())
-                .add(new ChartNode(BARS)).build()));
-        assertThat(details(withoutLayout, "chart")).as("nothing is drawn without a layout").containsExactly(TABLE);
+                .add(new ChartNode(BARS)).build());
+        try (XWPFDocument document = DocxExports.withoutLayout(500, 400, 30, besideADisc)) {
+            assertThat(charts(document)).as("nothing is drawn without a layout, so nothing stands over it")
+                    .isEqualTo(1);
+            assertThat(document.getTables().get(0).getRow(0).getCell(1).getTables()).isEmpty();
+        }
+        assertThat(details(DocxExports.reportWithoutLayout(500, 400, 30, besideADisc), "chart"))
+                .singleElement().asString().startsWith("written as a Word chart");
     }
 
     @Test
@@ -159,7 +179,7 @@ class DocxChartInACellTest {
         AtomicReference<DocxExportReport> report = new AtomicReference<>();
         DocxSemanticBackend backend = new DocxSemanticBackend(report::set);
         export(backend, beside(chart));
-        assertThat(details(report.get(), "chart")).containsExactly(TABLE);
+        assertThat(details(report.get(), "chart")).containsExactly(WORD_CHART);
         export(backend, beside(new SectionBuilder()
                 .add(new EllipseBuilder().circle(12).fillColor(DocumentColor.BLACK).build()).add(chart).build()));
         assertThat(details(report.get(), "chart")).containsExactly(DRAWN_TOO);
@@ -191,10 +211,19 @@ class DocxChartInACellTest {
         return report.bySubject().getOrDefault(subject, List.of()).stream().map(DocxExportReport.Note::detail).toList();
     }
 
-    /** The drawings in the document's body, its tables' cells included, floating or in a line. */
+    /** The drawings in the document's body, its tables' cells included, floating or in a line, but its Word charts. */
     private static int drawings(XWPFDocument document) {
         String xml = document.getDocument().xmlText();
-        return count(xml, "<wp:anchor") + count(xml, "<wp:inline");
+        return count(xml, "<wp:anchor") + count(xml, "<wp:inline") - charts(xml);
+    }
+
+    /** The Word charts the document's body holds. */
+    private static int charts(XWPFDocument document) {
+        return charts(document.getDocument().xmlText());
+    }
+
+    private static int charts(String xml) {
+        return count(xml, "uri=\"http://schemas.openxmlformats.org/drawingml/2006/chart\"");
     }
 
     private static int count(String text, String of) {

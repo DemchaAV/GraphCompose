@@ -344,7 +344,7 @@ final class ShowcaseMetadata {
         feature("chrome", "pdf-chrome", "PdfChromeExample", "PDF Chrome", "Headers, footers, watermarks, metadata, document protection / encryption. The footer names its font family — fontName(PT_SANS) keeps a Cyrillic page counter's letters — and reserveSpace(true) keeps the body clear of the band.", "chrome", "metadata", "watermark");
         feature("streaming", "invoice-http-stream", "HttpStreamingExample", "HTTP Streaming", "Stream PDF directly to a Servlet response with no buffering.", "streaming", "http");
         feature("snapshots", "invoice-snapshot-regression", "LayoutSnapshotRegressionExample", "Layout Snapshots", "How LayoutSnapshotAssertions captures the resolved layout graph for regression testing.", "snapshots", "testing");
-        feature("docx", "word-export-companion", "WordExportExample", "Word Export (DOCX)", "DocxSemanticBackend — the same document as a fixed-layout PDF and an editable Word file; charts fall back to their data table.", "docx", "word", "export");
+        feature("docx", "word-export-companion", "WordExportExample", "Word Export (DOCX)", "DocxSemanticBackend — the same document as a fixed-layout PDF and an editable Word file; charts become Word charts with their data in an embedded workbook.", "docx", "word", "export");
         feature("debug", "debug-overlay", "DebugOverlayExample", "Debug Overlay", "DocumentDebugOptions — guide lines plus semantic node-path labels on the rendered sheet; trace any misplaced block back to the builder call that authored it.", "debug", "labels", "v1.8");
 
         // --- feature examples added since v1.7 ---

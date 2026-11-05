@@ -7656,8 +7656,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         applyVerticalSpacing(para, node);
         XWPFRun run = para.createRun();
         java.awt.geom.Rectangle2D plot = plotOf(node, laidOut, width, height);
+        DocxNativeCharts.Placed placed = new DocxNativeCharts.Placed(plot, sliceLabelsOf(node, laidOut, width, height),
+                legendOf(node, laidOut, width, height));
         List<String> lost = new ArrayList<>(DocxNativeCharts.write(document, run, node, width, height,
-                plot, sliceLabelsOf(node, laidOut, width, height), nextDrawingId++, this::wordFamilyOf,
+                placed, nextDrawingId++, this::wordFamilyOf,
                 // The workbook's own clocks say nothing a reader uses; pinned always, it is the same
                 // bytes for the same numbers, and a committed document's preview does not drift.
                 deterministicTimestamp == null ? DEFAULT_DETERMINISTIC_INSTANT : deterministicTimestamp));
@@ -7667,8 +7669,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 + (plot == null
                    ? "out in its box itself, so the plot area, the labels and the legend stand where Word puts "
                      + "them rather than where the page does"
-                   : "out in its box itself round its plot area, which stands where the page draws it: its legend "
-                     + "and the labels Word sets stand where Word puts them rather than where the page does")
+                   : placed.legend() != null
+                     ? "out in its box itself round its plot area and its legend, which stand where the page draws "
+                       + "them: the labels Word sets stand where Word puts them rather than where the page does"
+                     : "out in its box itself round its plot area, which stands where the page draws it: its legend "
+                       + "and the labels Word sets stand where Word puts them rather than where the page does")
                 + (lost.isEmpty() ? "" : "; " + String.join("; ", lost)));
     }
 
@@ -7752,6 +7757,43 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return down ? new java.awt.geom.Rectangle2D.Double(least, from, most - least, full)
                 : new java.awt.geom.Rectangle2D.Double(from, least, full, most - least);
     }
+
+    /**
+     * Where the page draws a chart's legend in its box, as fractions of the box from its top left
+     * corner, a little wider all round, as Word frames a legend's entries: the box of the swatch and
+     * the label of each entry, which the page lays out last, one entry a series or a slice it draws.
+     *
+     * @return the legend's box, or {@code null} for a chart with no legend or that the layout did not place
+     */
+    private java.awt.geom.Rectangle2D legendOf(ChartNode node, com.demcha.compose.document.layout.PlacedNode laidOut,
+                                               double width, double height) {
+        if (laidOut == null || node.spec().legend() == com.demcha.compose.document.chart.LegendPosition.NONE) {
+            return null;
+        }
+        long entries = node.spec() instanceof com.demcha.compose.document.chart.ChartSpec.Pie pie
+                ? pie.data().series().get(0).values().stream().filter(v -> v != null && v > 0).count()
+                : node.spec().data().seriesCount();
+        List<com.demcha.compose.document.layout.PlacedFragment> fragments = layout.ownFragments(node);
+        if (entries == 0 || fragments.size() < 2 * entries) {
+            return null;
+        }
+        java.awt.geom.Rectangle2D box = null;
+        for (com.demcha.compose.document.layout.PlacedFragment fragment
+                : fragments.subList(fragments.size() - (int) (2 * entries), fragments.size())) {
+            java.awt.geom.Rectangle2D part = new java.awt.geom.Rectangle2D.Double(
+                    fragment.x(), fragment.y(), fragment.width(), fragment.height());
+            box = box == null ? part : box.createUnion(part);
+        }
+        double left = laidOut.placementX() + node.padding().left();
+        double top = laidOut.placementY() + laidOut.placementHeight() - node.padding().top();
+        double frame = LEGEND_FRAME;
+        return new java.awt.geom.Rectangle2D.Double((box.getX() - frame - left) / width,
+                (top - box.getMaxY() - frame) / height, (box.getWidth() + 2 * frame) / width,
+                (box.getHeight() + 2 * frame) / height);
+    }
+
+    /** What Word frames a legend's entries with on each side, in points. */
+    private static final double LEGEND_FRAME = 3;
 
     /**
      * Where the page centres a pie's slice labels in its chart's box, as fractions of the box from its

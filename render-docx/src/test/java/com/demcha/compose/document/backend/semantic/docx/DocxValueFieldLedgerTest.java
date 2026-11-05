@@ -722,10 +722,12 @@ class DocxValueFieldLedgerTest {
                 "showTickLabels:WRITTEN:as the value axis's labels");
         value(com.demcha.compose.document.chart.LegendPosition.class,
                 "NONE:WRITTEN:as no legend",
-                "BOTTOM:REPORTED:as the legend's side; its keys Word's own, named",
-                "RIGHT:REPORTED:as the legend's side; its keys Word's own, and beside a stack of columns listed from "
-                + "the top of the stack down, named",
-                "TOP:REPORTED:as the legend's side; its keys Word's own, named");
+                "BOTTOM:REPORTED:as the legend's side, the legend placed where the page draws it; its keys and "
+                + "spacing Word's own, named",
+                "RIGHT:REPORTED:as the legend's side, the legend placed where the page draws it; its keys and spacing "
+                + "Word's own, and beside a stack of columns listed from the top of the stack down, named",
+                "TOP:REPORTED:as the legend's side, the legend placed where the page draws it and set about 9pt lower, "
+                + "inside the chart's frame; its keys and spacing Word's own, named");
         value(com.demcha.compose.document.chart.ValueLabelMode.class,
                 "NONE:WRITTEN:as no labels",
                 "OUTSIDE:REPORTED:outside a bar's end or above a point; a stack's totals, named",

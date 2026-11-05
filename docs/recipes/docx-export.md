@@ -1151,9 +1151,11 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   measured). A donut's slice labels are laid out by hand where the page sets them, outside its
   ring, and Word sets them there; LibreOffice sets them about 11pt nearer the hole. A donut's
   centre text is a text box of the chart's own over its hole — within 0.4pt of the hole's centre
-  in Word and 0.1pt in LibreOffice. Word lays the rest of the chart out itself — its legend, its
-  axes' labels — and the chart's report note says so. The note also names what Word's chart has
-  no setting for:
+  in Word and 0.1pt in LibreOffice. The legend is placed where the page draws it as well — left
+  to Word, a legend under a pinned plot stood on the category labels — and both editors keep a
+  legend at the top inside the chart's frame, about 9pt lower. Word lays the rest of the chart out
+  itself — its axes' labels, the legend's keys and spacing — and the chart's report note says so.
+  The note also names what Word's chart has no setting for:
   - a monotone curve is written as straight segments between its points: Word's and
     LibreOffice's smoothing passes beyond the points (below a point's value, measured in both),
     which a monotone curve is chosen not to do;
@@ -1165,8 +1167,9 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
     first colour), bars so many that the gap between their groups passes the widest Word takes, a
     gap between slices, a counterclockwise pie (written clockwise) and point markers that are not
     round;
-  - Word's legend keys, about half the page's square swatch, a line series' a stroke through a
-    marker; and a legend beside a stack of columns, which Word and LibreOffice list from the top of
+  - Word's legend keys and spacing, a key about half the page's square swatch, a line series' a
+    stroke through a marker, so a legend above or below the plot starts where the page's does and
+    ends short of it; and a legend at the top set about 9pt lower; and a legend beside a stack of columns, which Word and LibreOffice list from the top of
     the stack down;
   - a number format with a divisor, separators other than `.` and `,`, grouping other than by
     thousands, or more than digits, grouping and decimals. An Excel format code's optional

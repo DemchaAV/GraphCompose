@@ -106,23 +106,30 @@ final class DocxNativeCharts {
     }
 
     /**
+     * Where the page draws a chart's parts in its box, as fractions of the box's width and height
+     * from its top left corner; each {@code null} where the layout gives none.
+     *
+     * @param plot        the plot: a pie's disc, the rectangle a bar or line chart's value grid spans
+     * @param sliceLabels each category's slice label's centre, {@code null} for one it labels nowhere
+     * @param legend      the legend, its entries framed as Word frames them
+     */
+    record Placed(Rectangle2D plot, List<java.awt.geom.Point2D> sliceLabels, Rectangle2D legend) {
+    }
+
+    /**
      * Writes {@code node} into {@code run} as a Word chart {@code width} by {@code height} points.
      *
-     * @param plot        where the page draws the chart's plot in its box — a pie's disc, the rectangle
-     *                    its value grid spans — as fractions of the box's width and height from its top
-     *                    left corner, or {@code null} where the layout gives none
-     * @param sliceLabels where the page centres each category's slice label, as fractions of the box,
-     *                    {@code null} for a category it labels nowhere; or {@code null} for none at all
-     * @param drawingId   the drawing's id in the document, unique among its drawings
-     * @param family      the Word family a text style's font is written in, as the document's runs
-     * @param pinned      the instant the embedded workbook's clocks are set to ({@link #workbookOf})
+     * @param placed    where the page draws the chart's parts in its box
+     * @param drawingId the drawing's id in the document, unique among its drawings
+     * @param family    the Word family a text style's font is written in, as the document's runs
+     * @param pinned    the instant the embedded workbook's clocks are set to ({@link #workbookOf})
      * @return what the chart part does not carry, phrased for the chart's note; empty when nothing
      */
     static List<String> write(XWPFDocument document, XWPFRun run, ChartNode node, double width, double height,
-                              Rectangle2D plot, List<java.awt.geom.Point2D> sliceLabels, long drawingId,
-                              Function<FontName, String> family, Instant pinned) throws IOException {
+                              Placed placed, long drawingId, Function<FontName, String> family, Instant pinned)
+            throws IOException {
         ChartStyle style = ChartDefaults.DEFAULT_THEME.toChartStyle().mergedUnder(node.style());
-        Part part = new Part(style, family, width, height, plot, sliceLabels);
+        Part part = new Part(style, family, width, height, placed);
         String chartXml = part.chartSpace(node.spec());
 
         OPCPackage pack = document.getPackage();
@@ -286,20 +293,21 @@ final class DocxNativeCharts {
         private final double height;
         private final Rectangle2D plot;
         private final List<java.awt.geom.Point2D> sliceLabelsAt;
+        private final Rectangle2D legendAt;
         // Once each: an axis and every labelled series may lose the same thing to one format.
         private final java.util.Set<String> lost = new java.util.LinkedHashSet<>();
         private final StringBuilder xml = new StringBuilder(4096);
         /** The chart's own drawing part, a donut's centre text, or {@code null} when it has none. */
         private String shapes;
 
-        Part(ChartStyle style, Function<FontName, String> family, double width, double height, Rectangle2D plot,
-             List<java.awt.geom.Point2D> sliceLabelsAt) {
+        Part(ChartStyle style, Function<FontName, String> family, double width, double height, Placed placed) {
             this.style = style;
             this.family = family;
             this.width = width;
             this.height = height;
-            this.plot = plot;
-            this.sliceLabelsAt = sliceLabelsAt;
+            this.plot = placed.plot();
+            this.sliceLabelsAt = placed.sliceLabels();
+            this.legendAt = placed.legend();
         }
 
         String chartSpace(ChartSpec spec) {
@@ -739,10 +747,19 @@ final class DocxNativeCharts {
             if (spec.legend() == LegendPosition.NONE) {
                 return;
             }
-            // Measured: Word draws a 4.5pt key, LibreOffice 5.4pt, beside the page's 9pt swatch, and a
-            // line series' key as a stroke through its marker. A chart part has no setting for either.
-            lost.add("its legend's keys are Word's own, about half the page's square swatch"
-                     + (spec instanceof ChartSpec.Line ? ", and a line's is its stroke through a marker" : ""));
+            // Measured: Word draws a 4.5pt key, LibreOffice 5.4pt, beside the page's 9pt swatch, a line
+            // series' key as a stroke through its marker, and its entries at its own spacing. A chart
+            // part has no setting for any of it.
+            lost.add("its legend's keys and spacing are Word's own, a key about half the page's square swatch"
+                     + (spec instanceof ChartSpec.Line ? ", and a line's its stroke through a marker" : "")
+                     + (legendAt != null && spec.legend() != LegendPosition.RIGHT
+                        ? ", so its row starts where the page's does and ends short of it" : ""));
+            if (legendAt != null && spec.legend() == LegendPosition.TOP) {
+                // Measured: set where the page draws it, both editors keep a legend at the top inside
+                // the chart's own frame, 8.8pt lower in Word and 8.2pt in LibreOffice.
+                lost.add("its legend stands about 9pt lower than the page's: Word keeps a legend at the top "
+                         + "inside the chart's frame");
+            }
             if (spec instanceof ChartSpec.Bar bar && bar.grouping() == BarGrouping.STACKED && !bar.horizontal()
                 && spec.legend() == LegendPosition.RIGHT) {
                 // Measured in both editors: a legend beside a stack of columns lists it from the top down.
@@ -769,6 +786,17 @@ final class DocxNativeCharts {
                 for (int s = 0; s < line.data().seriesCount(); s++) {
                     xml.append("<c:legendEntry><c:idx val=\"").append(s).append("\"/><c:delete val=\"1\"/></c:legendEntry>");
                 }
+            }
+            if (legendAt != null) {
+                // Where the page draws it: left to Word, a legend under a pinned plot stood on the
+                // category labels' line, over them.
+                // Its top left corner only, measured: given a width or a height too, Word spread a row's
+                // entries across it and cut a one-entry legend away; given its height alone, Word set
+                // it at the chart's top. Word's entries are narrower than the page's, so a row starts
+                // where the page's does and ends short of it.
+                xml.append("<c:layout><c:manualLayout><c:xMode val=\"edge\"/><c:yMode val=\"edge\"/><c:x val=\"")
+                        .append(fraction(legendAt.getX())).append("\"/><c:y val=\"").append(fraction(legendAt.getY()))
+                        .append("\"/></c:manualLayout></c:layout>");
             }
             xml.append("<c:overlay val=\"0\"/>").append(NO_FRAME).append(textBody(style.legendTextStyle()))
                     .append("</c:legend>");

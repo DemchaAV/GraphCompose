@@ -30,16 +30,19 @@ follow semantic versioning; release dates are ISO 8601.
     (4.4pt and 3.9pt measured), and the note says so. A donut's slice labels are laid out by hand
     where the page sets them, outside the ring, where Word sets them; LibreOffice sets them about
     11pt nearer the hole. A donut's centre text is a text box of the chart's own over its hole,
-    within 0.4pt of the hole's centre in Word and 0.1pt in LibreOffice. Word lays the rest of the
-    chart out itself — its legend, its axes' labels — and the chart's report note says so.
+    within 0.4pt of the hole's centre in Word and 0.1pt in LibreOffice. The legend is placed where
+    the page draws it too: left to Word, a legend under a pinned plot stood on the category labels.
+    Word keeps a legend at the top inside the chart's frame, about 9pt lower, which is named. Word
+    lays the rest out itself — the axes' labels, the legend's keys and spacing — and the chart's
+    report note says so.
   - The note names what Word's chart has no setting for. A monotone curve is written as straight
     segments: Word's and LibreOffice's smoothing passes beyond the points, measured below a
     point's value in both, which a monotone curve is chosen not to do. A smoothed line over an
     area fill keeps Word's smoothing while the fill runs straight between the points, and
     LibreOffice draws that line straight as well. Stack totals, rounded bar corners, a gradient
     series paint, bars too many for Word's widest gap, gaps between slices, a counterclockwise
-    pie, Word's legend keys (about half the page's swatch, and a line's a stroke through a
-    marker), a legend beside a stack of columns (listed from the top of the stack down in both
+    pie, Word's legend keys and spacing (a key about half the page's swatch, a line's a stroke
+    through a marker, so a legend row starts where the page's does and ends short of it), a legend beside a stack of columns (listed from the top of the stack down in both
     editors), an area's missing value (a gap in Word, as on the
     page, but filled down to the axis in LibreOffice), and a number format with a divisor, other
     separators or grouping, or more than digits, grouping and decimals are named too. Excel keeps a

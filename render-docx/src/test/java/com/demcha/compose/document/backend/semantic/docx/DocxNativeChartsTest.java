@@ -73,11 +73,41 @@ class DocxNativeChartsTest {
         assertThat(body).contains("<wp:extent cx=\"" + org.apache.poi.util.Units.toEMU(placed.placementWidth() - 20)
                                   + "\" cy=\"" + org.apache.poi.util.Units.toEMU(placed.placementHeight() - 20) + "\"/>");
         assertThat(note(content)).isEqualTo("written as a Word chart, its numbers in the workbook embedded with it; "
-                + "Word lays the chart out in its box itself round its plot area, which stands where the page draws "
-                + "it: its legend and the labels Word sets stand where Word puts them rather than where the page "
+                + "Word lays the chart out in its box itself round its plot area and its legend, which stand where "
+                + "the page draws them: the labels Word sets stand where Word puts them rather than where the page "
                 + "does; Word keeps room for the axes' labels inside the chart's box, so its plot can stand a few "
-                + "points short of the page's where the page leaves them less; its legend's keys are Word's own, "
-                + "about half the page's square swatch; its left padding is not in the file");
+                + "points short of the page's where the page leaves them less; its legend's keys and spacing are "
+                + "Word's own, a key about half the page's square swatch, so its row starts where the page's does "
+                + "and ends short of it; its left padding is not in the file");
+    }
+
+    @Test
+    void aLegendStandsWhereThePageDrawsIt() throws Exception {
+        ChartNode node = new ChartNode(ChartSpec.bar().data(QUARTERS).legend(LegendPosition.BOTTOM).build());
+        Consumer<PageFlowBuilder> content = page -> page.add(node);
+        double[] at = numbers(chartXml(content), "<c:legend><c:legendPos val=\"b\"/><c:layout><c:manualLayout>"
+                + "<c:xMode val=\"edge\"/><c:yMode val=\"edge\"/><c:x val=\"(-?[0-9.]+)\"/><c:y val=\"(-?[0-9.]+)\"/>");
+        try (DocumentSession session = GraphCompose.document().pageSize(500, 500).margin(DocumentInsets.of(30))
+                .create()) {
+            session.pageFlow(content::accept);
+            var graph = session.layoutGraph();
+            PlacedNode chart = graph.nodes().stream().filter(n -> n.path().contains("Chart")).findFirst().orElseThrow();
+            List<com.demcha.compose.document.layout.PlacedFragment> own = graph.fragments().stream()
+                    .filter(f -> f.path().equals(chart.path())).toList();
+            // The page lays its legend out last: a swatch and a label for each of the two series.
+            List<com.demcha.compose.document.layout.PlacedFragment> legend = own.subList(own.size() - 4, own.size());
+            double left = legend.stream().mapToDouble(com.demcha.compose.document.layout.PlacedFragment::x).min()
+                    .orElseThrow();
+            double high = legend.stream().mapToDouble(f -> f.y() + f.height()).max().orElseThrow();
+            double top = chart.placementY() + chart.placementHeight();
+            assertThat(at[0]).isCloseTo((left - 3 - chart.placementX()) / chart.placementWidth(), within(1e-4));
+            assertThat(at[1]).isCloseTo((top - high - 3) / chart.placementHeight(), within(1e-4));
+        }
+        assertThat(note(page -> page.add(new ChartNode(ChartSpec.line().data(QUARTERS).legend(LegendPosition.TOP)
+                .build())))).contains("its legend stands about 9pt lower than the page's");
+        assertThat(note(content)).doesNotContain("9pt lower");
+        assertThat(chartXml(page -> page.add(new ChartNode(ChartSpec.bar().data(QUARTERS).build()))))
+                .as("no legend, nothing to place").doesNotContain("<c:legend>");
     }
 
     @Test
@@ -126,8 +156,8 @@ class DocxNativeChartsTest {
     @Test
     void aLegendNamesWordsOwnKeysAndAStackOfColumnsListedFromTheTop() throws Exception {
         assertThat(note(line(LineInterpolation.LINEAR, false)))
-                .contains("its legend's keys are Word's own, about half the page's square swatch, and a line's is its "
-                          + "stroke through a marker");
+                .contains("its legend's keys and spacing are Word's own, a key about half the page's square swatch, "
+                          + "and a line's its stroke through a marker");
         Consumer<PageFlowBuilder> beside = page -> page.add(new ChartNode(ChartSpec.bar().data(QUARTERS)
                 .grouping(BarGrouping.STACKED).legend(LegendPosition.RIGHT).build()));
         assertThat(note(beside)).contains("its legend beside the stack lists the series from the top of the stack down");
@@ -249,7 +279,7 @@ class DocxNativeChartsTest {
         assertThat((from[0] + to[0]) / 2).as("centred on the disc").isCloseTo(disc[0] + disc[2] / 2, within(1e-4));
         assertThat((from[1] + to[1]) / 2).isCloseTo(disc[1] + disc[3] / 2, within(1e-4));
         assertThat(to[0] - from[0]).as("as wide as the hole").isCloseTo(0.6 * disc[2], within(1e-4));
-        assertThat(note(content)).contains("round its plot area, which stands where the page draws it")
+        assertThat(note(content)).contains("round its plot area and its legend, which stand where the page draws them")
                 .contains("LibreOffice sets its slice labels nearer the hole than the page does")
                 .doesNotContain("hole is set in the middle");
 

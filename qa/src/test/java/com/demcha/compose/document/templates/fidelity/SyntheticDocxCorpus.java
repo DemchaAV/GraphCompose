@@ -3,6 +3,17 @@ package com.demcha.compose.document.templates.fidelity;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.api.PageBackgroundFill;
 import com.demcha.compose.document.api.PageMarginRule;
+import com.demcha.compose.document.chart.BarGrouping;
+import com.demcha.compose.document.chart.ChartData;
+import com.demcha.compose.document.chart.ChartSize;
+import com.demcha.compose.document.chart.ChartSpec;
+import com.demcha.compose.document.chart.ChartStyle;
+import com.demcha.compose.document.chart.LegendPosition;
+import com.demcha.compose.document.chart.LineInterpolation;
+import com.demcha.compose.document.chart.PointMarker;
+import com.demcha.compose.document.chart.SliceLabelMode;
+import com.demcha.compose.document.chart.ValueLabelMode;
+import com.demcha.compose.document.node.ChartNode;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
@@ -134,7 +145,69 @@ final class SyntheticDocxCorpus {
                 synthetic("sections_and_fields", SyntheticDocxCorpus::sectionsAndFields),
                 synthetic("rtl_paragraphs", SyntheticDocxCorpus::rtlParagraphs),
                 synthetic("links_and_toc", SyntheticDocxCorpus::linksAndToc),
-                synthetic("long_free_text", SyntheticDocxCorpus::longFreeText));
+                synthetic("long_free_text", SyntheticDocxCorpus::longFreeText),
+                synthetic("bar_and_line_charts", SyntheticDocxCorpus::barAndLineCharts),
+                synthetic("pie_and_donut_charts", SyntheticDocxCorpus::pieAndDonutCharts));
+    }
+
+    /**
+     * Five charts between paragraphs over three pages: grouped bars labelled outside, horizontal
+     * stacked bars, a line with point markers and labels, a smoothed line over an area, and a
+     * monotone line. A chart does not split, so the layout moves one that does not fit whole onto
+     * the next page; the paragraphs round them are where the gate sees whether Word and
+     * LibreOffice give each chart the page's box. The export writes each as a Word chart.
+     */
+    private static void barAndLineCharts(DocumentSession session) {
+        session.pageSize(400, 560).margin(MARGIN);
+        ChartData quarters = ChartData.builder().categories("Q1", "Q2", "Q3", "Q4")
+                .series("Sales", 120, 180, 150, 210).series("Costs", 90, 110, 130, 120).build();
+        ChartData teams = ChartData.builder().categories("Alpha", "Beta", "Gamma")
+                .series("Build", 3, 5, 2).series("Test", 2, 1, 4).series("Ship", 1, 2, 2).build();
+        ChartData visits = ChartData.builder().categories("Jan", "Feb", "Mar", "Apr", "May", "Jun")
+                .series("Visits", 10, 12, 40, 41, 42, 15).build();
+        ChartStyle markers = ChartStyle.builder().pointMarker(PointMarker.circle(6)).build();
+        session.pageFlow(page -> {
+            page.spacing(8);
+            page.addParagraph(p -> p.text("Quarterly figures").textStyle(HEADING));
+            page.addParagraph(p -> text(p, prose(31)));
+            page.add(new ChartNode(ChartSpec.bar().data(quarters).legend(LegendPosition.BOTTOM)
+                    .valueLabels(ValueLabelMode.OUTSIDE).build()));
+            page.addParagraph(p -> text(p, prose(32)));
+            page.add(new ChartNode(ChartSpec.bar().data(teams).horizontal(true).grouping(BarGrouping.STACKED)
+                    .legend(LegendPosition.RIGHT).build()));
+            page.addParagraph(p -> text(p, prose(33)));
+            page.add(new ChartNode("", ChartSpec.line().data(quarters).legend(LegendPosition.TOP)
+                    .valueLabels(ValueLabelMode.OUTSIDE).build(), markers, null, null));
+            page.addParagraph(p -> text(p, prose(34)));
+            page.add(new ChartNode(ChartSpec.line().data(visits).interpolation(LineInterpolation.SMOOTH).area(true)
+                    .legend(LegendPosition.BOTTOM).build()));
+            page.addParagraph(p -> text(p, prose(35)));
+            page.add(new ChartNode("", ChartSpec.line().data(visits).interpolation(LineInterpolation.MONOTONE)
+                    .build(), markers, null, null));
+            page.addParagraph(p -> text(p, prose(36)));
+        });
+    }
+
+    /**
+     * A pie with its shares outside its slices and a legend at its right, and a donut with a
+     * category and share on each slice and a total in its hole, between paragraphs. The donut
+     * does not fit under the pie, so the layout moves it whole onto page 2.
+     */
+    private static void pieAndDonutCharts(DocumentSession session) {
+        session.pageSize(400, 560).margin(MARGIN);
+        ChartData regions = ChartData.builder().categories("North", "South", "East", "West")
+                .series("Share", 45, 25, 20, 10).build();
+        session.pageFlow(page -> {
+            page.spacing(8);
+            page.addParagraph(p -> p.text("Sales by region").textStyle(HEADING));
+            page.addParagraph(p -> text(p, prose(41)));
+            page.add(new ChartNode(ChartSpec.pie().data(regions).sliceLabels(SliceLabelMode.PERCENT)
+                    .legend(LegendPosition.RIGHT).size(ChartSize.aspectRatio(16, 10)).build()));
+            page.addParagraph(p -> text(p, prose(42)));
+            page.add(new ChartNode(ChartSpec.pie().data(regions).donutRatio(0.6).centerText("100%")
+                    .sliceLabels(SliceLabelMode.CATEGORY_PERCENT).legend(LegendPosition.BOTTOM).build()));
+            page.addParagraph(p -> text(p, prose(43)));
+        });
     }
 
     /**

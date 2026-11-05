@@ -319,9 +319,14 @@ class DocxNodeFieldLedgerTest {
                 "clipPolicy:INERT:the page clips no canvas",
                 "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written",
                 "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written");
-        node(ChartNode.class, "name:INERT", "spec:REPORTED", "style:REPORTED:in the chart's note",
-                "margin:REPORTED:in the chart's note; above and below; below a block a band or a column measures from, written",
-                "padding:REPORTED:in the chart's note; above and below; below a block a band or a column measures from, written");
+        node(ChartNode.class, "name:INERT", "spec:REPORTED:as a Word chart, as its kind's entries say",
+                "style:REPORTED:as its parts' entries say",
+                "margin:REPORTED:on the left, in the chart's note; above and below, written as its paragraph's space; "
+                + "written as its data table, above and below in its note too, below a block a band or a column "
+                + "measures from written",
+                "padding:REPORTED:on the left, in the chart's note; above and below, written as its paragraph's space; "
+                + "written as its data table, above and below in its note too, below a block a band or a column "
+                + "measures from written");
         node(ContainerNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN",
                 "padding:GAP:" + PADDING_BELOW_ZERO + "; " + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written",
                 "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; " + PULL + "; "

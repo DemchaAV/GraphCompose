@@ -94,7 +94,9 @@ What maps:
   Word paragraph.
 - **Horizontal rules.** A horizontal line or an `addDivider` bar is a paragraph border.
 - **Barcodes and QR codes** are pictures of the same matrix the PDF draws, so they scan.
-- **Charts** are a table of their data.
+- **Charts** are Word charts — bar, line, pie and donut — with their numbers in an embedded
+  workbook a reader edits through *Edit Data*; one drawn beside other drawings in a table cell
+  is a table of its data.
 - **Pages.** Page size, margins and orientation; page zones (`session.chrome().zone(...)`)
   and text headers and footers (`session.header(...)` / `footer(...)`) as real Word headers
   and footers with live page-number fields, a zone's logo an inline picture where the page

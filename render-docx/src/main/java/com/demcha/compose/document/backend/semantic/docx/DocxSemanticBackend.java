@@ -276,9 +276,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // Whether the table being written is a chart's data table, which the page does not draw.
     private boolean writingAChartsTable;
     // The charts that are all their table cell draws, whose drawings in that cell are not drawn:
-    // the chart is its data table there, as anywhere else (drawCellDrawing). By identity: one chart
-    // node placed twice, alone in one cell and beside other drawings in another, has the note of
-    // one not drawn in both.
+    // the chart is a Word chart there, as anywhere else (drawCellDrawing, writeChart). By identity:
+    // one chart node placed twice, alone in one cell and beside other drawings in another, is a Word
+    // chart in both, and in the second its strokes are drawn over it as well.
     private final java.util.Set<ChartNode> chartsNotDrawn =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // Geometry-only node kinds already warned about this export pass.
@@ -5119,7 +5119,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } else if (node instanceof ShapeContainerNode shapeContainer) {
             writeShapeContainer(document, shapeContainer, null);
         } else if (node instanceof ChartNode chart) {
-            writeChartFallback(document, chart);
+            writeChart(document, chart);
         } else if (node instanceof com.demcha.compose.document.node.ListNode list) {
             writeList(document, list);
         } else if (node instanceof com.demcha.compose.document.layout.HorizontalBandContentNode band) {
@@ -7623,35 +7623,241 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Semantic chart fallback: the chart compiles into the layout's geometry — bars, lines and
-     * labels placed on the page — and this export writes no Word chart (DrawingML's
-     * {@code c:chart}) of it. The chart's <em>semantic</em> content is its data, so the fallback
-     * writes a categories-by-series table (values formatted with the chart's own axis format).
-     * Authors who need the rendered chart must use the PDF fixed-layout backend, where charts
-     * compile into ordinary primitives.
+     * Writes a chart as a Word chart, inline in a paragraph of its own at the size the page draws
+     * it, with its numbers in the workbook embedded with it ({@link DocxNativeCharts}).
+     *
+     * <p>A chart composed in a table cell beside other drawings, or in a table composed in a cell,
+     * is drawn among its table's drawings where the page draws it, and the export cannot tell its
+     * strokes from the rest: a Word chart there would stand over the drawn one. That chart keeps
+     * its data table ({@link #writeChartFallback}). With no layout behind the export nothing is
+     * drawn and no node is taken for composed in a cell ({@link #composedInACell}), so it is a Word
+     * chart as anywhere else.</p>
+     */
+    private void writeChart(XWPFDocument document, ChartNode node) throws Exception {
+        if (composedInACell(node) && !chartsNotDrawn.contains(node)) {
+            writeChartFallback(document, node);
+            return;
+        }
+        com.demcha.compose.document.layout.PlacedNode laidOut = layout.placement(node);
+        DocumentInsets padding = node.padding();
+        double width;
+        double height;
+        if (laidOut != null) {
+            width = laidOut.placementWidth() - padding.horizontal();
+            height = laidOut.placementHeight() - padding.vertical();
+        } else {
+            width = Math.max(1, availableWidth() - padding.horizontal());
+            height = Math.max(1, node.spec().size().resolveHeight(width));
+        }
+        if (opensItsPageInTheFlow(node)) {
+            holdAParagraphsTopEdgeOnItsPage(document, node, 0);
+        }
+        XWPFParagraph para = newBodyParagraph(document);
+        applyVerticalSpacing(para, node);
+        XWPFRun run = para.createRun();
+        java.awt.geom.Rectangle2D plot = plotOf(node, laidOut, width, height);
+        DocxNativeCharts.Placed placed = new DocxNativeCharts.Placed(plot, sliceLabelsOf(node, laidOut, width, height),
+                legendOf(node, laidOut, width, height));
+        List<String> lost = new ArrayList<>(DocxNativeCharts.write(document, run, node, width, height,
+                placed, nextDrawingId++, this::wordFamilyOf,
+                // The workbook's own clocks say nothing a reader uses; pinned always, it is the same
+                // bytes for the same numbers, and a committed document's preview does not drift.
+                deterministicTimestamp == null ? DEFAULT_DETERMINISTIC_INSTANT : deterministicTimestamp));
+        lost.addAll(sidesLost(node, true, false));
+        report.add(DocxExportReport.Severity.APPROXIMATED, "chart", layout.pathOf(node),
+                "written as a Word chart, its numbers in the workbook embedded with it; Word lays the chart "
+                + (plot == null
+                   ? "out in its box itself, so the plot area, the labels and the legend stand where Word puts "
+                     + "them rather than where the page does"
+                   : placed.legend() != null
+                     ? "out in its box itself round its plot area and its legend, which stand where the page draws "
+                       + "them: the labels Word sets stand where Word puts them rather than where the page does"
+                     : "out in its box itself round its plot area, which stands where the page draws it: its legend "
+                       + "and the labels Word sets stand where Word puts them rather than where the page does")
+                + (lost.isEmpty() ? "" : "; " + String.join("; ", lost)));
+    }
+
+    /**
+     * Where the page draws a chart's plot in its box, as fractions of the box from its top left
+     * corner: for a pie the box of the slices the layout placed, each sector's own being the whole
+     * disc's; for bars and lines the rectangle the value axis's grid lines span, which the page draws
+     * from its lowest tick to its highest and across the plot's whole width (or, for horizontal bars,
+     * height).
+     *
+     * @return the plot, or {@code null} where the layout placed no slice, or no two grid lines
+     */
+    private java.awt.geom.Rectangle2D plotOf(ChartNode node, com.demcha.compose.document.layout.PlacedNode laidOut,
+                                             double width, double height) {
+        if (laidOut == null) {
+            return null;
+        }
+        java.awt.geom.Rectangle2D plot = null;
+        if (node.spec() instanceof com.demcha.compose.document.chart.ChartSpec.Pie) {
+            for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
+                if (fragment.payload() instanceof com.demcha.compose.document.layout.payloads.PolygonFragmentPayload) {
+                    java.awt.geom.Rectangle2D box = new java.awt.geom.Rectangle2D.Double(
+                            fragment.x(), fragment.y(), fragment.width(), fragment.height());
+                    plot = plot == null ? box : plot.createUnion(box);
+                }
+            }
+        } else {
+            plot = valueGridOf(node);
+        }
+        if (plot == null) {
+            return null;
+        }
+        // The layout counts up from the page's foot; the chart part from its box's top left corner.
+        double left = laidOut.placementX() + node.padding().left();
+        double top = laidOut.placementY() + laidOut.placementHeight() - node.padding().top();
+        return new java.awt.geom.Rectangle2D.Double((plot.getX() - left) / width,
+                (top - plot.getMaxY()) / height, plot.getWidth() / width, plot.getHeight() / height);
+    }
+
+    /**
+     * The rectangle a bar or line chart's value grid lines span, in the layout's own coordinates: the
+     * lines across the plot (down it, for horizontal bars), all as long as the plot and set from one
+     * edge, at two values at least. A line of the data itself is shorter, or set elsewhere.
+     *
+     * @return the rectangle, or {@code null} where the chart draws no such grid
+     */
+    private java.awt.geom.Rectangle2D valueGridOf(ChartNode node) {
+        boolean down = node.spec() instanceof com.demcha.compose.document.chart.ChartSpec.Bar bar && bar.horizontal();
+        List<com.demcha.compose.document.layout.PlacedFragment> lines = new ArrayList<>();
+        double longest = 0;
+        for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
+            if (fragment.payload() instanceof com.demcha.compose.document.layout.payloads.LineFragmentPayload) {
+                double along = down ? fragment.height() : fragment.width();
+                double across = down ? fragment.width() : fragment.height();
+                if (along > across) {
+                    lines.add(fragment);
+                    longest = Math.max(longest, along);
+                }
+            }
+        }
+        double full = longest;
+        lines.removeIf(line -> Math.abs((down ? line.height() : line.width()) - full) > 0.01);
+        if (lines.size() < 2) {
+            return null;
+        }
+        double from = down ? lines.get(0).y() : lines.get(0).x();
+        if (lines.stream().anyMatch(line -> Math.abs((down ? line.y() : line.x()) - from) > 0.01)) {
+            return null;
+        }
+        // Each line's centre is its tick's value; the outermost two are the plot's ends.
+        double least = Double.POSITIVE_INFINITY;
+        double most = Double.NEGATIVE_INFINITY;
+        for (com.demcha.compose.document.layout.PlacedFragment line : lines) {
+            double centre = down ? line.x() + line.width() / 2 : line.y() + line.height() / 2;
+            least = Math.min(least, centre);
+            most = Math.max(most, centre);
+        }
+        if (most - least < 1) {
+            return null;
+        }
+        return down ? new java.awt.geom.Rectangle2D.Double(least, from, most - least, full)
+                : new java.awt.geom.Rectangle2D.Double(from, least, full, most - least);
+    }
+
+    /**
+     * Where the page draws a chart's legend in its box, as fractions of the box from its top left
+     * corner, a little wider all round, as Word frames a legend's entries: the box of the swatch and
+     * the label of each entry, which the page lays out last, one entry a series or a slice it draws.
+     *
+     * @return the legend's box, or {@code null} for a chart with no legend or that the layout did not place
+     */
+    private java.awt.geom.Rectangle2D legendOf(ChartNode node, com.demcha.compose.document.layout.PlacedNode laidOut,
+                                               double width, double height) {
+        if (laidOut == null || node.spec().legend() == com.demcha.compose.document.chart.LegendPosition.NONE) {
+            return null;
+        }
+        long entries = node.spec() instanceof com.demcha.compose.document.chart.ChartSpec.Pie pie
+                ? pie.data().series().get(0).values().stream().filter(v -> v != null && v > 0).count()
+                : node.spec().data().seriesCount();
+        List<com.demcha.compose.document.layout.PlacedFragment> fragments = layout.ownFragments(node);
+        if (entries == 0 || fragments.size() < 2 * entries) {
+            return null;
+        }
+        List<com.demcha.compose.document.layout.PlacedFragment> legend =
+                fragments.subList(fragments.size() - (int) (2 * entries), fragments.size());
+        com.demcha.compose.document.layout.PlacedFragment first = legend.get(0);
+        java.awt.geom.Rectangle2D box = new java.awt.geom.Rectangle2D.Double(
+                first.x(), first.y(), first.width(), first.height());
+        for (com.demcha.compose.document.layout.PlacedFragment fragment : legend) {
+            box.add(new java.awt.geom.Rectangle2D.Double(
+                    fragment.x(), fragment.y(), fragment.width(), fragment.height()));
+        }
+        double left = laidOut.placementX() + node.padding().left();
+        double top = laidOut.placementY() + laidOut.placementHeight() - node.padding().top();
+        double frame = LEGEND_FRAME;
+        return new java.awt.geom.Rectangle2D.Double((box.getX() - frame - left) / width,
+                (top - box.getMaxY() - frame) / height, (box.getWidth() + 2 * frame) / width,
+                (box.getHeight() + 2 * frame) / height);
+    }
+
+    /** What Word frames a legend's entries with on each side, in points. */
+    private static final double LEGEND_FRAME = 3;
+
+    /**
+     * Where the page centres a pie's slice labels in its chart's box, as fractions of the box from its
+     * top left corner, a category to an entry: the page lays a label out for each slice it draws, in
+     * the categories' order, before its centre text and its legend.
+     *
+     * @return the labels' centres, {@code null} for a category the page labels nowhere; or {@code null}
+     *         for a chart that is no pie with slice labels, or whose labels the layout did not place
+     */
+    private List<java.awt.geom.Point2D> sliceLabelsOf(ChartNode node,
+                                                       com.demcha.compose.document.layout.PlacedNode laidOut,
+                                                       double width, double height) {
+        if (!(node.spec() instanceof com.demcha.compose.document.chart.ChartSpec.Pie pie)
+            || pie.sliceLabels() == com.demcha.compose.document.chart.SliceLabelMode.NONE || laidOut == null) {
+            return null;
+        }
+        List<com.demcha.compose.document.layout.PlacedFragment> texts = layout.ownFragments(node).stream()
+                .filter(f -> f.payload() instanceof com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload)
+                .toList();
+        List<Double> values = pie.data().series().get(0).values();
+        long drawn = values.stream().filter(v -> v != null && v > 0).count();
+        if (texts.size() < drawn) {
+            return null;
+        }
+        double left = laidOut.placementX() + node.padding().left();
+        double top = laidOut.placementY() + laidOut.placementHeight() - node.padding().top();
+        List<java.awt.geom.Point2D> centres = new ArrayList<>();
+        int next = 0;
+        for (Double v : values) {
+            if (v == null || v <= 0) {
+                centres.add(null);
+                continue;
+            }
+            com.demcha.compose.document.layout.PlacedFragment text = texts.get(next++);
+            centres.add(new java.awt.geom.Point2D.Double((text.x() + text.width() / 2 - left) / width,
+                    (top - (text.y() + text.height() / 2)) / height));
+        }
+        return centres;
+    }
+
+    /**
+     * A chart composed in a table cell whose drawing the export draws among its table's ({@link
+     * #writeChart}): its <em>semantic</em> content is its data, so it is written as a
+     * categories-by-series table, values formatted with the chart's own axis format, while its bars,
+     * lines and slices stand drawn where the page draws them.
      */
     private void writeChartFallback(XWPFDocument document, ChartNode node) throws Exception {
         // The table is written as it is, set from the left with nothing owed round it for the
         // chart's own insets, but where the page measures the space below it (insetSidesLost).
         List<String> sides = insetSidesLost(node, true);
-        // A chart a cell's drawing is all of is not drawn there (drawCellDrawing); one the export
-        // does not find so — beside other drawings in its cell, which it cannot tell its own
-        // from, or in a table composed in a cell — is drawn among the table's drawings.
-        boolean drawnToo = composedInACell(node) && !chartsNotDrawn.contains(node);
         report.add(DocxExportReport.Severity.APPROXIMATED, "chart", layout.pathOf(node),
-                "exported as its data table — a categories-by-series table in the chart's own "
-                + "value format — because the drawn chart is layout geometry"
-                + (drawnToo ? "; composed in a table cell where the export does not find it drawing alone — "
-                              + "beside other drawings, or in a table composed in a cell — its bars, lines and "
-                              + "slices are drawn as well, where the page draws them, over the table and "
-                              + "without its text"
-                            : "")
+                "exported as its data table — a categories-by-series table in the chart's own value format — "
+                + "and not as a Word chart: composed in a table cell where the export does not find it drawing "
+                + "alone — beside other drawings, or in a table composed in a cell — its bars, lines and slices "
+                + "are drawn where the page draws them, over the table and without its text, and a Word chart "
+                + "would stand over them"
                 + (sides.isEmpty() ? "" : "; its margin and padding " + listed(sides)
                                           + " are not written round the table"));
         if (chartWarned.compareAndSet(false, true)) {
-            LOG.warn("docx.export.chart-fallback kind={} — a chart is exported as its data table: the "
-                    + "export writes no Word chart. "
-                    + "(One warning per export; use the PDF backend for the rendered chart.)",
+            LOG.warn("docx.export.chart-fallback kind={} — a chart drawn beside other drawings in a table cell, "
+                    + "or in a table composed in a cell, is exported as its data table, not as a Word chart. "
+                    + "(One warning per export.)",
                     node.spec().getClass().getSimpleName());
         }
         ChartData data = node.spec().data();
@@ -17056,11 +17262,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * The boxes of a table's cells whose drawing is a chart's alone, which are not drawn: the chart
-     * is written there as its data table, as it is anywhere else.
+     * is written there as a Word chart, as it is anywhere else ({@link #writeChart}).
      *
-     * <p>Drawn too, its bars and grid lines stood over the table in both editors and hid its
-     * numbers — "Sales" read "Sa", 2.5 read "2." — and its axis labels, the page's text, were not
-     * drawn at all (measured in Word and LibreOffice on Windows). A cell's drawing is a chart's
+     * <p>Drawn too, its bars and grid lines would stand over the Word chart; over the data table it
+     * once was, they hid its numbers in both editors — "Sales" read "Sa", 2.5 read "2." — without
+     * the page's axis labels (measured in Word and LibreOffice on Windows). A cell's drawing is a chart's
      * alone where the chart is the only thing in the cell that draws ({@link #chartDrawnAlone}):
      * then every drawing the layout places in the cell's box is the chart's. One beside other
      * drawings, which the export cannot tell its own from, or in a table composed in a cell, whose

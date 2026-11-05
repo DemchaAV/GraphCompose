@@ -15,8 +15,8 @@ import java.util.Objects;
  * primitive nodes. No fixed-layout render handler ever sees a chart — that is
  * what keeps charts deterministic and snapshot-testable for free, and what
  * gives every fixed-layout backend (PDF today, others later) vector charts
- * with no chart-specific code. The DOCX export writes no Word chart of that
- * geometry and falls back to the chart's data: a categories-by-series table.
+ * with no chart-specific code. The DOCX export writes it as a Word chart, built
+ * from its spec and data rather than from that geometry.
  *
  * <p>A chart is {@link com.demcha.compose.document.layout.PaginationPolicy#ATOMIC}:
  * it places whole on a page or moves to the next, exactly like an inline image

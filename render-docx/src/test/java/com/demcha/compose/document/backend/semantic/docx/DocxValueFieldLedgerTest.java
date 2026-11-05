@@ -71,7 +71,7 @@ class DocxValueFieldLedgerTest {
     // A drawing's gradient is not carried, an inline icon's is drawn in one colour.
     private static final String GRADIENT = "a shape's or a path's gradient is not drawn: the drawing keeps what else "
                                            + "it paints, or is dropped; an inline icon's is drawn flat, in its first "
-                                           + "colour; a chart's, with its drawing";
+                                           + "colour; a chart series', as its first colour, named";
 
     // An auto column's text is given a point past the page's width, out of its cells' margins.
     private static final String AUTO_COLUMN_ROOM = "the room an editor's face is given in it, held in its text "
@@ -275,7 +275,8 @@ class DocxValueFieldLedgerTest {
         value(com.demcha.compose.document.style.DocumentInsets.class,
                 "bottom:GAP:" + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; " + PADDING_BELOW_ZERO
                 + "; below zero, the pull nothing under it gives back, on the next block (space above); "
-                + "a chart's or a spacer's no band or column measures from; a page field's beside other parts; a "
+                + "a chart's written as its data table, or a spacer's, no band or column measures from; a page "
+                + "field's beside other parts; a "
                 + "picture's padding drawn beside its text or over its badge; a chip's; a shape container's at its "
                 + "table cell's middle or foot; any other is written",
                 "left:GAP:" + PADDING_BELOW_ZERO + "; " + LEFT_EDGE
@@ -288,7 +289,8 @@ class DocxValueFieldLedgerTest {
                 + "hold; any other is written",
                 "top:GAP:" + TOP_PULL + "; " + PULL_UNRECKONED + "; a paragraph's, a rule's or a page reference's "
                 + "otherwise named (space above); " + PADDING_BELOW_ZERO
-                + "; a chart's or a spacer's; a page field's beside other parts; a picture's padding drawn "
+                + "; a chart's written as its data table, or a spacer's; a page field's beside other parts; a "
+                + "picture's padding drawn "
                 + "beside its text or over its badge; a chip's, above its letters; any other is written");
         value(com.demcha.compose.document.style.DocumentTransform.class,
                 "rotationDegrees:REPORTED", "scaleX:REPORTED", "scaleY:REPORTED");
@@ -305,27 +307,28 @@ class DocxValueFieldLedgerTest {
         value(com.demcha.compose.document.style.DocumentColor.class,
                 "color:REPORTED:its translucency where Word holds an opaque colour — a panel's or a table cell's "
                 + "fill or border, a rule, a chip, a page zone's separator — flattened against the colour under it; "
-                + "a chart's or a watermark's, with them; any other is written, alpha included");
+                + "a watermark's, with it; a chart drawn over its data table's, with its drawing; any other is "
+                + "written, alpha included");
         value(com.demcha.compose.document.style.DocumentStroke.class,
                 "color:REPORTED:its translucency as a Word border — a panel's, a table cell's, a rule's — flattened "
-                + "against the panel's fill or the colour under it; a chart's, with its drawing; drawn, its alpha is "
-                + "written; any other is written",
+                + "against the panel's fill or the colour under it; drawn, its alpha is written; any other is "
+                + "written",
                 "width:REPORTED:" + RIGHT_BORDER + "; " + LEFT_EDGE
                 + "; as a Word border, a width that, rounded to the eighth of a point, is below a quarter "
                 + "of a point or past 12pt, drawn at Word's thinnest or widest, and the room Word makes for a panel's "
-                + "or a cell's border past the page's; a chart's, with its drawing; any other is written");
+                + "or a cell's border past the page's; any other is written");
         value(com.demcha.compose.document.style.DocumentCornerRadius.class,
                 "bottomLeft:REPORTED:a panel's, square, as a Word table cell is; drawn, corners that differ once each "
-                + "is held to half the shorter side, at the largest of them; a chart's, with its drawing; any other "
+                + "is held to half the shorter side, at the largest of them; a chart's bars', square, named; any other "
                 + "is written",
                 "bottomRight:REPORTED:a panel's, square, as a Word table cell is; drawn, corners that differ once each "
-                + "is held to half the shorter side, at the largest of them; a chart's, with its drawing; any other "
+                + "is held to half the shorter side, at the largest of them; a chart's bars', square, named; any other "
                 + "is written",
                 "topLeft:REPORTED:a panel's, square, as a Word table cell is; drawn, corners that differ once each "
-                + "is held to half the shorter side, at the largest of them; a chart's, with its drawing; any other "
+                + "is held to half the shorter side, at the largest of them; a chart's bars', square, named; any other "
                 + "is written",
                 "topRight:REPORTED:a panel's, square, as a Word table cell is; drawn, corners that differ once each "
-                + "is held to half the shorter side, at the largest of them; a chart's, with its drawing; any other "
+                + "is held to half the shorter side, at the largest of them; a chart's bars', square, named; any other "
                 + "is written");
         value(com.demcha.compose.document.style.DocumentBorders.class,
                 "bottom:REPORTED:" + RIGHT_END + "; " + LEFT_EDGE
@@ -374,7 +377,7 @@ class DocxValueFieldLedgerTest {
                 + "at its box");
         value(com.demcha.compose.document.style.DocumentPaint.Solid.class,
                 "color:REPORTED:its translucency as a shape's fill written as a rule, flattened against the colour "
-                + "under it; a chart's, with its drawing; any other is written, alpha included");
+                + "under it; any other is written, alpha included");
         value(com.demcha.compose.document.style.DocumentPaint.Linear.class,
                 "angleDegrees:REPORTED:" + GRADIENT,
                 "stops:REPORTED:" + GRADIENT);
@@ -395,7 +398,7 @@ class DocxValueFieldLedgerTest {
                 "stops:REPORTED:" + GRADIENT);
         value(com.demcha.compose.document.style.DocumentPaint.Stop.class,
                 "color:REPORTED:as its gradient's: none is drawn on a shape or a path; in an inline icon the first "
-                + "stop's is drawn flat and the others are not; a chart's, with its drawing",
+                + "stop's is drawn flat and the others are not; a chart series' first stop's is its colour",
                 "offset:REPORTED:" + GRADIENT);
         value(com.demcha.compose.document.node.RowVerticalAlign.class,
                 "BOTTOM:WRITTEN", "CENTER:WRITTEN",
@@ -608,65 +611,64 @@ class DocxValueFieldLedgerTest {
                 "fill:WRITTEN:drawn into the inline shape's picture, alpha included",
                 "stroke:WRITTEN:drawn into the inline shape's picture at its width, mitred as on the page");
         value(com.demcha.compose.document.chart.ChartStyle.class,
-                "palette:REPORTED:in the chart's note",
-                "seriesPaintOverrides:REPORTED:in the chart's note",
-                "lineWidth:REPORTED:in the chart's note",
-                "barCornerRadius:REPORTED:in the chart's note",
-                "barWidthRatio:REPORTED:in the chart's note",
-                "grid:REPORTED:in the chart's note",
-                "pointMarker:REPORTED:in the chart's note",
-                "valueLabelOffset:REPORTED:in the chart's note",
-                "axisTextStyle:REPORTED:in the chart's note",
-                "legendTextStyle:REPORTED:in the chart's note",
-                "valueLabelTextStyle:REPORTED:in the chart's note",
-                "valueLabelHalo:REPORTED:in the chart's note",
-                "areaOpacity:REPORTED:in the chart's note",
-                "sliceStroke:REPORTED:in the chart's note",
-                "sliceGapDegrees:REPORTED:in the chart's note",
-                "donutCenterTextStyle:REPORTED:in the chart's note");
+                "palette:REPORTED:as the series' or the slices' colours; a gradient as its first colour, named",
+                "seriesPaintOverrides:REPORTED:as the series' or the slices' colours; a gradient as its first "
+                + "colour, named",
+                "lineWidth:WRITTEN:as a line series' width",
+                "barCornerRadius:REPORTED:in the chart's note: Word's bars are square",
+                "barWidthRatio:REPORTED:as the bars' gap and overlap; a gap past Word's widest, named",
+                "grid:WRITTEN:as the axes' grid lines",
+                "pointMarker:REPORTED:as a round marker; an oval one, named",
+                "valueLabelOffset:REPORTED:in the chart's note, which says Word sets the labels",
+                "axisTextStyle:WRITTEN:as the axes' text",
+                "legendTextStyle:WRITTEN:as the legend's text",
+                "valueLabelTextStyle:WRITTEN:as the value and slice labels' text",
+                "valueLabelHalo:WRITTEN:as the labels' fill",
+                "areaOpacity:WRITTEN:as the area's alpha",
+                "sliceStroke:WRITTEN:as the slices' outline",
+                "sliceGapDegrees:REPORTED:in the chart's note: Word sets slices edge to edge",
+                "donutCenterTextStyle:WRITTEN:as the centre text's run");
         value(com.demcha.compose.document.chart.ChartStyle.GridStyle.class,
-                "horizontal:REPORTED:in the chart's note",
-                "vertical:REPORTED:in the chart's note");
+                "horizontal:WRITTEN:as the value axis's grid lines, the plot pinned to the rectangle they span",
+                "vertical:WRITTEN:as the category axis's grid lines");
         value(com.demcha.compose.document.chart.ChartSpec.Bar.class,
-                "data:WRITTEN:as the chart's data table, a row a category and a column a series",
-                "horizontal:REPORTED:in the chart's note",
-                "grouping:REPORTED:in the chart's note; each series' values are written either way",
-                "valueAxis:REPORTED:its format is written, as the data table's value format; its bounds, grid lines "
-                + "and tick labels, in the chart's note",
-                "legend:REPORTED:in the chart's note; the series' names are written as the data table's header",
-                "valueLabels:REPORTED:in the chart's note; the values are written in the data table",
-                "size:REPORTED:in the chart's note; the data table is as tall as its rows",
-                "showCategoryLabels:REPORTED:in the chart's note; the categories are written in the data table "
-                + "either way");
+                "data:WRITTEN:in the embedded workbook and the chart's own copy of it",
+                "horizontal:WRITTEN:as the bars' direction, the first category at the top",
+                "grouping:REPORTED:as clustered or stacked bars; a stack's totals, named",
+                "valueAxis:REPORTED:as its parts' entries say",
+                "legend:WRITTEN:as the legend's side",
+                "valueLabels:REPORTED:outside each bar's end; a stack's totals, named",
+                "size:WRITTEN:as the chart's drawing's size, the page's",
+                "showCategoryLabels:WRITTEN:as the category axis's labels");
         value(com.demcha.compose.document.chart.ChartSpec.Line.class,
-                "data:WRITTEN:as the chart's data table, a row a category and a column a series",
-                "interpolation:REPORTED:in the chart's note",
-                "area:REPORTED:in the chart's note",
-                "valueAxis:REPORTED:its format is written, as the data table's value format; its bounds, grid lines "
-                + "and tick labels, in the chart's note",
-                "legend:REPORTED:in the chart's note; the series' names are written as the data table's header",
-                "valueLabels:REPORTED:in the chart's note; the values are written in the data table",
-                "size:REPORTED:in the chart's note; the data table is as tall as its rows",
-                "showCategoryLabels:REPORTED:in the chart's note; the categories are written in the data table "
-                + "either way");
+                "data:WRITTEN:in the embedded workbook and the chart's own copy of it",
+                "interpolation:REPORTED:as its constants' entries say",
+                "area:REPORTED:as an area under the line; under a smoothed line, its wedges named; with a missing "
+                + "value, LibreOffice's fill down to the axis named",
+                "valueAxis:REPORTED:as its parts' entries say",
+                "legend:WRITTEN:as the legend's side",
+                "valueLabels:WRITTEN:above each point",
+                "size:WRITTEN:as the chart's drawing's size, the page's",
+                "showCategoryLabels:WRITTEN:as the category axis's labels");
         value(com.demcha.compose.document.chart.ChartSpec.Pie.class,
-                "data:WRITTEN:as the chart's data table, a row a category",
-                "donutRatio:REPORTED:in the chart's note",
-                "startAngleDegrees:REPORTED:in the chart's note",
-                "clockwise:REPORTED:in the chart's note",
-                "sliceLabels:REPORTED:in the chart's note; the values and categories are written in the data "
-                + "table, the shares not",
-                "valueFormat:WRITTEN:as the data table's value format",
-                "percentFormat:REPORTED:in the chart's note; the shares it formats are only drawn",
-                "centerText:REPORTED:in the chart's note; the text in the donut's hole is only drawn, and is not "
-                + "in the data table",
-                "legend:REPORTED:in the chart's note; the categories it lists are written in the data table",
-                "size:REPORTED:in the chart's note; the data table is as tall as its rows");
+                "data:WRITTEN:in the embedded workbook and the chart's own copy of it; a zero, which the page "
+                + "draws no slice for, as no value",
+                "donutRatio:REPORTED:as the hole's size; one below Word's least, at the least, named",
+                "startAngleDegrees:REPORTED:as the first slice's angle, to the nearest whole degree; a "
+                + "fraction of one, named",
+                "clockwise:REPORTED:counterclockwise, written clockwise and named",
+                "sliceLabels:REPORTED:as its constants' entries say",
+                "valueFormat:REPORTED:as the slice labels' number format, as its parts' entries say",
+                "percentFormat:REPORTED:as the slice labels' percent format, as its parts' entries say",
+                "centerText:REPORTED:as a text box of the chart's own over its hole, where the page draws the disc; "
+                + "where the layout gives no place of the disc, set in the middle of the chart's box and named",
+                "legend:WRITTEN:as the legend's side, listing the slices the page draws",
+                "size:WRITTEN:as the chart's drawing's size, the page's");
         value(com.demcha.compose.document.chart.PointMarker.class,
-                "width:REPORTED:in the chart's note",
-                "height:REPORTED:in the chart's note",
-                "fill:REPORTED:in the chart's note",
-                "stroke:REPORTED:in the chart's note");
+                "width:REPORTED:with its height, their mean as the marker's size; unequal, named",
+                "height:REPORTED:with its width, their mean as the marker's size; unequal, named",
+                "fill:WRITTEN:as the marker's fill",
+                "stroke:WRITTEN:as the marker's outline");
         value(com.demcha.compose.document.table.DocumentTableStyle.class,
                 "padding:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO
                 + "; a text cell's thinner than its rules' share, which Word makes room for, where its "
@@ -703,53 +705,56 @@ class DocxValueFieldLedgerTest {
                 "CENTER_LEFT:WRITTEN", "CENTER:WRITTEN", "CENTER_RIGHT:WRITTEN",
                 "TOP_LEFT:WRITTEN", "TOP_RIGHT:WRITTEN", "BOTTOM_LEFT:WRITTEN", "BOTTOM_RIGHT:WRITTEN");
         value(com.demcha.compose.document.chart.ChartData.class,
-                "categories:WRITTEN:as the first column of the chart's data table",
-                "series:WRITTEN:as the chart's data table's other columns, one a series");
+                "categories:WRITTEN:down the embedded workbook's first column, and as the category axis's labels",
+                "series:WRITTEN:in the embedded workbook's other columns, one a series, and as the chart's series");
         value(com.demcha.compose.document.chart.ChartData.Series.class,
-                "name:WRITTEN:as its column's header in the chart's data table",
-                "values:WRITTEN:in the chart's data table, in its value format, a gap as an empty cell");
+                "name:WRITTEN:at its column's head in the embedded workbook, and as the series' name",
+                "values:WRITTEN:in its column of the embedded workbook, a gap as an empty cell and no point");
         value(com.demcha.compose.document.chart.BarGrouping.class,
-                "GROUPED:REPORTED:in the chart's note; each series' values are written",
-                "STACKED:REPORTED:in the chart's note; each series' values are written, not a stack's total");
+                "GROUPED:WRITTEN:as clustered bars",
+                "STACKED:REPORTED:as stacked bars; with value labels, their totals named");
         value(com.demcha.compose.document.chart.AxisSpec.class,
-                "baselineAtZero:REPORTED:in the chart's note",
-                "min:REPORTED:in the chart's note",
-                "max:REPORTED:in the chart's note",
-                "format:WRITTEN:as the chart's data table's value format",
-                "showGridLines:REPORTED:in the chart's note",
-                "showTickLabels:REPORTED:in the chart's note");
+                "baselineAtZero:WRITTEN:in the value axis's bounds, as the page computes them",
+                "min:WRITTEN:in the value axis's bounds, as the page computes them",
+                "max:WRITTEN:in the value axis's bounds, as the page computes them",
+                "format:REPORTED:as its parts' entries say",
+                "showGridLines:WRITTEN:as the value axis's grid lines",
+                "showTickLabels:WRITTEN:as the value axis's labels");
         value(com.demcha.compose.document.chart.LegendPosition.class,
-                "NONE:INERT:the page draws no legend; the names one lists are written in the data table all "
-                + "the same",
-                "BOTTOM:REPORTED:in the chart's note; the names it lists are written in the data table",
-                "RIGHT:REPORTED:in the chart's note; the names it lists are written in the data table",
-                "TOP:REPORTED:in the chart's note; the names it lists are written in the data table");
+                "NONE:WRITTEN:as no legend",
+                "BOTTOM:REPORTED:as the legend's side, the legend placed where the page draws it; its keys and "
+                + "spacing Word's own, named",
+                "RIGHT:REPORTED:as the legend's side, the legend placed where the page draws it; its keys and spacing "
+                + "Word's own, and beside a stack of columns listed from the top of the stack down, named",
+                "TOP:REPORTED:as the legend's side, the legend placed where the page draws it and set about 9pt lower, "
+                + "inside the chart's frame; its keys and spacing Word's own, named");
         value(com.demcha.compose.document.chart.ValueLabelMode.class,
-                "NONE:INERT:the page draws no value labels",
-                "OUTSIDE:REPORTED:in the chart's note; the values are written in the data table",
+                "NONE:WRITTEN:as no labels",
+                "OUTSIDE:REPORTED:outside a bar's end or above a point; a stack's totals, named",
                 "INSIDE:INERT:the page lays out no chart that asks for it");
         value(com.demcha.compose.document.chart.LineInterpolation.class,
-                "LINEAR:REPORTED:in the chart's note",
-                "SMOOTH:REPORTED:in the chart's note",
-                "MONOTONE:REPORTED:in the chart's note");
+                "LINEAR:WRITTEN:as straight segments",
+                "SMOOTH:REPORTED:as Word's smoothed line; over an area, the area's wedges named",
+                "MONOTONE:REPORTED:as straight segments, named: Word's smoothing passes beyond the points");
         value(com.demcha.compose.document.chart.SliceLabelMode.class,
-                "NONE:INERT:the page draws no slice labels",
-                "VALUE:REPORTED:in the chart's note; the values are written in the data table",
-                "PERCENT:REPORTED:in the chart's note; the shares are not written, only the values",
-                "CATEGORY:REPORTED:in the chart's note; the categories are written in the data table",
-                "CATEGORY_PERCENT:REPORTED:in the chart's note; the categories are written in the data table, "
-                + "the shares not");
+                "NONE:WRITTEN:as no labels",
+                "VALUE:REPORTED:as each slice's value, outside its slice; a donut's where the page sets it, nearer the "
+                + "hole in LibreOffice, named",
+                "PERCENT:REPORTED:as each slice's share, outside its slice; a donut's where the page sets it, nearer "
+                + "the hole in LibreOffice, named",
+                "CATEGORY:REPORTED:as each slice's category, outside its slice; a donut's where the page sets it, "
+                + "nearer the hole in LibreOffice, named",
+                "CATEGORY_PERCENT:REPORTED:as each slice's category and share, outside its slice; a donut's where "
+                + "the page sets it, nearer the hole in LibreOffice, named");
         value(com.demcha.compose.document.chart.NumberFormatSpec.class,
-                "pattern:REPORTED:as a pie's percent format, in the chart's note; as a chart's value format, an "
-                + "axis's or a pie's, written in its data table's values",
-                "locale:REPORTED:as a pie's percent format, in the chart's note; as a chart's value format, an "
-                + "axis's or a pie's, written in its data table's values",
-                "prefix:REPORTED:as a pie's percent format, in the chart's note; as a chart's value format, an "
-                + "axis's or a pie's, written in its data table's values",
-                "suffix:REPORTED:as a pie's percent format, in the chart's note; as a chart's value format, an "
-                + "axis's or a pie's, written in its data table's values",
-                "scaleDivisor:REPORTED:as a pie's percent format, in the chart's note; as a chart's value format, "
-                + "an axis's or a pie's, written in its data table's values");
+                "pattern:REPORTED:as an Excel format code; where all its decimals are optional and the numbers "
+                + "shown are whole and fractional both, with fixed decimals, named; grouping other than by "
+                + "thousands, and one that is more than digits, grouping and decimals, named",
+                "locale:REPORTED:its separators named where they are not . and ,: Word shows the reader's own",
+                "prefix:WRITTEN:as quoted text before the format code",
+                "suffix:REPORTED:as quoted text after the format code, a pie's leading % as the code's own; a pie's "
+                + "percent format without one, named",
+                "scaleDivisor:REPORTED:named where it is not 1: the numbers are shown unscaled");
         value(com.demcha.compose.document.table.DocumentTableCell.class,
                 "lines:WRITTEN:a text cell's, a line each; a composed cell's are read neither by the page nor by "
                 + "the export",
@@ -761,10 +766,10 @@ class DocxValueFieldLedgerTest {
                 "rowSpan:WRITTEN",
                 "content:WRITTEN:as its own node's entries say");
         value(com.demcha.compose.document.chart.ChartSize.Fixed.class,
-                "points:REPORTED:in the chart's note; the data table is as tall as its rows");
+                "points:WRITTEN:as the chart's drawing's height, the page's");
         value(com.demcha.compose.document.chart.ChartSize.AspectRatio.class,
-                "w:REPORTED:in the chart's note; the data table is as tall as its rows",
-                "h:REPORTED:in the chart's note; the data table is as tall as its rows");
+                "w:WRITTEN:in the chart's drawing's height, the page's",
+                "h:WRITTEN:in the chart's drawing's height, the page's");
         value(com.demcha.compose.document.output.DocumentMetadata.class,
                 "author:WRITTEN:as the file's creator",
                 "creator:WRITTEN:as the application the file names as the one that made it",

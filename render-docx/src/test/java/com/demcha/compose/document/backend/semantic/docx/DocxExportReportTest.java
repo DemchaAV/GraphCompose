@@ -156,7 +156,7 @@ class DocxExportReportTest {
         assertThat(report.bySubject()).containsKey("chart");
         DocxExportReport.Note note = report.bySubject().get("chart").get(0);
         assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.APPROXIMATED);
-        assertThat(note.detail()).contains("data table");
+        assertThat(note.detail()).startsWith("written as a Word chart");
         assertThat(note.path())
                 .as("an unnamed node is addressed by its kind, which still locates it")
                 .isEqualTo("ContainerNode[0]/Chart[0]");

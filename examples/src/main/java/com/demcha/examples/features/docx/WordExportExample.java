@@ -34,9 +34,9 @@ import java.nio.file.Path;
  * DOCX capability table from {@code docs/recipes/docx-export.md}:
  * styled paragraphs and inline runs map 1:1, lists keep markers and
  * per-depth indent, tables and side-by-side rows stay tables, images
- * embed at their declared size, page breaks survive, charts fall back to
- * their data table, and pure geometry (dividers, shape containers) stays
- * PDF-only by design.
+ * embed at their declared size, page breaks survive, charts become Word
+ * charts with their data in an embedded workbook, and pure geometry
+ * (dividers, shape containers) stays PDF-only by design.
  *
  * <p>Requires {@code org.apache.poi:poi-ooxml} on the classpath — the
  * dependency is optional in the GraphCompose POM, so this module adds it
@@ -166,10 +166,10 @@ public final class WordExportExample {
 
                     .addPageBreak(pb -> pb.name("ToPage2"))
 
-                    .addParagraph("Charts fall back to their data", heading)
-                    .addParagraph("The PDF renders the vector chart; the Word export writes no "
-                            + "chart, so the same node exports as a categories-by-series "
-                            + "table.", caption)
+                    .addParagraph("Charts become Word charts", heading)
+                    .addParagraph("The PDF renders the vector chart; the Word export writes the "
+                            + "same node as a Word chart, its numbers in an embedded workbook "
+                            + "you edit through Edit Data.", caption)
                     .addSection("Chart", s -> s.chart(ChartSpec.bar().data(quarters).build()))
 
                     .addParagraph("Geometry stays PDF-only by design", heading)

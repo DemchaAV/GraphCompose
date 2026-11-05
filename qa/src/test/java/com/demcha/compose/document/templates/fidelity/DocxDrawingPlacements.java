@@ -21,8 +21,9 @@ import java.util.zip.ZipInputStream;
  * {@code paragraph} moves it with the paragraph carrying it when the text above is edited, and
  * {@code page} nails it to the sheet. An {@code wp:inline} drawing stands in the text itself and
  * names nothing to be placed from. The export writes a drawing a node paints under the name
- * "Drawing N" and a page's fill under "Page background N", so the two are told apart in the file
- * ({@link Placement#paints} and {@link Placement#isPageBackground()}).</p>
+ * "Drawing N", a page's fill under "Page background N" and a Word chart, which stands in the text,
+ * under "Chart N", so the three are told apart in the file ({@link Placement#paints},
+ * {@link Placement#isPageBackground()} and {@link Placement#isInlineChart()}).</p>
  *
  * <p>{@link #problems()} names every anchor this reader cannot classify: one with no
  * {@code wp:positionV}, or more than one; one whose {@code wp:docPr} carries no name; one named
@@ -42,6 +43,9 @@ final class DocxDrawingPlacements {
 
     /** The name the export writes a page's own fill under. */
     private static final String PAGE_BACKGROUND = "Page background ";
+
+    /** The name the export writes a Word chart under. */
+    private static final String CHART = "Chart ";
 
     private static final XMLInputFactory XML = XMLInputFactory.newFactory();
 
@@ -87,6 +91,14 @@ final class DocxDrawingPlacements {
         /** Whether it is a page's own fill, which belongs to the sheet and not to any text. */
         boolean isPageBackground() {
             return name.startsWith(PAGE_BACKGROUND);
+        }
+
+        /**
+         * Whether it is a Word chart standing in its paragraph's text, which is placed from nothing;
+         * one floating is no chart the export writes.
+         */
+        boolean isInlineChart() {
+            return name.startsWith(CHART) && !floating;
         }
 
         /** Whether it is nailed to the sheet rather than carried by a paragraph. */
@@ -145,8 +157,9 @@ final class DocxDrawingPlacements {
 
     /**
      * The drawings a node paints, floating and inline together. POI names an inline picture
-     * "Drawing N" as the export names a floating one, and the corpus holds 384 of them against
-     * 772 floating, so a count of these is not a count of what this guard is about:
+     * "Drawing N" as the export names a floating one, and the corpus holds 384 of them and 7
+     * inline charts against 772 floating, so a count of these is not a count of what this guard
+     * is about:
      * {@link #floatingPainted()} is.
      */
     List<Placement> painted() {
@@ -310,8 +323,8 @@ final class DocxDrawingPlacements {
                        + " in " + part;
         if (placement.name().isEmpty()) {
             problems.add(where + " carries no wp:docPr name, so what paints it cannot be told");
-        } else if (!placement.paints() && !placement.isPageBackground()) {
-            problems.add(where + " is named neither a drawing nor a page background");
+        } else if (!placement.paints() && !placement.isPageBackground() && !placement.isInlineChart()) {
+            problems.add(where + " is named neither a drawing, a page background nor a chart in the text");
         }
         if (floating && placement.placedFrom().isEmpty()) {
             problems.add(where + " floats and names nothing to be placed down from");

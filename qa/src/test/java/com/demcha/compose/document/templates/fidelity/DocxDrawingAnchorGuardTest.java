@@ -113,7 +113,7 @@ class DocxDrawingAnchorGuardTest {
 
     /**
      * The drawings of the corpus still placed from the page: which they are, and why each is there.
-     * Measured over the corpus of 82 documents, which holds 772 floating drawings painted by a
+     * Measured over the corpus of 84 documents, which holds 772 floating drawings painted by a
      * node, of which 740 are carried by a paragraph.
      *
      * <p>Twenty-five are a composed cell's ({@link #COMPOSED_CELL_WALK_STOPS}): thirteen in
@@ -170,8 +170,9 @@ class DocxDrawingAnchorGuardTest {
 
     /**
      * How many floating drawings the corpus has a node paint, as a floor: a reader that stopped
-     * finding them would otherwise report every document clean. Measured at 772 over 82 documents,
-     * beside 384 inline ones, which are placed from nothing and so are not this guard's business.
+     * finding them would otherwise report every document clean. Measured at 772 over 84 documents,
+     * beside 391 inline ones — 384 pictures and 7 charts — which are placed from nothing and so are
+     * not this guard's business.
      *
      * <p>Held close to the measurement rather than loosely, since the slack is what a drawing could
      * go missing in: a document that stops painting a drawing altogether is not this guard's
@@ -435,7 +436,11 @@ class DocxDrawingAnchorGuardTest {
         assertThat(placements.problems()).satisfiesExactly(
                 problem -> assertThat(problem).contains("an unnamed drawing").contains("carries no wp:docPr name"),
                 problem -> assertThat(problem).contains("\"Chart 7\"")
-                        .contains("named neither a drawing nor a page background"));
+                        .contains("named neither a drawing, a page background nor a chart in the text"));
+        // A Word chart stands in its paragraph's text, and is no problem there.
+        assertThat(DocxDrawingPlacements.read(docx(Map.of("word/document.xml",
+                body(paragraph("<w:r><w:drawing><wp:inline><wp:docPr id=\"7\" name=\"Chart 7\"/></wp:inline>"
+                               + "</w:drawing></w:r>"))))).problems()).isEmpty();
     }
 
     @Test

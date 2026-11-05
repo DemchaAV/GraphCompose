@@ -150,18 +150,17 @@ class DocxBlockGeometryReportTest {
     }
 
     @Test
-    void aChartNamesTheSpaceRoundItsTable() throws Exception {
+    void aChartHoldsTheSpaceAboveAndBelowItAndNamesItsLeftMargin() throws Exception {
         ChartData data = ChartData.builder().categories("Q1", "Q2").series("2025", 12.4, 15.1).build();
         DocxExportReport report = reportOf(page -> page
                 .add(new ChartNode("", ChartSpec.bar().data(data).build(), null,
                         new DocumentInsets(20, 0, 20, 30), DocumentInsets.zero())));
 
-        assertThat(detailOf(report, "chart")).startsWith("exported as its data table")
-                .endsWith("; its margin and padding above, below and on the left are not written round the table");
+        assertThat(detailOf(report, "chart")).startsWith("written as a Word chart")
+                .endsWith("; its left margin is not in the file");
         assertThat(bodyOf(page -> page.add(new ChartNode("", ChartSpec.bar().data(data).build(), null,
                 new DocumentInsets(20, 0, 20, 30), DocumentInsets.zero()))))
-                .as("the file does not carry them").isEqualTo(bodyOf(page -> page
-                        .add(new ChartNode(ChartSpec.bar().data(data).build()))));
+                .as("the space above it is its paragraph's").contains("w:before=\"400\"");
     }
 
     @Test

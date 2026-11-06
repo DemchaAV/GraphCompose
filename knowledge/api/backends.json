@@ -6055,7 +6055,8 @@
                   "type": "String",
                   "name": null
                 }
-              ]
+              ],
+              "stability": "beta"
             },
             {
               "kind": "constructor",
@@ -6310,6 +6311,7 @@
             "final"
           ],
           "artifact": "graph-compose-render-docx",
+          "stability": "beta",
           "members": [
             {
               "kind": "constructor",
@@ -6318,7 +6320,8 @@
               "origin": "source",
               "typeParameters": null,
               "returns": null,
-              "params": []
+              "params": [],
+              "stability": "beta"
             },
             {
               "kind": "method",
@@ -6327,7 +6330,8 @@
               "origin": "source",
               "typeParameters": null,
               "returns": "String",
-              "params": []
+              "params": [],
+              "stability": "beta"
             },
             {
               "kind": "method",
@@ -6336,7 +6340,8 @@
               "origin": "source",
               "typeParameters": null,
               "returns": "SemanticBackend<byte[]>",
-              "params": []
+              "params": [],
+              "stability": "beta"
             }
           ]
         },
@@ -6428,6 +6433,7 @@
             "final"
           ],
           "artifact": "graph-compose-render-docx",
+          "stability": "beta",
           "members": [
             {
               "kind": "constructor",
@@ -6453,7 +6459,8 @@
                   "type": "String",
                   "name": null
                 }
-              ]
+              ],
+              "stability": "beta"
             },
             {
               "kind": "method",
@@ -6462,7 +6469,8 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "DocxExportReport.Severity",
-              "params": []
+              "params": [],
+              "stability": "beta"
             },
             {
               "kind": "method",
@@ -6471,7 +6479,8 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "String",
-              "params": []
+              "params": [],
+              "stability": "beta"
             },
             {
               "kind": "method",
@@ -6480,7 +6489,8 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "String",
-              "params": []
+              "params": [],
+              "stability": "beta"
             },
             {
               "kind": "method",
@@ -6489,7 +6499,8 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "String",
-              "params": []
+              "params": [],
+              "stability": "beta"
             }
           ]
         },
@@ -6501,20 +6512,23 @@
             "final"
           ],
           "artifact": "graph-compose-render-docx",
+          "stability": "beta",
           "members": [
             {
               "kind": "constant",
               "name": "DROPPED",
               "static": true,
               "origin": "generated",
-              "type": "DocxExportReport.Severity"
+              "type": "DocxExportReport.Severity",
+              "stability": "beta"
             },
             {
               "kind": "constant",
               "name": "APPROXIMATED",
               "static": true,
               "origin": "generated",
-              "type": "DocxExportReport.Severity"
+              "type": "DocxExportReport.Severity",
+              "stability": "beta"
             }
           ]
         },
@@ -6548,7 +6562,8 @@
                   "type": "Consumer<DocxExportReport>",
                   "name": "reportSink"
                 }
-              ]
+              ],
+              "stability": "beta"
             },
             {
               "kind": "method",
@@ -6576,7 +6591,8 @@
               "origin": "source",
               "typeParameters": null,
               "returns": "boolean",
-              "params": []
+              "params": [],
+              "stability": "beta"
             },
             {
               "kind": "method",
@@ -6608,7 +6624,8 @@
                   "type": "List<SemanticSection>",
                   "name": "sections"
                 }
-              ]
+              ],
+              "stability": "beta"
             },
             {
               "kind": "method",
@@ -6622,7 +6639,8 @@
                   "type": "List",
                   "name": null
                 }
-              ]
+              ],
+              "stability": "beta"
             },
             {
               "kind": "method",

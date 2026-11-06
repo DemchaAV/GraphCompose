@@ -1082,9 +1082,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * export that finished — an export that fails throws, and a report is not a way to
      * discover that it did.</p>
      *
+     * <p><b>Experimental</b> ({@code @Beta}), as {@link DocxExportReport} is — see
+     * {@code docs/api-stability.md}. The no-argument constructor is unaffected.</p>
+     *
      * @param reportSink where the report goes, or null to keep the log as the only channel
      * @since 2.5.0
      */
+    @com.demcha.compose.document.api.Beta
     public DocxSemanticBackend(java.util.function.Consumer<DocxExportReport> reportSink) {
         this.reportSink = reportSink;
         this.deterministicTimestamp = null;
@@ -1202,7 +1206,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Nothing here depends on the layout being present. An export handed none still
      * writes a complete document: every place that reads a measured number falls back to
      * what the document itself states, and states what that costs.</p>
+     *
+     * <p><b>Experimental</b> ({@code @Beta}), as the method it overrides is — see
+     * {@code docs/api-stability.md}.</p>
      */
+    @com.demcha.compose.document.api.Beta
     @Override
     public boolean requiresResolvedLayout() {
         return true;
@@ -1236,7 +1244,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * one font table holding every section's families (the first definition of a family
      * wins, as it does in the PDF), and one set of bookmark names, so a link in one section
      * reaches an anchor in another.</p>
+     *
+     * <p><b>Experimental</b> ({@code @Beta}), as the method it overrides is — see
+     * {@code docs/api-stability.md}.</p>
      */
+    @com.demcha.compose.document.api.Beta
     @Override
     public byte[] exportSections(List<SemanticSection> sections) throws Exception {
         java.util.Objects.requireNonNull(sections, "sections");

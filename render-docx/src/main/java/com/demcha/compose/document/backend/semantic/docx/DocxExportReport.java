@@ -55,7 +55,13 @@ public record DocxExportReport(List<Note> notes) {
         notes = List.copyOf(notes);
     }
 
-    /** How much of the thing survived. */
+    /**
+     * How much of the thing survived.
+     *
+     * <p><b>Experimental</b> ({@code @Beta}), as the report is — see
+     * {@code docs/api-stability.md}.</p>
+     */
+    @Beta
     public enum Severity {
         /** The page draws it and the document does not carry it at all. */
         DROPPED,
@@ -66,6 +72,9 @@ public record DocxExportReport(List<Note> notes) {
     /**
      * One thing the export could not carry as authored.
      *
+     * <p><b>Experimental</b> ({@code @Beta}), as the report is — see
+     * {@code docs/api-stability.md}.</p>
+     *
      * @param severity whether it is missing or merely different
      * @param subject  what it was, in a few words — {@code "chart"}, {@code "corner radius"}
      * @param path     the authored node's path; a page's or a section's where the note is about one
@@ -74,6 +83,7 @@ public record DocxExportReport(List<Note> notes) {
      *                 in a document of several sections, its section
      * @param detail   what happened and what it means for the document
      */
+    @Beta
     public record Note(Severity severity, String subject, String path, String detail) {
 
         /**

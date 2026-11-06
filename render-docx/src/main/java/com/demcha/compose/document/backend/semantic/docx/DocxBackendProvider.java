@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.document.api.Beta;
 import com.demcha.compose.document.backend.semantic.SemanticBackend;
 import com.demcha.compose.document.backend.semantic.SemanticBackendProvider;
 
@@ -16,9 +17,14 @@ import com.demcha.compose.document.backend.semantic.SemanticBackendProvider;
  * <p>A backend is created per export rather than shared, because it holds the state of the
  * export it is running.</p>
  *
+ * <p><b>Experimental</b> ({@code @Beta}): it implements the semantic discovery seam
+ * {@link SemanticBackendProvider}, which is Experimental in its first release — see
+ * {@code docs/api-stability.md}.</p>
+ *
  * @author Artem Demchyshyn
  * @since 2.5.0
  */
+@Beta
 public final class DocxBackendProvider implements SemanticBackendProvider {
 
     /**

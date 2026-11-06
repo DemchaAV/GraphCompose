@@ -57,19 +57,24 @@ matrix.
 > Geometry identity with the PDF backend is a design invariant and will not
 > change; the API shape around it may still move in a minor release.
 >
-> Four members of the otherwise-Stable **semantic export SPI** carry `@Beta`, new
-> in 2.5.0: `SemanticBackend.requiresResolvedLayout`, the `layoutGraph` and
-> `layoutFailure` components of `SemanticExportContext`, and
+> Five members of the otherwise-Stable **semantic export SPI** carry `@Beta` for the
+> resolved layout, new in 2.5.0: `SemanticBackend.requiresResolvedLayout`, the
+> `layoutGraph` and `layoutFailure` components of `SemanticExportContext`, the
+> six-argument canonical constructor that takes them, and
 > `SemanticExportContext.requireLayoutGraph`. They let a semantic backend be handed the
 > compiled layout beside the graph — geometry it reads rather than places — and, where
 > the document cannot be laid out, the reason, so the backend can say why it exported
 > without one. The seam is marked Experimental because what a semantic backend
 > should be *given* is still settling: a later minor may narrow it to the measurements
 > a backend actually needs instead of the whole graph. Backends that do not ask are
-> unaffected, and the published `SemanticExportContext` constructors keep working.
+> unaffected, and the four- and three-argument `SemanticExportContext` constructors
+> published before 2.5.0 keep working. Java does not carry a method's annotation to its
+> override, so `DocxSemanticBackend` carries the marker on its own
+> `requiresResolvedLayout` too.
 >
 > **Semantic backend discovery** is Experimental in 2.5.0: the `SemanticBackendProvider`
-> and `SemanticBackendProviders` types, and the DOCX convenience methods on
+> and `SemanticBackendProviders` types, the DOCX backend's own provider
+> `DocxBackendProvider`, and the DOCX convenience methods on
 > `DocumentSession` (`toDocxBytes`, `writeDocx`, `buildDocx`). They are the semantic
 > half of the `ServiceLoader` path the fixed-layout backends have had since 2.0, so an
 > artifact on the classpath is enough to export — no naming the backend in code. The
@@ -79,8 +84,9 @@ matrix.
 > generalise against. Constructing `DocxSemanticBackend` and calling
 > `session.export(backend, path)` stays the Stable path and is unaffected.
 >
-> The **DOCX export report** is Experimental in 2.5.0: the `DocxExportReport` type and
-> the `DocxSemanticBackend(Consumer<DocxExportReport>)` constructor, which hand the
+> The **DOCX export report** is Experimental in 2.5.0: the `DocxExportReport` type with
+> its nested `DocxExportReport.Note` and `DocxExportReport.Severity`, and the
+> `DocxSemanticBackend(Consumer<DocxExportReport>)` constructor, which hand the
 > calling program what the export dropped or approximated and the path of the node each
 > came from — the same information the export has always written to the log, where a
 > service generating documents for other people cannot read it. It is marked
@@ -95,7 +101,8 @@ matrix.
 > `renderSections`: each section is handed over as its own graph and context, and a
 > backend that can write a sectioned document — DOCX writes a Word section per section —
 > overrides `exportSections`, while the default exports a single section and refuses
-> several. It is marked Experimental because it takes the same shape the single-document
+> several. `DocxSemanticBackend.exportSections` is that override, and carries the marker too.
+> It is marked Experimental because it takes the same shape the single-document
 > seam may still narrow, and a section can only carry what a `SemanticExportContext`
 > carries. `MultiSectionDocument`'s PDF methods are unaffected.
 >

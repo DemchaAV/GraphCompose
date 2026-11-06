@@ -545,7 +545,7 @@ Types: 78 · methods: 408 · constants: 21 · compiler-generated members: 210
 - `SemanticBackendProvider forFormat(String format)   [beta]`
 
 ### SemanticExportContext (record)
-- `new SemanticExportContext(LayoutCanvas, Collection<FontFamilyDefinition>, Path, DocumentOutputOptions, LayoutGraph, String)`
+- `new SemanticExportContext(LayoutCanvas, Collection<FontFamilyDefinition>, Path, DocumentOutputOptions, LayoutGraph, String)   [beta]`
 - `new SemanticExportContext(LayoutCanvas canvas, Collection<FontFamilyDefinition> customFontFamilies, Path outputFile, DocumentOutputOptions outputOptions)`
 - `new SemanticExportContext(LayoutCanvas canvas, Collection<FontFamilyDefinition> customFontFamilies, Path outputFile)`
 - `LayoutGraph requireLayoutGraph()   [beta]`
@@ -570,10 +570,10 @@ Types: 78 · methods: 408 · constants: 21 · compiler-generated members: 210
 
 ## com.demcha.compose.document.backend.semantic.docx
 
-### DocxBackendProvider (class)
-- `new DocxBackendProvider()`
-- `String format()`
-- `SemanticBackend<byte[]> create()`
+### DocxBackendProvider (class)   [beta]
+- `new DocxBackendProvider()   [beta]`
+- `String format()   [beta]`
+- `SemanticBackend<byte[]> create()   [beta]`
 
 ### DocxExportReport (record)   [beta]
 - `new DocxExportReport(List<DocxExportReport.Note>)   [beta]`
@@ -583,25 +583,25 @@ Types: 78 · methods: 408 · constants: 21 · compiler-generated members: 210
 - `List<DocxExportReport.Note> notes()   [beta]`
 - constants: `EMPTY`
 
-### DocxExportReport.Note (record)
-- `new Note(DocxExportReport.Severity, String, String, String)`
-- `DocxExportReport.Severity severity()`
-- `String subject()`
-- `String path()`
-- `String detail()`
+### DocxExportReport.Note (record)   [beta]
+- `new Note(DocxExportReport.Severity, String, String, String)   [beta]`
+- `DocxExportReport.Severity severity()   [beta]`
+- `String subject()   [beta]`
+- `String path()   [beta]`
+- `String detail()   [beta]`
 
-### DocxExportReport.Severity (enum)
+### DocxExportReport.Severity (enum)   [beta]
 - constants: `DROPPED`, `APPROXIMATED`
 
 ### DocxSemanticBackend (class)
 - `new DocxSemanticBackend()`
-- `new DocxSemanticBackend(Consumer<DocxExportReport> reportSink)`
+- `new DocxSemanticBackend(Consumer<DocxExportReport> reportSink)   [beta]`
 - `DocxSemanticBackend.Builder builder()   [beta]`
 - `String name()`
-- `boolean requiresResolvedLayout()`
+- `boolean requiresResolvedLayout()   [beta]`
 - `byte[] export(DocumentGraph graph, SemanticExportContext context)`
-- `byte[] exportSections(List<SemanticSection> sections)`
-- `Object exportSections(List)`
+- `byte[] exportSections(List<SemanticSection> sections)   [beta]`
+- `Object exportSections(List)   [beta]`
 - `Object export(DocumentGraph graph, SemanticExportContext context)`
 
 ### DocxSemanticBackend.Builder (class)   [beta]

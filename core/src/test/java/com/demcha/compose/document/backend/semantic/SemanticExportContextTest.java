@@ -139,4 +139,24 @@ class SemanticExportContextTest {
         assertThatThrownBy(() -> context.customFontFamilies().add(null))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
+
+    @Test
+    void theConstructorThatTakesTheLayoutShouldBeExperimentalAndThePublishedOnesStable() throws Exception {
+        // The API reference reads stability from the annotation, and the components'
+        // marker does not reach the canonical constructor that takes them.
+        assertThat(SemanticExportContext.class.getConstructor(
+                LayoutCanvas.class, java.util.Collection.class, java.nio.file.Path.class,
+                DocumentOutputOptions.class, LayoutGraph.class, String.class)
+                .isAnnotationPresent(com.demcha.compose.document.api.Beta.class))
+                .isTrue();
+        assertThat(SemanticExportContext.class.getConstructor(
+                LayoutCanvas.class, java.util.Collection.class, java.nio.file.Path.class,
+                DocumentOutputOptions.class)
+                .isAnnotationPresent(com.demcha.compose.document.api.Beta.class))
+                .isFalse();
+        assertThat(SemanticExportContext.class.getConstructor(
+                LayoutCanvas.class, java.util.Collection.class, java.nio.file.Path.class)
+                .isAnnotationPresent(com.demcha.compose.document.api.Beta.class))
+                .isFalse();
+    }
 }

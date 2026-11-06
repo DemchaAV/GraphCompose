@@ -25,6 +25,7 @@ flowchart TD
     E --> F{"Fixed-layout backend"}
     F -->|PDF| G["PdfFixedLayoutBackend<br/>(document.backend.fixed.pdf + engine.render.pdf)"]
     F -->|PPTX| P["PptxFixedLayoutBackend — POI XSLF<br/>(document.backend.fixed.pptx) — @Beta"]
+    E -.->|"LayoutGraph, read for what Word cannot work out"| H
     E -.->|"layoutSnapshot()"| I["Deterministic layout snapshot<br/>(regression tests — no bytes rendered)"]
 ```
 
@@ -32,9 +33,10 @@ The two fixed-layout backends branch from the **same** resolved graph, which
 is why page and slide geometry match by construction. The semantic DOCX
 exporter branches earlier, off the `DocumentGraph`: it writes Word's own
 paragraphs and tables, and Word paginates them. It is also handed the
-session's `LayoutGraph`, but reads it only for what Word cannot work out
-itself — line heights, `auto` column widths, where a floating drawing
-stands.
+session's `LayoutGraph`, and reads it for what Word cannot work out
+itself: line heights, `auto` column widths, where a floating drawing
+stands, which blocks the page kept together — and the page backgrounds,
+which only the layout carries.
 
 The PDF path deliberately spans **two** packages: the canonical backend
 `document.backend.fixed.pdf` owns PDFBox lifecycle and option translation,
@@ -61,7 +63,7 @@ Concretely:
    the same resolved graph, so page and slide geometry match by
    construction. `DocxSemanticBackend` takes the other route: it
    walks the semantic node tree and writes Word's own structure,
-   reading the layout graph only for measurements Word cannot make.
+   reading the layout graph for what Word cannot work out itself.
 
 That separation is the core project concept. Public code describes
 document intent, layout resolves geometry, renderers only draw already
@@ -126,11 +128,12 @@ need to reach below it.
   identically-sized slide. Marked `@Beta` at the package level; see the
   [backend capability matrix](./backend-capability-matrix.md) for
   per-capability fidelity.
-- **`document.backend.semantic`** — semantic exporters that write the node
-  tree as the format's own structure (`DocxSemanticBackend`, Apache POI,
-  which also reads the layout graph for measurements; and `PptxSemanticBackend`,
+- **`document.backend.semantic`** — the semantic export contracts. Their
+  backends live in the render modules: `DocxSemanticBackend` (Apache POI),
+  which writes the node tree as Word's own structure and reads the layout
+  graph for what Word cannot work out itself; and `PptxSemanticBackend`,
   a slide-safe node-graph manifest that predates the fixed-layout backend
-  and is not what `buildPptx(...)` uses).
+  and is not what `buildPptx(...)` uses.
 
 ## Template layer (`com.demcha.compose.document.templates.*`)
 

@@ -12,9 +12,10 @@ import com.demcha.compose.document.backend.semantic.SemanticBackendProvider;
  * {@code META-INF/services/com.demcha.compose.document.backend.semantic.SemanticBackendProvider}
  * file, and answers {@link #format()} with {@code "docx"}:
  * {@link com.demcha.compose.document.backend.semantic.SemanticBackendProviders} finds it through
- * {@link java.util.ServiceLoader} and matches it by that format. So {@code session.buildDocx(path)}, {@code writeDocx} and
- * {@code toDocxBytes} export to Word once the artifact is on the classpath, and the code that
- * builds the document need not import it.</p>
+ * {@link java.util.ServiceLoader} and matches it by that format. So
+ * {@code session.buildDocx(path)}, {@code writeDocx} and {@code toDocxBytes} export to Word once
+ * the artifact is on the classpath, and the code that builds the document need not import
+ * it.</p>
  *
  * <p>Each call to {@link #create()} returns a new {@link DocxSemanticBackend}, because a
  * backend holds the state of the export it is running. That backend is the no-argument one:

@@ -149,20 +149,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>The backend walks the semantic document graph and writes content Word owns: paragraphs
  * and their runs, lists, tables, pictures, page breaks, a Word section for each section of the
  * document, and the page's zones and text headers and footers as Word headers and footers with
- * live page-number fields. Word paginates that content and reflows it after an edit. From the
- * page the export carries over the blocks it kept together, and a page break between the pieces
- * of a panel the layout split across pages.</p>
+ * live page-number fields. Word paginates that content and reflows it after an edit; from the
+ * page the export carries over the blocks it kept together.</p>
  *
  * <p><b>Geometry from the resolved layout.</b> The backend asks for the session's compiled
  * layout ({@link #requiresResolvedLayout()}) and reads from it what Word cannot work out on its
  * own: how tall a line is set, how wide an {@code auto} column came out, where a drawing stands
  * and which paragraph carries it, which blocks the page kept together. A drawn shape other than
- * a horizontal rule — a line, a rectangle, an ellipse, a path or a polygon — is written as a floating shape
- * at the place and size the layout gives it, and the session's page backgrounds as shapes
- * behind the text of every page. A section handed no layout is still exported: its text, lists,
- * tables, pictures and charts from what the document states. Its drawings and page backgrounds
- * need the layout and are left out. The report names each of them, what else that leaves to
- * Word, and, where the session knows it, why there was no layout.</p>
+ * a horizontal rule — a line, a rectangle, an ellipse, a path or a polygon — is written as a
+ * floating shape at the place and size the layout gives it. The session's page backgrounds,
+ * which only the layout carries, are written as shapes behind the text of every page. A section
+ * handed no layout is still exported: its text, lists, tables, pictures and charts from what the
+ * document states. Its drawings are left out, each named in the report, and so are its page
+ * backgrounds, without a note. The report also names what else that leaves to Word and, where
+ * the session knows it, why there was no layout.</p>
  *
  * <p><b>Charts</b> are written as Word charts, their numbers in a workbook embedded with them,
  * which a reader edits through Word's <i>Edit Data</i>. A chart composed in a table cell beside

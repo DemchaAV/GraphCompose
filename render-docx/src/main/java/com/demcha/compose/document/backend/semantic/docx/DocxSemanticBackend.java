@@ -1082,9 +1082,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * export that finished — an export that fails throws, and a report is not a way to
      * discover that it did.</p>
      *
+     * <p><b>Experimental</b> ({@code @Beta}), as {@link DocxExportReport} is — see
+     * {@code docs/api-stability.md}. The no-argument constructor is unaffected.</p>
+     *
      * @param reportSink where the report goes, or null to keep the log as the only channel
      * @since 2.5.0
      */
+    @com.demcha.compose.document.api.Beta
     public DocxSemanticBackend(java.util.function.Consumer<DocxExportReport> reportSink) {
         this.reportSink = reportSink;
         this.deterministicTimestamp = null;
@@ -1098,6 +1102,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Starts a backend configured beyond what the constructors say.
      *
+     * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
+     *
      * @return a new builder
      * @since 2.5.0
      */
@@ -1109,6 +1115,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Configures a {@link DocxSemanticBackend}. Each call replaces what it sets, and
      * {@link #build()} can be called more than once.
+     *
+     * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
      *
      * @since 2.5.0
      */
@@ -1203,6 +1211,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * writes a complete document: every place that reads a measured number falls back to
      * what the document itself states, and states what that costs.</p>
      */
+    @com.demcha.compose.document.api.Beta
     @Override
     public boolean requiresResolvedLayout() {
         return true;
@@ -1237,6 +1246,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * wins, as it does in the PDF), and one set of bookmark names, so a link in one section
      * reaches an anchor in another.</p>
      */
+    @com.demcha.compose.document.api.Beta
     @Override
     public byte[] exportSections(List<SemanticSection> sections) throws Exception {
         java.util.Objects.requireNonNull(sections, "sections");

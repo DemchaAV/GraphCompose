@@ -36,6 +36,8 @@ public interface SemanticBackend<R> {
      * content at coordinates; a backend that wants coordinates is a fixed-layout backend
      * and should implement that contract instead.</p>
      *
+     * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
+     *
      * @return true to be given a resolved layout; false to be given the graph alone
      * @since 2.5.0
      */
@@ -65,6 +67,8 @@ public interface SemanticBackend<R> {
      * sections by simply concatenating their contents would give the whole document the
      * first section's page, which is the one thing a multi-section document exists to
      * avoid.</p>
+     *
+     * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
      *
      * @param sections the sections in document order; never empty
      * @return backend-specific export result for the whole document

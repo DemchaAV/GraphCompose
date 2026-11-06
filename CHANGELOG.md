@@ -50,9 +50,9 @@ follow semantic versioning; release dates are ISO 8601.
 ### Migrating the DOCX export from 2.4
 
 - **Code that exports today compiles and runs unchanged.** `session.export(new
-  DocxSemanticBackend())` stays the Stable path. What is new is additive — the report, the builder,
-  `buildDocx` and its siblings and the section export are `@Beta` — and the published constructors
-  of `SemanticExportContext` and `ShapeNode` are kept.
+  DocxSemanticBackend())` stays the Stable path. What is new is additive — the report, the
+  builder, the provider, `buildDocx` and its siblings and the section export are `@Beta` — and
+  the published constructors of `SemanticExportContext` and `ShapeNode` are kept.
 - **What you get is a different document.** Code that reads an exported DOCX back should expect a
   list as Word numbering (`w:numPr`) rather than marker text; body text that restates the `Normal`
   style without its own font, size or colour; a chart as a chart part rather than a table; drawings
@@ -213,26 +213,26 @@ follow semantic versioning; release dates are ISO 8601.
   the Word export meant constructing `DocxSemanticBackend`, which means importing the render
   artifact in the code that builds the document and carrying that dependency wherever
   documents are built. A render backend has not needed that since 2.0, and now neither does
-  this one: `session.buildDocx(path)`, `session.writeDocx(stream)` and
-  `session.toDocxBytes()` find the backend through a new `SemanticBackendProvider` /
-  `SemanticBackendProviders` pair — the semantic half of the `ServiceLoader` path, with the
-  fixed-layout locator's rules, since a classpath behaves the same way whichever backend is
-  on it. One rule is deliberately not copied: there is no default-format lookup, because
-  "render this document" has an obvious answer worth defaulting to and "export it
-  semantically" does not. The stream stays the caller's and is not closed; the bytes are
-  produced in full before any are written, since a `.docx` is a ZIP whose directory comes
-  last; a file is written through the same atomic path as `buildPdf`, so a failed export
-  leaves the previous file rather than a damaged one.
+  this one: `session.buildDocx(path)`, `session.writeDocx(stream)` and `session.toDocxBytes()`
+  find the backend through a new `SemanticBackendProvider` / `SemanticBackendProviders` pair,
+  through which `DocxBackendProvider` registers it — the semantic half of the `ServiceLoader`
+  path, with the fixed-layout locator's rules, since a classpath behaves the same way whichever
+  backend is on it. One rule is deliberately not copied: there is no default-format lookup,
+  because "render this document" has an obvious answer worth defaulting to and "export it
+  semantically" does not. The stream stays the caller's and is not closed; the bytes are produced
+  in full before any are written, since a `.docx` is a ZIP whose directory comes last; a file is
+  written through the same atomic path as `buildPdf`, so a failed export leaves the previous file
+  rather than a damaged one.
   <br><br>
   What the export cannot carry, it has always said — to the log, one line per kind, which a
-  service generating documents for other people has no way to read. A backend built with
-  `new DocxSemanticBackend(report -> ...)` now hands over a `DocxExportReport` once the
-  bytes are complete: every dropped node and every approximation, each with the path of the
-  authored node it came from, and each marked `DROPPED` (the page draws it, the document
-  does not carry it) or `APPROXIMATED` (it is there as the nearest thing Word owns). Errors
-  do not travel this way — an export that cannot proceed throws. The log keeps saying it
-  once per kind; the report records every one, because a caller asking what the document
-  lost wants the three charts it lost and which three.
+  service generating documents for other people has no way to read. A backend built with `new
+  DocxSemanticBackend(report -> ...)` now hands over a `DocxExportReport` once the bytes are
+  complete: every dropped node and every approximation, each a `DocxExportReport.Note` with the
+  path of the authored node it came from, and each marked by its `DocxExportReport.Severity`,
+  `DROPPED` (the page draws it, the document does not carry it) or `APPROXIMATED` (it is there
+  as the nearest thing Word owns). Errors do not travel this way — an export that cannot proceed
+  throws. The log keeps saying it once per kind; the report records every one, because a caller
+  asking what the document lost wants the three charts it lost and which three.
 
 - **A semantic export backend can ask for the compiled layout.** _(Experimental — see
   [API stability](docs/api-stability.md).)_ A semantic backend walks the authored tree and
@@ -251,8 +251,8 @@ follow semantic versioning; release dates are ISO 8601.
   <br><br>
   Binary compatibility is preserved: the four-argument `SemanticExportContext` constructor
   is written out by hand rather than left to the record, since adding the components moved
-  the canonical constructor to six arguments (the sixth, `layoutFailure`, has its own entry
-  above) and callers compiled against the published
+  the canonical constructor to six arguments (`@Beta`, as the components it takes are; the
+  sixth, `layoutFailure`, has its own entry above) and callers compiled against the published
   descriptor would otherwise stop linking. **Source compatibility is not**, in two narrow
   ways — a record pattern that destructures the four-component form
   (`case SemanticExportContext(var canvas, var fonts, var out, var opts)`) no longer

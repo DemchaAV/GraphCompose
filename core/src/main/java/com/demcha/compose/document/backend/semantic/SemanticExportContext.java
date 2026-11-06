@@ -13,6 +13,10 @@ import java.util.List;
 /**
  * Shared immutable context passed to semantic export backends.
  *
+ * <p>The {@code layoutGraph} and {@code layoutFailure} components, the canonical constructor
+ * that takes them and {@link #requireLayoutGraph()} are <b>Experimental</b>
+ * ({@code @Beta}) — see {@code docs/api-stability.md}. The rest of the record is Stable.</p>
+ *
  * @param canvas physical page canvas for semantic export
  * @param customFontFamilies document-local font families available to the backend
  * @param outputFile optional export output file
@@ -43,8 +47,14 @@ public record SemanticExportContext(
      * defaults the output options to the empty bundle when the caller passes
      * {@code null}, and reads a blank layout failure as none.
      *
+     * <p><b>Experimental</b> ({@code @Beta}), as the {@code layoutGraph} and
+     * {@code layoutFailure} components it takes are — see {@code docs/api-stability.md}. The
+     * four- and three-argument constructors are unaffected.</p>
+     *
      * @throws IllegalArgumentException if both a layout and a failure to compile one are given
+     * @since 2.5.0
      */
+    @com.demcha.compose.document.api.Beta
     public SemanticExportContext {
         customFontFamilies = List.copyOf(customFontFamilies);
         outputOptions = outputOptions == null ? DocumentOutputOptions.EMPTY : outputOptions;
@@ -89,6 +99,8 @@ public record SemanticExportContext(
 
     /**
      * The compiled layout, for a backend that asked for one.
+     *
+     * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
      *
      * @return the resolved layout
      * @throws IllegalStateException if no layout was supplied — which means the backend

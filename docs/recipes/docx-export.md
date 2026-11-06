@@ -286,7 +286,8 @@ pages with the margins in force.
 
 The export says what it drops — but it says it to the log, which a service generating
 documents for other people cannot read. Pass a sink and the same information arrives as a
-value:
+value, a `DocxExportReport` — Experimental in 2.5, as the sink constructor is; see
+[API stability](../api-stability.md):
 
 ```java
 var notes = new ArrayList<DocxExportReport.Note>();

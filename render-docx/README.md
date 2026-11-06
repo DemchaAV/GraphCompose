@@ -59,8 +59,8 @@ try (var doc = GraphCompose.document().create()) {
 ```
 
 `buildDocx(Path)`, `writeDocx(OutputStream)` and `toDocxBytes()` (Experimental, as are the
-backend's builder and its report) find this module on the classpath and build a default
-backend for each export. So they hand back no report, and they
+backend's provider, its builder and its report) find this module on the classpath and build
+a default backend for each export. So they hand back no report, and they
 stamp the export with the date it was made. For either, configure the backend and export
 through the session — which writes the file directly, not through the replace-on-success
 `buildDocx` uses, and throws a plain `Exception` rather than `DocumentRenderingException`:

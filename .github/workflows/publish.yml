@@ -148,17 +148,19 @@ jobs:
         run: |
           rm -rf ~/.m2/repository/io/github/demchaav/graph-compose-core
           rm -rf ~/.m2/repository/io/github/demchaav/graph-compose-templates
+          rm -rf ~/.m2/repository/io/github/demchaav/graph-compose-render-docx
 
       - name: Verify binary compatibility against the published baselines
         # Defence in depth: run the japicmp gate on the tagged commit before any
         # deploy, so an accidental binary-incompatible change to the public surface
         # aborts the publish even when the tag reached here by bypassing branch
         # protection (the CI japicmp job only gates pull requests). One reactor run
-        # diffs graph-compose-core and graph-compose-templates against the releases
-        # their poms pin, exactly as the pull-request job does; templates resolves
-        # the engine from the reactor rather than from the local repository, which
-        # is what lets this run before the install below.
-        run: ./mvnw -B -ntp -DskipTests -P japicmp verify -pl :graph-compose-core,:graph-compose-templates
+        # diffs graph-compose-core, graph-compose-templates and
+        # graph-compose-render-docx against the releases their poms pin, exactly as
+        # the pull-request job does; templates and render-docx resolve the engine
+        # (and render-docx the PDF backend) from the reactor rather than from the
+        # local repository, which is what lets this run before the install below.
+        run: ./mvnw -B -ntp -DskipTests -P japicmp verify -pl :graph-compose-core,:graph-compose-templates,:graph-compose-render-pdf,:graph-compose-render-docx
 
       - name: Prove every japicmp execution ran
         # A japicmp execution that does not run writes no report and fails nothing,
@@ -167,6 +169,7 @@ jobs:
           test -s core/target/japicmp/japicmp-against-baseline.xml
           test -s templates/target/japicmp/japicmp-against-major-floor.xml
           test -s templates/target/japicmp/japicmp-against-previous-release.xml
+          test -s render-docx/target/japicmp/japicmp-against-baseline.xml
 
       - name: Build, test and install to local m2 (verify + seed the release reactor)
         # Re-verify the tagged commit before publishing (defence in depth

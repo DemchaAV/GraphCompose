@@ -293,9 +293,10 @@ by the binary-compatibility gate below; none is removed before 3.0.
 
 The Stable-tier promise (§ 1 — no binary breaks outside a major release) is enforced
 mechanically by [japicmp](https://siom79.github.io/japicmp/), run in a `japicmp` Maven
-profile during `verify` on the engine module (`graph-compose-core`) and on
-`graph-compose-templates`. The render backends (`graph-compose-render-pdf`,
-`-render-docx`, `-render-pptx`) and `graph-compose-testing` are not gated yet.
+profile during `verify` on the engine module (`graph-compose-core`), on
+`graph-compose-templates` and on the Word backend (`graph-compose-render-docx`). The
+other render backends (`graph-compose-render-pdf`, `-render-pptx`) and
+`graph-compose-testing` are not gated yet.
 
 - **Baselines:** the published artifacts on Maven Central.
   - `graph-compose-core` is diffed against the `japicmp.baseline` property in
@@ -311,6 +312,17 @@ profile during `verify` on the engine module (`graph-compose-core`) and on
     -PostReleaseOnly` moves the previous pin to the release just published, and
     `VersionConsistencyGuardTest` fails the build when a pin disagrees with the working
     version and the CHANGELOG.
+  - `graph-compose-render-docx` is diffed against the `japicmp.baseline` property in
+    `render-docx/pom.xml`, the floor `2.0.0`, as the engine is. The floor holds the
+    Stable surface 2.0.0 shipped: `DocxSemanticBackend`, its no-argument constructor,
+    `name()` and `export(...)` — the Stable path of constructing the backend and calling
+    `session.export(backend, path)`. Everything the module added since is `@Beta` and
+    absent from the floor. A member that becomes Stable after 2.0.0 is **not** held by a
+    floor-only diff: guarding it, with a previous-release baseline as the templates gate
+    has, belongs to graduating the DOCX `@Beta` API to Stable, which
+    [`ROADMAP.md`](../ROADMAP.md) lists as still open after 2.5. Like the engine's
+    floor pin, this one breaks the build on every binary change, so the cut that opens
+    3.0 needs the same decision for it as for the engine.
 - **What fails the build:** any binary-incompatible change to the public surface
   against a baseline — a removed or less-accessible public method/field/type or
   constructor, a changed signature, and so on. A deprecated element stays protected like
@@ -319,27 +331,29 @@ profile during `verify` on the engine module (`graph-compose-core`) and on
   render-handoff payload records) are excluded; they carry no compatibility promise
   (§ 1). Every `templates.*` package is Stable (§ 4), so in `graph-compose-templates`
   only an element carrying the per-element `@Internal` marker is excluded — none does
-  today. Source-only incompatibilities (e.g. adding a default method to an interface)
-  are reported but do not fail, pending a finalized 2.x source-compatibility policy.
+  today. `graph-compose-render-docx` excludes the same marker and nothing else.
+  Source-only incompatibilities (e.g. adding a default method to an interface) are
+  reported but do not fail, pending a finalized 2.x source-compatibility policy.
 - **Where it runs:** the pull-request `Binary Compatibility` job, `cut-release.ps1` Step 5b
   and the publish workflow. Each ends by checking that every execution left its report: an
   execution that does not run — switched off, unbound, or not selected — writes none and
   fails nothing. A baseline japicmp cannot resolve still leaves a report, so that case is
-  caught only where the gate fails on it — `graph-compose-templates`, as the next point
-  says. `BinaryCompatibilityGateGuardTest` holds the executions, their settings, the job's
-  trigger and those checks in place.
+  caught only where the gate fails on it — `graph-compose-templates` and
+  `graph-compose-render-docx`, as the next point says. `BinaryCompatibilityGateGuardTest`
+  holds the executions, their settings, the job's trigger and those checks in place.
 - **Where a baseline comes from:** a published release, never this build. japicmp resolves
   a pin equal to the module's own version to the artifact the build just produced —
   measured on a simulated `3.0.0` cut, where it reported *"No incompatible changes found
   while checking backward compatibility of version 3.0.0 with the previous version
   3.0.0"*, from the reactor and from a local repository the release had been installed
-  into alike. So both pins are held **strictly older** than the working version
+  into alike. So every pin is held **strictly older** than the working version
   (`VersionConsistencyGuardTest`), every path drops our cached artifacts from the local
   repository before it resolves, and the publish workflow runs the gate *before* the
   `install` that seeds that repository with the release being published.
 - **Activity window:** active for every `-SNAPSHOT` cycle and every release commit of a
-  major that has a published release of its own; a `graph-compose-templates` baseline that
-  cannot be resolved fails the build rather than skipping its diff (japicmp's default,
+  major that has a published release of its own; a `graph-compose-templates` or
+  `graph-compose-render-docx` baseline that cannot be resolved fails the build rather
+  than skipping its diff (japicmp's default,
   which the engine gate still runs with, skips it with a warning).
 - **Opening a major:** while major `X` has no release of its own — the whole
   `X.0.0-SNAPSHOT` cycle *and* the `X.0.0` release commit — there is nothing in-major to

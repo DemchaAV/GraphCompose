@@ -104,7 +104,8 @@ dependencies. A small, dedicated, non-published `graph-compose-coverage` module
 now compile-depends on the tested modules and runs `report-aggregate` over core +
 render-pdf + templates + qa, so the core's coverage counts the qa suites that
 exercise it. Report-only; thresholds can follow after a baseline read.
-**Status: Done.**
+**Status: Done.** A non-regression ratchet on the aggregate followed, and
+`graph-compose-render-docx` joined the aggregate in 2.5.0.
 
 ### Per-module binary-compatibility baselines
 

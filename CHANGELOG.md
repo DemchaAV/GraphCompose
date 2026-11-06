@@ -6256,13 +6256,14 @@ follow semantic versioning; release dates are ISO 8601.
 ### Documentation
 
 - **`ROADMAP.md` says what 2.5 did for DOCX and what is left.** The strict-mode item said shapes,
-  lines and ellipses are dropped with a warning; they are drawn where the layout places them, and
+  lines and ellipses are dropped with a warning; they are written where the layout places them, and
   every loss is named in the `DocxExportReport`. A built-in option that fails the export instead
-  remains a directional item, as the report reaches its sink after an output file is written. The
-  item that asked whether to expand DOCX or fence it off as experimental now records that 2.5
-  expanded it, and names what is left: graduating its `@Beta` parts, the charts still written as
-  their data table, bytes that differ across platforms, and LibreOffice's distance from the page.
-  The *Now* section no longer lists moving DOCX onto the compiled layout as work to come.
+  stays a direction: the report reaches its sink only after an output file is written, so it cannot
+  stop that file. The item that asked whether to expand DOCX or fence it off as experimental now
+  records that 2.5 expanded it, and names what is left: graduating its `@Beta` parts, the charts
+  still written as their data table, bytes that differ across platforms, and LibreOffice setting
+  the document further from the engine's page than Word. The *Now* section no longer lists moving
+  DOCX onto the compiled layout as work to come.
 - **The `render-docx` README and `WordExportExample` show the session's Word export as it is.**
   - The README's usage opens on `session.buildDocx(path)`, and says what it and `writeDocx` /
     `toDocxBytes` do not give: they build a default backend, so they hand back no

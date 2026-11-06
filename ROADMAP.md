@@ -4,7 +4,7 @@ GraphCompose is solo-maintained. This roadmap is a direction, not a contract. Da
 
 ## Now — after 2.4
 
-The live threads are tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues): bringing the DOCX export onto the shared fixed-layout geometry the PPTX backend already renders from, growing the built-in layered template line-up, and keeping the knowledge pack current as the API moves. Vector clipping for the PPTX backend remains open.
+The live threads are tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues): finishing the DOCX export for 2.5, which now writes from the compiled layout the PDF and PPTX backends render (the `v2.5.0` entry in [CHANGELOG.md](CHANGELOG.md)), growing the built-in layered template line-up, and keeping the knowledge pack current as the API moves. Vector clipping for the PPTX backend remains open.
 
 ## Current stable — 2.4
 
@@ -97,10 +97,10 @@ Committed internal direction for the post-2.0 line: refactors, scale work, and t
 Not committed. Reflects current thinking; priorities may shift based on user feedback and adoption signals.
 
 - **PPTX beyond beta.** Graduate the fixed-layout PPTX backend from `@Beta` to stable and close the remaining fidelity gaps &mdash; true vector clipping instead of the raster fallback ([#413](https://github.com/DemchaAV/GraphCompose/issues/413)), exact numeric dash arrays, and distinct per-corner radii.
-- **A strict mode for DOCX.** Dropping a node the format cannot carry (`shape`, `line`, `ellipse`) now warns, so the loss is at least visible in the log. What is missing is the option to refuse: a flag that fails the export instead of silently producing a document with content gone.
+- **A strict mode for DOCX.** Since 2.5 shapes, lines and ellipses are drawn where the layout places them and dropped only where they cannot be &mdash; a fill that is only a gradient, or a document the engine could not lay out, among them &mdash; and every node the export drops or writes as the nearest thing Word has is named, with its path, in a `DocxExportReport` handed to the sink of a backend passed to `session.export(...)`. A caller exporting to bytes can read the report before keeping them, but an export given an output file has written it by the time the report arrives. What is missing is a built-in option to refuse: a flag that fails the export instead of writing a document with content gone.
 - **Block-level alignment for fixed-size flow children.** Paths, images, layer stacks, shape containers and barcodes currently left-align in a flow; centring one means wrapping it in a full-width `ShapeContainer` just to use its CENTER anchor. Add a per-node horizontal align (left / centre / right &mdash; the `margin: auto` / `align(center)` analogue) so a fixed box can place itself in the flow directly. Surfaced by the v1.8 SVG icon-gallery and feature-catalog work.
 - **Backend-neutral layout measurement.** Decouple measurement from PDFBox-specific resources so non-PDF backends do not pull PDFBox into the dependency graph.
-- **DOCX maturity.** Either expand DOCX coverage toward PDF parity, or move DOCX behind an explicitly experimental flag.
+- **DOCX after 2.5.** 2.5 expanded DOCX coverage toward the page rather than moving DOCX behind an experimental flag: the export writes from the compiled layout and is held to a corpus in Word and LibreOffice. Still open: graduating to stable what it added as `@Beta`, among them the export report, the backend builder, `buildDocx` and its siblings and the section export; writing a chart that shares a table cell with other drawings, or sits in a table composed in a cell, as a Word chart rather than its data table; the same deterministic bytes on every platform rather than on one; and setting the exported document in LibreOffice as close to the engine's page as Word sets it &mdash; Word passes more of the corpus.
 - **Property-based testing.** Expand the `@Property` layout-invariant seed to random table spans, pagination edge cases, and deeply nested layouts.
 - **Public Javadoc site.** Generated and hosted, kept in sync with releases.
 

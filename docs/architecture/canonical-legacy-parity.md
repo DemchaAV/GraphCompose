@@ -93,7 +93,7 @@ reaching into engine internals.
 | Byte output | Done | Use `toPdfBytes()`. |
 | Guide lines | Done | `guideLines(true)` is available on document builder and session. |
 | Metadata/protection/watermark/header/footer | Done | Configure on `DocumentSession` (e.g. `metadata(...)`, `watermark(...)`, `protect(...)`, `header(...)`, `footer(...)`); convenience PDF entrypoints (`buildPdf`, `writePdf`, `toPdfBytes`) honour these options without an explicit backend builder. `PdfFixedLayoutBackend.builder()` remains for advanced cases. |
-| DOCX semantic export | Done | Use `session.export(new DocxSemanticBackend())` for paragraph/table/image-aware Word output. Requires `org.apache.poi:poi-ooxml` on the consumer classpath. |
+| DOCX semantic export | Done | Use `session.buildDocx(path)` for editable Word output, or `session.export(DocxSemanticBackend.builder()…build(), path)` for a backend configured with a report sink or deterministic output. Requires `graph-compose-render-docx` on the classpath, which brings Apache POI. |
 | PPTX export | Done (fixed-layout, `@Beta` since 2.1.0) | `session.buildPptx(path)` with `graph-compose-render-pptx` on the classpath emits an editable deck from the same resolved layout graph as the PDF — one page per slide, native shapes, matching geometry. See the [backend capability matrix](backend-capability-matrix.md). The older `PptxSemanticBackend` manifest remains in the module but is not what the convenience methods use. |
 | PDFBox types in session API | Rejected | Keep PDFBox behind the fixed PDF backend. |
 

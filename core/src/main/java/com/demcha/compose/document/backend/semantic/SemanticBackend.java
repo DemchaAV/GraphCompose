@@ -32,9 +32,9 @@ public interface SemanticBackend<R> {
      *
      * <p>A backend that answers {@code true} is handed the same session's compiled layout
      * in {@link SemanticExportContext#layoutGraph()}. It is for reading what the engine
-     * already worked out — a resolved width, a settled page count — not for placing
-     * content at coordinates; a backend that wants coordinates is a fixed-layout backend
-     * and should implement that contract instead.</p>
+     * already worked out — a resolved width, a settled page count, where a drawing the
+     * format floats stands — not for drawing every page at its coordinates; a backend that
+     * wants that is a fixed-layout backend and should implement that contract instead.</p>
      *
      * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
      *

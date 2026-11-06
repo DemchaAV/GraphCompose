@@ -57,7 +57,7 @@ per-package artifact.
 | `com.demcha.compose.document.backend.fixed.pdf` | Canonical fixed-layout PDF backend, fragment handlers, PDF-specific options, and PDF-backed measurement resources. | Keep PDFBox lifecycle internal; normal callers should use `DocumentSession` and default PDF convenience methods. |
 | `com.demcha.compose.document.backend.fixed.pptx` (`@Beta` at package level) | Fixed-layout PowerPoint backend — `PptxFixedLayoutBackend`, its provider, deterministic writer, embedded-font and clip support, plus the `.handlers` fragment handler set. Consumes the same resolved `LayoutGraph` as the PDF backend. | Keep POI XSLF lifecycle internal. Any capability change must update [backend-capability-matrix.md](./backend-capability-matrix.md) in the same commit. |
 | `com.demcha.compose.document.dsl.internal` | Internal helpers for public DSL builders such as semantic name normalization and builder callback application. | Do not expose these helpers in examples; move reusable authoring concepts to public builder classes instead. |
-| `com.demcha.compose.document.backend.semantic` | Experimental semantic export contracts for non-fixed outputs. | Keep exporters separate from PDF fixed-layout rendering. |
+| `com.demcha.compose.document.backend.semantic` | Semantic export contracts for non-fixed outputs. Stable; what 2.5.0 added is `@Beta` element by element (see `docs/api-stability.md`). | Keep exporters separate from PDF fixed-layout rendering. |
 | `com.demcha.compose.document.debug` | Snapshot/debug adapters for canonical layout graph inspection. | Debug output should be deterministic and safe for tests. |
 
 ## Shared Engine Foundation

@@ -191,12 +191,12 @@
         {
           "id": "configured-backend-export",
           "useWhen": "the caller needs the export report (what Word could not carry as authored, docs/recipes/docx-export.md#finding-out-what-the-export-could-not-carry) or the same bytes on every run, as a byte-level test does",
-          "tradeoffs": "session.export(DocxSemanticBackend.builder().deterministic(true).reportSink(report -> ...).build(), path) — the builder and DocxExportReport are @Beta; the file is written in place, not replaced on success, and a failure is a plain Exception; the bytes hold on one platform only, and a {date} header or footer token still changes them with the day unless -Dgraphcompose.renderDate pins it (docs/recipes/docx-export.md#byte-identical-output); one backend per thread"
+          "tradeoffs": "session.export(DocxSemanticBackend.builder().deterministic(true).reportSink(report -> ...).build(), path) — the builder and DocxExportReport are @Beta; the bytes go straight over the file, so a write that breaks part-way can truncate it, and a failure is a plain Exception; the bytes hold on one platform only (docs/recipes/docx-export.md#byte-identical-output), and a {date} token changes them daily unless -Dgraphcompose.renderDate pins it; one backend per thread"
         },
         {
           "id": "stable-backend-export",
           "useWhen": "the code may use Stable API only",
-          "tradeoffs": "session.export(new DocxSemanticBackend(), path), the path docs/api-stability.md#1-stability-tiers keeps Stable — no report (what is dropped goes to the log only), and the package carries the date of the export"
+          "tradeoffs": "session.export(new DocxSemanticBackend(), path), the path docs/api-stability.md#1-stability-tiers keeps Stable — no report (what is dropped goes to the log only), the package carries the date of the export, and it writes and throws as the configured backend does"
         },
         {
           "id": "pdf",

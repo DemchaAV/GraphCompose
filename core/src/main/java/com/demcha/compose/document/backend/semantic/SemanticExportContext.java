@@ -52,6 +52,7 @@ public record SemanticExportContext(
      * four- and three-argument constructors are unaffected.</p>
      *
      * @throws IllegalArgumentException if both a layout and a failure to compile one are given
+     * @since 2.5.0
      */
     @com.demcha.compose.document.api.Beta
     public SemanticExportContext {

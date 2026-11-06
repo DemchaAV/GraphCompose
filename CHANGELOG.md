@@ -225,15 +225,14 @@ follow semantic versioning; release dates are ISO 8601.
   rather than a damaged one.
   <br><br>
   What the export cannot carry, it has always said — to the log, one line per kind, which a
-  service generating documents for other people has no way to read. A backend built with
-  `new DocxSemanticBackend(report -> ...)` now hands over a `DocxExportReport` once the
-  bytes are complete: every dropped node and every approximation, each a `DocxExportReport.Note`
-  with the path of the authored node it came from, and each marked by its
-  `DocxExportReport.Severity`, `DROPPED` (the page draws it, the document
-  does not carry it) or `APPROXIMATED` (it is there as the nearest thing Word owns). Errors
-  do not travel this way — an export that cannot proceed throws. The log keeps saying it
-  once per kind; the report records every one, because a caller asking what the document
-  lost wants the three charts it lost and which three.
+  service generating documents for other people has no way to read. A backend built with `new
+  DocxSemanticBackend(report -> ...)` now hands over a `DocxExportReport` once the bytes are
+  complete: every dropped node and every approximation, each a `DocxExportReport.Note` with the
+  path of the authored node it came from, and each marked by its `DocxExportReport.Severity`,
+  `DROPPED` (the page draws it, the document does not carry it) or `APPROXIMATED` (it is there
+  as the nearest thing Word owns). Errors do not travel this way — an export that cannot proceed
+  throws. The log keeps saying it once per kind; the report records every one, because a caller
+  asking what the document lost wants the three charts it lost and which three.
 
 - **A semantic export backend can ask for the compiled layout.** _(Experimental — see
   [API stability](docs/api-stability.md).)_ A semantic backend walks the authored tree and

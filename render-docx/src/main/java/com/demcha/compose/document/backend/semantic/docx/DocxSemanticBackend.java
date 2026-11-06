@@ -1102,6 +1102,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Starts a backend configured beyond what the constructors say.
      *
+     * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
+     *
      * @return a new builder
      * @since 2.5.0
      */
@@ -1113,6 +1115,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Configures a {@link DocxSemanticBackend}. Each call replaces what it sets, and
      * {@link #build()} can be called more than once.
+     *
+     * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
      *
      * @since 2.5.0
      */
@@ -1206,9 +1210,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Nothing here depends on the layout being present. An export handed none still
      * writes a complete document: every place that reads a measured number falls back to
      * what the document itself states, and states what that costs.</p>
-     *
-     * <p><b>Experimental</b> ({@code @Beta}), as the method it overrides is — see
-     * {@code docs/api-stability.md}.</p>
      */
     @com.demcha.compose.document.api.Beta
     @Override
@@ -1244,9 +1245,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * one font table holding every section's families (the first definition of a family
      * wins, as it does in the PDF), and one set of bookmark names, so a link in one section
      * reaches an anchor in another.</p>
-     *
-     * <p><b>Experimental</b> ({@code @Beta}), as the method it overrides is — see
-     * {@code docs/api-stability.md}.</p>
      */
     @com.demcha.compose.document.api.Beta
     @Override

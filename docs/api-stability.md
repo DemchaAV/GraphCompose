@@ -319,9 +319,10 @@ other render backends (`graph-compose-render-pdf`, `-render-pptx`) and
     `session.export(backend, path)`. Everything the module added since is `@Beta` and
     absent from the floor. A member that becomes Stable after 2.0.0 is **not** held by a
     floor-only diff: guarding it, with a previous-release baseline as the templates gate
-    has, is part of the DOCX Stable-graduation stage. Like the engine's floor pin, this
-    one breaks the build on every binary change, so the cut that opens 3.0 needs the
-    same decision for it as for the engine.
+    has, belongs to graduating the DOCX `@Beta` API to Stable, which
+    [`ROADMAP.md`](../ROADMAP.md) lists as still open after 2.5. Like the engine's
+    floor pin, this one breaks the build on every binary change, so the cut that opens
+    3.0 needs the same decision for it as for the engine.
 - **What fails the build:** any binary-incompatible change to the public surface
   against a baseline — a removed or less-accessible public method/field/type or
   constructor, a changed signature, and so on. A deprecated element stays protected like
@@ -345,7 +346,7 @@ other render backends (`graph-compose-render-pdf`, `-render-pptx`) and
   measured on a simulated `3.0.0` cut, where it reported *"No incompatible changes found
   while checking backward compatibility of version 3.0.0 with the previous version
   3.0.0"*, from the reactor and from a local repository the release had been installed
-  into alike. So both pins are held **strictly older** than the working version
+  into alike. So every pin is held **strictly older** than the working version
   (`VersionConsistencyGuardTest`), every path drops our cached artifacts from the local
   repository before it resolves, and the publish workflow runs the gate *before* the
   `install` that seeds that repository with the release being published.

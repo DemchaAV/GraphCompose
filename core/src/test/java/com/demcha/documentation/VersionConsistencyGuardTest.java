@@ -228,7 +228,8 @@ class VersionConsistencyGuardTest {
         Element project = parse(coveragePom).getDocumentElement();
 
         Element unpack = executionOf(project, "maven-dependency-plugin", "unpack-measured-classes");
-        Element unpackIds = unpack == null ? null : directChild(directChild(unpack, "configuration"), "includeArtifactIds");
+        Element unpackConfiguration = unpack == null ? null : directChild(unpack, "configuration");
+        Element unpackIds = unpackConfiguration == null ? null : directChild(unpackConfiguration, "includeArtifactIds");
         assertThat(unpackIds)
                 .describedAs("coverage/pom.xml's unpack-measured-classes execution must name the modules "
                         + "whose classes it unpacks")
@@ -250,11 +251,20 @@ class VersionConsistencyGuardTest {
         for (int i = 0; i < includes.getLength(); i++) {
             merged.add(includes.item(i).getTextContent().trim());
         }
+        assertThat(merged)
+                .describedAs("coverage/pom.xml's merge-exec execution must merge the qa suites' exec, "
+                        + "which carries most of the cross-module coverage")
+                .contains("qa/target/jacoco.exec");
 
         for (Map.Entry<String, String> module : COVERAGE_MEASURED_MODULES.entrySet()) {
             assertThat(declaresDependencyOn(project, module.getKey()))
                     .describedAs("coverage/pom.xml must depend on %s to report on it", module.getKey())
                     .isTrue();
+            assertThat(dependencyScope(project, module.getKey()))
+                    .describedAs("coverage/pom.xml must depend on %s at compile scope: report-aggregate "
+                            + "does not traverse a test-scope dependency, so the published report would "
+                            + "drop the module while the check still counted it", module.getKey())
+                    .isIn("", "compile");
             assertThat(merged)
                     .describedAs("coverage/pom.xml's merge-exec execution must merge %s's exec", module.getKey())
                     .contains(module.getValue() + "/target/jacoco.exec");
@@ -263,6 +273,23 @@ class VersionConsistencyGuardTest {
                             + "write no exec for the aggregate to merge", module.getValue())
                     .isTrue();
         }
+    }
+
+    /** The {@code <scope>} of the project's dependency on {@code artifactId}; empty when it declares none. */
+    private static String dependencyScope(Element project, String artifactId) {
+        Element deps = directChild(project, "dependencies");
+        NodeList children = deps == null ? null : deps.getChildNodes();
+        for (int i = 0; children != null && i < children.getLength(); i++) {
+            Node node = children.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("dependency")) {
+                Element aid = directChild((Element) node, "artifactId");
+                if (aid != null && artifactId.equals(aid.getTextContent().trim())) {
+                    Element scope = directChild((Element) node, "scope");
+                    return scope == null ? "" : scope.getTextContent().trim();
+                }
+            }
+        }
+        return "";
     }
 
     /** The execution {@code id} of the build plugin {@code artifactId}, or null when there is none. */

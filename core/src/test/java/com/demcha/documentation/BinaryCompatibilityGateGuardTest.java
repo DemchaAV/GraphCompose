@@ -453,25 +453,47 @@ class BinaryCompatibilityGateGuardTest {
                 .isLessThan(checked);
 
         int baselinesFrom = script.indexOf("$japicmpBaselines = @(");
-        assertThat(baselinesFrom)
-                .describedAs("cut-release.ps1 Step 5b no longer builds $japicmpBaselines")
-                .isNotNegative();
-        String baselines = script.substring(baselinesFrom, script.indexOf("if ($DryRun)", baselinesFrom));
+        int baselinesTo = baselinesFrom < 0 ? -1 : script.indexOf("if ($DryRun)", baselinesFrom);
+        assertThat(baselinesTo)
+                .describedAs("cut-release.ps1 Step 5b no longer builds $japicmpBaselines ahead of its "
+                        + "dry-run branch")
+                .isPositive();
+        List<String> baselineEntries = List.of(script.substring(baselinesFrom, baselinesTo).split("\n"));
+
+        for (Map.Entry<String, Map<String, String>> pom : REQUIRED_EXECUTIONS.entrySet()) {
+            String module = pom.getKey().substring(0, pom.getKey().indexOf('/'));
+            String artifact = artifactIdOf(module);
+            for (String property : new LinkedHashSet<>(pom.getValue().values())) {
+                assertThat(baselineEntries)
+                        .describedAs("cut-release.ps1 Step 5b must drop %s's %s baseline from the local "
+                                + "repository before the gate resolves it, reading the pin from %s — Step 4 "
+                                + "installed the just-bumped version there", artifact, property, pom.getKey())
+                        .anyMatch(entry -> entry.contains("'" + artifact + "/' + [regex]::Match(")
+                                && entry.contains("'<" + property.replace(".", "\\.") + ">(")
+                                && readsPom(script, entry, pom.getKey()));
+            }
+        }
 
         for (String module : gatedModules()) {
             String artifact = artifactIdOf(module);
             assertThat(releaseArgs)
                     .describedAs("cut-release.ps1 Step 5b must diff %s before the tag is cut", artifact)
                     .contains(":" + artifact);
-            assertThat(baselines)
-                    .describedAs("cut-release.ps1 Step 5b must drop %s's pinned baseline from the local "
-                            + "repository before the gate resolves it — Step 4 installed the just-bumped "
-                            + "version there", artifact)
-                    .contains("'" + artifact + "/' + [regex]::Match(");
             assertThat(publishGates)
                     .describedAs("publish.yml must diff %s on the tagged commit before it deploys", artifact)
                     .anyMatch(run -> run.contains(":" + artifact));
         }
+    }
+
+    /** A Step 5b baseline entry's {@code [regex]::Match($variable, ...)} source variable. */
+    private static final Pattern MATCHED_VARIABLE = Pattern.compile("\\[regex]::Match\\((\\$\\w+),");
+
+    /** Whether the variable a baseline entry reads was loaded from {@code pom} in the script. */
+    private static boolean readsPom(String script, String entry, String pom) {
+        Matcher variable = MATCHED_VARIABLE.matcher(entry);
+        return variable.find()
+                && script.contains(variable.group(1) + " = [System.IO.File]::ReadAllText((Join-Path $repoRoot '"
+                        + pom + "'))");
     }
 
     /** The XML report each required execution writes: {@code <module>/target/japicmp/<id>.xml}. */

@@ -6251,7 +6251,7 @@ follow semantic versioning; release dates are ISO 8601.
   and `BinaryCompatibilityGateGuardTest` and `VersionConsistencyGuardTest` hold the wiring and the
   pin. Against 2.0.0 and 2.4.1 the module reports additions only. Everything it gained in 2.5 is
   `@Beta` and absent from the floor; a member that becomes Stable later is not held by a floor-only
-  diff, which `docs/api-stability.md` leaves to the DOCX Stable-graduation stage.
+  diff, which `docs/api-stability.md` leaves to graduating the DOCX `@Beta` API to Stable.
 - **CI and CodeQL run on every push to `2.5-dev`.** The 2.5 line was checked only through its
   pull requests, so no commit merged into it had a CI run of its own, and its pull requests had
   no CodeQL analysis of their base branch. `ci.yml` and `codeql.yml` now list `2.5-dev` beside

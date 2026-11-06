@@ -278,7 +278,7 @@
             Everything this module added since is @Beta and absent from the floor, so
             only the per-element @Internal marker is excluded. A member that becomes
             Stable after 2.0.0 is not held by a floor-only diff; docs/api-stability.md
-            leaves that to the DOCX Stable-graduation stage. Fails the build on any
+            leaves that to graduating the DOCX @Beta API to Stable. Fails the build on any
             binary-incompatible modification; source-incompatible changes are reported
             only. A baseline that cannot be resolved fails the build rather than
             skipping its diff.

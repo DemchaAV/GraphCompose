@@ -5986,6 +5986,31 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The `render-docx` README and `WordExportExample` show the session's Word export as it is.**
+  - The README's usage opens on `session.buildDocx(path)`, and says what it and `writeDocx` /
+    `toDocxBytes` do not give: they build a default backend, so they hand back no
+    `DocxExportReport` and stamp the file with the date it was written. A second snippet exports
+    through `DocxSemanticBackend.builder().deterministic(true).reportSink(...)`, and the README
+    says what a report note holds and what deterministic output pins.
+  - Three README statements were false and are corrected. Shapes, ellipses, slanted and vertical
+    lines, polygons and paths are drawn as floating shapes where the page draws them, not
+    left out; what is still dropped is a drawing painted only with a gradient, one with no
+    layout or no paragraph on its page, and one in a page zone. A layer stack takes more Word
+    forms than side-by-side columns. A line becomes a paragraph border only when it is level,
+    untransformed, no thicker than 12pt and in the flow.
+  - The README and the recipe said deterministic output is the same bytes "on every run and
+    machine". It is on every run on one platform; across platforms the parts Apache POI writes
+    still end their XML declaration with the platform's line separator, and both now say so.
+  - `WordExportExample` exports through that configured backend and prints its report, so the
+    committed `word-export-companion.docx` comes out as the same bytes on every run on one
+    platform. The
+    document's own captions said the divider and the badge stay PDF-only and that a nested list
+    indents two spaces a level; in Word they are a paragraph border, a drawn shape holding its
+    letters and a Word list level, and the captions say so. The title and the nested markers no
+    longer use characters Helvetica lacks, which the PDF printed as `?`. The class Javadoc no
+    longer calls Apache POI an optional dependency, and the Word export section of
+    `examples/README.md` follows the example.
+
 - **The DOCX recipe says what Word and LibreOffice do with the export's page fields once a page is
   added, and why the file asks for no update on open.**
   - Measured in Word 16 and LibreOffice 24.2, with a page put in at the start of the corpus's

@@ -1180,7 +1180,7 @@ The semantic backend walks the document graph and writes **editable
 Word content**, which Word paginates and re-flows after an edit. One
 session, two outputs:
 
-<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
+<!-- doc-example-ignore: abridges a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 try (DocumentSession document = GraphCompose.document(pdfFile)
         .pageSize(595, 842)
@@ -1192,25 +1192,35 @@ try (DocumentSession document = GraphCompose.document(pdfFile)
 
     document.pageFlow().name("Flow")
             .addRich(rich -> rich.plain("Inline ").bold("runs").plain(" survive."))
-            .addList(list -> list.markerFor(1, ListMarker.custom("◦"))
+            .addList(list -> list.markerFor(1, ListMarker.custom("»"))
                     .addItem("Nested authoring", l1 -> l1
-                            .addItem("Two spaces of indent per depth in Word")))
+                            .addItem("Each depth is a level of one Word list")))
             .addTable(t -> t.headerRow("Quarter", "Revenue").row("Q1", "42"))
             .addSection("Chart", s -> s.chart(ChartSpec.bar().data(quarters).build()))
             .build();
 
     document.buildPdf();                                   // fixed-layout PDF
-    document.export(new DocxSemanticBackend(), docxFile);  // editable Word file
+    document.export(DocxSemanticBackend.builder()          // editable Word file
+            .deterministic(true)                           // same bytes every run
+            .reportSink(report -> report.notes().forEach(System.out::println))
+            .build(), docxFile);
 }
 ```
 
+`document.buildDocx(docxFile)` exports in one call. It has no report and
+stamps the file with the date of the export, so the example configures
+the backend: the report says what Word could not carry as authored, each
+note naming where it was (a node's path, a page, or none), and
+`deterministic(true)` makes the committed preview the same bytes on every
+run on one platform.
+
 Paragraphs (inline runs included), lists, tables, side-by-side rows,
-images, spacers, and page breaks map 1:1; session metadata lands in the
-Word core properties. Charts export as their categories-by-series data
-table (one capability warning per export), shape containers flatten to
-inline layers, and pure geometry — dividers, shapes, barcodes — stays
-PDF-only by design. Requires the `graph-compose-render-docx` artifact
-on the classpath (it brings Apache POI transitively).
+images, spacers and page breaks become Word's own; session metadata lands
+in the Word core properties. A chart is a Word chart, its numbers in an
+embedded workbook. The divider is a paragraph border and the badge a
+drawn shape holding its letters; the report names both. Requires the
+`graph-compose-render-docx` artifact on the classpath (it brings Apache
+POI transitively).
 
 [📄 View PDF](../assets/readme/examples/word-export-companion.pdf) ·
 [📝 Word file](../assets/readme/examples/word-export-companion.docx) ·

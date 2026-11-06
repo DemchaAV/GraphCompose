@@ -58,8 +58,11 @@ byte[] docx = session.export(DocxSemanticBackend.builder()
 ```
 
 The package's created / modified dates and every zip entry's time are pinned, so the same
-document exports to the same bytes on every run and machine — the contract the PDF and PPTX
-backends keep, with the same default instant. Embedded fonts are deterministic either way:
+document exports to the same bytes on every run on one platform, at the same default instant
+the PDF and PPTX backends pin. Across platforms the bytes still differ where Apache POI ends an
+XML declaration with the platform's line separator — in `word/document.xml`, `styles.xml`,
+`numbering.xml`, `settings.xml` and `docProps/app.xml`; a chart's embedded workbook is written
+with plain line breaks on any machine. Embedded fonts are deterministic either way:
 their obfuscation keys are derived from the font. Off by default, because a document's
 creation date is real metadata.
 

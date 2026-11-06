@@ -6275,6 +6275,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The knowledge pack routes a Word export.** `api-query --task export.docx` recommends
+  `session.buildDocx(path)` — or `writeDocx` / `toDocxBytes` — and says when to export through
+  another path instead: `DocxSemanticBackend.builder().deterministic(true).reportSink(...)` for
+  the `DocxExportReport` or the same bytes on every run on one platform (a `{date}` token aside),
+  `new DocxSemanticBackend()` where only Stable API may be used, and `buildPdf` where the reader
+  must see the page as laid out rather than edit it. It names what each path costs and which of
+  these calls are `@Beta`, and points at the `render-docx` README's usage. The route is not yet
+  confirmed by a maintainer, and `api-query` says so when it prints it.
 - **`ROADMAP.md` says what 2.5 did for DOCX and what is left.** The strict-mode item said shapes,
   lines and ellipses are dropped with a warning; they are written where the layout places them, and
   every loss is named in the `DocxExportReport`. A built-in option that fails the export instead

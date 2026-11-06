@@ -22,9 +22,9 @@
         runs `verify` on this module), which feeds the required CI Gate.
 
         Scope: the engine (graph-compose-core), the PDF backend
-        (graph-compose-render-pdf), and the built-in templates
-        (graph-compose-templates) — each reported from its own tests plus the qa
-        suites' exec.
+        (graph-compose-render-pdf), the Word backend (graph-compose-render-docx),
+        and the built-in templates (graph-compose-templates) — each reported from
+        its own tests plus the qa suites' exec.
     -->
     <parent>
         <groupId>io.github.demchaav</groupId>
@@ -52,6 +52,11 @@
         </dependency>
         <dependency>
             <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-render-docx</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-templates</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -70,11 +75,15 @@
     <properties>
         <!--
             Non-regression ratchet on the AGGREGATE report (core + render-pdf +
-            templates, counting the qa cross-module exec). Measured stable baseline on
-            the v2.0.0 line: INSTRUCTION 87.86 % (0.87857), BRANCH 68.31 % (0.68310) —
+            render-docx + templates, counting the qa cross-module exec). Measured stable
+            baseline on the v2.0.0 line, before render-docx joined in 2.5.0:
+            INSTRUCTION 87.86 % (0.87857), BRANCH 68.31 % (0.68310) —
             verified identical on Windows and CI Linux (branch byte-identical; instruction
-            differs by 5 of ~102k). The floors sit ~0.36 pp (instruction) and ~0.31 pp
-            (branch) below the baseline — rounding/variance headroom only, not vanity.
+            differs by 5 of ~102k). The floors were set ~0.36 pp (instruction) and
+            ~0.31 pp (branch) below that baseline — rounding/variance headroom only, not
+            vanity. The aggregate has since risen well above them: render-docx joined at
+            INSTRUCTION 96.90 %, BRANCH 85.00 %, taking it from 93.99 % / 77.52 % to
+            94.88 % / 81.37 %. Raising the floors to match is a separate ratchet step.
             Ratchet UP as coverage improves; never lower to make a red build pass —
             fix the tests.
         -->
@@ -88,7 +97,7 @@
             <!--
                 JaCoCo has no native aggregate-check goal, so reproduce the aggregate
                 inputs for a BUNDLE check: (1) unpack the measured modules' main classes
-                into this module's output dir, (2) merge their four jacoco.exec into one
+                into this module's output dir, (2) merge their five jacoco.exec into one
                 aggregate.exec, (3) run jacoco:check against that class set + merged exec.
                 Same classes + same execs as report-aggregate above, so the enforced
                 numbers match the published aggregate report.
@@ -106,7 +115,7 @@
                         </goals>
                         <configuration>
                             <!-- qa has no main classes (test-only); it contributes exec, not classes. -->
-                            <includeArtifactIds>graph-compose-core,graph-compose-render-pdf,graph-compose-templates</includeArtifactIds>
+                            <includeArtifactIds>graph-compose-core,graph-compose-render-pdf,graph-compose-render-docx,graph-compose-templates</includeArtifactIds>
                             <includes>**/*.class</includes>
                             <outputDirectory>${project.build.outputDirectory}</outputDirectory>
                             <overWriteReleases>true</overWriteReleases>
@@ -140,6 +149,7 @@
                                     <includes>
                                         <include>core/target/jacoco.exec</include>
                                         <include>render-pdf/target/jacoco.exec</include>
+                                        <include>render-docx/target/jacoco.exec</include>
                                         <include>templates/target/jacoco.exec</include>
                                         <include>qa/target/jacoco.exec</include>
                                     </includes>

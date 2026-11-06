@@ -283,8 +283,8 @@
 
         <!--
             Binary-compatibility gate for this module. Activated with `-P japicmp`,
-            the same profile id as the engine pom, so one reactor invocation
-            (-pl :graph-compose-core,:graph-compose-templates) gates both modules.
+            the same profile id as the engine and render-docx poms, so one reactor
+            invocation gates all three modules.
             Resolves the two published baselines pinned by japicmp.baseline.floor /
             japicmp.baseline.previous from Maven Central and diffs the freshly-built
             jar against each in its own execution; reports are named after the

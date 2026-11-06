@@ -70,7 +70,7 @@ Almost all work targets **`develop`**, the ongoing 2.x line. The `1.x` branch ta
    - `Architecture and Documentation Guards` &mdash; fast canonical / engine-boundary guard tests, fail-first gate (always runs)
    - `Build and run tests (JDK 17)`, `(JDK 21)`, `(JDK 25)` &mdash; full `mvnw verify` in parallel matrix across the supported JVMs
    - `Examples Generation Smoke Test` &mdash; regenerates every runnable example and uploads the PDFs as a CI artifact
-   - `Binary Compatibility` &mdash; PR-only japicmp diff of the `graph-compose-core` and `graph-compose-templates` surfaces
+   - `Binary Compatibility` &mdash; PR-only japicmp diff of the `graph-compose-core`, `graph-compose-templates` and `graph-compose-render-docx` surfaces
    - `Performance Smoke Check` &mdash; PR-only coarse benchmark to catch performance regressions
    - `CI Gate` &mdash; single aggregate status check that is green when every job that ran passed
 

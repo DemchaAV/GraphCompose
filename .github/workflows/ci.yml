@@ -95,10 +95,10 @@ jobs:
   changes:
     # Path-based change detection for selective CI on pull requests. Emits the
     # reverse-dependency flags the heavy jobs gate on: `code` (any build input),
-    # `docs` (markdown the guard suites read and compile), `core` and `templates`
-    # (the graph-compose-core / graph-compose-templates sources + pom — the two
-    # modules under the japicmp gate), `perf` (modules the smoke benchmark
-    # exercises), and `jvm` (published library modules + toolchain — drives the
+    # `docs` (markdown the guard suites read and compile), `core`, `templates` and
+    # `render_docx` (the graph-compose-core / -templates / -render-docx sources +
+    # pom — the three modules under the japicmp gate), `perf` (modules the smoke
+    # benchmark exercises), and `jvm` (published library modules + toolchain — drives the
     # JDK matrix width). Pushes/dispatch bypass these gates.
     name: Detect changed paths
     if: github.event_name != 'schedule'
@@ -108,6 +108,7 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       core: ${{ steps.filter.outputs.core }}
       templates: ${{ steps.filter.outputs.templates }}
+      render_docx: ${{ steps.filter.outputs.render_docx }}
       perf: ${{ steps.filter.outputs.perf }}
       jvm: ${{ steps.filter.outputs.jvm }}
       docx: ${{ steps.filter.outputs.docx }}
@@ -162,6 +163,9 @@ jobs:
             templates:
               - 'templates/src/**'
               - 'templates/pom.xml'
+            render_docx:
+              - 'render-docx/src/**'
+              - 'render-docx/pom.xml'
             perf:
               - 'core/src/**'
               - 'render-pdf/**'
@@ -256,10 +260,11 @@ jobs:
         # scope — this is where DocumentationSnippetCompileTest, the guard that
         # compiles the literal markdown fences in docs/, and DocumentationExamplesTest
         # actually run), and the graph-compose-coverage aggregator (JaCoCo over core +
-        # render-pdf + templates, counting the qa exec, now with a NON-REGRESSION
-        # RATCHET — this step fails if aggregate INSTRUCTION or BRANCH coverage drops
-        # below the floor in coverage/pom.xml). -am pulls the fonts / emoji upstreams;
-        # only examples / benchmarks are excluded (their own CI jobs cover them).
+        # render-pdf + render-docx + templates, counting the qa exec, now with a
+        # NON-REGRESSION RATCHET — this step fails if aggregate INSTRUCTION or BRANCH
+        # coverage drops below the floor in coverage/pom.xml). -am pulls the fonts /
+        # emoji upstreams; only examples / benchmarks are excluded (their own CI jobs
+        # cover them).
         run: ./mvnw -B -ntp clean verify -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose,:graph-compose-bundle,:graph-compose-qa,:graph-compose-coverage -am
 
       # The knowledge pack describes the public API of the tree being built, so
@@ -412,15 +417,15 @@ jobs:
           fi
 
       - name: Upload aggregate coverage report
-        # The cross-module JaCoCo report (core + render-pdf + templates coverage,
-        # counting the qa suites) is published as an artifact for inspection. The
+        # The cross-module JaCoCo report (core + render-pdf + render-docx + templates
+        # coverage, counting the qa suites) is published as an artifact for inspection. The
         # non-regression gate itself is enforced by the `verify` step above; this just
         # captures the numbers. One JDK is enough — coverage is identical across JVMs.
         if: matrix.java == '17'
         uses: actions/upload-artifact@v7
         with:
-          # Cross-module aggregate (core + render-pdf + templates, counting the qa
-          # suites). The artifact name is kept for continuity with earlier runs.
+          # Cross-module aggregate (core + render-pdf + render-docx + templates, counting
+          # the qa suites). The artifact name is kept for continuity with earlier runs.
           name: coverage-core-aggregate-${{ github.run_id }}
           path: coverage/target/site/jacoco-aggregate/**
           if-no-files-found: error
@@ -632,13 +637,14 @@ jobs:
 
   binary-compat:
     name: Binary Compatibility (japicmp vs pom baseline)
-    # japicmp diffs the graph-compose-core and graph-compose-templates public
-    # surfaces (each module carries a `japicmp` profile), so it only matters when
-    # one of them changed (`core/src/**`, `core/pom.xml`, `templates/src/**` or
-    # `templates/pom.xml`). Both are diffed in one reactor invocation: templates
-    # compiles against the core built in the same run, and a core change can move
-    # the surface templates exposes.
-    if: github.event_name == 'pull_request' && (needs.changes.outputs.core == 'true' || needs.changes.outputs.templates == 'true')
+    # japicmp diffs the graph-compose-core, graph-compose-templates and
+    # graph-compose-render-docx public surfaces (each module carries a `japicmp`
+    # profile), so it only matters when one of them changed (its `src/**` or its
+    # `pom.xml`). All three are diffed in one reactor invocation: templates and
+    # render-docx compile against the core built in the same run, and a core
+    # change can move the surface they expose. render-pdf is in the reactor only
+    # because render-docx compiles against it; it has no japicmp profile.
+    if: github.event_name == 'pull_request' && (needs.changes.outputs.core == 'true' || needs.changes.outputs.templates == 'true' || needs.changes.outputs.render_docx == 'true')
     needs: [architecture-and-documentation-guards, changes]
     runs-on: ubuntu-latest
     env:
@@ -672,16 +678,19 @@ jobs:
         run: |
           rm -rf ~/.m2/repository/io/github/demchaav/graph-compose-core
           rm -rf ~/.m2/repository/io/github/demchaav/graph-compose-templates
+          rm -rf ~/.m2/repository/io/github/demchaav/graph-compose-render-docx
 
       - name: Compare public API against baseline
         # Each module's `japicmp` profile resolves the published releases its
         # pom pins from Maven Central and diffs them against the freshly-built
         # artifact: graph-compose-core against `japicmp.baseline` (the 2.x
         # floor), graph-compose-templates against `japicmp.baseline.floor` and
-        # `japicmp.baseline.previous` (the floor and the latest release). Fails
-        # the job on any binary-incompatible modification to either public
-        # surface. Source-incompatible changes are reported only (phased policy).
-        run: ./mvnw -B -ntp -DskipTests -P japicmp verify -pl :graph-compose-core,:graph-compose-templates
+        # `japicmp.baseline.previous` (the floor and the latest release),
+        # graph-compose-render-docx against its `japicmp.baseline` (the 2.x
+        # floor). Fails the job on any binary-incompatible modification to a
+        # gated public surface. Source-incompatible changes are reported only
+        # (phased policy).
+        run: ./mvnw -B -ntp -DskipTests -P japicmp verify -pl :graph-compose-core,:graph-compose-templates,:graph-compose-render-pdf,:graph-compose-render-docx
 
       - name: Prove every japicmp execution ran
         # A japicmp execution that does not run — switched off, unbound from the
@@ -690,12 +699,13 @@ jobs:
         # the gate relies on must have left its XML report;
         # BinaryCompatibilityGateGuardTest keeps this list in step with the poms.
         # (A baseline japicmp cannot resolve still leaves a report; the templates
-        # gate fails on it through ignoreMissingOldVersion=false.)
+        # and render-docx gates fail on it through ignoreMissingOldVersion=false.)
         run: |
-          ls -l core/target/japicmp templates/target/japicmp
+          ls -l core/target/japicmp templates/target/japicmp render-docx/target/japicmp
           test -s core/target/japicmp/japicmp-against-baseline.xml
           test -s templates/target/japicmp/japicmp-against-major-floor.xml
           test -s templates/target/japicmp/japicmp-against-previous-release.xml
+          test -s render-docx/target/japicmp/japicmp-against-baseline.xml
 
       - name: Upload japicmp report
         if: always()
@@ -705,6 +715,7 @@ jobs:
           path: |
             core/target/japicmp/**
             templates/target/japicmp/**
+            render-docx/target/japicmp/**
           if-no-files-found: ignore
           # ~130 KB of XML — the whole live population is under 60 MB, so retention
           # here is about usefulness, not bytes. These reports answer "when did this

@@ -35,7 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * their own proof: each ends by checking that every execution left its XML report. An
  * execution that does not run — switched off, unbound, or not selected — never writes
  * one. A baseline japicmp cannot resolve is the exception: the plugin still writes a
- * report for it, which is why the templates gate must fail on that case instead.</p>
+ * report for it, which is why the templates and render-docx gates must fail on that case
+ * instead.</p>
  *
  * <p>The other half is where the baseline comes from. japicmp resolves a pin that equals
  * the module's own version to the artifact this build just produced — measured, from the
@@ -60,7 +61,7 @@ class BinaryCompatibilityGateGuardTest {
     /** The ci.yml job that runs the gate on pull requests. */
     private static final String PR_JOB = "binary-compat";
 
-    /** The per-element marker: the one exclusion the templates gate may carry. */
+    /** The per-element marker: the one exclusion the templates and render-docx gates may carry. */
     private static final String INTERNAL_MARKER = "@com.demcha.compose.document.api.Internal";
 
     /** The property japicmp reads its skip switch from. */
@@ -74,7 +75,7 @@ class BinaryCompatibilityGateGuardTest {
 
     /** The artifacts a gate path must drop from the local repository before it resolves. */
     private static final List<String> CACHED_ARTIFACTS =
-            List.of("graph-compose-core", "graph-compose-templates");
+            List.of("graph-compose-core", "graph-compose-templates", "graph-compose-render-docx");
 
     /**
      * Each execution the gate relies on, per pom, with the baseline property its
@@ -82,6 +83,7 @@ class BinaryCompatibilityGateGuardTest {
      */
     private static final Map<String, Map<String, String>> REQUIRED_EXECUTIONS = Map.of(
             "core/pom.xml", Map.of("japicmp-against-baseline", "japicmp.baseline"),
+            "render-docx/pom.xml", Map.of("japicmp-against-baseline", "japicmp.baseline"),
             "templates/pom.xml", Map.of(
                     "japicmp-against-major-floor", "japicmp.baseline.floor",
                     "japicmp-against-previous-release", "japicmp.baseline.previous"));
@@ -184,7 +186,15 @@ class BinaryCompatibilityGateGuardTest {
     }
 
     /**
-     * A baseline the templates gate cannot resolve fails the build.
+     * The gates that may narrow themselves by nothing but the per-element {@code @Internal}
+     * marker, and that must fail on a baseline they cannot resolve. The engine pom is not
+     * here: it excludes its two {@code @Internal} package trees, and still runs with
+     * japicmp's default for an unresolvable baseline.
+     */
+    private static final List<String> MARKER_ONLY_GATES = List.of("templates/pom.xml", "render-docx/pom.xml");
+
+    /**
+     * A baseline the templates or DOCX gate cannot resolve fails the build.
      *
      * <p>japicmp defaults {@code ignoreMissingOldVersion} to {@code true}: a pin naming a
      * mistyped or unpublished version, or one the repository cannot serve, is logged as a
@@ -195,38 +205,42 @@ class BinaryCompatibilityGateGuardTest {
      * back.</p>
      */
     @Test
-    void theTemplatesGateFailsWhenABaselineCannotBeResolved() throws Exception {
-        Element plugin = japicmpPlugin(PROJECT_ROOT.resolve("templates/pom.xml"));
+    void theTemplatesAndDocxGatesFailWhenABaselineCannotBeResolved() throws Exception {
+        for (String pom : MARKER_ONLY_GATES) {
+            Element plugin = japicmpPlugin(PROJECT_ROOT.resolve(pom));
 
-        assertThat(descendantTexts(plugin, "ignoreMissingOldVersion"))
-                .describedAs("templates/pom.xml must set ignoreMissingOldVersion to false: japicmp "
-                        + "defaults it to true, which skips a baseline it cannot resolve and passes")
-                .isNotEmpty()
-                .containsOnly("false");
-        assertThat(descendantTexts(plugin, "ignoreNonResolvableArtifacts"))
-                .describedAs("templates/pom.xml: ignoreNonResolvableArtifacts skips an unresolvable "
-                        + "baseline just as ignoreMissingOldVersion does")
-                .noneMatch(value -> value.equalsIgnoreCase("true"));
+            assertThat(descendantTexts(plugin, "ignoreMissingOldVersion"))
+                    .describedAs("%s must set ignoreMissingOldVersion to false: japicmp defaults it "
+                            + "to true, which skips a baseline it cannot resolve and passes", pom)
+                    .isNotEmpty()
+                    .containsOnly("false");
+            assertThat(descendantTexts(plugin, "ignoreNonResolvableArtifacts"))
+                    .describedAs("%s: ignoreNonResolvableArtifacts skips an unresolvable baseline just "
+                            + "as ignoreMissingOldVersion does", pom)
+                    .noneMatch(value -> value.equalsIgnoreCase("true"));
+        }
     }
 
     /**
-     * Every {@code templates.*} package is Stable ({@code docs/api-stability.md}), so the
-     * templates gate may narrow itself by nothing but the per-element {@code @Internal}
-     * marker. An excluded package or class, or an include list naming part of the
-     * module, would let a Stable break ship with the gate green.
+     * Every {@code templates.*} package is Stable ({@code docs/api-stability.md}), and the
+     * DOCX gate diffs against a floor that holds only Stable members, so both gates may
+     * narrow themselves by nothing but the per-element {@code @Internal} marker. An
+     * excluded package or class, or an include list naming part of the module, would let a
+     * Stable break ship with the gate green.
      */
     @Test
-    void theTemplatesGateCoversTheWholeStableSurface() throws Exception {
-        Element plugin = japicmpPlugin(PROJECT_ROOT.resolve("templates/pom.xml"));
+    void theTemplatesAndDocxGatesCoverTheWholeStableSurface() throws Exception {
+        for (String pom : MARKER_ONLY_GATES) {
+            Element plugin = japicmpPlugin(PROJECT_ROOT.resolve(pom));
 
-        assertThat(descendantTexts(plugin, "exclude"))
-                .describedAs("templates/pom.xml: the japicmp gate may exclude only %s — every "
-                        + "templates.* package is Stable per docs/api-stability.md", INTERNAL_MARKER)
-                .isSubsetOf(List.of(INTERNAL_MARKER));
-        assertThat(descendantTexts(plugin, "include"))
-                .describedAs("templates/pom.xml: an include list narrows the japicmp gate to part "
-                        + "of the Stable surface")
-                .isEmpty();
+            assertThat(descendantTexts(plugin, "exclude"))
+                    .describedAs("%s: the japicmp gate may exclude only %s", pom, INTERNAL_MARKER)
+                    .isSubsetOf(List.of(INTERNAL_MARKER));
+            assertThat(descendantTexts(plugin, "include"))
+                    .describedAs("%s: an include list narrows the japicmp gate to part of the Stable "
+                            + "surface", pom)
+                    .isEmpty();
+        }
     }
 
     /**
@@ -438,11 +452,22 @@ class BinaryCompatibilityGateGuardTest {
                 .isGreaterThan(cleared)
                 .isLessThan(checked);
 
+        int baselinesFrom = script.indexOf("$japicmpBaselines = @(");
+        assertThat(baselinesFrom)
+                .describedAs("cut-release.ps1 Step 5b no longer builds $japicmpBaselines")
+                .isNotNegative();
+        String baselines = script.substring(baselinesFrom, script.indexOf("if ($DryRun)", baselinesFrom));
+
         for (String module : gatedModules()) {
             String artifact = artifactIdOf(module);
             assertThat(releaseArgs)
                     .describedAs("cut-release.ps1 Step 5b must diff %s before the tag is cut", artifact)
                     .contains(":" + artifact);
+            assertThat(baselines)
+                    .describedAs("cut-release.ps1 Step 5b must drop %s's pinned baseline from the local "
+                            + "repository before the gate resolves it — Step 4 installed the just-bumped "
+                            + "version there", artifact)
+                    .contains("'" + artifact + "/' + [regex]::Match(");
             assertThat(publishGates)
                     .describedAs("publish.yml must diff %s on the tagged commit before it deploys", artifact)
                     .anyMatch(run -> run.contains(":" + artifact));

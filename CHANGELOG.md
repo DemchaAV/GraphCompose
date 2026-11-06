@@ -6232,6 +6232,26 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Build
 
+- **The coverage aggregate counts the Word export.** `graph-compose-render-docx` ran its tests
+  without the JaCoCo agent and was not among the modules `graph-compose-coverage` reports on, so
+  the export had no coverage figure and its classes were outside the ratchet. Its pom now runs the
+  agent (`prepare-agent`, the same pinned `jacoco.plugin.version` as the other measured modules,
+  held by `VersionConsistencyGuardTest`), and the aggregate unpacks its classes and merges its
+  exec beside the engine's, the PDF backend's and the templates'. The module measures 96.90%
+  instructions and 85.00% branches, its own tests and the `qa` suites together, so the aggregate
+  rises from 93.99% / 77.52% to 94.88% / 81.37%; the floors stay at 0.875 / 0.68. The agent adds
+  no measurable time to the module's 2545 tests.
+- **The binary-compatibility gate holds the Word export's Stable path.** japicmp did not diff
+  `graph-compose-render-docx`, so the Stable members of `DocxSemanticBackend` (the class, its
+  no-argument constructor, `name()` and `export(...)`) could break in a 2.x minor with every check
+  green. The module's pom now carries the `japicmp` profile: one diff against the 2.x floor, `2.0.0`,
+  the baseline the engine's gate holds, excluding only the `@Internal` marker and failing on a
+  baseline it cannot resolve. The pull-request job (now also run when `render-docx/src/**` or its pom changes),
+  the publish workflow and `cut-release.ps1` Step 5b run it beside the engine and templates gates,
+  and `BinaryCompatibilityGateGuardTest` and `VersionConsistencyGuardTest` hold the wiring and the
+  pin. Against 2.0.0 and 2.4.1 the module reports additions only. Everything it gained in 2.5 is
+  `@Beta` and absent from the floor; a member that becomes Stable later is not held by a floor-only
+  diff, which `docs/api-stability.md` leaves to the DOCX Stable-graduation stage.
 - **CI and CodeQL run on every push to `2.5-dev`.** The 2.5 line was checked only through its
   pull requests, so no commit merged into it had a CI run of its own, and its pull requests had
   no CodeQL analysis of their base branch. `ci.yml` and `codeql.yml` now list `2.5-dev` beside

@@ -1936,30 +1936,35 @@ try {
 
     if (-not $SkipVerify) {
         Step "5b" "Binary-compatibility gate (japicmp vs the published baselines)"
-        # Confirm the graph-compose-core and graph-compose-templates public APIs stay
-        # binary-compatible with their japicmp baselines BEFORE the tag is cut —
-        # independent of the PR-time CI japicmp job, which a direct-to-branch push could
-        # bypass. One reactor run diffs both. 2.0 module layout only (core/ present); the
-        # legacy 1.x single-artifact tree has no such gate. Precondition: every baseline is
+        # Confirm the graph-compose-core, graph-compose-templates and
+        # graph-compose-render-docx public APIs stay binary-compatible with their japicmp
+        # baselines BEFORE the tag is cut — independent of the PR-time CI japicmp job,
+        # which a direct-to-branch push could bypass. One reactor run diffs all three.
+        # render-docx resolves the PDF backend from the local repository, where Step 4
+        # installed it. 2.0 module layout only (core/ present); the legacy 1.x
+        # single-artifact tree has no such gate. Precondition: every baseline is
         # already on Central. On the first cut of a new major the templates baselines
         # (X.0.0) are not, so this gate — and publish.yml's — fails that cut until it is
         # decided how the gate runs for it.
         if (Test-Path (Join-Path $repoRoot 'core/pom.xml')) {
-            $japicmpArgs = @('-B', '-ntp', '-P', 'japicmp', '-Dmaven.test.skip=true', '-Djacoco.skip=true', 'verify', '-pl', ':graph-compose-core,:graph-compose-templates')
+            $japicmpArgs = @('-B', '-ntp', '-P', 'japicmp', '-Dmaven.test.skip=true', '-Djacoco.skip=true', 'verify', '-pl', ':graph-compose-core,:graph-compose-templates,:graph-compose-render-docx')
             # An execution that does not run writes no report and fails nothing, so every
             # execution the gate relies on must leave its report from THIS run.
             $japicmpReports = @('core/target/japicmp/japicmp-against-baseline.xml',
                 'templates/target/japicmp/japicmp-against-major-floor.xml',
-                'templates/target/japicmp/japicmp-against-previous-release.xml')
+                'templates/target/japicmp/japicmp-against-previous-release.xml',
+                'render-docx/target/japicmp/japicmp-against-baseline.xml')
             # Step 4 installed the just-bumped version into the local repository, so a
             # baseline is dropped from there before the gate resolves it: the diff must
             # be against the release on Central, never against what this cut built.
             $corePomText = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'core/pom.xml'))
             $templatesPomText = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'templates/pom.xml'))
+            $docxPomText = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'render-docx/pom.xml'))
             $japicmpBaselines = @(
                 'graph-compose-core/' + [regex]::Match($corePomText, '<japicmp\.baseline>([^<]+)<').Groups[1].Value,
                 'graph-compose-templates/' + [regex]::Match($templatesPomText, '<japicmp\.baseline\.floor>([^<]+)<').Groups[1].Value,
-                'graph-compose-templates/' + [regex]::Match($templatesPomText, '<japicmp\.baseline\.previous>([^<]+)<').Groups[1].Value)
+                'graph-compose-templates/' + [regex]::Match($templatesPomText, '<japicmp\.baseline\.previous>([^<]+)<').Groups[1].Value,
+                'graph-compose-render-docx/' + [regex]::Match($docxPomText, '<japicmp\.baseline>([^<]+)<').Groups[1].Value)
             if ($DryRun) {
                 Write-Host "    [DRY RUN] $mvnw $($japicmpArgs -join ' ')" -ForegroundColor Yellow
             } else {

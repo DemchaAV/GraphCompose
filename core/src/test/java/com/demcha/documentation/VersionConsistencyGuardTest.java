@@ -230,10 +230,10 @@ class VersionConsistencyGuardTest {
         Element unpack = executionOf(project, "maven-dependency-plugin", "unpack-measured-classes");
         Element unpackConfiguration = unpack == null ? null : directChild(unpack, "configuration");
         Element unpackIds = unpackConfiguration == null ? null : directChild(unpackConfiguration, "includeArtifactIds");
-        assertThat(unpackIds)
-                .describedAs("coverage/pom.xml's unpack-measured-classes execution must name the modules "
-                        + "whose classes it unpacks")
-                .isNotNull();
+        if (unpackIds == null) {
+            throw new AssertionError("coverage/pom.xml's unpack-measured-classes execution must name the "
+                    + "modules whose classes it unpacks");
+        }
         Set<String> unpackedIds = new LinkedHashSet<>();
         for (String id : unpackIds.getTextContent().split(",")) {
             unpackedIds.add(id.trim());
@@ -243,9 +243,9 @@ class VersionConsistencyGuardTest {
                 .containsExactlyInAnyOrderElementsOf(COVERAGE_MEASURED_MODULES.keySet());
 
         Element merge = executionOf(project, "jacoco-maven-plugin", "merge-exec");
-        assertThat(merge)
-                .describedAs("coverage/pom.xml must keep the jacoco merge-exec execution")
-                .isNotNull();
+        if (merge == null) {
+            throw new AssertionError("coverage/pom.xml must keep the jacoco merge-exec execution");
+        }
         Set<String> merged = new LinkedHashSet<>();
         NodeList includes = merge.getElementsByTagName("include");
         for (int i = 0; i < includes.getLength(); i++) {

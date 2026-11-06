@@ -6,8 +6,10 @@ package com.demcha.compose.document.style;
  * <p>The semantics are independent of the chosen outline kind: the same enum
  * applies whether the container is a rectangle, a rounded rectangle, or an
  * ellipse. Backends decide how to enforce the policy — the PDF backend uses
- * graphics-state clip paths, while the DOCX backend ignores
- * {@link #CLIP_PATH} and logs a capability warning.</p>
+ * graphics-state clip paths. A Word file has no clip a container can set, so
+ * the DOCX backend writes most of a clipped container's content whole, crops a
+ * picture that fills an elliptical outline, and names in its export report
+ * each clip that cuts what the container holds.</p>
  *
  * @author Artem Demchyshyn
  */

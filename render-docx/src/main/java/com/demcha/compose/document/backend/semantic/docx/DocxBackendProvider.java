@@ -8,14 +8,19 @@ import com.demcha.compose.document.backend.semantic.SemanticBackendProvider;
  * Registers the Word export with the document API, so a session can reach it without
  * naming it.
  *
- * <p>Before this, using the export meant constructing {@code DocxSemanticBackend} — which
- * means importing this artifact in the code that builds the document, and carrying that
- * dependency wherever the document is built. A render backend has not needed that since
- * 2.0; now neither does this one: put the artifact on the classpath and
- * {@code session.buildDocx(path)} finds it.</p>
+ * <p>The provider is listed in this artifact's
+ * {@code META-INF/services/com.demcha.compose.document.backend.semantic.SemanticBackendProvider}
+ * file, and answers {@link #format()} with {@code "docx"}:
+ * {@link com.demcha.compose.document.backend.semantic.SemanticBackendProviders} finds it through
+ * {@link java.util.ServiceLoader} and matches it by that format. So {@code session.buildDocx(path)}, {@code writeDocx} and
+ * {@code toDocxBytes} export to Word once the artifact is on the classpath, and the code that
+ * builds the document need not import it.</p>
  *
- * <p>A backend is created per export rather than shared, because it holds the state of the
- * export it is running.</p>
+ * <p>Each call to {@link #create()} returns a new {@link DocxSemanticBackend}, because a
+ * backend holds the state of the export it is running. That backend is the no-argument one:
+ * no report sink, and live dates in the package. For the {@link DocxExportReport} or
+ * byte-identical output, build a backend with {@link DocxSemanticBackend#builder()} and pass it
+ * to the session's {@code export(...)}.</p>
  *
  * <p><b>Experimental</b> ({@code @Beta}): it implements the semantic discovery seam
  * {@link SemanticBackendProvider}, which is Experimental in its first release — see

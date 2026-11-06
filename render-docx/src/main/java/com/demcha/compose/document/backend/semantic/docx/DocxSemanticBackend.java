@@ -144,13 +144,43 @@ import java.util.function.Function;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Functional canonical DOCX semantic backend backed by Apache POI.
+ * Exports a document as an editable Word file ({@code .docx}), through Apache POI.
  *
- * <p>The backend walks the semantic document graph and writes a DOCX file with:
- * paragraphs (single-style or inline-run), per-row tables, embedded images,
- * spacer paragraphs for vertical gaps, page-break markers, and section
- * containers. It deliberately ignores fixed-layout concerns (no per-page
- * pagination, no PDF chrome) since semantic exports target editing tools.</p>
+ * <p>The backend walks the semantic document graph and writes content Word owns: paragraphs
+ * and their runs, lists, tables, pictures, page breaks, a Word section for each section of the
+ * document, and the page's zones and text headers and footers as Word headers and footers with
+ * live page-number fields. Word paginates that content and reflows it after an edit. From the
+ * page the export carries over the blocks it kept together, and a page break between the pieces
+ * of a panel the layout split across pages.</p>
+ *
+ * <p><b>Geometry from the resolved layout.</b> The backend asks for the session's compiled
+ * layout ({@link #requiresResolvedLayout()}) and reads from it what Word cannot work out on its
+ * own: how tall a line is set, how wide an {@code auto} column came out, where a drawing stands
+ * and which paragraph carries it, which blocks the page kept together. A drawn shape other than
+ * a horizontal rule — a line, a rectangle, an ellipse, a path or a polygon — is written as a floating shape
+ * at the place and size the layout gives it, and the session's page backgrounds as shapes
+ * behind the text of every page. A section handed no layout is still exported: its text, lists,
+ * tables, pictures and charts from what the document states. Its drawings and page backgrounds
+ * need the layout and are left out. The report names each of them, what else that leaves to
+ * Word, and, where the session knows it, why there was no layout.</p>
+ *
+ * <p><b>Charts</b> are written as Word charts, their numbers in a workbook embedded with them,
+ * which a reader edits through Word's <i>Edit Data</i>. A chart composed in a table cell beside
+ * other drawings, or in a table composed in a cell, is the exception: it is drawn with them,
+ * over a table of its data.</p>
+ *
+ * <p><b>The report.</b> A Word document cannot hold everything a page draws. What this export
+ * drops, and what it writes as the nearest thing Word owns, is named in a
+ * {@link DocxExportReport} with the path of the node it came from, handed to the sink given to
+ * {@link #DocxSemanticBackend(java.util.function.Consumer)} or
+ * {@link Builder#reportSink(java.util.function.Consumer)} once the export has finished.</p>
+ *
+ * <p><b>Deterministic output.</b> A backend built with {@link Builder#deterministic(boolean)}
+ * pins the package's dates and every zip entry's time, so the same document exports to the same
+ * bytes on every run on one platform — on one day, where a header or footer prints the
+ * {@code {date}} token and {@code -Dgraphcompose.renderDate} does not pin it. On another platform
+ * the bytes still differ where Apache POI ends an XML declaration with that platform's line
+ * separator.</p>
  *
  * <p><b>Dependencies:</b> this backend ships in
  * {@code io.github.demchaav:graph-compose-render-docx}, which brings
@@ -10800,7 +10830,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * ({@link #listItemsMatched}), the line the parts of a band share.
      *
      * <p>A shape belongs to the node drawing it and to the blocks holding that node, and is
-     * anchored in the first paragraph the nearest of them writes on its page
+     * anchored in the paragraph of those the nearest of them writes on its page that can place it
+     * at the smallest offset, preferring those whose line it stands level with or below
      * ({@link DocxDrawingAnchors}). A block whose text another writer writes had no paragraph to
      * offer: a card whose only text is a list's items, a CV entry's head band written as one Word
      * line. Their shapes went to the text nearest them instead — in the body, the paragraph above

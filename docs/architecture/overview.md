@@ -20,7 +20,7 @@ flowchart TD
     A["Application code — GraphCompose.document(...)"] --> B["DocumentSession + DocumentDsl<br/>(document.api · document.dsl)"]
     B --> C["Semantic DocumentNode tree<br/>(document.node) — renderer-neutral"]
     C --> D["LayoutCompiler + NodeRegistry<br/>(document.layout) → LayoutFragments"]
-    C -->|"export(...)"| H["DocxSemanticBackend — Apache POI<br/>(document.backend.semantic) — reads DocumentGraph"]
+    C -->|"export(...)"| H["DocxSemanticBackend — Apache POI<br/>(document.backend.semantic.docx) — walks DocumentGraph"]
     D --> E["Shared engine foundation — @Internal<br/>(engine.*): measure → paginate → place → order"]
     E --> F{"Fixed-layout backend"}
     F -->|PDF| G["PdfFixedLayoutBackend<br/>(document.backend.fixed.pdf + engine.render.pdf)"]
@@ -30,8 +30,11 @@ flowchart TD
 
 The two fixed-layout backends branch from the **same** resolved graph, which
 is why page and slide geometry match by construction. The semantic DOCX
-exporter branches earlier, straight off the `DocumentGraph`: it never sees a
-`LayoutGraph`, which is why it cannot reproduce fixed-layout geometry.
+exporter branches earlier, off the `DocumentGraph`: it writes Word's own
+paragraphs and tables, and Word paginates them. It is also handed the
+session's `LayoutGraph`, but reads it only for what Word cannot work out
+itself — line heights, `auto` column widths, where a floating drawing
+stands.
 
 The PDF path deliberately spans **two** packages: the canonical backend
 `document.backend.fixed.pdf` owns PDFBox lifecycle and option translation,
@@ -57,7 +60,8 @@ Concretely:
    for PDF and `PptxFixedLayoutBackend` for PowerPoint, both consuming
    the same resolved graph, so page and slide geometry match by
    construction. `DocxSemanticBackend` takes the other route: it
-   consumes the semantic node tree directly, without the layout graph.
+   walks the semantic node tree and writes Word's own structure,
+   reading the layout graph only for measurements Word cannot make.
 
 That separation is the core project concept. Public code describes
 document intent, layout resolves geometry, renderers only draw already
@@ -122,8 +126,9 @@ need to reach below it.
   identically-sized slide. Marked `@Beta` at the package level; see the
   [backend capability matrix](./backend-capability-matrix.md) for
   per-capability fidelity.
-- **`document.backend.semantic`** — semantic exporters that bypass the
-  layout graph (`DocxSemanticBackend`, Apache POI; and `PptxSemanticBackend`,
+- **`document.backend.semantic`** — semantic exporters that write the node
+  tree as the format's own structure (`DocxSemanticBackend`, Apache POI,
+  which also reads the layout graph for measurements; and `PptxSemanticBackend`,
   a slide-safe node-graph manifest that predates the fixed-layout backend
   and is not what `buildPptx(...)` uses).
 

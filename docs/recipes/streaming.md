@@ -110,9 +110,8 @@ must be in range.)
 
 ## DOCX semantic export
 
-`DocxSemanticBackend` produces an editable Word document. Apache POI
-must be on the consumer classpath (it's an optional dependency in the
-GraphCompose POM).
+`DocxSemanticBackend` produces an editable Word document. It ships in
+`graph-compose-render-docx`, which brings Apache POI with it.
 
 ```java
 try (DocumentSession document = GraphCompose.document().create()) {
@@ -124,11 +123,14 @@ try (DocumentSession document = GraphCompose.document().create()) {
 }
 ```
 
-The DOCX path is semantic — it preserves paragraphs, tables, images,
-and module structure but ignores fixed-layout concerns (page
-backgrounds, exact placement, graphics-state clip paths). See the
-[parity matrix](../architecture/canonical-legacy-parity.md) for the per-feature
-mapping.
+The DOCX path is semantic — it writes paragraphs, tables, images and
+module structure as Word's own, and Word paginates them. It reads the
+resolved layout only for what Word cannot work out itself, such as line
+heights, column widths and where a drawing stands. A Word file has no clip
+a container can set, so most of what a container clips on the page is
+written whole, and the export report names each such clip — pass a sink
+through `DocxSemanticBackend.builder().reportSink(...)` to receive it. See the
+[DOCX recipe](docx-export.md) for what is written and what is approximated.
 
 ## Header / footer chrome
 

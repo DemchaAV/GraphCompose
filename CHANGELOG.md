@@ -6204,6 +6204,14 @@ follow semantic versioning; release dates are ISO 8601.
   deployment waits at `VALIDATED` — and everything else from Central. A scenario fails unless
   every file of every train artifact it resolved came from the staged directory at the staged
   version.
+- **The release smoke exports Word the way a consumer does.** Scenario `s8-core-render-docx`
+  calls `toDocxBytes()`, `writeDocx(stream)` and `buildDocx(path)`, which find the backend
+  through the ServiceLoader and pass only if the published render-docx jar carries its service
+  registration; until now it named `new DocxSemanticBackend()` alone, which kept passing
+  without one. The named Stable backend stays checked beside them. The scenario no longer
+  declares `graph-compose-render-pdf`: render-docx brings it at compile scope, so a session
+  that opens proves the published POM carries it. It therefore requires 2.5.0. The nine
+  scenario poms move to the reactor's surefire 3.6.1, and `s2` to its enforcer 3.7.0.
 
 ### Performance
 

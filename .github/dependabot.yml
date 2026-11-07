@@ -7,11 +7,12 @@ updates:
       - "/"
       - "/examples"
       - "/benchmarks"
-      # The release-smoke consumer projects: eight deliberately *different*
-      # setups, one per published coordinate combination, so they must not be
-      # consolidated. What they share is the test scaffolding — junit, assertj
+      # The release-smoke consumer projects: nine deliberately *different*
+      # setups, each proving one consumer scenario (s6 and s9 share
+      # graph-compose-bundle and exercise different halves of it), so they must
+      # not be consolidated. What they share is the test scaffolding — junit, assertj
       # and surefire pinned separately in each — which is why a bump has to be
-      # applied eight times and one grouped entry keeps them moving together.
+      # applied nine times and one grouped entry keeps them moving together.
       # Until they were listed here they had no entry at all, which is why
       # nothing but a security alert had ever opened a PR for them.
       - "/scripts/release-smoke/*"

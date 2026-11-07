@@ -16,7 +16,7 @@
         <gc.version>2.4.1</gc.version>
         <junit.version>6.1.3</junit.version>
         <assertj.version>3.27.7</assertj.version>
-        <surefire.version>3.6.0</surefire.version>
+        <surefire.version>3.6.1</surefire.version>
     </properties>
 
     <dependencies>
@@ -25,25 +25,17 @@
             <artifactId>graph-compose-core</artifactId>
             <version>${gc.version}</version>
         </dependency>
-        <!-- Compile scope, unlike the fixed-layout backends: the DOCX exporter is
-             named directly by the caller (session.export(new DocxSemanticBackend()))
-             rather than discovered through the ServiceLoader. -->
+        <!-- The two coordinates a Word export needs, and nothing else: no PDF backend
+             is declared. render-docx brings graph-compose-render-pdf at compile scope,
+             because opening a session needs the font metrics it publishes, so a session
+             that opens here proves the published POM carries it. The exporter is found
+             through the ServiceLoader by session.toDocxBytes() / writeDocx(stream) /
+             buildDocx(path), and named directly by
+             session.export(new DocxSemanticBackend()); this scenario takes both routes. -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-render-docx</artifactId>
             <version>${gc.version}</version>
-        </dependency>
-        <!-- Required, and not transitive: opening a DocumentSession resolves a
-             FontMetricsProvider, and render-pdf is the only artifact that publishes
-             one. render-docx declares it at test scope for its own suite, so a
-             consumer installing core + render-docx alone cannot construct a session
-             at all. This scenario therefore pins the combination that actually
-             works — see render-docx/README.md. -->
-        <dependency>
-            <groupId>io.github.demchaav</groupId>
-            <artifactId>graph-compose-render-pdf</artifactId>
-            <version>${gc.version}</version>
-            <scope>runtime</scope>
         </dependency>
 
         <dependency>

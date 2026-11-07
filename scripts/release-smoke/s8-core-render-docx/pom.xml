@@ -30,9 +30,8 @@
              because opening a session needs the font metrics it publishes, so a session
              that opens here proves the published POM carries it. The exporter is found
              through the ServiceLoader by session.toDocxBytes() / writeDocx(stream) /
-             buildDocx(path), and
-             named directly by session.export(new DocxSemanticBackend()); this scenario
-             takes both routes. -->
+             buildDocx(path), and named directly by
+             session.export(new DocxSemanticBackend()); this scenario takes both routes. -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-render-docx</artifactId>

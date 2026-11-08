@@ -6256,6 +6256,23 @@ follow semantic versioning; release dates are ISO 8601.
     259: two fixture values, a derivation recorded in its pull request, a row height that follows
     from the border rule measured in Word 16 and LibreOffice on Windows, and Helvetica's AFM
     ascender and descender.
+- **Branches of three render-docx classes that no test took are taken, each asserted on DOCX
+  XML.**
+  - `DocxColourUnderTest`: what a translucent panel is flattened against, over an ellipse, a
+    polygon, a path, a gradient box, a gradient path and a table cell, each under the panel's
+    centre and beside it, a box under a transform under it and a picture beside it. A gradient or
+    a turned fill under the centre leaves the colour unknown, and the panel is flattened against
+    white.
+  - `DocxZoneByPageTest`: a page zone built for the first page with another constant of an enum,
+    another kind of node, a row of one line fewer, or one column fewer styled or one styled
+    otherwise, is written as Word's first-page footer; built alike, it is written once, unless it
+    nests deeper than its values are read.
+  - `DocxTimelineRailGuardsTest`, on documents built for it: each check a timeline's rail must
+    pass to be written as its cells' border leaves the timeline as it was written when it fails:
+    no bar, a bar not offset from its column or past the last one, entries of other rows, grids
+    or cells, a rail past either end, a cell on the rail holding anything but the bar, anything
+    but an exact empty line between entries. A rail on a cell's left edge is that cell's border, and the line between two
+    entries keeps its row with the next only when it keeps with the next itself.
 
 ### Performance
 

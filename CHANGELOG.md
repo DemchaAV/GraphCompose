@@ -296,6 +296,23 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A DOCX export keeps a canvas and an alignment wrapper on the page the layout moves them to,
+  whole.**
+  - The layout moves a canvas and an alignment wrapper to a new page whole, as it does a layer
+    stack or a shape container, which the export already kept together in Word. These two were
+    told nothing, and Word and LibreOffice 24.2 split them over the break. Measured on a page the
+    layout moved each to: a canvas of five lines stood with three of them at the foot of the page
+    above, and the text below it 38.5 to 39pt high; an alignment wrapper round five lines kept three
+    there in Word and two in LibreOffice; a canvas or an alignment wrapper round a table of four
+    rows kept its first row there; and an alignment wrapper round one paragraph of four lines kept
+    two.
+  - Each written in the flow is now kept on its page as a block kept together is (`w:keepLines`
+    on each paragraph, `w:keepNext` on all but the last). Each opens the page the layout moves it
+    to in both editors, its first line within 0.3pt of the page. In a table's or a panel's cell it
+    is left to the row, as a stack is. Inside a panel that runs on to the next page Word still
+    breaks the panel's row where its lines run out, and the report now names a canvas or an
+    alignment wrapper moved there, as it names a stack.
+  - The fidelity corpus exports byte for byte as before.
 - **A DOCX export keeps the space above a shape container, a canvas, a barcode, a page reference
   and a stack of side-by-side columns on the page the layout moves them to.**
   - Word drops the space above a paragraph at the top of a page. A paragraph, a picture, a list

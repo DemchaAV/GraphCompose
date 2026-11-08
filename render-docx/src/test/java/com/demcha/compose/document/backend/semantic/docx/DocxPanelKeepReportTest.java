@@ -2,12 +2,15 @@ package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.dsl.CanvasLayerBuilder;
 import com.demcha.compose.document.dsl.LayerStackBuilder;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
+import com.demcha.compose.document.node.AlignNode;
+import com.demcha.compose.document.node.HorizontalAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import org.junit.jupiter.api.Test;
@@ -68,6 +71,30 @@ class DocxPanelKeepReportTest {
         assertThat(notes(inAPanel(10, panel -> panel.add(new ShapeContainerBuilder().name("Shape")
                 .rectangle(200, 45).fillColor(DocumentColor.rgb(250, 240, 230)).topLeft(threeLines()).build()))))
                 .singleElement().satisfies(note -> assertThat(note.path()).contains("Shape"));
+    }
+
+    @Test
+    void aCanvasMovedThereIsNamedToo() throws Exception {
+        // Measured: a canvas of five lines moved there stood with four at the foot of the page
+        // above in Word and LibreOffice.
+        assertThat(notes(inAPanel(10, panel -> panel.add(new CanvasLayerBuilder(200, 45).name("Canvas")
+                .position(threeLines(), 0, 0).build()))))
+                .singleElement().satisfies(note -> {
+                    assertThat(note.path()).contains("Canvas");
+                    assertThat(note.detail()).startsWith(WHOLE);
+                });
+    }
+
+    @Test
+    void anAlignmentWrapperMovedThereIsNamedToo() throws Exception {
+        // Measured: one round five lines moved there stood with four at the foot of the page above
+        // in Word, three in LibreOffice.
+        assertThat(notes(inAPanel(10, panel -> panel.add(new AlignNode("Aligned", threeLines(),
+                HorizontalAlign.CENTER, DocumentInsets.zero())))))
+                .singleElement().satisfies(note -> {
+                    assertThat(note.path()).contains("Aligned");
+                    assertThat(note.detail()).startsWith(WHOLE);
+                });
     }
 
     @Test

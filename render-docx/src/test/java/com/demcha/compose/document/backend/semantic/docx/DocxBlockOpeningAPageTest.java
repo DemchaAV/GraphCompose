@@ -684,6 +684,44 @@ class DocxBlockOpeningAPageTest {
     }
 
     @Test
+    void aPullPastTheLineLeavesTheSpaceAboveTheLineAndIsNamed() throws Exception {
+        // The 3pt line gives back what it can; Word drops the space above it at the top of the page,
+        // so what is left of the pull is not taken from there, and is named.
+        Consumer<PageFlowBuilder> content = movedToANewPage(new CanvasLayerBuilder(200, 40).name("Block")
+                .margin(DocumentInsets.top(3))
+                .position(new ParagraphBuilder().text("Opening").margin(DocumentInsets.top(-5)).build(), 0, 0).build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph line = paragraphBefore(document, paragraphWith(document, "Opening"));
+
+            assertThat(lineHeight(line)).as("all but a twip given back").isEqualTo(1);
+            assertThat(before(spacing(line))).as("the filler's height stays above the line").isEqualTo(owed(CONTENT - 10));
+        }
+        assertThat(DocxExports.report(300, 200, 20, content).notes())
+                .anyMatch(note -> "space above".equals(note.subject()));
+    }
+
+    @Test
+    void aShapeContainersFirstParagraphPulledUpTakesThePullOutOfTheLine() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(new ShapeContainerBuilder().name("Block")
+                .ellipse(200, 40).fillColor(DocumentColor.LIGHT_GRAY).margin(DocumentInsets.top(EDGE))
+                .layer(new ParagraphBuilder().name("Opening").text("Opening").margin(DocumentInsets.top(-5)).build(),
+                        LayerAlign.CENTER).build());
+        assertOpensTheSecondPage(content, "Block");
+        double room = roomAbove(content, "Block", "Opening");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph opening = paragraphWith(document, "Opening");
+
+            // The room is to where the page places the paragraph, its pull up included.
+            assertThat(lineBefore(document, opening)).as("its margin and the room above its text")
+                    .isCloseTo(Math.round((EDGE + room) * 20), org.assertj.core.data.Offset.offset(1L));
+            assertThat(before(spacing(opening))).isZero();
+        }
+        assertThat(DocxExports.report(300, 200, 20, content).notes())
+                .noneMatch(note -> "space above".equals(note.subject()));
+    }
+
+    @Test
     void aCanvasInAStackOfOneLayerHoldsItsMarginToo() throws Exception {
         Consumer<PageFlowBuilder> content = movedToANewPage(new LayerStackBuilder().name("Stack")
                 .topLeft(canvas(EDGE)).build());

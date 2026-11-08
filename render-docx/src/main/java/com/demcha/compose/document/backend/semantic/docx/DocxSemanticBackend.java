@@ -11030,10 +11030,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             double shortBy = -(carriedSpacingBefore + pendingSpacingAfter - borderBelow);
             if (shortBy > 0.01 && node == topEdgeHeldAbove && topEdgeLine != null) {
                 // The first paragraph of a shape container or a canvas whose edge a line holds
-                // (letItsFirstParagraphTakeFromTheLine): its pull comes out of that line, as the
-                // page sets it up into the edge. Left there, a canvas's first paragraph pulled 5pt
-                // up stood 5.2pt low in Word and LibreOffice 24.2, measured.
-                double taken = takeFromTheLineHoldingItsEdge(toTwips(shortBy)) / POINT_TO_TWIP;
+                // (letItsFirstParagraphTakeFromTheLine): its pull comes out of that line's height,
+                // as the page sets it up into the edge, and what the line cannot give is left to
+                // the paragraph's own line and named. Left there, a canvas's first paragraph pulled
+                // 5pt up stood 5.2pt low in Word and LibreOffice 24.2, measured.
+                double taken = shortenTheLineHoldingItsEdge(toTwips(shortBy)) / POINT_TO_TWIP;
                 carriedSpacingBefore += taken;
                 shortBy -= taken;
             }
@@ -22486,18 +22487,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private long takeFromTheLineHoldingItsEdge(long twips) {
         CTSpacing spacing = topEdgeLine == null ? null : topEdgeLine.getCTP().getPPr().getSpacing();
-        Long line = spacing == null ? null : writtenTwips(spacing.getLine());
-        if (line == null) {
+        if (spacing == null || writtenTwips(spacing.getLine()) == null) {
             return 0;
         }
-        long taken = Math.max(0, Math.min(twips, line - 1));
-        spacing.setLine(BigInteger.valueOf(line - taken));
+        long taken = shortenTheLineHoldingItsEdge(twips);
         long before = twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null);
         long rest = Math.min(before, twips - taken);
         if (rest > 0) {
             spacing.setBefore(BigInteger.valueOf(before - rest));
             taken += rest;
         }
+        return taken;
+    }
+
+    /**
+     * Takes up to {@code twips} off the height of the line holding a paragraph's top edge, short of
+     * a twip, and returns how much it took: a pull that line gives back on the page it opens. Its
+     * space above is not taken: Word drops that space at the top of the page, so taking from it
+     * gives nothing back there.
+     */
+    private long shortenTheLineHoldingItsEdge(long twips) {
+        CTSpacing spacing = topEdgeLine == null ? null : topEdgeLine.getCTP().getPPr().getSpacing();
+        Long line = spacing == null ? null : writtenTwips(spacing.getLine());
+        if (line == null) {
+            return 0;
+        }
+        long taken = Math.max(0, Math.min(twips, line - 1));
+        spacing.setLine(BigInteger.valueOf(line - taken));
         return taken;
     }
 

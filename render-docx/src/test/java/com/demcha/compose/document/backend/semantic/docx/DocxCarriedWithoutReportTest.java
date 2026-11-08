@@ -31,13 +31,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * What a node the export writes or draws goes without is in its report note: a link, an
- * outline entry, an anchor a drawing cannot hold, a gradient, unequal corners, a dash, a rule's
- * caps, an image's transform.
+ * outline entry, an anchor a drawing cannot hold, a gradient, unequal corners, a rule's dash
+ * and caps, an image's transform.
  *
  * <p>The export wrote each of these nodes and said nothing of what it left behind: a linked
- * logo became an unlinked picture, a rotated photo stood upright, a dashed rail was drawn
- * solid, an anchor on a drawn shape left a page reference to it as plain text — and the report
- * listed no loss.</p>
+ * logo became an unlinked picture, a rotated photo stood upright, an anchor on a drawn shape
+ * left a page reference to it as plain text — and the report listed no loss. A drawing's dash
+ * the outline carries, and its note does not name.</p>
  */
 class DocxCarriedWithoutReportTest {
 
@@ -77,7 +77,7 @@ class DocxCarriedWithoutReportTest {
     }
 
     @Test
-    void aDrawnLineNamesItsDashAndLinkAndNotTheCapsItsOutlineEndsWith() throws Exception {
+    void aDrawnLineNamesItsLinkAndNotTheDashOrCapsItsOutlineCarries() throws Exception {
         DocxExportReport report = reportOf(page -> page
                 .addParagraph(p -> p.text("Target").anchor("target"))
                 .addLine(line -> line.vertical(60).thickness(2).color(INK)
@@ -85,10 +85,9 @@ class DocxCarriedWithoutReportTest {
                         .bookmark(OUTLINE).anchor("rail")));
 
         assertThat(detailOf(report, "LineNode")).startsWith("drawn as a shape")
-                .contains("its dash pattern is not carried, so it is drawn solid")
                 .contains("its link is not carried").contains("its outline entry is not written")
                 .contains("its anchor has no bookmark in the Word file")
-                .doesNotContain("caps");
+                .doesNotContain("dash").doesNotContain("caps");
     }
 
     @Test
@@ -309,9 +308,11 @@ class DocxCarriedWithoutReportTest {
                 .addPath(path -> path.name("Filled").size(40, 20).moveTo(0, 0).lineTo(0.5, 1).lineTo(1, 0)
                         .fillColor(INK).dashed(3, 2).lineCap(DocumentLineCap.ROUND)));
 
-        assertThat(noteNaming(report, "Dashed")).endsWith("; its dash pattern is not carried");
+        // A dash the outline carries (DocxDrawings), and the note names no paint lost.
+        assertThat(noteNaming(report, "Dashed")).doesNotContain("not carried").doesNotContain("dash");
         assertThat(noteNaming(report, "Rounded")).doesNotContain("not carried");
-        assertThat(noteNaming(report, "Everything")).endsWith("; its gradient paint and dash pattern are not carried");
+        assertThat(noteNaming(report, "Everything")).endsWith("; its gradient paint is not carried")
+                .doesNotContain("dash");
         assertThat(noteNaming(report, "Mitred")).doesNotContain("not carried");
         assertThat(noteNaming(report, "Cross")).doesNotContain("not carried");
         assertThat(noteNaming(report, "Graded")).endsWith("; its gradient paint is not carried");
@@ -319,9 +320,9 @@ class DocxCarriedWithoutReportTest {
     }
 
     @Test
-    void aPathComposedInATableCellLeavesItsDashToItsTablesNote() throws Exception {
-        // The table's note names the dash its drawings go without; the path's caps and joins its
-        // outline carries.
+    void aPathComposedInATableCellIsNamedByNoNoteForItsDash() throws Exception {
+        // The path's dash, caps and joins its outline carries, in a table cell as in the flow:
+        // neither its own note nor the table's names them.
         DocxExportReport report = reportOf(page -> page
                 .addTable(table -> table.columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
                         .rowCells(DocumentTableCell.node(new com.demcha.compose.document.dsl.PathBuilder()
@@ -332,7 +333,7 @@ class DocxCarriedWithoutReportTest {
                                 DocumentTableCell.text("Beside"))));
 
         assertThat(notesOn(report, "Path")).isEmpty();
-        assertThat(notesOn(report, "cell drawing")).singleElement().asString().contains("a dash");
+        assertThat(notesOn(report, "cell drawing")).singleElement().asString().doesNotContain("dash");
     }
 
     @Test

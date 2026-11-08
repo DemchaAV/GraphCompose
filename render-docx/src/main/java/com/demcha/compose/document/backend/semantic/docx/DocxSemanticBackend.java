@@ -5204,7 +5204,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         if (drawnByItsTable(node)) {
             // Composed in a cell, what it paints is its table's to draw, and the table's note
-            // names the gradient and the dash it leaves out; this one names the rest.
+            // names the gradient it leaves out; this one names the rest.
             List<String> lost = new ArrayList<>(carriedWithout(node, true, false));
             if (cornersDiffer(node)) {
                 lost.add(0, CORNERS_AT_THE_LARGEST);
@@ -5291,13 +5291,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * As {@link #carriedWithout(DocumentNode, boolean)}, leaving out a gradient fill and a dash
-     * pattern when {@code paint} is false: a table's own note names those for every drawing its
-     * cells hold.
+     * As {@link #carriedWithout(DocumentNode, boolean)}, leaving out a gradient fill when
+     * {@code paint} is false: a table's own note names that for every drawing its cells hold.
      *
      * @param node  the node written or drawn
      * @param drawn whether the node is drawn as a floating shape rather than written in the flow
-     * @param paint whether to name a gradient fill and a dash pattern the drawing leaves out
+     * @param paint whether to name a gradient fill the drawing leaves out
      * @return the phrases, in the order a note lists them
      */
     private static List<String> carriedWithout(DocumentNode node, boolean drawn, boolean paint) {
@@ -5318,9 +5317,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             outline = ellipse.bookmarkOptions();
             anchor = ellipse.anchor();
         } else if (node instanceof com.demcha.compose.document.node.PathNode path) {
-            // Drawn as custom geometry, which says the outline, a solid paint and how the stroke ends
-            // and turns, and no gradient or dash: composed in a table cell, the table's note names
-            // those.
+            // Drawn as custom geometry, which says the outline, a solid paint, how the stroke ends
+            // and turns and its dashes, and no gradient: composed in a table cell, the table's note
+            // names that.
             String style = drawn && paint ? pathStyleLost(path) : null;
             if (style != null) {
                 lost.add(style);
@@ -5329,11 +5328,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             link = drawn ? line.linkTarget() : null;
             outline = line.bookmarkOptions();
             anchor = line.anchor();
-            if (drawn && paint && line.dashPattern() != null && !line.dashPattern().isSolid()) {
-                lost.add("its dash pattern is not carried, so it is drawn solid");
-            }
-            // A drawn line's outline ends as the page's does (DocxDrawings); a border has no caps,
-            // and ends flat.
+            // A drawn line's outline ends and is dashed as the page's is (DocxDrawings); a border
+            // has no caps, and ends flat.
             if (!drawn && line.lineCap() != null
                 && line.lineCap() != com.demcha.compose.document.style.DocumentLineCap.BUTT) {
                 lost.add("its caps are not carried: a border ends flat");
@@ -5699,27 +5695,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * What of a path's paint and stroke custom geometry does not say, as one phrase naming only
-     * what the path has, or {@code null} where it says all of it: a gradient paint and a dash
-     * pattern. A dash is a stroke's, lost only where the page strokes the path, which is then
-     * drawn solid. Its caps and joins the outline says ({@code DocxDrawings}).
+     * What of a path's paint custom geometry does not say, or {@code null} where it says all of
+     * it: a gradient paint. Its caps, joins and dashes the outline says ({@code DocxDrawings}).
      */
     private static String pathStyleLost(com.demcha.compose.document.node.PathNode path) {
-        List<String> parts = new ArrayList<>();
         boolean stroked = path.stroke() != null && path.stroke().width() > 0;
         if (path.fillPaint() != null
             && !(path.fillPaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)
             || stroked && path.strokePaint() != null
                && !(path.strokePaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)) {
-            parts.add("gradient paint");
+            return "its gradient paint is not carried";
         }
-        if (stroked && path.dashPattern() != null && !path.dashPattern().isSolid()) {
-            parts.add("dash pattern");
-        }
-        if (parts.isEmpty()) {
-            return null;
-        }
-        return "its " + String.join(" and ", parts) + (parts.size() > 1 ? " are" : " is") + " not carried";
+        return null;
     }
 
     private static com.demcha.compose.document.style.DocumentTransform transformOf(DocumentNode node) {
@@ -17150,7 +17137,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 report.add(DocxExportReport.Severity.APPROXIMATED, "cell drawing", layout.pathOf(node),
                         "what its cells draw is drawn as shapes where the layout puts it — anchored in the "
                         + "cell a drawing is all of, and otherwise " + ANCHORED_IN_ITS_CELL
-                        + "; a transform, a gradient or a dash on it is not carried");
+                        + "; a transform or a gradient on it is not carried");
             }
             tableDrawings = outerDrawings;
             composedCellsWritten = outerCellsWritten;

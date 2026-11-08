@@ -8,6 +8,7 @@ import com.demcha.compose.document.layout.payloads.PolygonFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.layout.payloads.SideBorders;
 import com.demcha.compose.document.style.DocumentCornerRadius;
+import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentLineCap;
 import com.demcha.compose.document.style.DocumentLineJoin;
 import com.demcha.compose.document.style.DocumentPathSegment;
@@ -84,7 +85,8 @@ final class DocxDrawings {
      * @param stroke      its outline colour, or {@code null}
      * @param strokeWidth its outline width, in points
      * @param radius      a rounded rectangle's corner radius, in points
-     * @param flipH       whether a line runs from its top-right corner
+     * @param flipH       whether a line runs from its right-hand end: from its top-right corner,
+     *                    or with {@code flipV} from its bottom-right
      * @param page        the page the layout drew it on, from 0
      * @param path        a custom shape's outline in its box's unit square, empty for a preset
      * @param front       whether it is drawn in front of the text rather than behind it
@@ -99,22 +101,37 @@ final class DocxDrawings {
      * @param lineCap     how its outline ends, as the page strokes it; butt where the page has none
      * @param lineJoin    how its outline turns a corner, as the page strokes it; mitred where the
      *                    page has none
+     * @param flipV       whether a line runs from its bottom edge: with {@code flipH}, a dashed
+     *                    line runs from the end the page starts it at
+     * @param dash        its outline's dashes and gaps, alternating from a dash, in points; empty
+     *                    for a solid outline. A list of odd length is repeated once, as the page
+     *                    repeats it, so it alternates the other way round the second time
      */
     record Shape(Kind kind, double x, double top, double width, double height, Color fill,
                  Color stroke, double strokeWidth, double radius, boolean flipH, int page,
                  List<DocumentPathSegment> path, boolean front, String picture, String text, boolean textAtTop,
-                 double textRise, double textLine, DocumentLineCap lineCap, DocumentLineJoin lineJoin) {
+                 double textRise, double textLine, DocumentLineCap lineCap, DocumentLineJoin lineJoin,
+                 boolean flipV, List<Double> dash) {
         Shape {
             path = path == null ? List.of() : List.copyOf(path);
             lineCap = lineCap == null ? DocumentLineCap.BUTT : lineCap;
             lineJoin = lineJoin == null ? DocumentLineJoin.MITER : lineJoin;
+            if (dash == null) {
+                dash = List.of();
+            } else if (dash.size() % 2 == 1) {
+                List<Double> twice = new ArrayList<>(dash);
+                twice.addAll(dash);
+                dash = List.copyOf(twice);
+            } else {
+                dash = List.copyOf(dash);
+            }
         }
 
         Shape(Kind kind, double x, double top, double width, double height, Color fill,
               Color stroke, double strokeWidth, double radius, boolean flipH, int page,
               List<DocumentPathSegment> path, boolean front, String picture) {
             this(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front, picture,
-                    null, false, 0, 0, null, null);
+                    null, false, 0, 0, null, null, false, List.of());
         }
 
         Shape(Kind kind, double x, double top, double width, double height, Color fill,
@@ -137,7 +154,7 @@ final class DocxDrawings {
         /** The same shape in front of the text rather than behind it. */
         Shape inFront() {
             return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, true,
-                    picture, text, textAtTop, textRise, textLine, lineCap, lineJoin);
+                    picture, text, textAtTop, textRise, textLine, lineCap, lineJoin, flipV, dash);
         }
 
         /**
@@ -150,7 +167,7 @@ final class DocxDrawings {
          */
         Shape holding(String paragraph, double rise, double line) {
             return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front,
-                    picture, paragraph, false, rise, line, lineCap, lineJoin);
+                    picture, paragraph, false, rise, line, lineCap, lineJoin, flipV, dash);
         }
 
         /**
@@ -161,7 +178,19 @@ final class DocxDrawings {
          */
         Shape strokedWith(DocumentLineCap cap, DocumentLineJoin join) {
             return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front,
-                    picture, text, textAtTop, textRise, textLine, cap, join);
+                    picture, text, textAtTop, textRise, textLine, cap, join, flipV, dash);
+        }
+
+        /**
+         * The same shape with its outline dashed as the page dashes it.
+         *
+         * @param pattern the page's dashes and gaps, alternating from a dash, in points; {@code null}
+         *                or solid for a solid outline
+         */
+        Shape dashedWith(DocumentDashPattern pattern) {
+            return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front,
+                    picture, text, textAtTop, textRise, textLine, lineCap, lineJoin, flipV,
+                    pattern == null ? List.of() : pattern.segments());
         }
 
         /**
@@ -179,7 +208,7 @@ final class DocxDrawings {
          */
         static Shape textBox(double x, double top, double width, double height, int page, String paragraph) {
             return new Shape(Kind.RECT, x, top, width, height, null, null, 0, 0, false, page, List.of(), true,
-                    null, paragraph, true, 0, 0, null, null);
+                    null, paragraph, true, 0, 0, null, null, false, List.of());
         }
 
         /**
@@ -231,15 +260,21 @@ final class DocxDrawings {
             double y1 = pageHeight - (fragment.y() + line.startY());
             double y2 = pageHeight - (fragment.y() + line.endY());
             // Running from the upper-left to the lower-right is the preset's own direction; the
-            // other diagonal flips it.
-            boolean flipH = (x2 - x1) * (y2 - y1) < 0;
+            // other diagonal flips it. A dashed line also runs from the end the page starts it at,
+            // where its first dash is: flipped both ways, the preset runs from its lower-right.
+            boolean dashed = !line.dashPattern().isSolid();
+            boolean flipH = dashed ? x1 > x2 : (x2 - x1) * (y2 - y1) < 0;
+            boolean flipV = dashed && y1 > y2;
             add(shapes, visible(new Shape(Kind.LINE, Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1),
-                    Math.abs(y2 - y1), null, colourOf(line.stroke()), widthOf(line.stroke()), 0, flipH, page)
-                    .strokedWith(line.lineCap(), null)));
+                    Math.abs(y2 - y1), null, colourOf(line.stroke()), widthOf(line.stroke()), 0, flipH, page,
+                    List.of(), false, null, null, false, 0, 0, line.lineCap(), null, flipV,
+                    line.dashPattern().segments())));
         } else if (fragment.payload() instanceof PathFragmentPayload path) {
+            // Custom geometry runs as the path's segments do, so each part's first dash is where the
+            // page's is: both editors start a part's dashes again at its first point, as the page does.
             add(shapes, visible(new Shape(Kind.CUSTOM, fragment.x(), top, fragment.width(), fragment.height(),
                     path.fillColor(), colourOf(path.stroke()), widthOf(path.stroke()), 0, false, page,
-                    path.segments()).strokedWith(path.lineCap(), path.lineJoin())));
+                    path.segments()).strokedWith(path.lineCap(), path.lineJoin()).dashedWith(path.dashPattern())));
         } else if (fragment.payload() instanceof PolygonFragmentPayload polygon) {
             add(shapes, visible(new Shape(Kind.CUSTOM, fragment.x(), top, fragment.width(), fragment.height(),
                     polygon.fillColor(), colourOf(polygon.stroke()), widthOf(polygon.stroke()), 0, false, page,
@@ -489,7 +524,8 @@ final class DocxDrawings {
                 : "<a:noFill/>";
         return "<a:graphic><a:graphicData uri=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\">"
                 + "<wps:wsp><wps:cNvSpPr/><wps:spPr>"
-                + "<a:xfrm" + (shape.flipH() ? " flipH=\"1\"" : "") + "><a:off x=\"0\" y=\"0\"/><a:ext cx=\"" + cx
+                + "<a:xfrm" + (shape.flipH() ? " flipH=\"1\"" : "") + (shape.flipV() ? " flipV=\"1\"" : "")
+                + "><a:off x=\"0\" y=\"0\"/><a:ext cx=\"" + cx
                 + "\" cy=\"" + cy + "\"/></a:xfrm>"
                 + geometry + fill + outline(shape)
                 + "</wps:spPr>" + textOf(shape) + "</wps:wsp>"
@@ -521,7 +557,43 @@ final class DocxDrawings {
             case BEVEL -> "<a:bevel/>";
         };
         return "<a:ln w=\"" + Units.toEMU(shape.strokeWidth()) + "\" cap=\"" + cap + "\"><a:solidFill>"
-               + colour(shape.stroke()) + "</a:solidFill>" + join + "</a:ln>";
+               + colour(shape.stroke()) + "</a:solidFill>" + dashes(shape) + join + "</a:ln>";
+    }
+
+    /**
+     * A dashed outline's dashes and gaps, as DrawingML counts them: in thousandths of a percent of
+     * the outline's width, so a 2pt dash on a 1pt line is 200000. Empty for a solid outline.
+     *
+     * <p>The page's dash is the stroke's length before its caps, which reach half the outline's
+     * width past each end of it; Word's is the length the dash shows, its caps included. So a dash
+     * whose ends are round or square is written an outline's width longer, and its gap as much
+     * shorter: measured, a 6pt dash with a 6pt gap on a 3pt outline with round caps, written as
+     * 6 and 6, came out in Word a 3pt stroke with a 9pt gap, a dash of 6 and a gap of 6 where the
+     * page shows 9 and 3. A gap the caps close on the page is written as none, which moves the
+     * dashes after it in a pattern whose other gaps stay open; no template has one. LibreOffice
+     * 24.2 reads a round dash as Word does, and a square one as the stroke's length before its
+     * caps: a square dash stands an outline's width longer there, and its gap as much shorter.</p>
+     */
+    private static String dashes(Shape shape) {
+        if (shape.dash().isEmpty()) {
+            return "";
+        }
+        double caps = shape.lineCap() == DocumentLineCap.BUTT ? 0 : shape.strokeWidth();
+        StringBuilder xml = new StringBuilder("<a:custDash>");
+        for (int i = 0; i < shape.dash().size(); i += 2) {
+            xml.append("<a:ds d=\"").append(ofTheWidth(shape.dash().get(i) + caps, shape.strokeWidth(), 1))
+                    .append("\" sp=\"").append(ofTheWidth(shape.dash().get(i + 1) - caps, shape.strokeWidth(), 0))
+                    .append("\"/>");
+        }
+        return xml.append("</a:custDash>").toString();
+    }
+
+    /**
+     * A length as thousandths of a percent of the outline's width, at least {@code least} and at
+     * most the largest the attribute, an {@code int}, holds.
+     */
+    private static long ofTheWidth(double length, double strokeWidth, long least) {
+        return Math.min(Integer.MAX_VALUE, Math.max(least, Math.round(length / strokeWidth * 100_000)));
     }
 
     /**

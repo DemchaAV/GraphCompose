@@ -353,8 +353,8 @@ class DocxValueFieldLedgerTest {
                 + "cell, or with no layout — and a layer stack's column, where it holds text that wraps, which runs "
                 + "the width of its column; any other is written");
         value(com.demcha.compose.document.style.DocumentDashPattern.class,
-                "segments:REPORTED:drawn, as a line's or a path's stroke, drawn solid; as a rule, Word's own dash or "
-                + "dots, not the pattern's lengths; in a table cell, on its table; an inline icon's is written in its "
+                "segments:REPORTED:as a rule, Word's own dash or dots, not the pattern's lengths; drawn, as a line's "
+                + "or a path's stroke, in a table cell too, it is written; an inline icon's is written in its "
                 + "picture");
         value(com.demcha.compose.document.style.DocumentLineCap.class,
                 "BUTT:WRITTEN",

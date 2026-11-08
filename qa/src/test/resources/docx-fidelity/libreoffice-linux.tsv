@@ -1,5 +1,6 @@
 # libreoffice build 420(Build:2) on linux
-# every row from CI run 41696246504, shot whole when the gate came to hold each line to its width, which the column before the letters records: no line moved more than half a point down or across from the row it replaces, none was lost and none found anew, and every document's row reads as it did
+# rows of invoice-consulting and invoice-consulting_long: from CI run 42480884766, when a table's rows came to carry what each is written taller than the page by and settle it in their bottom margins, the item rows set level where each had stood a fiftieth of a point lower than the one above
+# every other row from CI run 41696246504, shot whole when the gate came to hold each line to its width, which the column before the letters records: no line moved more than half a point down or across from the row it replaces, none was lost and none found anew, and every document's row reads as it did
 document	engine_pages	editor_pages	lines	matched	median	p90	over2
 cv-blue_banner	2	2	54	54	0.05	0.22	0
 cv-boxed_sections	2	2	58	58	0.14	0.17	0
@@ -29,8 +30,8 @@ cv-timeline_minimal	2	2	89	89	0.05	0.08	0
 cv-violet_grid	1	1	80	78	0.16	0.41	0
 invoice-classic	1	1	56	56	0.07	0.12	0
 invoice-classic_long	2	2	166	166	0.07	0.08	0
-invoice-consulting	1	1	92	92	0.11	0.33	0
-invoice-consulting_long	2	2	236	236	0.12	0.31	0
+invoice-consulting	1	1	92	92	0.08	0.30	0
+invoice-consulting_long	2	2	236	236	0.09	0.24	0
 invoice-luma_studio	1	1	97	97	0.15	0.33	2
 invoice-luma_studio_long	3	3	192	192	0.09	0.16	2
 invoice-merchant	1	1	94	94	0.78	1.96	5

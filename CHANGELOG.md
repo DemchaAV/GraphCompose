@@ -296,6 +296,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A DOCX export keeps a table's rows from creeping lower than the page's, row after row.**
+  - A row is written in whole twips. A row whose cells' lines or whose written height are rounded
+    up stood taller than the page's by the rounding, and each row under it lower by every row's
+    rounding above it: `ConsultingInvoice`'s item rows, written 607 twips where the page makes
+    them 606.6, their two lines rounded up from 10.64pt to 213 twips, stood a fiftieth of a point
+    lower with every row in Word and LibreOffice, and its long variant's last rows 0.56pt low in
+    Word.
+  - What each row is written taller than the page by is now carried to the rows under it on its
+    page, and a row takes the whole twips it and the rows above it come to off its bottom margin,
+    once they reach half a twip, as far as that margin holds. In the
+    fidelity corpus, Word sets 220 lines of `ConsultingInvoice` and its long variant nearer the
+    page and 3 further, by up to 0.06pt; the long variant's lines past half a point go from 12 to
+    none, its median from 0.27pt to 0.11. LibreOffice 24.2 sets the rows level instead of 0.28pt
+    lower from first to last on the page; the block under the table comes up 0.25pt with them,
+    which brings its payment details nearer and the summary labels LibreOffice already sets high
+    further.
+  - A row written shorter than the page carries nothing: it stands no shorter in Word or
+    LibreOffice. Given a twip back, `ClassicInvoice`'s rows stood a step of Word's 0.12pt grid
+    lower. A row holding a cell whose content the export does not read — one built from a node,
+    or a text cell holding a picture or a line Word sets at its own height — where no text cell
+    beside it sets the row, a row in a vertical merge, and a row written taller by more than its
+    rounded parts can come to, half a twip each, are left as they are, and the carry starts again
+    under them. A header row Word repeats on each page is counted once, on its first page.
+
 - **A DOCX export writes a chart as a Word chart.**
   - A chart was exported as a table of its data: the export wrote no Word chart. It is now
     Word's own chart, a chart part drawn inline at the size the page draws the chart, with its

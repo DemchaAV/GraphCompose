@@ -1235,9 +1235,10 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   written, the space above the first block written and below the last is the
   page's distance from the stack's edges, and a later layer resumes the page's
   distance below the blocks above it, to its first block's content. Where a panel holds
-  the band's first or lowest written block, the space above the band and below it — not
-  the resume between its layers, which is measured to the text as described — is measured
-  to that panel's box, since the panel writes its padding itself, as its cell's margins:
+  the band's first or lowest written block, the space above the band and below it is
+  measured to that panel's box, since the panel writes its padding itself, as its cell's
+  margins — and so is the resume between its layers, below a panel the layers before a
+  later layer end in and above one that layer opens with:
   the outermost panel holding the block, as every panel between writes its own padding
   inside the cell above it. Which of the two is taken shows wherever the measured block
   sits inside an inner panel: below the band whenever its lowest block does, whether or
@@ -1251,10 +1252,13 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   and 27.98pt, one of 20pt padding 19.99 and 40.02pt in Word, one with a 10pt margin of
   its own 13.95 and 28.06pt, and one holding a further panel of 6pt 13.99 and 34.02pt —
   the card's padding over again above its text, and both paddings over again below it;
-  measured to the panel's box, all of them stand within 0.06pt of the page. A band's
-  resume to a later layer is measured to that layer's text still, a panel round it
-  included, so a layer standing under a card in the same stack keeps the card's padding
-  twice: measured, 14pt. The icon, anchored in the
+  measured to the panel's box, all of them stand within 0.06pt of the page. Measured to
+  the text, a band's resume did the same one layer down: a caption laid under a panel of
+  6pt padding stood 6.0pt low in Word 16, under one of 12pt 12.0pt, and a panel written as
+  a later layer its top padding low; measured to the panel's box, while it stands on one
+  page with the block it holds, each stands within 0.1pt of the page. A panel in a row of
+  a later layer keeps its own margin in the row's cell, since the row's table takes the
+  resume: left in the gap, it stood 8.1pt low. The icon, anchored in the
   card's text, stands on the card's corner as each editor sets the card
   (`icon_over_card` in the fidelity corpus holds the lines, not where the icon stands). What a
   later layer's first block holds above its content past the page's distance — a
@@ -1263,8 +1267,12 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   edge, in a band as in a column's cell, where the block is a paragraph, a picture, a
   list or a table in its layer's own flow — under plain sections and containers, and
   alignment and anchor wrappers — its edge above at zero or more; not in a row,
-  a panel or a nested stack, which keep the gap to the block's box and name the overlap
-  from it. Kept whole, a caption with a 20pt margin 7pt under the line above stood 12.7pt
+  a panel or a nested stack: a row or a nested stack keeps the gap to the block's box,
+  a panel on its page the gap to its own box, whose padding it writes itself — which
+  wins where the panel stands in a row, less the margin the panel writes in the row's
+  cell — and each names the overlap from it: a panel the layer opens with from its box,
+  so one the page starts over the layers before it is named though its text starts
+  below their end. Kept whole, a caption with a 20pt margin 7pt under the line above stood 12.7pt
   low in Word and LibreOffice, a picture contained in a box level with that line 12.9pt,
   and a table with a 20pt margin 12.6pt. A list a layer opens keeps its own margin and
   padding after the layer's resume, as a table does: lost there, a list with a 20pt

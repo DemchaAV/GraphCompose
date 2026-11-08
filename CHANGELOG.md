@@ -296,6 +296,28 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A DOCX export measures the space a later layer of a band resumes with to the box of a panel,
+  not through its padding, so a block under a panel in a stack of overlapping layers stands where
+  the page sets it.**
+  - A stack of overlapping layers is written as one band, where each later layer resumes the
+    page's distance below the layers before it. That distance was measured to text, a panel's
+    included, while the panel writes its padding itself, as its cell's margins. Measured in Word
+    16: a caption laid under a panel of 6pt padding stood 6.0pt low, under one of 12pt 12.0pt and
+    under one padded 10pt below its text alone 10.0pt, while under one padded 10pt above its text
+    alone it stood where the page sets it: each low was the panel's bottom padding over again. A
+    panel written as a later layer stood its top padding low, 6.0pt, in a band and in a column's
+    cell of a stack written as columns.
+  - The distance is now measured to the box of the outermost panel the layers before it end in,
+    and of the one the later layer opens with, each while it stands on one page with the block it
+    holds, as the space round the band already is. Each of those stands within 0.1pt of the page
+    in Word, a band opening a new page included. A panel in a row of a later layer keeps its own
+    margin in the row's cell, which the row's table resumes above; left in the distance, it stood
+    8.1pt low, and stands 0.2pt low now. A panel a later layer opens with, which the page starts
+    over the layers before it, is named as written under them, read from its box: with its text
+    below their end, it stood 13.0pt low with no note. A layer
+    the page lays over a panel or over a chart's box is still written under it and named, as
+    before.
+  - The fidelity corpus exports byte for byte as before.
 - **A DOCX export keeps a canvas and an alignment wrapper on the page the layout moves them to,
   whole.**
   - The layout moves a canvas and an alignment wrapper to a new page whole, as it does a layer
@@ -787,8 +809,7 @@ follow semantic versioning; release dates are ISO 8601.
     the block the distance is measured to the block itself, as before, and a stack of one layer,
     which lays nothing over anything and is no band, is untouched.
   - What a band owes between two of its own layers — the resume to a later layer — is measured to
-    that layer's text still, a panel round it included, and is unchanged: a layer standing under
-    a card in the same stack keeps the card's padding twice, measured at 14pt.
+    a panel's box by the same rule, its own entry above.
 
 - **A DOCX export anchors a drawing in a paragraph written by any writer of text — a list's item,
   the one line two halves of a band share — so a card whose only text is written so moves its

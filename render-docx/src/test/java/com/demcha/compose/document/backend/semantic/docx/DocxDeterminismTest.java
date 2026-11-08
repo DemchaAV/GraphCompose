@@ -88,10 +88,15 @@ class DocxDeterminismTest {
 
     @Test
     void theBuilderStillHandsTheReportOver() throws Exception {
+        // Pinning the clocks changes no note: the builder hands over the report the plain
+        // constructor does.
         AtomicReference<DocxExportReport> received = new AtomicReference<>();
+        AtomicReference<DocxExportReport> plain = new AtomicReference<>();
         exportCorpus(DocxSemanticBackend.builder().reportSink(received::set).deterministic(true).build());
+        exportCorpus(new DocxSemanticBackend(plain::set));
 
-        assertThat(received.get()).isNotNull();
+        assertThat(plain.get().notes()).as("the fixture has something to report").isNotEmpty();
+        assertThat(received.get().notes()).isEqualTo(plain.get().notes());
     }
 
     private static byte[] exportCorpus(DocxSemanticBackend backend) throws Exception {

@@ -2,16 +2,20 @@ package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.dsl.BarcodeBuilder;
+import com.demcha.compose.document.dsl.CanvasLayerBuilder;
 import com.demcha.compose.document.dsl.LayerStackBuilder;
 import com.demcha.compose.document.dsl.ListBuilder;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.dsl.ShapeContainerBuilder;
 import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
+import com.demcha.compose.document.node.PageReferenceNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -484,6 +488,489 @@ class DocxBlockOpeningAPageTest {
             assertThat(lineHeight(paragraphBefore(document, document.getTables().get(0))))
                     .as("the gap").isEqualTo(Math.round(GAP * 20));
         }
+    }
+
+    @Test
+    void aShapeContainerHoldsItsMarginAndTheRoomAboveItsTextAndDrawsItsOutlineFromTheText() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(ellipse(EDGE, "Opening"));
+        assertOpensTheSecondPage(content, "Block");
+        double room = roomAbove(content, "Block", "Opening");
+        assertThat(room).as("the premise: the ellipse centres its text, below its top").isGreaterThan(5);
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph opening = paragraphWith(document, "Opening");
+
+            assertThat(lineBefore(document, opening)).as("its margin and the room above its text")
+                    .isCloseTo(Math.round((EDGE + room) * 20), org.assertj.core.data.Offset.offset(1L));
+            assertThat(before(spacing(opening))).isZero();
+            // Placed down from the top of the text's paragraph, the space above it once included:
+            // dropped by Word at the top of the page, that space left the outline under the page.
+            assertThat(outlineOffset(opening)).as("the outline's top, from the text's")
+                    .isCloseTo(-room, org.assertj.core.data.Offset.offset(0.5));
+        }
+    }
+
+    @Test
+    void aShapeContainerOpeningABandLeavesTheEdgeToItsText() throws Exception {
+        // Its text holds the band's edge there, as any band's first paragraph does, and the room
+        // the ellipse leaves above it: one line.
+        Consumer<PageFlowBuilder> content = movedToANewPage(bandOpeningWith(ellipse(0, "Opening")));
+        assertOpensTheSecondPage(content, "Block");
+        double room = roomAbove(content, "Block", "Opening");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph opening = paragraphWith(document, "Opening");
+
+            assertThat(document.getParagraphs()).filteredOn(DocxBlockOpeningAPageTest::holdsAnEdge).hasSize(1);
+            assertThat(lineBefore(document, opening)).isCloseTo(Math.round((EDGE + room) * 20),
+                    org.assertj.core.data.Offset.offset(1L));
+        }
+    }
+
+    @Test
+    void aShapeContainerInAStackOfOneLayerHoldsItsEdgeToo() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(new LayerStackBuilder().name("Stack")
+                .topLeft(ellipse(EDGE, "Opening")).build());
+        assertOpensTheSecondPage(content, "Block");
+        double room = roomAbove(content, "Block", "Opening");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph opening = paragraphWith(document, "Opening");
+
+            assertThat(lineBefore(document, opening)).isCloseTo(Math.round((EDGE + room) * 20),
+                    org.assertj.core.data.Offset.offset(1L));
+            assertThat(before(spacing(opening))).isZero();
+        }
+    }
+
+    @Test
+    void aWrappedFirstParagraphInAShapeContainerTakesTheGapBetweenItsLinesOutOfTheLine() throws Exception {
+        // As a paragraph does where a line holds its edge: what the gap took from the space above
+        // it, which Word drops at the top of the page, would set its lines close.
+        Consumer<PageFlowBuilder> content = movedToANewPage(new ShapeContainerBuilder().name("Block")
+                .rectangle(260, 60).margin(DocumentInsets.top(EDGE))
+                .layer(wrapped(), LayerAlign.TOP_LEFT).build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph opening = paragraphStartingWith(document, "Opening");
+
+            assertThat(lineBefore(document, opening)).as("the margin less the 4pt gap").isEqualTo(Math.round(EDGE * 20) - 80);
+            assertThat(before(spacing(opening))).isZero();
+        }
+    }
+
+    @Test
+    void aWrappedFirstParagraphInACanvasTakesTheGapBetweenItsLinesOutOfTheLine() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(new CanvasLayerBuilder(200, 60).name("Block")
+                .margin(DocumentInsets.top(EDGE)).position(wrapped(), 0, 0).build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph opening = paragraphStartingWith(document, "Opening");
+
+            assertThat(lineBefore(document, opening)).as("the margin less the 4pt gap").isEqualTo(Math.round(EDGE * 20) - 80);
+        }
+    }
+
+    @Test
+    void aShapeContainerInARowsCellHoldsNoLine() throws Exception {
+        // The row's table opens the page; the container's text is its cell's.
+        Consumer<PageFlowBuilder> content = page -> page.spacer(0, CONTENT - 10)
+                .addRow(row -> row.name("Row").add(ellipse(EDGE, "Opening")).addParagraph("Beside"));
+        assertOpensTheSecondPage(content, "Row");
+        try (XWPFDocument document = export(content)) {
+            assertThat(document.getTables().get(0).getRow(0).getCell(0).getParagraphs())
+                    .noneMatch(DocxBlockOpeningAPageTest::holdsAnEdge);
+        }
+    }
+
+    @Test
+    void aShapeContainerThatOnlyDrawsLastInAStackOfOneLayerHoldsNoLineOfItsOwn() throws Exception {
+        // Last in its parent in a stack of one layer, it is written as a container, not held as its
+        // drawing (writeNodeContentOf), and writes no paragraph for a line to keep with.
+        Consumer<PageFlowBuilder> content = page -> page.spacer(0, CONTENT - 10)
+                .add(new LayerStackBuilder().name("Stack").topLeft(new SectionBuilder()
+                        .addSection("Holder", holder -> holder.add(new ShapeContainerBuilder().name("Block")
+                                .ellipse(60, 20).fillColor(DocumentColor.LIGHT_GRAY).margin(DocumentInsets.top(EDGE))
+                                .layer(new com.demcha.compose.document.dsl.ShapeBuilder().size(20, 10)
+                                        .fillColor(DocumentColor.BLACK).build(), LayerAlign.CENTER).build()))
+                        .addParagraph("Opening").build()).build())
+                .addParagraph("After");
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(document.getParagraphs()).noneMatch(DocxBlockOpeningAPageTest::holdsAnEdge);
+        }
+    }
+
+    @Test
+    void aShapeContainerOnItsPageHoldsNoLine() throws Exception {
+        Consumer<PageFlowBuilder> content = page -> page.addParagraph("Before").add(ellipse(EDGE, "Opening"));
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph opening = paragraphWith(document, "Opening");
+
+            assertThat(paragraphBefore(document, opening).getText()).isEqualTo("Before");
+            assertThat(before(spacing(opening))).as("its margin and room above its text").isPositive();
+        }
+    }
+
+    @Test
+    void aShapeContainerThatOnlyDrawsHoldsNoLine() throws Exception {
+        // It writes no paragraph to keep a line with: it is held whole as its drawing, its room
+        // owed as space to the next block, before it would be written as a container.
+        Consumer<PageFlowBuilder> content = page -> page.spacer(0, CONTENT - 10)
+                .add(new ShapeContainerBuilder().name("Block").ellipse(200, 40).fillColor(DocumentColor.LIGHT_GRAY)
+                        .margin(DocumentInsets.top(EDGE))
+                        .layer(new com.demcha.compose.document.dsl.ShapeBuilder().size(20, 10)
+                                .fillColor(DocumentColor.BLACK).build(), LayerAlign.CENTER).build())
+                .addParagraph("After");
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(document.getParagraphs()).noneMatch(DocxBlockOpeningAPageTest::holdsAnEdge);
+        }
+    }
+
+    @Test
+    void aCanvasHoldsItsMarginInALineKeptWithItsFirstBlock() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(canvas(EDGE));
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph opening = paragraphWith(document, "Opening");
+
+            assertThat(lineBefore(document, opening)).isEqualTo(Math.round(EDGE * 20));
+            assertThat(before(spacing(opening))).isZero();
+        }
+    }
+
+    @Test
+    void aCanvasOpeningWithATableHoldsItsMarginOnce() throws Exception {
+        // The line opens the page: the table under it is not the page's first block, and holds no
+        // line of its own with the canvas's margin in it a second time.
+        assertTheCanvasHoldsItsMarginOnce(new TableBuilder().autoColumns(2).row("Opening", "Beside").build());
+    }
+
+    @Test
+    void aCanvasOpeningWithAPanelHoldsItsMarginOnce() throws Exception {
+        assertTheCanvasHoldsItsMarginOnce(new SectionBuilder().fillColor(DocumentColor.LIGHT_GRAY)
+                .padding(DocumentInsets.of(6)).addParagraph("Opening").build());
+    }
+
+    @Test
+    void aShapeContainerOpeningWithATableHoldsItsMarginOnce() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(new ShapeContainerBuilder().name("Block")
+                .rectangle(260, 40).margin(DocumentInsets.top(EDGE))
+                .layer(new TableBuilder().autoColumns(2).row("Opening", "Beside").build(), LayerAlign.TOP_LEFT).build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(document.getParagraphs()).filteredOn(DocxBlockOpeningAPageTest::holdsAnEdge)
+                    .as("one line holds the container's margin").hasSize(1)
+                    .allSatisfy(line -> assertThat(DocxTwips.of(spacing(line).getLine())).isEqualTo(Math.round(EDGE * 20)));
+            assertThat(paragraphBefore(document, document.getTables().get(0)))
+                    .as("the line, right above the table").matches(DocxBlockOpeningAPageTest::holdsAnEdge);
+        }
+    }
+
+    @Test
+    void aCanvasFirstParagraphPulledUpTakesThePullOutOfTheLine() throws Exception {
+        // The page sets it 5pt up into the canvas's 12pt margin: the line holds the 7pt left, and
+        // nothing of the pull is left to name.
+        Consumer<PageFlowBuilder> content = movedToANewPage(new CanvasLayerBuilder(200, 40).name("Block")
+                .margin(DocumentInsets.top(EDGE))
+                .position(new ParagraphBuilder().text("Opening").margin(DocumentInsets.top(-5)).build(), 0, 0).build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph opening = paragraphWith(document, "Opening");
+
+            assertThat(lineBefore(document, opening)).isEqualTo(Math.round((EDGE - 5) * 20));
+            assertThat(before(spacing(opening))).isZero();
+        }
+        assertThat(DocxExports.report(300, 200, 20, content).notes())
+                .noneMatch(note -> "space above".equals(note.subject()));
+    }
+
+    @Test
+    void aPullPastTheLineLeavesTheSpaceAboveTheLineAndIsNamed() throws Exception {
+        // The 3pt line gives back what it can; Word drops the space above it at the top of the page,
+        // so what is left of the pull is not taken from there, and is named.
+        Consumer<PageFlowBuilder> content = movedToANewPage(new CanvasLayerBuilder(200, 40).name("Block")
+                .margin(DocumentInsets.top(3))
+                .position(new ParagraphBuilder().text("Opening").margin(DocumentInsets.top(-5)).build(), 0, 0).build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph line = paragraphBefore(document, paragraphWith(document, "Opening"));
+
+            assertThat(lineHeight(line)).as("all but a twip given back").isEqualTo(1);
+            assertThat(before(spacing(line))).as("the filler's height stays above the line").isEqualTo(owed(CONTENT - 10));
+        }
+        assertThat(DocxExports.report(300, 200, 20, content).notes())
+                .anyMatch(note -> "space above".equals(note.subject()));
+    }
+
+    @Test
+    void aShapeContainersFirstParagraphPulledUpTakesThePullOutOfTheLine() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(new ShapeContainerBuilder().name("Block")
+                .ellipse(200, 40).fillColor(DocumentColor.LIGHT_GRAY).margin(DocumentInsets.top(EDGE))
+                .layer(new ParagraphBuilder().name("Opening").text("Opening").margin(DocumentInsets.top(-5)).build(),
+                        LayerAlign.CENTER).build());
+        assertOpensTheSecondPage(content, "Block");
+        double room = roomAbove(content, "Block", "Opening");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph opening = paragraphWith(document, "Opening");
+
+            // The room is to where the page places the paragraph, its pull up included.
+            assertThat(lineBefore(document, opening)).as("its margin and the room above its text")
+                    .isCloseTo(Math.round((EDGE + room) * 20), org.assertj.core.data.Offset.offset(1L));
+            assertThat(before(spacing(opening))).isZero();
+        }
+        assertThat(DocxExports.report(300, 200, 20, content).notes())
+                .noneMatch(note -> "space above".equals(note.subject()));
+    }
+
+    @Test
+    void aCanvasInAStackOfOneLayerHoldsItsMarginToo() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(new LayerStackBuilder().name("Stack")
+                .topLeft(canvas(EDGE)).build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(lineBefore(document, paragraphWith(document, "Opening"))).isEqualTo(Math.round(EDGE * 20));
+        }
+    }
+
+    private static void assertTheCanvasHoldsItsMarginOnce(DocumentNode first) throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(new CanvasLayerBuilder(200, 60).name("Block")
+                .margin(DocumentInsets.top(EDGE)).position(first, 0, 0).build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(document.getParagraphs()).filteredOn(DocxBlockOpeningAPageTest::holdsAnEdge)
+                    .as("one line holds the canvas's margin").hasSize(1)
+                    .allSatisfy(line -> assertThat(DocxTwips.of(spacing(line).getLine())).isEqualTo(Math.round(EDGE * 20)));
+            assertThat(paragraphBefore(document, document.getTables().get(0)))
+                    .as("the line, right above the table").matches(DocxBlockOpeningAPageTest::holdsAnEdge);
+        }
+    }
+
+    @Test
+    void aCanvasOnItsPageHoldsNoLine() throws Exception {
+        try (XWPFDocument document = export(page -> page.addParagraph("Before").add(canvas(EDGE)))) {
+            XWPFParagraph opening = paragraphWith(document, "Opening");
+
+            assertThat(paragraphBefore(document, opening).getText()).isEqualTo("Before");
+            assertThat(before(spacing(opening))).as("its margin").isEqualTo(Math.round(EDGE * 20));
+        }
+    }
+
+    @Test
+    void aBarcodeHoldsItsMarginInALineKeptWithIt() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(barcode());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph symbol = pictureParagraph(document);
+
+            assertThat(lineBefore(document, symbol)).isEqualTo(Math.round(EDGE * 20));
+            assertThat(before(spacing(symbol))).isZero();
+        }
+    }
+
+    @Test
+    void aBarcodeOnItsPageHoldsNoLine() throws Exception {
+        try (XWPFDocument document = export(page -> page.addParagraph("Before").add(barcode()))) {
+            XWPFParagraph symbol = pictureParagraph(document);
+
+            assertThat(paragraphBefore(document, symbol).getText()).isEqualTo("Before");
+            assertThat(before(spacing(symbol))).as("its margin").isEqualTo(Math.round(EDGE * 20));
+        }
+    }
+
+    @Test
+    void aPageReferenceHoldsItsMarginInALineKeptWithIt() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(pageReference(DocumentInsets.top(EDGE)))
+                .andThen(page -> page.addParagraph(p -> p.text("Target").anchor("target")));
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph reference = paragraphWith(document, "2");
+
+            assertThat(lineBefore(document, reference)).isEqualTo(Math.round(EDGE * 20));
+            assertThat(before(spacing(reference))).as("the paragraph it is written as owes it no more").isZero();
+        }
+    }
+
+    @Test
+    void aPageReferenceOpeningABandHoldsTheBandsMargin() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(bandOpeningWith(pageReference(DocumentInsets.zero())))
+                .andThen(page -> page.addParagraph(p -> p.text("Target").anchor("target")));
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(lineBefore(document, paragraphWith(document, "2"))).isEqualTo(Math.round(EDGE * 20));
+        }
+    }
+
+    @Test
+    void aBarcodeOpeningABandHoldsTheBandsMargin() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(bandOpeningWith(new BarcodeBuilder().name("Block")
+                .code128().data("12345").size(120, 30).build()));
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(lineBefore(document, pictureParagraph(document))).isEqualTo(Math.round(EDGE * 20));
+        }
+    }
+
+    @Test
+    void layerColumnsOpeningABandHoldTheBandsMargin() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(bandOpeningWith(new LayerStackBuilder().name("Block")
+                .layer(column("Side", 0, 160, "Opening"), LayerAlign.TOP_LEFT)
+                .layer(column("Main", 120, 0, "Beside"), LayerAlign.TOP_LEFT).build()));
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            XWPFTable columns = document.getTables().get(0);
+
+            assertThat(columns.getRow(0).getTableCells()).as("the premise: written as columns").hasSize(2);
+            assertThat(lineHeight(paragraphBefore(document, columns))).isEqualTo(Math.round(EDGE * 20));
+        }
+    }
+
+    @Test
+    void layerColumnsOpeningABandAfterItsBackdropHoldTheBandsMargin() throws Exception {
+        // As a table there does: the backdrop is on the new page already, and the columns start no
+        // page of their own; the band opens the page, and they are its first block.
+        Consumer<PageFlowBuilder> content = movedToANewPage(new LayerStackBuilder().margin(DocumentInsets.top(EDGE))
+                .back(new com.demcha.compose.document.dsl.ShapeBuilder().size(200, 30)
+                        .fillColor(DocumentColor.LIGHT_GRAY).build())
+                .topLeft(new LayerStackBuilder().name("Block")
+                        .layer(column("Side", 0, 160, "Opening"), LayerAlign.TOP_LEFT)
+                        .layer(column("Main", 120, 0, "Beside"), LayerAlign.TOP_LEFT).build())
+                .bottomRight(new ParagraphBuilder().text("Caption").margin(DocumentInsets.top(30)).build())
+                .build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            XWPFTable columns = document.getTables().get(0);
+
+            assertThat(columns.getRow(0).getTableCells()).as("the premise: written as columns").hasSize(2);
+            assertThat(lineHeight(paragraphBefore(document, columns))).isEqualTo(Math.round(EDGE * 20));
+        }
+    }
+
+    @Test
+    void layerColumnsOpeningABandLeaveOnlyTheGapOnThePageAbove() throws Exception {
+        // As a table opening the band does: the page above keeps the paragraph's 8pt below it, and
+        // the line holds the band's margin alone.
+        assertTheGapStaysAbove(new LayerStackBuilder().name("Block")
+                .layer(column("Side", 0, 160, "Opening"), LayerAlign.TOP_LEFT)
+                .layer(column("Main", 120, 0, "Beside"), LayerAlign.TOP_LEFT).build(), 0);
+    }
+
+    @Test
+    void aPageReferenceOnItsPageHoldsNoLine() throws Exception {
+        try (XWPFDocument document = export(page -> page.addParagraph("Before")
+                .add(pageReference(DocumentInsets.top(EDGE))).addParagraph(p -> p.text("Target").anchor("target")))) {
+            XWPFParagraph reference = paragraphWith(document, "1");
+
+            assertThat(paragraphBefore(document, reference).getText()).isEqualTo("Before");
+            assertThat(before(spacing(reference))).as("its margin").isEqualTo(Math.round(EDGE * 20));
+        }
+    }
+
+    @Test
+    void layerColumnsHoldTheirStacksMarginInALineKeptWithTheirTable() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(layerColumns());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(document.getTables().get(0).getRow(0).getTableCells()).as("the premise: written as columns")
+                    .hasSize(2);
+            assertThat(lineHeight(paragraphBefore(document, document.getTables().get(0))))
+                    .isEqualTo(Math.round(EDGE * 20));
+        }
+    }
+
+    @Test
+    void layerColumnsOnTheirPageHoldNoLine() throws Exception {
+        try (XWPFDocument document = export(page -> page.addParagraph("Before").add(layerColumns()))) {
+            assertThat(paragraphBefore(document, document.getTables().get(0)).getText()).isEqualTo("Before");
+        }
+    }
+
+    /** A shape container drawing an ellipse round a paragraph it centres in it, its margin {@code above}. */
+    private static DocumentNode ellipse(double above, String text) {
+        return new ShapeContainerBuilder().name("Block").ellipse(200, 40).fillColor(DocumentColor.LIGHT_GRAY)
+                .margin(DocumentInsets.top(above))
+                .layer(new ParagraphBuilder().name(text).text(text).build(), LayerAlign.CENTER).build();
+    }
+
+    /** A paragraph that wraps onto a second line, with a 4pt gap between its lines. */
+    private static DocumentNode wrapped() {
+        return new ParagraphBuilder().text("Opening words that run on past the width of this block and wrap onto "
+                                           + "a second line").lineSpacing(4).build();
+    }
+
+    private static XWPFParagraph paragraphStartingWith(XWPFDocument document, String text) {
+        return document.getParagraphs().stream().filter(p -> p.getText().startsWith(text)).findFirst().orElseThrow();
+    }
+
+    /** A canvas with its margin {@code above}, placing a paragraph at its top left. */
+    private static DocumentNode canvas(double above) {
+        return new CanvasLayerBuilder(200, 40).name("Block").margin(DocumentInsets.top(above))
+                .position(new ParagraphBuilder().text("Opening").build(), 0, 0).build();
+    }
+
+    /** A 30pt code with a 12pt margin. */
+    private static DocumentNode barcode() {
+        return new BarcodeBuilder().name("Block").code128().data("12345").size(120, 30)
+                .margin(DocumentInsets.top(EDGE)).build();
+    }
+
+    /** A reference to the page of the anchor {@code target}. */
+    private static DocumentNode pageReference(DocumentInsets margin) {
+        return new PageReferenceNode("Block", "target", null, TextAlign.LEFT, null, DocumentInsets.zero(), margin);
+    }
+
+    /** A stack with a 12pt margin whose two layers are side-by-side columns, as a two-column page lays them. */
+    private static DocumentNode layerColumns() {
+        return new LayerStackBuilder().name("Block").margin(DocumentInsets.top(EDGE))
+                .layer(column("Side", 0, 160, "Opening"), LayerAlign.TOP_LEFT)
+                .layer(column("Main", 120, 0, "Beside"), LayerAlign.TOP_LEFT).build();
+    }
+
+    /** One column as a full-width layer, inset to its band. */
+    private static DocumentNode column(String name, double left, double right, String text) {
+        SectionBuilder layer = new SectionBuilder();
+        layer.name(name).spacing(0).padding(new DocumentInsets(0, right, 0, left));
+        layer.addSection(name + "Content", section -> section.spacing(0).addParagraph(text));
+        return layer.build();
+    }
+
+    /** How far below the top of a block's box the layout sets the top of a block inside it, in points. */
+    private static double roomAbove(Consumer<PageFlowBuilder> content, String outer, String inner) {
+        try (DocumentSession session = GraphCompose.document().pageSize(300, 200).margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(content::accept);
+            com.demcha.compose.document.layout.PlacedNode box = placed(session, outer);
+            com.demcha.compose.document.layout.PlacedNode text = placed(session, inner);
+            return box.placementY() + box.placementHeight() - (text.placementY() + text.placementHeight());
+        }
+    }
+
+    private static com.demcha.compose.document.layout.PlacedNode placed(DocumentSession session, String name) {
+        return session.layoutGraph().nodes().stream()
+                .filter(node -> name.equals(node.semanticName())).findFirst().orElseThrow();
+    }
+
+    /** How far below the top of the paragraph it is anchored in a drawing is placed, in points. */
+    private static double outlineOffset(XWPFParagraph paragraph) {
+        java.util.regex.Matcher offset = java.util.regex.Pattern
+                .compile("<wp:positionV relativeFrom=\"paragraph\">\\s*<wp:posOffset>(-?\\d+)")
+                .matcher(paragraph.getCTP().xmlText());
+        assertThat(offset.find()).as("a drawing placed from the paragraph").isTrue();
+        try {
+            return Long.parseLong(offset.group(1)) / 12700.0;
+        } catch (NumberFormatException outOfRange) {
+            throw new AssertionError("an offset past a long: " + offset.group(1), outOfRange);
+        }
+    }
+
+    /** The paragraph carrying the document's one picture. */
+    private static XWPFParagraph pictureParagraph(XWPFDocument document) {
+        return document.getParagraphs().stream().filter(p -> !p.getRuns().isEmpty()
+                && !p.getRuns().get(0).getEmbeddedPictures().isEmpty()).findFirst().orElseThrow();
+    }
+
+    /** Whether a paragraph is an empty exact line kept with the next, as a held edge is. */
+    private static boolean holdsAnEdge(XWPFParagraph paragraph) {
+        CTSpacing spacing = paragraph.getCTP().isSetPPr() ? paragraph.getCTP().getPPr().getSpacing() : null;
+        return paragraph.getText().isEmpty() && spacing != null && spacing.getLineRule() == STLineSpacingRule.EXACT
+               && paragraph.getCTP().getPPr().isSetKeepNext() && DocxTwips.of(spacing.getLine()) > HAIRLINE;
     }
 
     /** A gap between blocks, which does not fit in the 3pt the filler leaves at the foot of the first page. */

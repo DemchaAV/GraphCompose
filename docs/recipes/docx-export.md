@@ -1854,8 +1854,20 @@ mitred, round or bevelled join, mitred up to ten times the stroke's width as the
 Written with neither, Word and LibreOffice end an outline flat and round its corners: a
 rectangle's 10pt frame came out with rounded corners, and a star's points 4pt short. Neither
 editor reads the miter limit: Word's own is the page's, so it mitres and bevels where the page
-does, and LibreOffice bevels a corner sharper than 30 degrees. What a drawing does not carry is
-named in the report:
+does, and LibreOffice bevels a corner sharper than 30 degrees. A drawn line or path is dashed
+as the page dashes it (`a:custDash`), from the end the page starts it at: a line built with
+`vertical(h)` starts at its foot, so its preset is flipped to run up from there, and a path's
+dashes start at its first point. A pattern of odd length is written twice, as the page repeats
+it. The page's dash is the stroke's length before its caps, Word's the length it shows: a round
+or square dash is written an outline's width longer, and its gap as much shorter, and a gap the
+caps close as none, which moves the dashes after it in a pattern whose other gaps stay open
+(measured, a 6pt dash and 6pt gap with round caps on a 3pt line, written as 6 and 6, came out 6
+and 6 where the page shows 9 and 3). LibreOffice 24.2 reads a round dash as Word does, and a
+square one as the stroke's length before its caps, so there a square dash stands an outline's
+width longer and its gap as much shorter; and it keeps at most two dash lengths and one gap
+length of a pattern (written as 8, 4, 2, 6 it drew 8, 4, 2, 4). No template has a square dash
+or a pattern of more than one dash and gap. What a drawing does not carry is named in the
+report:
 
 - A transform is not carried: a rotated or scaled shape is drawn upright at its size, and so
   is what a turned shape container holds — named with its outline, or on its own where the
@@ -1864,12 +1876,12 @@ named in the report:
   anchor points at none, and a page reference to it is a fixed number. A section, a container
   or a layer stack's column of drawings alone is bookmarked all the same, at the start of the
   paragraph its first drawing is anchored in, where one carries it (see the links and anchors
-  row). A gradient fill,
+  row). A gradient fill and
   unequal corners (drawn at the largest radius; corners whose radii differ only past half the
   box's shorter side, where the page holds them, are drawn alike and not named — a shape
   composed in a table cell is held to half its own shorter side, so one in a cell narrower than
-  it can still be named) and a line's dash pattern (drawn solid)
-  are not carried either.
+  it can still be named) are not carried either. A drawn line's or path's dash pattern is
+  carried (above).
   A rule — a line or a thin bar written as a paragraph border — keeps its anchor; its note
   names a lost outline entry, caps (a border ends flat) or a bar's link, a line's link being
   reported as `rule link`.
@@ -1930,9 +1942,9 @@ named in the report:
 
 Polygons and paths — a star, a chevron, an SVG icon's layers, a portrait drawn as paths —
 are drawn the same way, as custom geometry through the same points and curves, their fill
-and stroke colours carried, and the outline's caps and joins as above; the dash pattern and
-the clip round an SVG icon are not. A path's note names a gradient or a dash it loses, and a
-clip that cuts the icon's art, parked outside its box, is named in the report. A shape filled only with a gradient paint shows nothing the export
+and stroke colours carried, and the outline's caps, joins and dashes as above; the clip round
+an SVG icon is not. A path's note names a gradient it loses, and a clip that cuts the icon's
+art, parked outside its box, is named in the report. A shape filled only with a gradient paint shows nothing the export
 carries and is **skipped**, and the report names each one. In the flow a drawn or skipped
 shape still takes its room:
 its placed height and margins are owed as space above what follows, and so are

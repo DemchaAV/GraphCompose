@@ -377,7 +377,8 @@ class DocxNodeFieldLedgerTest {
                 "padding:GAP:" + PULL_UNRECKONED + "; as a rule, " + PULLED_UP + "; " + DRAWING_DROPPED,
                 "margin:GAP:" + PULL_UNRECKONED + "; as a rule, " + PULLED_UP + "; " + DRAWING_DROPPED,
                 "transform:REPORTED",
-                "dashPattern:REPORTED",
+                "dashPattern:REPORTED:a rule's, in Word's own dash or dots for a border, not the pattern's lengths; "
+                + "drawn, it is written; " + DRAWING_DROPPED,
                 "anchor:REPORTED:drawn; a rule in the flow is bookmarked",
                 "lineCap:REPORTED:a rule's other than butt, a border ending flat; drawn, it is written; "
                 + DRAWING_DROPPED,
@@ -452,7 +453,8 @@ class DocxNodeFieldLedgerTest {
         node(PathNode.class, "name:INERT", "width:REPORTED:" + DRAWING_DROPPED, "height:REPORTED:" + DRAWING_DROPPED,
                 "segments:REPORTED:" + DRAWING_DROPPED, "fillColor:REPORTED:" + DRAWING_DROPPED, "fillPaint:REPORTED",
                 "stroke:REPORTED:" + DRAWING_DROPPED, "strokePaint:REPORTED", "padding:REPORTED:" + DRAWING_DROPPED,
-                "margin:REPORTED:" + DRAWING_DROPPED, "dashPattern:REPORTED", "lineCap:REPORTED:" + DRAWING_DROPPED,
+                "margin:REPORTED:" + DRAWING_DROPPED, "dashPattern:REPORTED:" + DRAWING_DROPPED,
+                "lineCap:REPORTED:" + DRAWING_DROPPED,
                 "lineJoin:REPORTED:" + DRAWING_DROPPED);
         node(PolygonNode.class, "name:INERT", "width:REPORTED:" + DRAWING_DROPPED, "height:REPORTED:" + DRAWING_DROPPED,
                 "points:REPORTED:" + DRAWING_DROPPED, "fillColor:REPORTED:" + DRAWING_DROPPED,

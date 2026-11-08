@@ -1057,13 +1057,87 @@ class DocxDrawingsTest {
     }
 
     @Test
-    void theReportNamesWhatADashedPathLoses() throws Exception {
+    void aDashedLineRunsFromTheEndThePageStartsItWithThePagesDashes() throws Exception {
+        // A dash and a gap in hundred-thousandths of the outline's width: 4 and 2 on a 2pt line.
+        // vertical(h) starts at its foot, so its preset is flipped to run up from there; one
+        // drawn from its top runs down, as the preset does. A slanted one is flipped across from
+        // its right-hand end and down from its foot, as it starts; a solid one only to slant
+        // from top-right to bottom-left, as before.
+        String dashes = "<a:custDash><a:ds d=\"200000\" sp=\"100000\"/></a:custDash>";
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addParagraph(p -> p.text("Up"))
+                .addLine(line -> line.vertical(60).thickness(2).color(ACCENT).dashed(4, 2))
+                .addParagraph(p -> p.text("Down"))
+                .addLine(line -> line.size(2, 60).from(1, 60).to(1, 0).thickness(2).color(ACCENT).dashed(4, 2))
+                .addParagraph(p -> p.text("Up and right"))
+                .addLine(line -> line.size(40, 30).from(0, 0).to(40, 30).thickness(2).color(ACCENT).dashed(4, 2))
+                .addParagraph(p -> p.text("Up and left"))
+                .addLine(line -> line.size(40, 30).from(40, 0).to(0, 30).thickness(2).color(ACCENT).dashed(4, 2))
+                .addParagraph(p -> p.text("Down and left"))
+                .addLine(line -> line.size(40, 30).from(40, 30).to(0, 0).thickness(2).color(ACCENT).dashed(4, 2))
+                .addParagraph(p -> p.text("Solid"))
+                .addLine(line -> line.vertical(60).thickness(2).color(ACCENT))
+                .addParagraph(p -> p.text("Solid, up and right"))
+                .addLine(line -> line.size(40, 30).from(0, 0).to(40, 30).thickness(2).color(ACCENT))))) {
+
+            assertThat(flipsAndDashes(document.getDocument().xmlText())).containsExactlyInAnyOrder(
+                    " flipV=\"1\"|" + dashes,
+                    "|" + dashes,
+                    " flipV=\"1\"|" + dashes,
+                    " flipH=\"1\" flipV=\"1\"|" + dashes,
+                    " flipH=\"1\"|" + dashes,
+                    "|",
+                    " flipH=\"1\"|");
+        }
+    }
+
+    @Test
+    void aDashWithRoundOrSquareEndsIsWrittenAsLongAsItShows() throws Exception {
+        // The page's 6pt dash shows 9pt with its caps on a 3pt line, its 6pt gap 3pt; a 2pt gap the
+        // caps close shows none.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addParagraph(p -> p.text("Round"))
+                .addLine(line -> line.vertical(60).thickness(3).color(ACCENT).dashed(6, 6)
+                        .lineCap(DocumentLineCap.ROUND))
+                .addParagraph(p -> p.text("Square"))
+                .addLine(line -> line.vertical(60).thickness(3).color(ACCENT).dashed(6, 6)
+                        .lineCap(DocumentLineCap.SQUARE))
+                .addParagraph(p -> p.text("Closed"))
+                .addLine(line -> line.vertical(60).thickness(3).color(ACCENT).dashed(6, 2)
+                        .lineCap(DocumentLineCap.ROUND))))) {
+
+            assertThat(dashes(document.getDocument().xmlText())).containsExactlyInAnyOrder(
+                    "<a:ds d=\"300000\" sp=\"100000\"/>",
+                    "<a:ds d=\"300000\" sp=\"100000\"/>",
+                    "<a:ds d=\"300000\" sp=\"0\"/>");
+        }
+    }
+
+    @Test
+    void aDashPatternOfOddLengthIsWrittenTwiceAsThePageRepeatsIt() throws Exception {
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addParagraph(p -> p.text("One"))
+                .addLine(line -> line.vertical(60).thickness(2).color(ACCENT).dashed(8))
+                .addParagraph(p -> p.text("Three"))
+                .addLine(line -> line.vertical(60).thickness(2).color(ACCENT).dashed(8, 4, 2))))) {
+
+            assertThat(dashes(document.getDocument().xmlText())).containsExactlyInAnyOrder(
+                    "<a:ds d=\"400000\" sp=\"400000\"/>",
+                    "<a:ds d=\"400000\" sp=\"200000\"/><a:ds d=\"100000\" sp=\"400000\"/>"
+                    + "<a:ds d=\"200000\" sp=\"100000\"/>");
+        }
+    }
+
+    @Test
+    void aDashedPathIsDrawnDashedAndItsNoteNamesNoDash() throws Exception {
         AtomicReference<DocxExportReport> report = new AtomicReference<>();
-        try (XWPFDocument ignored = export(report, session -> session.pageFlow(page -> page
+        try (XWPFDocument document = export(report, session -> session.pageFlow(page -> page
                 .addPath(path -> path.name("Dashed").size(40, 10).moveTo(0, 0.5).lineTo(1, 0.5)
                         .stroke(DocumentStroke.of(ACCENT, 1)).dashed(3, 2))))) {
+            assertThat(dashes(document.getDocument().xmlText()))
+                    .containsExactly("<a:ds d=\"300000\" sp=\"200000\"/>");
             assertThat(report.get().notes()).extracting(DocxExportReport.Note::detail)
-                    .anyMatch(detail -> detail.contains("dash pattern"));
+                    .noneMatch(detail -> detail.contains("dash"));
         }
     }
 
@@ -1119,11 +1193,13 @@ class DocxDrawingsTest {
                                         new com.demcha.compose.document.dsl.PathBuilder().size(20, 20)
                                                 .moveTo(0, 0).lineTo(0.5, 1).lineTo(1, 0)
                                                 .stroke(DocumentStroke.of(ACCENT, 2)).lineCap(DocumentLineCap.ROUND)
-                                                .lineJoin(DocumentLineJoin.BEVEL).build()),
+                                                .lineJoin(DocumentLineJoin.BEVEL).dashed(3, 3).build()),
                                 com.demcha.compose.document.table.DocumentTableCell.text("Beside")))))) {
 
+            // Dashed as in the flow: the 3pt dash shows 5pt with its round caps, the gap 1pt.
             assertThat(outlines(document.getDocument().xmlText())).singleElement().asString()
-                    .contains("cap=\"rnd\"").contains("<a:bevel/>");
+                    .contains("cap=\"rnd\"").contains("<a:bevel/>")
+                    .contains("<a:custDash><a:ds d=\"250000\" sp=\"50000\"/></a:custDash>");
         }
     }
 
@@ -1192,6 +1268,31 @@ class DocxDrawingsTest {
             anchors.add(matcher.group());
         }
         return anchors;
+    }
+
+    /** Each drawn shape's flips and the dashes of its outline, as {@code flips|dashes}. */
+    private static List<String> flipsAndDashes(String xml) {
+        List<String> shapes = new ArrayList<>();
+        Pattern flips = Pattern.compile("<a:xfrm([^>]*)>");
+        Pattern dashes = Pattern.compile("<a:custDash>.*?</a:custDash>");
+        String[] parts = xml.split("<wps:wsp>", -1);
+        for (int i = 1; i < parts.length; i++) {
+            String shape = parts[i].substring(0, parts[i].indexOf("</wps:wsp>"));
+            Matcher flip = flips.matcher(shape);
+            Matcher dash = dashes.matcher(shape);
+            shapes.add((flip.find() ? flip.group(1) : "?") + "|" + (dash.find() ? dash.group() : ""));
+        }
+        return shapes;
+    }
+
+    /** The dashes of each dashed outline, its {@code a:ds} elements run together. */
+    private static List<String> dashes(String xml) {
+        List<String> dashes = new ArrayList<>();
+        Matcher matcher = Pattern.compile("<a:custDash>(.*?)</a:custDash>").matcher(xml);
+        while (matcher.find()) {
+            dashes.add(matcher.group(1));
+        }
+        return dashes;
     }
 
     /** Every shape's outline in a part's XML, in document order. */

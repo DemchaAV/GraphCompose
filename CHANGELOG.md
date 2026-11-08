@@ -296,6 +296,27 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A DOCX export draws a dashed line or path dashed.**
+  - A line or a path the export draws as a shape was drawn solid, and the report said so:
+    `VioletGridCv`'s five dotted dividers between its skill columns came out as solid rules.
+  - Its outline is now dashed as the page dashes it (`a:custDash`), in a table cell as
+    anywhere, from the end the page starts it at — `vertical(h)` from its foot, a path from its
+    first point — and a pattern of odd length twice over, as the page repeats it. The page's
+    dash is the stroke's length before its caps and Word's the length it shows, so a round or
+    square dash is written an outline's width longer and its gap as much shorter: written as the
+    page's, a 6pt dash and gap with round caps on a 3pt line came out 6 and 6 in Word where the
+    page shows 9 and 3.
+  - Measured in Word and LibreOffice 24.2, `VioletGridCv`'s dividers start at their foot and
+    keep the page's 1.13pt dots and 1.78pt gaps; LibreOffice rounds the line's width to 1.15pt
+    and keeps the dots' proportion. LibreOffice reads a square dash as the stroke's length
+    before its caps, so it draws one an outline's width longer than Word and its gap as much
+    shorter, and it keeps at most two dash lengths and one gap length of a pattern; no template
+    has either. A line written
+    as a rule is still a paragraph border in Word's own dash, as before.
+  - The report no longer names the dash of a drawn line or path, and a table's note on what its
+    cells draw names a transform or a gradient only. In the fidelity corpus only
+    `VioletGridCv` changes: its text stands where it stood.
+
 - **A DOCX export keeps a table's rows from creeping lower than the page's, row after row.**
   - A row is written in whole twips. A row whose cells' lines or whose written height are rounded
     up stood taller than the page's by the rounding, and each row under it lower by every row's

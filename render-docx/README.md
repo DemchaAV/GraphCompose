@@ -139,8 +139,9 @@ What maps:
   placed where the page draws them, anchored in a paragraph of the block they belong to so they
   move with it. One whose block writes no paragraph on its page is carried by another paragraph
   there and placed from the page's edges. What
-  a drawing loses — a transform, a gradient, a dash pattern, a link or an outline entry — is
-  named in a report note, on its table for one composed in a table cell.
+  a drawing loses — a transform, a gradient, a link or an outline entry — is named in a report
+  note, on its table for one composed in a table cell. A line or a path is dashed as the page
+  dashes it.
 - **Barcodes and QR codes** are pictures of the same matrix the PDF draws, so they scan.
 - **Charts** are Word charts — bar, line, pie and donut — with their numbers in an embedded
   workbook a reader edits through *Edit Data*; one drawn beside other drawings in a table cell,

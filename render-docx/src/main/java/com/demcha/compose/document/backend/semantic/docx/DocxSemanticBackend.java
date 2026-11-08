@@ -17806,12 +17806,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>A text cell's content is read as written ({@link #writtenContent}). A cell whose content
      * is not read — one built from a node, or a text cell holding a picture or a line Word sets at
-     * its own height — is not counted, as Word's room for the rules does not count a cell built
-     * from a node ({@link DocxRuleRoom}): a row holding one is read only where a text cell beside
-     * it sets the row at least as tall as its written height. A row the layout did not place or
-     * measure, a row in a vertical merge, and a row the export holds no height for are not read.
-     * A header row Word repeats on each page is read once, on the first page the layout puts
-     * it.</p>
+     * its own height — is not counted, as the export's count of the room Word makes for the rules
+     * leaves a cell built from a node out ({@link DocxRuleRoom}): a row holding one is read only
+     * where a text cell beside it sets the row at least as tall as its written height. A row the
+     * layout did not place or measure, a row in a vertical merge, and a row the export holds no
+     * height for are not read. A header row Word repeats on each page is read once, on the first
+     * page the layout puts it.</p>
      */
     private void carryTheRowsRounding(XWPFTable table, TableNode node, TableGrid.Placement[][] cover) {
         DocxRowRounding rounding = new DocxRowRounding();

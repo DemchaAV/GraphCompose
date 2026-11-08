@@ -58,7 +58,7 @@ class DocxTableRowRoundingTest {
                 assertTheRowsStandWhereThePagesDo(exported, size + "pt");
                 long most = mostBottom(exported.table());
                 assertThat(bottoms(exported.table()).stream().distinct())
-                        .as("at %spt, rows take a twip off their bottom margin, and none adds one", size)
+                        .as("at %spt, some rows take a twip off their bottom margin", size)
                         .containsExactlyInAnyOrder(most, most - 1);
             }
         }

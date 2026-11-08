@@ -15,8 +15,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class DocxRowRoundingTest {
 
-    /** Two lines, a space after the first and the row's own four: six rounded parts. */
-    private static final int PARTS = 6;
+    /** Two lines, a space after the first and the row's own four: seven rounded parts. */
+    private static final int PARTS = 7;
     private static final long ROOM = 79;
 
     @Test
@@ -59,9 +59,9 @@ class DocxRowRoundingTest {
         DocxRowRounding rounding = new DocxRowRounding();
 
         assertThat(rounding.settle(0, 0.4, PARTS, ROOM)).isZero();
-        assertThat(rounding.settle(0, 3.2, PARTS, ROOM)).as("past six half twips: not rounding, left as it is").isZero();
+        assertThat(rounding.settle(0, 3.8, PARTS, ROOM)).as("past seven half twips: not rounding, left as it is").isZero();
         assertThat(rounding.settle(0, 0.4, PARTS, ROOM)).as("nothing carried from above it").isZero();
-        assertThat(rounding.settle(0, 2.9, PARTS, ROOM)).as("within six half twips: rounding").isEqualTo(3);
+        assertThat(rounding.settle(0, 3.4, PARTS, ROOM)).as("within seven half twips: rounding, 3.8 carried").isEqualTo(4);
     }
 
     @Test

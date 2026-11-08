@@ -6227,6 +6227,19 @@ follow semantic versioning; release dates are ISO 8601.
     identical through the constructors, where it held the size within 64 bytes.
     `DocxDeterminismTest` requires the deterministic builder to hand over the notes the plain
     constructor does, where it had only to hand over a report.
+- **Six export-report notes that no test asserted are now asserted, each on the document that
+  makes it:**
+  - a face whose OS/2 `fsType` forbids embedding, and a face whose file cannot be read, are each
+    named `DROPPED` (`embedded font`) and not shipped. The page cannot lay either face out, so
+    both documents are written without a layout;
+  - a page zone whose content builds nothing for the first page Word writes it on, while the page
+    draws it there, is named `DROPPED` (`page zone`);
+  - a node of a kind the caller registers, drawn over three pages, whose middle page has no
+    paragraph to carry its shape, is named `DROPPED` for that part only;
+  - a page that no block of the body starts is named where its top and bottom margins differ from
+    those Word sets it with (`page margin`);
+  - without a layout, a painted shape container's outline is named `DROPPED` (`shape container
+    outline`), and an unpainted one is not.
 
 ### Performance
 

@@ -158,6 +158,84 @@ class DocxFontTableTest {
     }
 
     @Test
+    void aFaceThatMayNotBeEmbeddedIsNamedAndNotShipped(@TempDir Path folder) throws Exception {
+        // OS/2 fsType 0x0002: restricted. The page cannot measure such a face either, so the
+        // document is written without a layout; the face is named, not shipped.
+        byte[] font = latoRegular();
+        int os2 = DocxFontEmbedding.tableOffset(font, "OS/2", 10);
+        font[os2 + 8] = 0x00;
+        font[os2 + 9] = 0x02;
+        assertThat(DocxFontEmbedding.permissionOf(font))
+                .as("the fixture's face is the restricted one the export refuses")
+                .isEqualTo(DocxFontEmbedding.Permission.RESTRICTED);
+        Path restricted = Files.write(folder.resolve("Restricted.ttf"), font);
+
+        FontExport exported = exportSetIn(GraphCompose.document().registerFontFamily("Restricted", restricted),
+                DocumentTextStyle.builder().fontName(FontName.of("Restricted")).size(10).build());
+
+        assertThat(exported.layoutFailure()).as("the premise: the page could not lay the face out")
+                .contains("does not permit embedding");
+        assertThat(exported.fontNote()).satisfies(note -> {
+            assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.DROPPED);
+            assertThat(note.detail()).isEqualTo("'Restricted' does not permit embedding (OS/2 fsType), so a "
+                                                + "reader without it installed sees a substituted face");
+        });
+        assertThat(fontParts(exported.document())).as("the face was refused").isEmpty();
+    }
+
+    @Test
+    void aFaceWhoseFileCannotBeReadIsNamedAndNotShipped(@TempDir Path folder) throws Exception {
+        // The bold face's file is missing: the page cannot lay it out, and the export, written
+        // without a layout, names the face it could not read.
+        Path regular = Files.write(folder.resolve("Unread-Regular.ttf"), latoRegular());
+        Path missing = folder.resolve("Unread-Bold.ttf");
+
+        FontExport exported = exportSetIn(GraphCompose.document().registerFontFamily(
+                        com.demcha.compose.font.FontFamilyDefinition.files("Unread", regular).boldPath(missing).build()),
+                DocumentTextStyle.builder().fontName(FontName.of("Unread")).size(10)
+                        .decoration(DocumentTextDecoration.BOLD).build());
+
+        assertThat(exported.layoutFailure()).as("the premise: the page could not lay the face out").isNotEmpty();
+        assertThat(exported.fontNote().detail()).as("the premise: the bold face's file is the one missing")
+                .contains("Unread-Bold.ttf");
+        assertThat(exported.fontNote()).satisfies(note -> {
+            assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.DROPPED);
+            assertThat(note.detail()).startsWith("the embedBold face of 'Unread' could not be read (")
+                    .contains(missing.toString())
+                    .endsWith("), so a reader without it installed sees a substituted face");
+        });
+        assertThat(fontParts(exported.document())).as("the one face the text is set in, not shipped").isEmpty();
+    }
+
+    /**
+     * A paragraph set in one face, exported: the document, the report's one note on the embedded
+     * font, and the layout's failure where the page could not lay the face out, or empty.
+     */
+    private record FontExport(XWPFDocument document, DocxExportReport.Note fontNote, String layoutFailure) {
+    }
+
+    private static FontExport exportSetIn(GraphCompose.DocumentBuilder builder, DocumentTextStyle style) throws Exception {
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        byte[] docx;
+        try (DocumentSession session = builder.pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page.addParagraph("Set in a face that stays home", style));
+            docx = session.export(new DocxSemanticBackend(report::set));
+        }
+        DocxExportReport.Note fontNote = report.get().notes().stream()
+                .filter(note -> note.subject().equals("embedded font"))
+                .reduce((one, two) -> {
+                    throw new AssertionError("more than one note on the embedded font");
+                })
+                .orElseThrow(() -> new AssertionError("no note on the embedded font"));
+        String layoutFailure = report.get().notes().stream()
+                .filter(note -> note.subject().equals("measured geometry"))
+                .map(DocxExportReport.Note::detail)
+                .filter(detail -> detail.contains("the layout failed: "))
+                .findFirst().orElse("");
+        return new FontExport(new XWPFDocument(new ByteArrayInputStream(docx)), fontNote, layoutFailure);
+    }
+
+    @Test
     void aFaceSetOnlyInATablesCellBuiltFromANodeTravelsToo() throws Exception {
         // A cell built from a node keeps it in the cell, not among its table's children: read by
         // the children alone, the faces of the cells — a nested table's among them — were named on

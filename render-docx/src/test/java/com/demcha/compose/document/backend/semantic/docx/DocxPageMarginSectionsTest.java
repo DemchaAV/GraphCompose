@@ -752,6 +752,28 @@ class DocxPageMarginSectionsTest {
         return ((java.math.BigInteger) section.getPgMar().getBottom()).longValue();
     }
 
+    @Test
+    void aPageNoBlockOfTheBodyStartsIsNamedForTheMarginsWordCannotChangeThere() throws Exception {
+        // Page 2 holds a shape alone, drawn where the page draws it: no paragraph or table of the
+        // body starts there, so nothing can start the Word section its margins need.
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> page
+                .addParagraph("Intro")
+                .addShape(300, 300, com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148))
+                .addShape(300, 220, com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148))
+                .addParagraph("After"));
+
+        assertThat(exported.lastNames()).as("the premise: three pages").hasSize(3);
+        assertThat(exported.lastLineOf(1)).as("the premise: no paragraph on page 2").isEmpty();
+        assertThat(exported.report().notes()).filteredOn(note -> note.subject().equals("page margin"))
+                .filteredOn(note -> "page 2".equals(note.path()))
+                .singleElement().satisfies(note -> {
+                    assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.APPROXIMATED);
+                    assertThat(note.detail()).isEqualTo("page 2's top and bottom margins differ from page 1's, which "
+                                                        + "Word sets it with: no block of the body starts page 2, "
+                                                        + "where the export starts no Word section");
+                });
+    }
+
     private static Exported export(List<PageMarginRule> rules, Consumer<PageFlowBuilder> content) throws Exception {
         return export(rules, session -> { }, content);
     }

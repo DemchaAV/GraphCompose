@@ -263,6 +263,19 @@ class DocxZoneByPageTest {
                 + "them, its content is none; a zone absent from some pages says so through appliesTo");
     }
 
+    @Test
+    void aZoneBuildingNothingForTheFirstPageThatThePageDrawsIsNamed() throws Exception {
+        // The page draws a footer on page 1, asked with its number; Word's first-page footer is
+        // built without one, and this content builds none for that.
+        Exported exported = export(3, footer(page -> page.isFirst()
+                ? (page.isPaginated() ? text("Cover") : null)
+                : text("Running")));
+
+        assertThat(exported.footerText(STHdrFtr.DEFAULT)).isEqualTo("Running");
+        assertThat(exported.zoneNotes()).contains("a footer on the first page is not written: built for it, its "
+                + "content is none; a zone absent from some pages says so through appliesTo");
+    }
+
     private static DocumentPageZone footer(Function<PageContext, DocumentNode> content) {
         return DocumentPageZone.footer(20, content);
     }

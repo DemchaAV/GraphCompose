@@ -286,6 +286,8 @@ class DocxLineHeightTest {
             assertThat(lineRule(totals)).isEqualTo("exact");
             // 14pt of Helvetica measures 12.95pt from ascent to descent — the table's default
             // cell face and the totals row's alike.
+            // Source: the face's metrics, not an editor. #717 states 12.95pt; it is pdfbox's
+            // Helvetica.afm, ascender 718 and descender -207: (718 + 207) / 1000 x 14 = 12.95pt.
             assertThat(lineTwips(body)).isEqualTo(259L);
             assertThat(lineTwips(totals)).isEqualTo(259L);
         }

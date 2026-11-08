@@ -33,10 +33,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class DocxListGeometryFreezeTest {
 
-    /** The marker column the export writes, in twips. A convention, not a measurement. */
+    /** The marker column the export writes, in twips. A convention, not a measurement (#701). */
     private static final int HANGING_TWIPS = 180;
 
-    /** Added per nesting level, approximating the two spaces the old text path used. */
+    /** Added per nesting level, approximating the two spaces the old text path used (#701). */
     private static final int NESTING_STEP_TWIPS = 120;
 
     private static final Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> OUTLINE =

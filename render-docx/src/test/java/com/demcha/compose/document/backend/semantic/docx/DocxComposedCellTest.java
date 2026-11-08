@@ -197,6 +197,8 @@ class DocxComposedCellTest {
     void aChipsLabelTallerThanItsOutlineIsCutToIt() throws Exception {
         // CobaltRota's stacked chips: a 9.2pt outline round 8.2pt text on a 10pt line. Grown to
         // the line in Word, each stood 0.8pt taller than the page draws it.
+        // Source: 9.2 is the fixture's outline, not a measurement; that Word grew the chip to its
+        // line was seen in Word in #796, whose record names no Word version.
         XWPFTableCell chip = chipCell(null);
         double line = lineOf(chip);
 
@@ -211,6 +213,8 @@ class DocxComposedCellTest {
         // the cell centring the line, the top gives no more — 9.84 less twice 0.93. Beside another
         // cell, which gives back none of what the chip grows by, Word sets the line from the top
         // of the chip it grows, not where the page starts it: it is read from the middle.
+        // Source: 7.98 is derived as above (#796) — Lato's metrics, Word keeping the borders
+        // outside the content, and the letters' margin — not read off an editor.
         XWPFTableCell chip = chipCell(com.demcha.compose.document.style.DocumentStroke.of(
                 com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148), 1.1));
 
@@ -254,6 +258,10 @@ class DocxComposedCellTest {
         // holds: CobaltRota's outlined chips, 9.2pt outlines with a 1.125pt border, stood 10.3pt
         // tall in Word, and each row holding one 1.1pt taller than the page's. A 1.125pt border is
         // written at nine eighths, and a row counts it 22 twips.
+        // Source: 184 is the 9.2pt outline in twips. 140 follows from a row counting a border at
+        // its eighths times 2.5, rounded down, measured in Word 16 and LibreOffice on Windows
+        // (#880). LibreOffice 24.2 sets such a chip a written border shorter, as it counts a
+        // cell's margins inside an at-least row height (#880).
         XWPFTableCell outlined = chipCell(com.demcha.compose.document.style.DocumentStroke.of(
                 com.demcha.compose.document.style.DocumentColor.rgb(20, 160, 70), 1.125));
         XWPFTableCell filled = chipCell(null);

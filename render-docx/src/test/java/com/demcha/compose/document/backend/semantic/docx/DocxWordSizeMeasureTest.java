@@ -16,6 +16,7 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTInd;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /**
  * A paragraph's lines are set in a measure as much wider or narrower than the page's as Word
@@ -32,15 +33,29 @@ class DocxWordSizeMeasureTest {
 
     @Test
     void aSizeWordSetsLargerWidensTheMeasureByAsMuch() throws Exception {
-        assertThat(indentOf(7.8, TextAlign.LEFT, SHORT))
-                .as("one line: the measure 8/7.8 of the page's, in full")
-                .isEqualTo(-Math.round(ROOM * (8 / 7.8 - 1) * 20));
+        Measured measured = measuredAt(7.8, TextAlign.LEFT, SHORT);
+
+        assertThat(measured.writtenSize()).as("the premise: Word is given a larger size").isGreaterThan(7.8);
+        assertThat(measured.measureTwips())
+                .as("one line: as many ems wide in Word as on the page, to the half twip the indent is rounded to")
+                .isCloseTo(ROOM * 20 * measured.writtenSize() / 7.8, within(0.5));
     }
 
     @Test
     void aSizeWordSetsSmallerNarrowsAParagraphOfSeveralLines() throws Exception {
-        assertThat(indentOf(9.2, TextAlign.LEFT, LONG)).as("9/9.2 of the page's, a point short of it")
-                .isEqualTo(Math.round((ROOM * (1 - 9 / 9.2) + 1) * 20));
+        // Long words, three to a line, leave each line well short of the room: the measure is the
+        // page's ems a point short, not held out by the widest line.
+        Measured measured = measuredAt(9.2, TextAlign.LEFT, SPARSE);
+        double inEms = ROOM * 20 * measured.writtenSize() / 9.2;
+        double widestInWord = laidOut(ROOM, p -> p.text(SPARSE).textStyle(DocumentTextStyle.DEFAULT.withSize(9.2)))
+                .stream().mapToDouble(ParagraphLine::width).max().orElseThrow() * 20 * measured.writtenSize() / 9.2;
+
+        assertThat(measured.writtenSize()).as("the premise: Word is given a smaller size").isLessThan(9.2);
+        assertThat(widestInWord + 20).as("the premise: the widest line and a point stand clear of that measure")
+                .isLessThan(inEms - 20 - 1);
+        // The indent is written to the twip, so the measure is held to half of one.
+        assertThat(measured.measureTwips()).as("the page's ems, a point short of them")
+                .isCloseTo(inEms - 20, within(0.5));
     }
 
     @Test
@@ -300,7 +315,8 @@ class DocxWordSizeMeasureTest {
 
             assertThat(DocxTwips.of(small.getRuns().get(0).getCTR().getRPr().getSzArray(0).getVal()))
                     .as("8pt, in half points").isEqualTo(16L);
-            assertThat(rightIndent(small)).isEqualTo(-Math.round(ROOM * (8 / 7.8 - 1) * 20));
+            assertThat(ROOM * 20 - rightIndent(small)).as("the measure taken for the size the run states")
+                    .isCloseTo(ROOM * 20 * writtenSize(small) / 7.8, within(0.5));
         }
     }
 
@@ -317,7 +333,7 @@ class DocxWordSizeMeasureTest {
 
             assertThat(-rightIndent(cell)).as("wider, by its share of a column no wider than 200pt")
                     .isPositive()
-                    .isLessThanOrEqualTo(Math.round(200 * (8 / 7.8 - 1) * 20));
+                    .isLessThanOrEqualTo(Math.round(200 * 20 * (writtenSize(cell) / 7.8 - 1)));
         }
     }
 
@@ -337,7 +353,7 @@ class DocxWordSizeMeasureTest {
             try (XWPFDocument document = DocxExports.withLayout(room + 40, 400, 20, page -> page
                     .addParagraph(p -> p.text(text).textStyle(DocumentTextStyle.DEFAULT.withSize(7.95))))) {
                 double measure = room - rightIndent(text(document, "Built backend")) / 20.0;
-                double grows = 8 / 7.95;
+                double grows = writtenSize(text(document, "Built backend")) / 7.95;
 
                 assertThat(rightIndent(text(document, "Built backend"))).as("wider than the page's").isNegative();
                 assertThat(measure).as("every line fits").isGreaterThanOrEqualTo(tie[0] * grows);
@@ -463,6 +479,41 @@ class DocxWordSizeMeasureTest {
     private static final String SHORT = "Platform engineer with ten years of document pipelines.";
     private static final String LONG = SHORT + " Built resilient layout engines, template systems and the "
             + "snapshot-tested libraries that replace brittle production scripts across many teams.";
+    /** Nine long words, three to a line, each line well short of the room. */
+    private static final String SPARSE = String.join(" ", java.util.Collections.nCopies(9, "Documentationpipelines"));
+
+    /** A paragraph's measure in Word, in twips, and the size its run is written at, in points. */
+    private record Measured(double measureTwips, double writtenSize) {
+    }
+
+    /** The measure Word sets a paragraph of the text given in, at a size and an alignment. */
+    private static Measured measuredAt(double size, TextAlign align, String words) throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page
+                .addParagraph(p -> p.text(words).textStyle(DocumentTextStyle.DEFAULT.withSize(size)).align(align)))) {
+            XWPFParagraph paragraph = text(document, words.split(" ")[0]);
+            return new Measured(ROOM * 20 - rightIndent(paragraph), writtenSize(paragraph));
+        }
+    }
+
+    /**
+     * The size a paragraph's first run is written at, in points: the run's own, else its
+     * paragraph style's, else the document's default, which the export writes to Normal as well.
+     * Styles based on others are not followed: the export writes none for these paragraphs.
+     */
+    private static double writtenSize(XWPFParagraph paragraph) {
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr run =
+                paragraph.getRuns().get(0).getCTR().getRPr();
+        if (run != null && run.sizeOfSzArray() > 0) {
+            return DocxTwips.of(run.getSzArray(0).getVal()) / 2.0;
+        }
+        org.apache.poi.xwpf.usermodel.XWPFStyles styles = paragraph.getDocument().getStyles();
+        org.apache.poi.xwpf.usermodel.XWPFStyle style = paragraph.getStyleID() == null ? null
+                : styles.getStyle(paragraph.getStyleID());
+        if (style != null && style.getCTStyle().isSetRPr() && style.getCTStyle().getRPr().sizeOfSzArray() > 0) {
+            return DocxTwips.of(style.getCTStyle().getRPr().getSzArray(0).getVal()) / 2.0;
+        }
+        return DocxTwips.of(styles.getCtStyles().getDocDefaults().getRPrDefault().getRPr().getSzArray(0).getVal()) / 2.0;
+    }
 
     /** The right indent of a paragraph of the text given, at a size and an alignment. */
     private static long indentOf(double size, TextAlign align, String words) throws Exception {

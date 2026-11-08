@@ -953,7 +953,11 @@ class DocxBlockOpeningAPageTest {
                 .compile("<wp:positionV relativeFrom=\"paragraph\">\\s*<wp:posOffset>(-?\\d+)")
                 .matcher(paragraph.getCTP().xmlText());
         assertThat(offset.find()).as("a drawing placed from the paragraph").isTrue();
-        return Double.parseDouble(offset.group(1)) / 12700.0;
+        try {
+            return Long.parseLong(offset.group(1)) / 12700.0;
+        } catch (NumberFormatException outOfRange) {
+            throw new AssertionError("an offset past a long: " + offset.group(1), outOfRange);
+        }
     }
 
     /** The paragraph carrying the document's one picture. */

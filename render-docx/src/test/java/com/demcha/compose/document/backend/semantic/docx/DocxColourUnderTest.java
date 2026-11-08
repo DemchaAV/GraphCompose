@@ -114,7 +114,7 @@ class DocxColourUnderTest {
     void aTablesCellIsItsFillWhereItCoversThePoint() throws Exception {
         DocumentTableStyle red = DocumentTableStyle.builder().fillColor(RED).build();
         assertThat(panelOver(table(200, red), LayerAlign.CENTER)).as("a red cell under the centre").isEqualTo(OVER_RED);
-        // Beside the centre across, then above it: each bound of the cell is read.
+        // Beside the centre across, then above it: a bound across and a bound down are read.
         assertThat(panelOver(table(20, red), LayerAlign.CENTER_LEFT))
                 .as("a red cell left of the centre").isEqualTo(OVER_NAVY);
         assertThat(panelOver(table(200, red), LayerAlign.TOP_CENTER))

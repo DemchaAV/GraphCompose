@@ -317,6 +317,27 @@ class DocxZoneByPageTest {
     }
 
     @Test
+    void aZoneDeeperThanItsValuesAreReadIsTakenForOtherwise() throws Exception {
+        // Sections each holding the next, built alike for every page: three deep, one footer;
+        // forty deep, past the depth the values are read to, a first-page footer and the rest's.
+        // A zone writes no section, so both are empty either way; how many is the reading.
+        assertThat(export(3, footer(page -> nested(3))).section().getFooterReferenceList())
+                .as("three deep").hasSize(1);
+        Exported deep = export(3, footer(page -> nested(40)));
+        assertThat(deep.section().isSetTitlePg()).as("forty deep").isTrue();
+        assertThat(deep.section().getFooterReferenceList()).hasSize(2);
+    }
+
+    /** A line in sections each holding the next, as many as given. */
+    private static DocumentNode nested(int depth) {
+        DocumentNode content = text("Running");
+        for (int level = 0; level < depth; level++) {
+            content = new com.demcha.compose.document.dsl.SectionBuilder().add(content).build();
+        }
+        return content;
+    }
+
+    @Test
     void columnsStyledOtherwiseOnTheFirstPageAreTheTitlePagesFooter() throws Exception {
         // Two styled columns against three, maps of one class — a map of one entry is another
         // class than a map of two or more: the first page's every key is among the rest's, so

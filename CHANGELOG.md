@@ -312,8 +312,9 @@ follow semantic versioning; release dates are ISO 8601.
     holds, as the space round the band already is. Each of those stands within 0.1pt of the page
     in Word, a band opening a new page included. A panel in a row of a later layer keeps its own
     margin in the row's cell, which the row's table resumes above; left in the distance, it stood
-    8.1pt low. A panel the page starts over the layers before it is named as written under them,
-    read from its box: with its text below their end, it stood 13.0pt low with no note. A layer
+    8.1pt low, and stands 0.2pt low now. A panel a later layer opens with, which the page starts
+    over the layers before it, is named as written under them, read from its box: with its text
+    below their end, it stood 13.0pt low with no note. A layer
     the page lays over a panel or over a chart's box is still written under it and named, as
     before.
   - The fidelity corpus exports byte for byte as before.

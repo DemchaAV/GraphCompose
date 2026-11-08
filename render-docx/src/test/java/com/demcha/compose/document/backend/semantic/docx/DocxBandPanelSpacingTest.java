@@ -317,7 +317,13 @@ class DocxBandPanelSpacingTest {
                     .addParagraph(p -> p.text("After the stack.")));
             double gap = gapAbove(session, "Head", "Panel");
             try (XWPFDocument document = docx(session)) {
-                assertThat(document.getTables()).as("written as columns").isNotEmpty();
+                assertThat(document.getTables())
+                        .as("written as columns: the head in a cell of a row of two, beside the side column")
+                        .anySatisfy(table -> assertThat(table.getRows()).singleElement().satisfies(row -> {
+                            assertThat(row.getTableCells()).hasSize(2);
+                            assertThat(row.getCell(1).getParagraphs())
+                                    .anySatisfy(p -> assertThat(p.getText()).isEqualTo("The head."));
+                        }));
                 assertThat(after(paragraph(document, "The head.")))
                         .as("the page's gap from the head to the panel's box, its padding not in it")
                         .isCloseTo(Math.round(gap * 20), offset(2L));

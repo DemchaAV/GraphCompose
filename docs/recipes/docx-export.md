@@ -1268,9 +1268,11 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   list or a table in its layer's own flow — under plain sections and containers, and
   alignment and anchor wrappers — its edge above at zero or more; not in a row,
   a panel or a nested stack: a row or a nested stack keeps the gap to the block's box,
-  a panel on its page the gap to its own box, whose padding it writes itself, and each
-  names the overlap from it — a panel from its box, so one the page starts over the
-  layers before it is named though its text starts below their end. Kept whole, a caption with a 20pt margin 7pt under the line above stood 12.7pt
+  a panel on its page the gap to its own box, whose padding it writes itself — which
+  wins where the panel stands in a row, less the margin the panel writes in the row's
+  cell — and each names the overlap from it: a panel the layer opens with from its box,
+  so one the page starts over the layers before it is named though its text starts
+  below their end. Kept whole, a caption with a 20pt margin 7pt under the line above stood 12.7pt
   low in Word and LibreOffice, a picture contained in a box level with that line 12.9pt,
   and a table with a 20pt margin 12.6pt. A list a layer opens keeps its own margin and
   padding after the layer's resume, as a table does: lost there, a list with a 20pt

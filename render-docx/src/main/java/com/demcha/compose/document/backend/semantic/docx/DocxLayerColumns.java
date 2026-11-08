@@ -100,7 +100,8 @@ final class DocxLayerColumns {
 
         /**
          * How far above where the content of the layers before it in its cell ends — a panel
-         * among them where its box does — the page starts a layer's highest block: the page sets
+         * among them where its box does — the page starts a layer's highest block, a panel on its
+         * page the layer opens with from its box: the page sets
          * it over that content, beside it or above it, and Word writes one block under another,
          * so what the layer writes in the flow is written under them.
          *
@@ -484,8 +485,9 @@ final class DocxLayerColumns {
      * end, it is written under them, no further up than its own edge gives, and named
      * ({@link Band#over}).</p>
      *
-     * <p>Only a block that {@link #givesItsEdgeBack} does so. Any other keeps the gap to its box
-     * less its margin, never below zero, as it always has: one in a row, a panel broken over pages,
+     * <p>Only a block that {@link #givesItsEdgeBack} does so. Any other not held by a panel on its
+     * page keeps the gap to its box less its margin, never below zero, as it always has: one in a
+     * row, a panel broken over pages,
      * a nested stack or a shape writes its edge inside them; a spacer writes neither its margin nor
      * its padding, though its margin comes off the gap, and the report names it; and a block with an
      * edge below zero takes it out where it is written, by its own writer's rules.</p>

@@ -6240,6 +6240,21 @@ follow semantic versioning; release dates are ISO 8601.
     those Word sets it with (`page margin`);
   - without a layout, a painted shape container's outline is named `DROPPED` (`shape container
     outline`), and an unpainted one is not.
+- **The numbers the Word export takes from an editor say where they came from.**
+  - `DocxEditorConstantsFreezeTest` pins each editor, format or convention constant other tests
+    name by symbol as a literal, with the pull request it came from and what it was measured in:
+    Word's rule reach (1.42 and 1.51pt), the four-fifths baseline share, a column's point of
+    slack, a picture's quarter-point edge, a band's line factor, a stack's ink margin, the 1024
+    steps page backgrounds stand apart in, Word's 12pt thickest border, the engine's 4pt cell
+    padding and a badge's four characters. Where a source names no editor version, the test says
+    it is not recorded.
+  - `DocxWordSizeMeasureTest`'s size tests read the size Word writes a run at, where they restated
+    the export's rounding to the half point. One line is held to as many ems as the page's; a
+    paragraph whose lines stand clear of the room, to those ems a point short.
+  - `DocxComposedCellTest` and `DocxLineHeightTest` record the source of 9.2, 7.98, 140, 184 and
+    259: two fixture values, a derivation from Lato's metrics, a row height that follows from the
+    border rule measured in Word 16 and LibreOffice on Windows, and Helvetica's AFM ascender and
+    descender.
 
 ### Performance
 

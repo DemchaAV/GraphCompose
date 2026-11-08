@@ -12338,11 +12338,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             double edge = node.margin().top() + node.padding().top() + setIn[0];
             if (opensItsPageAsAnOverlay(node, overlaysRound) && !onlyDrawn(node)) {
                 // Its first layer is an overlay's, which holds no edge of its own there. One that
-                // only draws writes no paragraph for the line to keep with: in the flow it is held
-                // whole as its drawing (writeNodeContentOf), and last in its parent in a stack of
-                // one layer it reaches here and holds nothing.
+                // only draws writes no paragraph for the line to keep with: held whole as its
+                // drawing where writeNodeContentOf holds it, and where it reaches here — last in its
+                // parent in a stack of one layer, or with no place to hold — it holds nothing.
                 edge -= holdTheTopEdgeAboveItsLine(document, node, setIn[0]);
-                letItsFirstParagraphTakeFromTheLine(node);
+                if (topEdgeLine != null) {
+                    letItsFirstParagraphTakeFromTheLine(node);
+                    openItsPageWithTheLine(node);
+                }
             }
             double carriedFromOutside = carriedSpacingBefore;
             long blocksBefore = blocksWritten;
@@ -19917,7 +19920,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         List<DocxLayerColumns.Column> columns = plan.columns();
         XWPFTable table = newTable(document, 1, columns.size());
-        if (!startsItsPage) {
+        if (!(startsItsPage || opensItsBand)) {
             rowsLiftedForTheirGaps.add(table);
         }
         hideTableGrid(table);
@@ -20635,9 +20638,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean moves = followed || currentCell != null || overlayDepth - oneLayerDepth > 1;
         reportWrittenWithout(canvas, "written as its contents", canvasLosses(canvas, writes, followed, moves, room));
         if (!writes.nothing()) {
-            if (opensItsPageAsAnOverlay(canvas, overlayDepth - 1)) {
+            if (opensItsPageAsAnOverlay(canvas, overlayDepth - 1)
+                && holdAParagraphsTopEdgeOnItsPage(document, canvas, 0)) {
                 // Its first paragraph is an overlay's, which holds no edge of its own there.
-                holdAParagraphsTopEdgeOnItsPage(document, canvas, 0);
+                openItsPageWithTheLine(canvas);
             }
             writeContainerBody(document, canvas);
             double left = canvas.height() - writes.height();
@@ -22270,15 +22274,28 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Lets the first paragraph of a shape container or a canvas whose top edge a line holds take
      * the gap between its lines out of that line, as a paragraph holding its own edge does
      * ({@link #applyVerticalSpacing}, {@link #applyLineGap}): it owes the line none of its own
-     * edge, which it writes itself. Word drops the space above it at the top of the page, so what
-     * the gap took from it would set its lines that much close: measured in Word 16 and
-     * LibreOffice 24.2, a wrapped first paragraph with a 4pt gap between its lines stood 1.4 to
-     * 1.9pt from where the same paragraph does in the flow.
+     * edge, which it writes itself. The container's edge is in the line, so nothing above the
+     * paragraph is left for the gap to come out of, and its lines would be set that much closer:
+     * measured in Word 16 and LibreOffice 24.2, a wrapped first paragraph with a 4pt gap between
+     * its lines stood 1.4 to 1.9pt from where the same paragraph does in the flow.
      */
     private void letItsFirstParagraphTakeFromTheLine(DocumentNode node) {
         if (topEdgeLine != null && !node.children().isEmpty() && node.children().get(0) instanceof ParagraphNode first) {
             topEdgeHeldAbove = first;
             topEdgeHeld = 0;
+        }
+    }
+
+    /**
+     * Takes the page a shape container or a canvas opens as opened by the line holding its top
+     * edge: what it writes there is not the page's first block. A table, a row, a panel or a stack
+     * of columns it starts with would otherwise take itself for one ({@link #startsAPageOfItsOwn})
+     * and hold the container's edge a second time under the line.
+     */
+    private void openItsPageWithTheLine(DocumentNode node) {
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(node);
+        if (placed != null) {
+            lastEndPage = Math.max(lastEndPage, placed.startPage());
         }
     }
 

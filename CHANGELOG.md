@@ -302,7 +302,7 @@ follow semantic versioning; release dates are ISO 8601.
     and a table there already hold theirs in a line kept with them; these did not. Measured in Word
     16 and LibreOffice 24.2, each with a 14pt margin, moved to a new page in the flow: a canvas, a
     barcode, a page reference and the columns of a layer stack stood 13.7 to 14pt high, and a page
-    reference opening a band of layers 11.7pt, the band's margin. A shape container's text stood
+    reference opening a band of layers with a 12pt margin 11.7pt. A shape container's text stood
     27.3pt high — its margin and the room the container centres it in — and its outline was drawn
     below the text by all the space owed above it, past the foot of the page: the outline is placed
     down from the top of the paragraph it is anchored in, and that paragraph's space above is what

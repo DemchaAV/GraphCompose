@@ -638,6 +638,55 @@ class DocxBlockOpeningAPageTest {
     }
 
     @Test
+    void aCanvasOpeningWithATableHoldsItsMarginOnce() throws Exception {
+        // The line opens the page: the table under it is not the page's first block, and holds no
+        // line of its own with the canvas's margin in it a second time.
+        assertTheCanvasHoldsItsMarginOnce(new TableBuilder().autoColumns(2).row("Opening", "Beside").build());
+    }
+
+    @Test
+    void aCanvasOpeningWithAPanelHoldsItsMarginOnce() throws Exception {
+        assertTheCanvasHoldsItsMarginOnce(new SectionBuilder().fillColor(DocumentColor.LIGHT_GRAY)
+                .padding(DocumentInsets.of(6)).addParagraph("Opening").build());
+    }
+
+    @Test
+    void aShapeContainerOpeningWithATableHoldsItsMarginOnce() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(new ShapeContainerBuilder().name("Block")
+                .rectangle(260, 40).margin(DocumentInsets.top(EDGE))
+                .layer(new TableBuilder().autoColumns(2).row("Opening", "Beside").build(), LayerAlign.TOP_LEFT).build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(document.getParagraphs()).filteredOn(DocxBlockOpeningAPageTest::holdsAnEdge)
+                    .as("one line holds the container's margin").hasSize(1)
+                    .allSatisfy(line -> assertThat(DocxTwips.of(spacing(line).getLine())).isEqualTo(Math.round(EDGE * 20)));
+        }
+    }
+
+    @Test
+    void aCanvasInAStackOfOneLayerHoldsItsMarginToo() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(new LayerStackBuilder().name("Stack")
+                .topLeft(canvas(EDGE)).build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(lineBefore(document, paragraphWith(document, "Opening"))).isEqualTo(Math.round(EDGE * 20));
+        }
+    }
+
+    private static void assertTheCanvasHoldsItsMarginOnce(DocumentNode first) throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(new CanvasLayerBuilder(200, 60).name("Block")
+                .margin(DocumentInsets.top(EDGE)).position(first, 0, 0).build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(document.getParagraphs()).filteredOn(DocxBlockOpeningAPageTest::holdsAnEdge)
+                    .as("one line holds the canvas's margin").hasSize(1)
+                    .allSatisfy(line -> assertThat(DocxTwips.of(spacing(line).getLine())).isEqualTo(Math.round(EDGE * 20)));
+            assertThat(paragraphBefore(document, document.getTables().get(0)))
+                    .as("the line, right above the table").matches(DocxBlockOpeningAPageTest::holdsAnEdge);
+        }
+    }
+
+    @Test
     void aCanvasOnItsPageHoldsNoLine() throws Exception {
         try (XWPFDocument document = export(page -> page.addParagraph("Before").add(canvas(EDGE)))) {
             XWPFParagraph opening = paragraphWith(document, "Opening");
@@ -846,7 +895,7 @@ class DocxBlockOpeningAPageTest {
                 .compile("<wp:positionV relativeFrom=\"paragraph\">\\s*<wp:posOffset>(-?\\d+)")
                 .matcher(paragraph.getCTP().xmlText());
         assertThat(offset.find()).as("a drawing placed from the paragraph").isTrue();
-        return Long.parseLong(offset.group(1)) / 12700.0;
+        return Double.parseDouble(offset.group(1)) / 12700.0;
     }
 
     /** The paragraph carrying the document's one picture. */

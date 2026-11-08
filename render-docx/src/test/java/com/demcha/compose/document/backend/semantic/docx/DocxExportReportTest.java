@@ -10,9 +10,14 @@ import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -164,15 +169,39 @@ class DocxExportReportTest {
 
     @Test
     void withNoSinkTheExportIsUnchanged() throws Exception {
-        // The report is opt-in, and asking for it must not change the document.
+        // The report is opt-in, and asking for it must not change the document. With the
+        // package's clocks pinned, the two exports are compared byte for byte; through the
+        // constructors, whose clocks run, every part but the one holding the dates.
+        AtomicReference<DocxExportReport> received = new AtomicReference<>();
         byte[] withSink;
         byte[] without;
+        Map<String, byte[]> constructedWithSink;
+        Map<String, byte[]> constructedWithout;
         try (DocumentSession session = session(page -> page.addParagraph(p -> p.text("Body")))) {
-            withSink = session.export(new DocxSemanticBackend(report -> { }));
-            without = session.export(new DocxSemanticBackend());
+            withSink = session.export(DocxSemanticBackend.builder().reportSink(received::set)
+                    .deterministic(true).build());
+            without = session.export(DocxSemanticBackend.builder().deterministic(true).build());
+            constructedWithSink = partsBesidesTheDates(session.export(new DocxSemanticBackend(report -> { })));
+            constructedWithout = partsBesidesTheDates(session.export(new DocxSemanticBackend()));
         }
-        // Not byte-for-byte: a .docx carries a creation timestamp. The document is.
-        assertThat(withSink.length).isCloseTo(without.length, org.assertj.core.data.Offset.offset(64));
+        assertThat(received.get().notes()).as("the sink was handed a report with notes in it").isNotEmpty();
+        assertThat(withSink).isEqualTo(without);
+        assertThat(constructedWithSink.keySet()).containsExactlyElementsOf(constructedWithout.keySet());
+        constructedWithout.forEach((part, bytes) ->
+                assertThat(constructedWithSink.get(part)).as(part).isEqualTo(bytes));
+    }
+
+    /** Each part of the package by name, but the core properties, which hold the export's dates. */
+    private static Map<String, byte[]> partsBesidesTheDates(byte[] docx) throws Exception {
+        Map<String, byte[]> parts = new LinkedHashMap<>();
+        try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(docx))) {
+            for (ZipEntry entry; (entry = zip.getNextEntry()) != null; ) {
+                if (!entry.getName().equals("docProps/core.xml")) {
+                    parts.put(entry.getName(), zip.readAllBytes());
+                }
+            }
+        }
+        return parts;
     }
 
     @Test

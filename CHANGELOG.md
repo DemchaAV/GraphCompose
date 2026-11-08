@@ -6212,6 +6212,21 @@ follow semantic versioning; release dates are ISO 8601.
   declares `graph-compose-render-pdf`: render-docx brings it at compile scope, so a session
   that opens proves the published POM carries it. It therefore requires 2.5.0. The nine
   scenario poms move to the reactor's surefire 3.6.1, and `s2` to its enforcer 3.7.0.
+- **Five render-docx test classes that passed on a broken export now check what they claim.**
+  - `DocxListParityTest` exports each list to Word and to PDF from one session, and requires the
+    same marker beside the same text in both. Until now it read only the Word file. Its nested
+    lists are set in Lato, because the standard Helvetica cannot encode ◦, ▪ or →.
+  - `DocxGeometryDropTest` is renamed `DocxPathGeometryTest`. Since paths became custom geometry,
+    its test of a path on its own asserted only that the path left no text, which an empty
+    document also passes. It now requires the drawing and no `DROPPED` note, and a stack that
+    holds a path must draw it as well as keep its text.
+  - `SessionSemanticExportTest` reads the session's paragraph back, where it checked only the ZIP
+    signature.
+  - `DocxExportReportTest` holds that asking for the export report leaves the document
+    byte-identical with the package clocks pinned, and every part but the dated core properties
+    identical through the constructors, where it held the size within 64 bytes.
+    `DocxDeterminismTest` requires the deterministic builder to hand over the notes the plain
+    constructor does, where it had only to hand over a report.
 
 ### Performance
 

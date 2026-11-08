@@ -1048,6 +1048,14 @@ What Word has no way to say is the chip's *shape*. Shading covers the glyph box,
     One ending a centred line should be off by half that, though only the right-aligned case
     is measured.
 - **The padding above and below** the letters is not in the file.
+- **Spaces closing the paragraph.** Word draws nothing for the spaces at the end of a
+  paragraph, their shading included, so a chip of spaces closing its paragraph — a white
+  cut-out behind a heading — would lose its fill, and a centred or right-aligned line would
+  stand half its width or its width right of the page's. The export writes those spaces as
+  no-break spaces, which Word fills and counts as the page does (measured in Word 16). A
+  last line they would fill to its end is not measured. LibreOffice 24.2 draws neither kind:
+  its fill ends at the letters and such a line stands right of the page's, and the chip's
+  note says so.
 - **A padding below zero**, on any side, is not in the file either. The page draws the fill
   inside the letters' box there, and moves it up or down by padding above and below that sum
   to nothing; Word shades the letters' box whatever the padding is.

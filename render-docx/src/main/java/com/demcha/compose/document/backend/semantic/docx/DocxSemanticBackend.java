@@ -1060,6 +1060,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // marked where their first drawing is anchored (markTheBlocksOfDrawingsAlone), or named
     // (nameTheBlocksNoBookmarkMarks).
     private final List<UnmarkedBlock> blocksUnmarked = new ArrayList<>();
+
+    /** The runs chips were written in, the one holding a chip's last letter included. */
+    private final java.util.Map<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR, ChipWritten> chipsWritten =
+            new java.util.IdentityHashMap<>();
+
+    /** The chips whose closing spaces were named, each once whatever runs it was split into. */
+    private final java.util.Set<ChipWritten> chipsNamed = java.util.Collections.newSetFromMap(
+            new java.util.IdentityHashMap<>());
+
+    /** The notes given to chips with no path and no note of their own, once between them. */
+    private final java.util.Set<String> pathlessChipsNamed = new java.util.HashSet<>();
     // How many nodes declare each anchor, a bookmark written or not (DocxAnchorDeclarations), and
     // under how many paths the layouts register it, which counts a kind the export does not know.
     private final java.util.Map<String, Integer> anchorsDeclared = new java.util.LinkedHashMap<>();
@@ -1538,9 +1549,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // that the paragraphs a cut copies carry their held hyphens, and the ones it takes
                 // out are not read once they are gone.
                 lineStartHyphens.hold();
+                // Before a table is cut at its pages, which copies the chips' runs it moves.
+                fillTheSpacesClosingTheirParagraphs(document);
                 DocxPageMarginSections.apply(document, margins);
                 dropTheGapWhereASectionOpens(document);
             }
+            chipsWritten.clear();
+            chipsNamed.clear();
+            pathlessChipsNamed.clear();
             // Every bookmark is written now, those a reference on an earlier page reads included.
             nameTheBlocksNoBookmarkMarks();
             keepTheLastBookmarkOfEachAnchor(document);
@@ -7652,9 +7668,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             applyStyle(docRun, text.textStyle() == null ? style : text.textStyle());
             applyInlineBackground(docRun, runs, index, path, false);
             setTextBrokenAtLines(docRun, text.text());
-            spaceAfterTheLastLetter(para, docRun, text.text(), roomAfter(runs, index));
+            followTheChip(docRun, spaceAfterTheLastLetter(para, docRun, text.text(), roomAfter(runs, index)));
         }
         return pictures;
+    }
+
+    /** Takes the run a chip's last letter was split into as the chip's too. */
+    private void followTheChip(XWPFRun run, XWPFRun lastLetter) {
+        ChipWritten chip = chipsWritten.get(run.getCTR());
+        if (chip != null && lastLetter != run) {
+            chipsWritten.put(lastLetter.getCTR(), chip);
+        }
     }
 
     /**
@@ -14562,6 +14586,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             widthOwed = 0;
             XWPFRun lastLetter = spaceAfterTheLastLetter(para, docRun, text.text(),
                     rightToLeft ? 0 : roomAfter(inlineRuns, index));
+            followTheChip(docRun, lastLetter);
             lettersOf.put(docRun, docRun.text());
             lettersOf.put(lastLetter, lastLetter.text());
             textBefore = lastLetter;
@@ -15943,14 +15968,64 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         shading.setFill(toHexColor(fill.getAlpha() < 255 ? DocxTranslucency.flatten(fill, colourUnder(run, path)) : fill));
         String lost = chipLost(background, leftPaddingAs(runs, index, rightToLeft),
                 !rightToLeft && takesSpaceAfter(textOf(runs.get(index)).text()));
+        int noteAt = -1;
+        boolean repeated = false;
         if (lost != null) {
             if (warnedNodeKinds.add("inline-background")) {
                 LOG.warn("DocxSemanticBackend: an inline chip keeps its fill as run shading, "
                          + "but Word shades the glyph box — {}. (One warning per export.)", lost);
             }
+            int notes = report.size();
             report.add(DocxExportReport.Severity.APPROXIMATED, "inline chip", path,
                     "the fill is written as run shading; " + lost);
+            // A page zone's line written again for another kind of header gives no note its first
+            // writing gave already (skipRepeatsOf).
+            noteAt = report.size() > notes ? notes : -1;
+            repeated = noteAt < 0;
         }
+        chipsWritten.put(run.getCTR(), new ChipWritten(noteAt, repeated, path));
+    }
+
+    /**
+     * Writes the shaded spaces closing each paragraph as no-break spaces, which Word fills where it
+     * draws nothing for a space ({@link DocxClosingSpaces}), and adds to each chip's note that
+     * LibreOffice fills neither, or gives it a note of its own where it has none.
+     *
+     * <p>Run on each section once it is written, its page zones with it, and before its tables
+     * are cut at its pages, which copies the rows it moves and with them the runs of the chips
+     * they hold. It reads the whole document each time: spaces filled already are no-break
+     * spaces, and a chip is named once. A page zone's line written again for another kind of
+     * header is named where it was first written; a chip with no note of its own and no path — a
+     * page zone's — gets one note between them all. Before any note is put in among the others
+     * ({@link #settleThePageReferences}): a chip's note is where it was counted.</p>
+     */
+    private void fillTheSpacesClosingTheirParagraphs(XWPFDocument document) {
+        String phrase = "the spaces closing its paragraph are written as no-break spaces, which Word fills and sets "
+                        + "as the page does; LibreOffice draws none of them, so its fill ends at its letters there, "
+                        + "and a centred or right-aligned line stands about half their width or their width further "
+                        + "right";
+        for (org.apache.xmlbeans.XmlObject run : DocxClosingSpaces.fill(document)) {
+            ChipWritten chip = chipsWritten.get(run);
+            if (chip == null || chip.repeated() || !chipsNamed.add(chip)) {
+                continue;
+            }
+            if (chip.noteAt() >= 0) {
+                report.appendTo(chip.noteAt(), phrase);
+            } else if (chip.path() != null || pathlessChipsNamed.add(phrase)) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, "inline chip", chip.path(),
+                        "the fill is written as run shading; " + phrase);
+            }
+        }
+    }
+
+    /**
+     * A chip's run as it was written.
+     *
+     * @param noteAt   where its note stands in the report, or -1 where it has none
+     * @param repeated whether its note is the one a page zone's line gave where it was first written
+     * @param path     the path of the paragraph holding it, {@code null} for a page zone's
+     */
+    private record ChipWritten(int noteAt, boolean repeated, String path) {
     }
 
     /**

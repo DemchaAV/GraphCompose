@@ -53,6 +53,9 @@ class DocxListParityTest {
         assertThat(outputs.word()).containsExactly(
                 new Item("•", "alpha"), new Item("◦", "beta"), new Item("▪", "gamma"));
         assertThat(outputs.page()).isEqualTo(outputs.word());
+        assertThat(outputs.definedLevels())
+                .as("the list definition holds the cascade's levels and no others")
+                .containsExactly("•", "◦", "▪");
     }
 
     @Test
@@ -126,8 +129,11 @@ class DocxListParityTest {
     private record Item(String marker, String text) {
     }
 
-    /** The items of one session, as Word draws them and as the page does. */
-    private record Outputs(List<Item> word, List<Item> page) {
+    /**
+     * The items of one session, as Word draws them and as the page does, and the marker of every
+     * level the Word list definition holds, whether an item uses it or not.
+     */
+    private record Outputs(List<Item> word, List<Item> page, List<String> definedLevels) {
     }
 
     private static Outputs export(Consumer<PageFlowBuilder> author) throws Exception {
@@ -148,7 +154,17 @@ class DocxListParityTest {
             docx = session.export(new DocxSemanticBackend());
             pdf = session.toPdfBytes();
         }
-        return new Outputs(wordItems(docx), pageItems(pdf));
+        return new Outputs(wordItems(docx), pageItems(pdf), definedLevels(docx));
+    }
+
+    /** The marker of each level of the document's one list definition, in order. */
+    private static List<String> definedLevels(byte[] docx) throws Exception {
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            assertThat(document.getNumbering().getAbstractNums()).as("one list, one definition").hasSize(1);
+            return document.getNumbering().getAbstractNums().get(0).getCTAbstractNum().getLvlList().stream()
+                    .map(level -> level.getLvlText().getVal())
+                    .toList();
+        }
     }
 
     /**
@@ -190,7 +206,7 @@ class DocxListParityTest {
             stripper.setLineSeparator("\n");
             stripper.setPageEnd("\n");
             for (String line : stripper.getText(document).split("\n")) {
-                String drawn = line.replace(' ', ' ').strip();
+                String drawn = line.replace((char) 0x00A0, ' ').strip();
                 if (drawn.isEmpty()) {
                     continue;
                 }

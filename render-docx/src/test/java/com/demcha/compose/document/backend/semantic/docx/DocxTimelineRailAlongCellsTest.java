@@ -559,7 +559,7 @@ class DocxTimelineRailAlongCellsTest {
     }
 
     /** An empty paragraph one exact line tall with space after it, as the export keeps two entries apart. */
-    private static void gapParagraph(XWPFDocument document) {
+    static void gapParagraph(XWPFDocument document) {
         XWPFParagraph gap = document.createParagraph();
         gap.getCTP().addNewPPr().addNewSpacing().setAfter(BigInteger.valueOf(200));
         gap.getCTP().getPPr().getSpacing().setLine(BigInteger.valueOf(2));
@@ -568,7 +568,7 @@ class DocxTimelineRailAlongCellsTest {
     }
 
     /** A bar placed 100 twips into the first entry's second cell. */
-    private static CTDrawing barInFirstCell(XWPFTable entry) {
+    static CTDrawing barInFirstCell(XWPFTable entry) {
         CTDrawing bar = entry.getRow(0).getCell(1).getParagraphs().get(0).createRun().getCTR().addNewDrawing();
         org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTPosH across =
                 bar.addNewAnchor().addNewPositionH();
@@ -578,7 +578,7 @@ class DocxTimelineRailAlongCellsTest {
     }
 
     /** Two entries from the top of their pages, the rail from the first's top to the second's foot. */
-    private static DocxTimelineRails.Plan plan(XWPFTable upper, XWPFTable lower, int topPage, int bottomPage,
+    static DocxTimelineRails.Plan plan(XWPFTable upper, XWPFTable lower, int topPage, int bottomPage,
                                                CTDrawing bar) {
         DocxLayoutMetrics.RailedEntry entry = new DocxLayoutMetrics.RailedEntry(null, 0, 100, 500, 480);
         DocxLayoutMetrics.RailedEntry next = new DocxLayoutMetrics.RailedEntry(null, 0, 100, 470, 450);
@@ -586,7 +586,7 @@ class DocxTimelineRailAlongCellsTest {
                 bottomPage, Color.RED, 1, List.of(bar));
     }
 
-    private static XWPFTable entryTable(XWPFDocument document) {
+    static XWPFTable entryTable(XWPFDocument document) {
         XWPFTable table = document.createTable(1, 2);
         if (table.getCTTbl().getTblGrid() == null) {
             table.getCTTbl().addNewTblGrid();

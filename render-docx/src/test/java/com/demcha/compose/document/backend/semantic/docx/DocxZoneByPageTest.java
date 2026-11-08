@@ -12,6 +12,7 @@ import com.demcha.compose.document.output.PageContext;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.table.DocumentTableStyle;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFFooter;
 import org.apache.poi.xwpf.usermodel.XWPFHeader;
@@ -274,6 +275,76 @@ class DocxZoneByPageTest {
         assertThat(exported.footerText(STHdrFtr.DEFAULT)).isEqualTo("Running");
         assertThat(exported.zoneNotes()).contains("a footer on the first page is not written: built for it, its "
                 + "content is none; a zone absent from some pages says so through appliesTo");
+    }
+
+    @Test
+    void theSameWordsSetInBoldOnTheFirstPageAreTheTitlePagesFooter() throws Exception {
+        // The two builds differ only in one constant of the decoration's enum.
+        Exported exported = export(3, footer(page -> new ParagraphBuilder().text("Cover")
+                .textStyle(new DocumentTextStyle(SMALL.fontName(), SMALL.size(), page.isFirst()
+                        ? com.demcha.compose.document.style.DocumentTextDecoration.BOLD
+                        : com.demcha.compose.document.style.DocumentTextDecoration.DEFAULT, SMALL.color())).build()));
+
+        assertThat(exported.section().isSetTitlePg()).isTrue();
+        assertThat(exported.footerLine(STHdrFtr.FIRST).getRuns()).isNotEmpty().allMatch(run -> run.isBold());
+        assertThat(exported.footerLine(STHdrFtr.DEFAULT).getRuns()).isNotEmpty().noneMatch(run -> run.isBold());
+    }
+
+    @Test
+    void theSameWordsInAnotherKindOfNodeOnTheFirstPageAreTheTitlePagesFooter() throws Exception {
+        Exported exported = export(3, footer(page -> page.isFirst() ? text("Cover")
+                : new RowBuilder().addParagraph(p -> p.text("Cover").textStyle(SMALL)).build()));
+
+        assertThat(exported.section().isSetTitlePg()).isTrue();
+        assertThat(exported.section().getFooterReferenceList()).hasSize(2);
+    }
+
+    @Test
+    void aRowHoldingOneLineFewerOnTheFirstPageIsTheTitlePagesFooter() throws Exception {
+        // Three lines against four: both lists of one class, so their sizes are what tells them
+        // apart — a list of one or two is another class than a list of three or more. The first
+        // page's is the shorter, so read line by line it would match the rest's first three.
+        Exported exported = export(3, footer(page -> {
+            RowBuilder row = new RowBuilder().addParagraph(p -> p.text("Acme").textStyle(SMALL))
+                    .addParagraph(p -> p.text("Invoice").textStyle(SMALL))
+                    .addParagraph(p -> p.text("2026").textStyle(SMALL));
+            return (page.isFirst() ? row : row.addParagraph(p -> p.text("Copy").textStyle(SMALL))).build();
+        }));
+
+        assertThat(exported.section().isSetTitlePg()).isTrue();
+        assertThat(exported.text(exported.footer(STHdrFtr.FIRST))).contains("2026").doesNotContain("Copy");
+        assertThat(exported.text(exported.footer(STHdrFtr.DEFAULT))).contains("Copy");
+    }
+
+    @Test
+    void columnsStyledOtherwiseOnTheFirstPageAreTheTitlePagesFooter() throws Exception {
+        // Two styled columns against three, maps of one class — a map of one entry is another
+        // class than a map of two or more: the first page's every key is among the rest's, so
+        // only their sizes tell them apart.
+        DocumentTableStyle red = DocumentTableStyle.builder().fillColor(DocumentColor.rgb(200, 40, 40)).build();
+        DocumentTableStyle blue = DocumentTableStyle.builder().fillColor(DocumentColor.rgb(40, 40, 200)).build();
+
+        assertThat(export(3, DocumentPageZone.footer(30, page -> table(red, red, red))).section().getFooterReferenceList())
+                .as("the same column styles on every page: one footer").hasSize(1);
+        assertThat(export(3, DocumentPageZone.footer(30, page -> page.isFirst() ? table(red, red, null) : table(red, red, red)))
+                .section().isSetTitlePg()).as("a column styled after the first page alone").isTrue();
+        assertThat(export(3, DocumentPageZone.footer(30, page -> table(red, red, page.isFirst() ? red : blue))).section().isSetTitlePg())
+                .as("a column styled otherwise on the first page").isTrue();
+    }
+
+    /** A table of one row, a cell a column, each column styled as given or, for null, not at all. */
+    private static DocumentNode table(DocumentTableStyle... columns) {
+        String[] cells = new String[columns.length];
+        java.util.Arrays.fill(cells, "X");
+        com.demcha.compose.document.dsl.TableBuilder table = new com.demcha.compose.document.dsl.TableBuilder()
+                .autoColumns(columns.length)
+                .row(cells);
+        for (int column = 0; column < columns.length; column++) {
+            if (columns[column] != null) {
+                table.columnStyle(column, columns[column]);
+            }
+        }
+        return table.build();
     }
 
     private static DocumentPageZone footer(Function<PageContext, DocumentNode> content) {

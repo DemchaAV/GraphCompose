@@ -6236,8 +6236,8 @@ follow semantic versioning; release dates are ISO 8601.
     draws it there, is named `DROPPED` (`page zone`);
   - a node of a kind the caller registers, drawn over three pages, whose middle page has no
     paragraph to carry its shape, is named `DROPPED` for that part only;
-  - a page that no block of the body starts is named where its margins differ from those Word sets
-    it with (`page margin`);
+  - a page that no block of the body starts is named where its top and bottom margins differ from
+    those Word sets it with (`page margin`);
   - without a layout, a painted shape container's outline is named `DROPPED` (`shape container
     outline`), and an unpainted one is not.
 

@@ -297,7 +297,7 @@ follow semantic versioning; release dates are ISO 8601.
 ### Fixed
 
 - **A DOCX export writes the shaded spaces closing a paragraph as no-break spaces, so Word fills
-  them where the page does.**
+  them and counts them in the line.**
   - Word draws nothing for the spaces at the end of a paragraph, their run's shading included. A
     chip of spaces closing its paragraph lost its fill: `TealPulse` cuts the rule behind each
     section heading out with one, white, and in Word 16 the cut-out ended 9.8pt short of where
@@ -307,17 +307,17 @@ follow semantic versioning; release dates are ISO 8601.
   - `DocxClosingSpaces` writes the spaces after a paragraph's last character as no-break spaces,
     in shaded runs only, in the body, its tables and text boxes, and its headers and footers, for
     each section once it is written and before its tables are cut at its pages.
-    Word fills a no-break space and counts it where the page does. Measured in Word 16: the
+    Word fills a no-break space and counts it in the line. Measured in Word 16: the
     cut-out ends 2.3pt short of where the page ends it, nothing else on that page moving, and a
     heading closed by a chip of three spaces stands within 0.15pt of the page's centred or
     right-aligned (4.7pt and 9.4pt off before). A space before more of the line, a tab, a break, a
-    field or an inline picture stays a space; a drawing anchored in the paragraph takes no room
+    field character or an inline picture stays a space; a drawing anchored in the paragraph takes no room
     in its line and is passed over. A last line the no-break spaces would fill to its end is not
     measured.
   - LibreOffice 24.2 draws neither kind: its fill ends at the letters, and a centred or
     right-aligned line stands about half the spaces' width or their width right of the page's.
-    The chip's `inline chip` note says so; a page zone's chip, which has no path, is named in the
-    note of the zone's line where it was first written, or once in a note of its own.
+    The chip's `inline chip` note says so; a page zone's chip is named in each note the export
+    gives it, or once in a note of its own where it has none.
   - Across the fidelity corpus only `TealPulse`'s two section headings change.
 
 - **A DOCX export measures the space a later layer of a band resumes with to the box of a panel,

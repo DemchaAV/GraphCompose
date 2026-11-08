@@ -177,6 +177,60 @@ class DocxClosingSpacesTest {
     }
 
     @Test
+    void aLinkBeforeTheChipIsReadInItsPlaceAlongTheParagraph() throws Exception {
+        // Links and plain runs are read back in the order they stand. A chip of letters after the
+        // link closes the paragraph, so the link's spaces, before it, stay; a chip of spaces after
+        // it is read first, and the link's spaces closing the paragraph with it are filled after.
+        try (XWPFDocument document = new XWPFDocument()) {
+            XWPFParagraph para = document.createParagraph();
+            CTR linked = para.getCTP().addNewHyperlink().addNewR();
+            linked.addNewT().setStringValue("Site  ");
+            shade(linked);
+            text(para, "Go", true);
+
+            assertThat(DocxClosingSpaces.fill(document)).isEmpty();
+            assertThat(linked.getTArray(0).getStringValue()).isEqualTo("Site  ");
+        }
+        try (XWPFDocument document = new XWPFDocument()) {
+            XWPFParagraph para = document.createParagraph();
+            CTR linked = para.getCTP().addNewHyperlink().addNewR();
+            linked.addNewT().setStringValue("Site  ");
+            shade(linked);
+            XWPFRun chip = text(para, "  ", true);
+
+            assertThat(DocxClosingSpaces.fill(document)).containsExactly(chip.getCTR(), linked);
+            assertThat(linked.getTArray(0).getStringValue()).isEqualTo("Site" + NBSP.repeat(2));
+        }
+    }
+
+    @Test
+    void spacesInASimpleFieldClosingTheParagraphAreFilled() throws Exception {
+        try (XWPFDocument document = new XWPFDocument()) {
+            XWPFParagraph para = document.createParagraph();
+            text(para, "Page", false);
+            CTR inField = para.getCTP().addNewFldSimple().addNewR();
+            inField.addNewT().setStringValue("1  ");
+            shade(inField);
+
+            assertThat(DocxClosingSpaces.fill(document)).containsExactly(inField);
+            assertThat(inField.getTArray(0).getStringValue()).isEqualTo("1" + NBSP.repeat(2));
+        }
+    }
+
+    @Test
+    void shadedSpacesBeforeAFieldCharacterStay() throws Exception {
+        try (XWPFDocument document = new XWPFDocument()) {
+            XWPFParagraph para = document.createParagraph();
+            XWPFRun chip = text(para, "Page   ", true);
+            para.createRun().getCTR().addNewFldChar()
+                    .setFldCharType(org.openxmlformats.schemas.wordprocessingml.x2006.main.STFldCharType.BEGIN);
+
+            assertThat(DocxClosingSpaces.fill(document)).isEmpty();
+            assertThat(chip.text()).isEqualTo("Page   ");
+        }
+    }
+
+    @Test
     void spacesClosingAHeadersParagraphAreFilled() throws Exception {
         try (XWPFDocument document = new XWPFDocument()) {
             document.createParagraph();
@@ -230,9 +284,25 @@ class DocxClosingSpacesTest {
         assertThat(exported.textOf("HEADING")).isEqualTo("HEADING" + NBSP.repeat(3));
         assertThat(exported.chipNotes()).singleElement().asString()
                 .isEqualTo("the fill is written as run shading; the spaces closing its paragraph are written as "
-                           + "no-break spaces, which Word fills and sets as the page does; LibreOffice draws none of "
+                           + "no-break spaces, which Word fills and counts in its line; LibreOffice draws none of "
                            + "them, so its fill ends at its letters there, and a centred or right-aligned line stands "
                            + "about half their width or their width further right");
+    }
+
+    @Test
+    void aParagraphWithAChipIsNotLaidOverTheFlowSoItsChipIsNamed() throws Exception {
+        // A paragraph of plain runs laid over the flow is set in a text box; one holding a chip is
+        // written in the flow, so no chip is in a text box this export cannot name.
+        Exported plain = export(page -> page.add(DocxExports.laidOverTheFlow(new ParagraphBuilder()
+                .inlineText("Lockup", STYLE).build())));
+        assertThat(plain.document().getDocument().xmlText()).as("the fixture reaches the text box")
+                .containsPattern("txbxContent[\\s\\S]*Lockup");
+
+        Exported chip = export(page -> page.add(DocxExports.laidOverTheFlow(new ParagraphBuilder()
+                .inlineText("Lockup", STYLE).inlineHighlight("  ", STYLE, DocumentColor.WHITE, 0, NO_PADDING).build())));
+        assertThat(chip.document().getDocument().xmlText()).doesNotContain("txbxContent");
+        assertThat(chip.textOf("Lockup")).isEqualTo("Lockup" + NBSP.repeat(2));
+        assertThat(chip.chipNotes()).singleElement().asString().contains(LIBREOFFICE);
     }
 
     @Test

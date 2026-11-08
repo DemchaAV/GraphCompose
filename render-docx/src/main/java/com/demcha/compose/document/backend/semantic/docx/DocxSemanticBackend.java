@@ -15978,7 +15978,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             int notes = report.size();
             report.add(DocxExportReport.Severity.APPROXIMATED, "inline chip", path,
                     "the fill is written as run shading; " + lost);
-            // A page zone's line written again for another kind of header gives no note its first
+            // A page zone's line written once more for a later variant gives no note its first
             // writing gave already (skipRepeatsOf).
             noteAt = report.size() > notes ? notes : -1;
             repeated = noteAt < 0;
@@ -15994,16 +15994,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Run on each section once it is written, its page zones with it, and before its tables
      * are cut at its pages, which copies the rows it moves and with them the runs of the chips
      * they hold. It reads the whole document each time: spaces filled already are no-break
-     * spaces, and a chip is named once. A page zone's line written again for another kind of
-     * header is named where it was first written; a chip with no note of its own and no path — a
-     * page zone's — gets one note between them all. Before any note is put in among the others
-     * ({@link #settleThePageReferences}): a chip's note is where it was counted.</p>
+     * spaces, and a chip is named once. A chip is named in the note its writing gave it: a page
+     * zone's line written once more for a later variant gives none ({@link
+     * DocxExportReport.Builder#skipRepeatsOf}), and is named in the first one's; one written into
+     * several kinds of header gives a note in each, and each says so. A chip with no note of its
+     * own and no path — a page zone's — gets one note between them all. Before any note is put in
+     * among the others ({@link #settleThePageReferences}): a chip's note is where it was counted.
+     * A paragraph laid over the flow ({@link #writeTextOverTheFlow}) holds no chip: one with a
+     * chip is not laid over it ({@link #floatable}).</p>
      */
     private void fillTheSpacesClosingTheirParagraphs(XWPFDocument document) {
-        String phrase = "the spaces closing its paragraph are written as no-break spaces, which Word fills and sets "
-                        + "as the page does; LibreOffice draws none of them, so its fill ends at its letters there, "
-                        + "and a centred or right-aligned line stands about half their width or their width further "
-                        + "right";
+        String phrase = "the spaces closing its paragraph are written as no-break spaces, which Word fills and counts "
+                        + "in its line; LibreOffice draws none of them, so its fill ends at its letters there, and a "
+                        + "centred or right-aligned line stands about half their width or their width further right";
         for (org.apache.xmlbeans.XmlObject run : DocxClosingSpaces.fill(document)) {
             ChipWritten chip = chipsWritten.get(run);
             if (chip == null || chip.repeated() || !chipsNamed.add(chip)) {

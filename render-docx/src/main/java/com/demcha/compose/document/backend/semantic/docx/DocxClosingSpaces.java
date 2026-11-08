@@ -26,8 +26,9 @@ import java.util.List;
  * <p>Only the spaces after the paragraph's last character take the place of no-break spaces, in
  * shaded runs: a space Word draws stays a space, and so does one with nothing behind it to fill.
  * A drawing anchored in the paragraph takes no room in its line and is passed over; an inline
- * picture, a tab, a break or a field closes the line itself, and nothing before it is
- * changed.</p>
+ * picture, a tab, a break or a field character closes the line itself, and nothing before it is
+ * changed. A simple field's result is read as text; the export writes its fields with field
+ * characters.</p>
  */
 final class DocxClosingSpaces {
 

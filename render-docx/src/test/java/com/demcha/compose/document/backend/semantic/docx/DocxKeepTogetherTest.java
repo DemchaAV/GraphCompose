@@ -375,6 +375,113 @@ class DocxKeepTogetherTest {
     }
 
     @Test
+    void aCanvasIsChainedIntoOneUnit() throws Exception {
+        // The layout moves a canvas whole. Measured on a probe of five lines the page moved to a new
+        // page: three of them stood at the foot of the page above in Word and LibreOffice.
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .add(new com.demcha.compose.document.dsl.CanvasLayerBuilder(200, 45)
+                        .position(new com.demcha.compose.document.dsl.SectionBuilder()
+                                .addParagraph("Opening").addParagraph("Body").addParagraph("Tail").build(), 0, 0)
+                        .build())
+                .addParagraph(p -> p.text("After")))) {
+            assertThat(keepsNext(paragraph(document, "Opening")) && keepsNext(paragraph(document, "Body"))).isTrue();
+            assertThat(keepsNext(paragraph(document, "Tail")))
+                    .as("the canvas ends here, and is not tied to what follows it").isFalse();
+            assertThat(keepsLines(paragraph(document, "Opening")) && keepsLines(paragraph(document, "Tail"))).isTrue();
+            assertThat(keepsNext(paragraph(document, "After")) || keepsLines(paragraph(document, "After"))).isFalse();
+        }
+    }
+
+    @Test
+    void anAlignmentWrapperIsChainedIntoOneUnit() throws Exception {
+        // The layout moves an alignment wrapper whole. Measured on a probe round five lines the page
+        // moved to a new page: three of them stood at the foot of the page above in Word, two in
+        // LibreOffice.
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .add(new com.demcha.compose.document.node.AlignNode("Aligned",
+                        new com.demcha.compose.document.dsl.SectionBuilder()
+                                .addParagraph("Opening").addParagraph("Body").addParagraph("Tail").build(),
+                        com.demcha.compose.document.node.HorizontalAlign.CENTER, DocumentInsets.zero()))
+                .addParagraph(p -> p.text("After")))) {
+            assertThat(keepsNext(paragraph(document, "Opening")) && keepsNext(paragraph(document, "Body"))).isTrue();
+            assertThat(keepsNext(paragraph(document, "Tail")))
+                    .as("the wrapper ends here, and is not tied to what follows it").isFalse();
+            assertThat(keepsLines(paragraph(document, "Opening")) && keepsLines(paragraph(document, "Tail"))).isTrue();
+            assertThat(keepsNext(paragraph(document, "After")) || keepsLines(paragraph(document, "After"))).isFalse();
+        }
+    }
+
+    @Test
+    void aParagraphInAnAlignmentWrapperKeepsItsLines() throws Exception {
+        // Measured: a paragraph of four lines held in by an alignment, moved to a new page, stood
+        // with two of its lines at the foot of the page above in Word and LibreOffice.
+        String text = "One two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen "
+                      + "sixteen seventeen eighteen nineteen twenty";
+        try (XWPFDocument document = DocxExports.withLayout(300, 200, 20, page -> page
+                .add(new com.demcha.compose.document.node.AlignNode("Aligned",
+                        new com.demcha.compose.document.dsl.ParagraphBuilder().text(text).build(),
+                        com.demcha.compose.document.node.HorizontalAlign.CENTER, DocumentInsets.zero()))
+                .addParagraph(p -> p.text("After")))) {
+            assertThat(keepsLines(paragraph(document, text))).isTrue();
+            assertThat(keepsNext(paragraph(document, text)))
+                    .as("one paragraph is the whole wrapper, tied to nothing after it").isFalse();
+        }
+    }
+
+    @Test
+    void aCanvasAndAnAlignmentWrapperInARowsCellsAreLeftToTheirRow() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addRow(row -> row
+                        .addSection(cell -> cell.add(new com.demcha.compose.document.dsl.CanvasLayerBuilder(120, 30)
+                                .position(new com.demcha.compose.document.dsl.SectionBuilder()
+                                        .addParagraph("Drawn").addParagraph("Placed").build(), 0, 0)
+                                .build()))
+                        .addSection(cell -> cell.add(new com.demcha.compose.document.node.AlignNode("Aligned",
+                                new com.demcha.compose.document.dsl.SectionBuilder()
+                                        .addParagraph("Opening").addParagraph("Body").build(),
+                                com.demcha.compose.document.node.HorizontalAlign.CENTER, DocumentInsets.zero()))))
+                .addParagraph(p -> p.text("After")))) {
+            XWPFTableRow row = document.getTables().get(0).getRow(0);
+            List<XWPFParagraph> inside = new ArrayList<>();
+            inside.addAll(row.getCell(0).getParagraphs());
+            inside.addAll(row.getCell(1).getParagraphs());
+
+            assertThat(inside).extracting(XWPFParagraph::getText).contains("Drawn", "Placed", "Opening", "Body");
+            for (XWPFParagraph paragraph : inside) {
+                assertThat(keepsNext(paragraph) || keepsLines(paragraph))
+                        .as("a cell of a row Word keeps on its own terms").isFalse();
+            }
+        }
+    }
+
+    @Test
+    void aCanvasAndAnAlignmentWrapperInAPanelAreLeftToItsRow() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addSection(panel -> panel.fillColor(DocumentColor.LIGHT_GRAY).padding(DocumentInsets.of(6))
+                        .add(new com.demcha.compose.document.dsl.CanvasLayerBuilder(120, 30)
+                                .position(new com.demcha.compose.document.dsl.SectionBuilder()
+                                        .addParagraph("Drawn").addParagraph("Placed").build(), 0, 0)
+                                .build())
+                        .add(new com.demcha.compose.document.node.AlignNode("Aligned",
+                                new com.demcha.compose.document.dsl.SectionBuilder()
+                                        .addParagraph("Opening").addParagraph("Body").build(),
+                                com.demcha.compose.document.node.HorizontalAlign.CENTER, DocumentInsets.zero())))
+                .addParagraph(p -> p.text("After")))) {
+            List<CTP> inside = paragraphsIn(document.getTables().get(0));
+
+            assertThat(inside).extracting(DocxKeepTogetherTest::textOf)
+                    .contains("Drawn", "Placed", "Opening", "Body");
+            for (CTP paragraph : inside) {
+                assertThat(paragraph.isSetPPr()
+                           && (paragraph.getPPr().isSetKeepNext() || paragraph.getPPr().isSetKeepLines()))
+                        .as("%s: a panel's cell is its row's, which keeps or breaks on its own terms",
+                                textOf(paragraph))
+                        .isFalse();
+            }
+        }
+    }
+
+    @Test
     void aBandInARowsCellIsLeftToItsRow() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
                 .addRow(row -> row

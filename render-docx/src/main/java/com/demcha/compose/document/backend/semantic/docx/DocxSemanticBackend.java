@@ -4256,10 +4256,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writePlacedNode(XWPFDocument document, DocumentNode node) throws Exception {
-        // The layout moves a layer stack or a shape container to a new page whole, as it does a
-        // block kept together. Told nothing, Word and LibreOffice split them in the flow: a stack
-        // of one layer or a shape container, three lines the page moves down, with two at the foot
-        // of the page above, and a band of two layers with its first layer there.
+        // The layout moves a layer stack, a shape container, a canvas or an alignment wrapper to a
+        // new page whole, as it does a block kept together. Told nothing, Word and LibreOffice
+        // split them in the flow: a stack of one layer or a shape container, three lines the page
+        // moves down, with two at the foot of the page above, a band of two layers with its first
+        // layer there, and a canvas or an alignment wrapper with its first lines there (movedWhole).
         // In a cell their paragraphs are the table's, which a row keeps or breaks on its own terms.
         boolean keepTogether = (node.keepTogether() || currentCell == null && movedWhole(node))
                                && layout.onOnePage(node);
@@ -4326,7 +4327,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * told to, it still set the first two lines of a stack of three, moved whole to the next page
      * inside a panel, at the foot of the page above, and a heading kept with the line under it
      * there with that line on the next page, in Word and LibreOffice alike (measured). So a block
-     * the layout keeps whole — kept together, a layer stack, a shape container — may be split, and
+     * the layout keeps whole — kept together, or moved whole ({@link #movedWhole}) — may be split, and
      * one kept with the next left behind. What Word cannot split moves whole, and is not named
      * ({@link #reportAKeepThePanelBreaks}): a painted section kept together, its own row one that
      * may not split, as measured. A row in the panel's cell is the row's. A panel whose row Word
@@ -5088,12 +5089,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Whether a node is a layer stack or a shape container, which the layout moves to a new page
-     * whole, never breaking it over one. A canvas and an alignment wrapper are atomic there too and
-     * are not counted here: Word was not measured splitting them.
+     * Whether a node is one the layout moves to a new page whole, never breaking it over one: a
+     * layer stack, a shape container, a canvas or an alignment wrapper.
+     *
+     * <p>Told nothing, Word and LibreOffice split each in the flow (measured on a page the layout
+     * moved it to): a canvas of five lines stood with three of them at the foot of the page above;
+     * an alignment wrapper round five lines kept three there in Word and two in LibreOffice; either
+     * one round a table of four rows kept its first row there; and an alignment wrapper round one
+     * paragraph of four lines kept two.</p>
      */
     private static boolean movedWhole(DocumentNode node) {
-        return node instanceof com.demcha.compose.document.node.LayerStackNode || node instanceof ShapeContainerNode;
+        return node instanceof com.demcha.compose.document.node.LayerStackNode || node instanceof ShapeContainerNode
+               || node instanceof com.demcha.compose.document.node.CanvasLayerNode
+               || node instanceof com.demcha.compose.document.node.AlignNode;
     }
 
     /** Whether a node is a layer stack of one layer, which lays nothing over anything. */

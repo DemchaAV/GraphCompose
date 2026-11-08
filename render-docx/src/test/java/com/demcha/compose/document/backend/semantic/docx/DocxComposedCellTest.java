@@ -213,7 +213,8 @@ class DocxComposedCellTest {
         // the cell centring the line, the top gives no more — 9.84 less twice 0.93. Beside another
         // cell, which gives back none of what the chip grows by, Word sets the line from the top
         // of the chip it grows, not where the page starts it: it is read from the middle.
-        // Source: 7.98 is derived from Lato's metrics as above (#796), not read off an editor.
+        // Source: 7.98 is derived as above (#796) — Lato's metrics, Word keeping the borders
+        // outside the content, and the letters' margin — not read off an editor.
         XWPFTableCell chip = chipCell(com.demcha.compose.document.style.DocumentStroke.of(
                 com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148), 1.1));
 
@@ -259,7 +260,8 @@ class DocxComposedCellTest {
         // written at nine eighths, and a row counts it 22 twips.
         // Source: 184 is the 9.2pt outline in twips. 140 follows from a row counting a border at
         // its eighths times 2.5, rounded down, measured in Word 16 and LibreOffice on Windows
-        // (#880); LibreOffice 24.2 counts it otherwise, a written border shorter (#880).
+        // (#880). LibreOffice 24.2 sets such a chip a written border shorter, as it counts a
+        // cell's margins inside an at-least row height (#880).
         XWPFTableCell outlined = chipCell(com.demcha.compose.document.style.DocumentStroke.of(
                 com.demcha.compose.document.style.DocumentColor.rgb(20, 160, 70), 1.125));
         XWPFTableCell filled = chipCell(null);

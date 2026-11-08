@@ -37,8 +37,8 @@ class DocxWordSizeMeasureTest {
 
         assertThat(measured.writtenSize()).as("the premise: Word is given a larger size").isGreaterThan(7.8);
         assertThat(measured.measureTwips())
-                .as("one line: as many ems wide in Word as on the page, to a twip")
-                .isCloseTo(ROOM * 20 * measured.writtenSize() / 7.8, within(1.0));
+                .as("one line: as many ems wide in Word as on the page, to the half twip the indent is rounded to")
+                .isCloseTo(ROOM * 20 * measured.writtenSize() / 7.8, within(0.5));
     }
 
     @Test
@@ -316,7 +316,7 @@ class DocxWordSizeMeasureTest {
             assertThat(DocxTwips.of(small.getRuns().get(0).getCTR().getRPr().getSzArray(0).getVal()))
                     .as("8pt, in half points").isEqualTo(16L);
             assertThat(ROOM * 20 - rightIndent(small)).as("the measure taken for the size the run states")
-                    .isCloseTo(ROOM * 20 * writtenSize(small) / 7.8, within(1.0));
+                    .isCloseTo(ROOM * 20 * writtenSize(small) / 7.8, within(0.5));
         }
     }
 

@@ -23,6 +23,7 @@ class DocxEditorConstantsFreezeTest {
      * Measured in Word on Windows (#946): on nine synthetic rules, half a point to 4pt thick,
      * Word drew a paragraph's border 1.36 to 1.49pt past its left indent and 1.44 to 1.59pt past
      * its right one. The constants are the means. Word's version is not recorded.
+     * {@code DocxRuleTest} holds them in whole twips (28 and 30); this holds the exact values.
      */
     @Test
     void wordDrawsARuleThisFarPastItsIndents() {
@@ -62,8 +63,9 @@ class DocxEditorConstantsFreezeTest {
     }
 
     /**
-     * A convention (#770), not a measurement: an exact line leaves the editor no room to grow it,
-     * so a band's line is as tall as its type set solid with some air.
+     * Introduced in #770, which records no measurement of it; the constant's javadoc gives the
+     * reason: an exact line leaves the editor no room to grow it, so a band's line is as tall as
+     * its type set solid with some air.
      */
     @Test
     void aBandsLineIsItsTypeSizeAndAFifth() {

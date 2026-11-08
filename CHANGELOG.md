@@ -296,6 +296,28 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A DOCX export keeps the space above a shape container, a canvas, a barcode, a page reference
+  and a stack of side-by-side columns on the page the layout moves them to.**
+  - Word drops the space above a paragraph at the top of a page. A paragraph, a picture, a list
+    and a table there already hold theirs in a line kept with them; these did not. Measured in Word
+    16 and LibreOffice 24.2, each with a 14pt margin, moved to a new page in the flow: a canvas, a
+    barcode, a page reference and the columns of a layer stack stood 13.7 to 14pt high, and a page
+    reference opening a band of layers 11.7pt, the band's margin. A shape container's text stood
+    27.3pt high — its margin and the room the container centres it in — and its outline was drawn
+    below the text by all the space owed above it, past the foot of the page: the outline is placed
+    down from the top of the paragraph it is anchored in, and that paragraph's space above is what
+    Word drops there.
+  - Each now holds that space in a line kept with it, as a paragraph does: the layer stack's
+    columns as a table does, in the flow and first in a band opening its page, and a shape
+    container its margin and the room above its text, so its outline is placed from where its text
+    stands. A wrapped first paragraph of a shape container or a canvas takes the gap between its
+    lines out of that line, as a paragraph does there. Each stands within 0.3pt of the page in both
+    editors, as a paragraph moved so does; a shape container opening its page with no margin
+    included, and a barcode or the columns first in a band. A shape container that only draws
+    holds no line, as before.
+  - None of the fidelity corpus's 84 DOCX changes, and none of its 1694 notes: no corpus document
+    opens a page with one of these blocks.
+
 - **A DOCX export draws a dashed line or path dashed.**
   - A line or a path the export draws as a shape was drawn solid, and the report said so:
     `VioletGridCv`'s five dotted dividers between its skill columns came out as solid rules.

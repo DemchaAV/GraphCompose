@@ -9554,7 +9554,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double carriedFromOutside = carriedSpacingBefore;
         long blocksBefore = blocksWritten;
         if (opens) {
-            carriedSpacingBefore += node.margin().top() + node.padding().top();
+            double edge = node.margin().top() + node.padding().top();
+            if (node == topEdgeHeldAbove) {
+                // Held by the line above it, on the page the layout starts it on (writeCanvas).
+                edge -= topEdgeHeld;
+                topEdgeHeldAbove = null;
+                topEdgeHeld = 0;
+                letItsFirstParagraphTakeFromTheLine(node);
+            }
+            carriedSpacingBefore += edge;
             riseIntoItsLine(node);
         }
         // The sides are carried the same way, as the indent of every paragraph inside: a
@@ -12322,14 +12330,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // above — stood that gap high in Word, and everything under it with it.
             // One that writes nothing — its layers all drawn — stands above nothing, and its
             // edges are no space in the flow, as writeContainerBody hands them back.
-            double carriedFromOutside = carriedSpacingBefore;
-            long blocksBefore = blocksWritten;
             // What the container sets in from its edges — a layer centred, smaller than its
             // outline, or lines written one under another — stands that far in from them on the
             // page: NavySidebar's photo sits 1.6pt inside its ring, top and bottom, and written
             // flush with the ring's top the column under it stood twice the ring's width high.
             double[] setIn = layerSetIn(node);
-            carriedSpacingBefore += node.margin().top() + node.padding().top() + setIn[0];
+            double edge = node.margin().top() + node.padding().top() + setIn[0];
+            if (opensItsPageAsAnOverlay(node, overlaysRound) && !onlyDrawn(node)) {
+                // Its first layer is an overlay's, which holds no edge of its own there. One that
+                // only draws writes no paragraph for the line to keep with: in the flow it is held
+                // whole as its drawing (writeNodeContentOf), and last in its parent in a stack of
+                // one layer it reaches here and holds nothing.
+                edge -= holdTheTopEdgeAboveItsLine(document, node, setIn[0]);
+                letItsFirstParagraphTakeFromTheLine(node);
+            }
+            double carriedFromOutside = carriedSpacingBefore;
+            long blocksBefore = blocksWritten;
+            carriedSpacingBefore += edge;
             for (DocumentNode child : node.children()) {
                 insetLeft = innerLeft;
                 insetRight = innerRight;
@@ -12563,6 +12580,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // written exactly as that paragraph's would be.
         ParagraphNode asLaidOut = new ParagraphNode(node.name(), shown, node.textStyle(), node.align(),
                 0.0, node.padding(), node.margin());
+        if (opensItsPageInTheFlow(node) && holdAParagraphsTopEdgeOnItsPage(document, node, 0)) {
+            // Its top edge is held on the page the layout moves it to, as a paragraph's is (Word
+            // dropped a 14pt margin there, measured), and the paragraph it is written as owes it no more.
+            topEdgeHeldAbove = asLaidOut;
+        }
         XWPFParagraph para = newBodyParagraph(document);
         applyParagraphProperties(para, asLaidOut);
         applyLineHeight(para, layout.lineHeight(node));
@@ -16605,6 +16627,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         com.demcha.compose.engine.components.content.barcode.BarcodeData data =
                 NodeDefinitionSupport.toBarcodeData(node.barcodeOptions());
         byte[] png = DocxBarcodePictures.png(data, node.width(), node.height());
+        if (opensItsPageInTheFlow(node)) {
+            // Its top edge is held on the page the layout moves it to, as a picture's is: Word
+            // dropped a 14pt margin there, measured, and the symbol stood that much high.
+            holdAParagraphsTopEdgeOnItsPage(document, node, 0);
+        }
         XWPFParagraph para = newBodyParagraph(document);
         applyVerticalSpacing(para, node);
         XWPFRun run = para.createRun();
@@ -19873,10 +19900,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeLayerColumns(XWPFDocument document,
                                    com.demcha.compose.document.node.LayerStackNode stack,
                                    DocxLayerColumns.Plan plan) throws Exception {
+        // Moved to a new page, or opening a band that opens its page, it holds its top edge there
+        // as a table does (writeTableWithItsOwnSpacing): Word has no space above a table, and left
+        // on the page above, a stack's 14pt margin went with the page break — its columns stood
+        // 13.7pt high in Word and LibreOffice, measured.
+        boolean startsItsPage = currentCell == null && startsAPageOfItsOwn(stack);
+        boolean opensItsBand = currentCell == null && bandOpensItsPage;
+        if (opensItsBand) {
+            leaveThePageAboveTheBand(document, stack);
+        } else if (startsItsPage) {
+            leaveThePageAboveForTheBlock(document, stack);
+        }
         owePendingSpacingAfter(stack.margin().top() + stack.padding().top());
+        if (opensItsBand || startsItsPage) {
+            holdTheSpaceAboveOnItsPage(document);
+        }
         List<DocxLayerColumns.Column> columns = plan.columns();
         XWPFTable table = newTable(document, 1, columns.size());
-        if (!(currentCell == null && startsAPageOfItsOwn(stack))) {
+        if (!startsItsPage) {
             rowsLiftedForTheirGaps.add(table);
         }
         hideTableGrid(table);
@@ -20594,6 +20635,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean moves = followed || currentCell != null || overlayDepth - oneLayerDepth > 1;
         reportWrittenWithout(canvas, "written as its contents", canvasLosses(canvas, writes, followed, moves, room));
         if (!writes.nothing()) {
+            if (opensItsPageAsAnOverlay(canvas, overlayDepth - 1)) {
+                // Its first paragraph is an overlay's, which holds no edge of its own there.
+                holdAParagraphsTopEdgeOnItsPage(document, canvas, 0);
+            }
             writeContainerBody(document, canvas);
             double left = canvas.height() - writes.height();
             if (writes.measured() && moves && left > 0.5) {
@@ -22201,6 +22246,40 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private boolean opensItsPageInTheFlow(DocumentNode node) {
         return currentCell == null
                && (bandOpensItsPage || overlayDepth == oneLayerDepth && startsAPageOfItsOwn(node));
+    }
+
+    /**
+     * Whether a shape container or a canvas written in the flow as its layers opens a page the
+     * layout moves it to: its first paragraph stands in its overlay, deeper than the flow, and does
+     * not hold the edge itself ({@link #opensItsPageInTheFlow}). A band's layer stands in the band's
+     * overlay, deeper again, and is left to its first paragraph, which holds the band's edge.
+     *
+     * <p>Measured in Word 16 and LibreOffice 24.2: a canvas with a 14pt margin opening its page
+     * stood 13.7pt high, and a shape container's text 27.3pt — its margin and the room it centres
+     * its text in — while the outline it draws stood below the text by all the space owed above
+     * it, past the page's foot: the outline is placed down from the top of the paragraph it is
+     * anchored in, that space included, and Word drops that space at the top of a page.</p>
+     *
+     * @param overlaysRound the overlays round the block, its own not counted
+     */
+    private boolean opensItsPageAsAnOverlay(DocumentNode node, int overlaysRound) {
+        return currentCell == null && overlaysRound == oneLayerDepth && startsAPageOfItsOwn(node);
+    }
+
+    /**
+     * Lets the first paragraph of a shape container or a canvas whose top edge a line holds take
+     * the gap between its lines out of that line, as a paragraph holding its own edge does
+     * ({@link #applyVerticalSpacing}, {@link #applyLineGap}): it owes the line none of its own
+     * edge, which it writes itself. Word drops the space above it at the top of the page, so what
+     * the gap took from it would set its lines that much close: measured in Word 16 and
+     * LibreOffice 24.2, a wrapped first paragraph with a 4pt gap between its lines stood 1.4 to
+     * 1.9pt from where the same paragraph does in the flow.
+     */
+    private void letItsFirstParagraphTakeFromTheLine(DocumentNode node) {
+        if (topEdgeLine != null && !node.children().isEmpty() && node.children().get(0) instanceof ParagraphNode first) {
+            topEdgeHeldAbove = first;
+            topEdgeHeld = 0;
+        }
     }
 
     /**

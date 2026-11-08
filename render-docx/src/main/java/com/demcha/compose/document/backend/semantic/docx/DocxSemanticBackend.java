@@ -11028,6 +11028,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (edge < 0) {
             carriedSpacingBefore += edge;
             double shortBy = -(carriedSpacingBefore + pendingSpacingAfter - borderBelow);
+            if (shortBy > 0.01 && node == topEdgeHeldAbove && topEdgeLine != null) {
+                // The first paragraph of a shape container or a canvas whose edge a line holds
+                // (letItsFirstParagraphTakeFromTheLine): its pull comes out of that line, as the
+                // page sets it up into the edge. Left there, a canvas's first paragraph pulled 5pt
+                // up stood 5.2pt low in Word and LibreOffice 24.2, measured.
+                double taken = takeFromTheLineHoldingItsEdge(toTwips(shortBy)) / POINT_TO_TWIP;
+                carriedSpacingBefore += taken;
+                shortBy -= taken;
+            }
             if (shortBy > 0.01 && node instanceof ParagraphNode paragraph) {
                 shortBy -= takeFromTheLineAbove(shortBy, paragraph);
                 if (shortBy > 0.01) {

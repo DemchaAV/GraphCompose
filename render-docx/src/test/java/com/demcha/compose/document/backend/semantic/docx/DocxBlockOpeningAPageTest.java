@@ -660,7 +660,27 @@ class DocxBlockOpeningAPageTest {
             assertThat(document.getParagraphs()).filteredOn(DocxBlockOpeningAPageTest::holdsAnEdge)
                     .as("one line holds the container's margin").hasSize(1)
                     .allSatisfy(line -> assertThat(DocxTwips.of(spacing(line).getLine())).isEqualTo(Math.round(EDGE * 20)));
+            assertThat(paragraphBefore(document, document.getTables().get(0)))
+                    .as("the line, right above the table").matches(DocxBlockOpeningAPageTest::holdsAnEdge);
         }
+    }
+
+    @Test
+    void aCanvasFirstParagraphPulledUpTakesThePullOutOfTheLine() throws Exception {
+        // The page sets it 5pt up into the canvas's 12pt margin: the line holds the 7pt left, and
+        // nothing of the pull is left to name.
+        Consumer<PageFlowBuilder> content = movedToANewPage(new CanvasLayerBuilder(200, 40).name("Block")
+                .margin(DocumentInsets.top(EDGE))
+                .position(new ParagraphBuilder().text("Opening").margin(DocumentInsets.top(-5)).build(), 0, 0).build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph opening = paragraphWith(document, "Opening");
+
+            assertThat(lineBefore(document, opening)).isEqualTo(Math.round((EDGE - 5) * 20));
+            assertThat(before(spacing(opening))).isZero();
+        }
+        assertThat(DocxExports.report(300, 200, 20, content).notes())
+                .noneMatch(note -> "space above".equals(note.subject()));
     }
 
     @Test

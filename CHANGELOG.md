@@ -311,7 +311,8 @@ follow semantic versioning; release dates are ISO 8601.
     columns as a table does, in the flow and first in a band opening its page, and a shape
     container its margin and the room above its text, so its outline is placed from where its text
     stands. A wrapped first paragraph of a shape container or a canvas takes the gap between its
-    lines out of that line, as a paragraph does there. Each stands within 0.3pt of the page in both
+    lines out of that line, as a paragraph does there, and one the page pulls up into the edge
+    takes its pull out of it. Each stands within 0.3pt of the page in both
     editors, as a paragraph moved so does; a shape container opening its page with no margin
     included, and a barcode or the columns first in a band. A shape container that only draws
     holds no line, as before.

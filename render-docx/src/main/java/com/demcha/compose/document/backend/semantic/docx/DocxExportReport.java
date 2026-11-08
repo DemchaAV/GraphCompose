@@ -219,6 +219,19 @@ public record DocxExportReport(List<Note> notes) {
             add(severity, subject, path, alone);
         }
 
+        /**
+         * Adds a phrase to the note at an index, after what it says already: what a later step
+         * learns of the node that note is about.
+         *
+         * @param index  where the note stands, counted when it was added; no note was put in
+         *               before it since
+         * @param phrase what the node also loses
+         */
+        void appendTo(int index, String phrase) {
+            Note note = notes.get(index);
+            notes.set(index, new Note(note.severity(), note.subject(), note.path(), note.detail() + "; " + phrase));
+        }
+
         DocxExportReport build() {
             return notes.isEmpty() ? EMPTY : new DocxExportReport(notes);
         }

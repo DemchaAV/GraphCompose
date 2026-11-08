@@ -17795,6 +17795,114 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Carries what each of a table's rows is written taller than the page by, rounded to the twip,
+     * on to the rows under it, and settles it in a row's margin below ({@link DocxRowRounding}).
+     *
+     * <p>Word sets a row at its written height or its tallest cell's content, whichever is more,
+     * and adds the cells' margins and rules round it ({@link #holdRowHeight}): a row's bottom margin
+     * moves the row by as much, whichever sets it. So a row takes its twips off in the bottom margin
+     * of the cells holding the row's largest, which is the one the row is given
+     * ({@link #evenTheRowsMargins}), and no more than that margin holds.</p>
+     *
+     * <p>A text cell's content is read as written ({@link #writtenContent}). A cell whose content
+     * is not read — one built from a node, or a text cell holding a picture or a line Word sets at
+     * its own height — is not counted, as Word's room for the rules does not count a cell built
+     * from a node ({@link DocxRuleRoom}): a row holding one is read only where a text cell beside
+     * it sets the row at least as tall as its written height. A row the layout did not place or
+     * measure, a row in a vertical merge, and a row the export holds no height for are not read.
+     * A header row Word repeats on each page is read once, on the first page the layout puts
+     * it.</p>
+     */
+    private void carryTheRowsRounding(XWPFTable table, TableNode node, TableGrid.Placement[][] cover) {
+        DocxRowRounding rounding = new DocxRowRounding();
+        for (int rowIdx = 0; rowIdx < cover.length; rowIdx++) {
+            XWPFTableRow row = table.getRow(rowIdx);
+            java.util.OptionalDouble height = layout.rowHeight(node, rowIdx);
+            int page = layout.rowPage(node, rowIdx);
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTrPr properties = row.getCtRow().getTrPr();
+            Long held = properties == null || properties.sizeOfTrHeightArray() == 0 ? null
+                    : writtenTwips(properties.getTrHeightArray(0).getVal());
+            WrittenContent tallestText = null;
+            boolean unread = false;
+            boolean merged = false;
+            long margins = 0;
+            long bottom = 0;
+            int column = 0;
+            for (XWPFTableCell cell : row.getTableCells()) {
+                TableGrid.Placement placement = cover[rowIdx][column];
+                column += placement.colSpan();
+                merged |= placement.rowSpan() > 1;
+                WrittenContent content = placement.cell() != null && placement.cell().content() == null
+                        ? writtenContent(cell) : null;
+                if (content == null) {
+                    unread = true;
+                } else if (tallestText == null || content.twips() > tallestText.twips()) {
+                    tallestText = content;
+                }
+                margins = Math.max(margins, verticalMargins(cell));
+                bottom = Math.max(bottom, cellMargin(cell, false));
+            }
+            if (height.isEmpty() || page < 0 || held == null || merged || tallestText == null
+                || unread && tallestText.twips() < held) {
+                rounding.forget();
+                continue;
+            }
+            double pages = height.getAsDouble() * POINT_TO_TWIP - margins - rulesBeyondOne(table, rowIdx);
+            // Rounded besides the content's parts: the row's height, its two margins and its rules.
+            long taken = rounding.settle(page, Math.max(held, tallestText.twips()) - pages,
+                    tallestText.rounded() + 4, bottom);
+            if (taken > 0) {
+                for (XWPFTableCell cell : row.getTableCells()) {
+                    if (cellMargin(cell, false) == bottom) {
+                        setCellMarginTwips(cell, false, bottom - taken);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * How tall Word sets a text cell's paragraphs, in twips — each one's lines at the height they
+     * are written at, and the space above and below it — and how many parts that adds, each
+     * rounded to the twip; {@code null} where it is not written: a line Word sets at its own
+     * height, or a table or a picture in the cell.
+     */
+    private static WrittenContent writtenContent(XWPFTableCell cell) {
+        if (!cell.getTables().isEmpty()) {
+            return null;
+        }
+        long content = 0;
+        int rounded = 0;
+        for (XWPFParagraph para : cell.getParagraphs()) {
+            CTPPr properties = para.getCTP().getPPr();
+            CTSpacing spacing = properties != null && properties.isSetSpacing() ? properties.getSpacing() : null;
+            if (spacing == null || !spacing.isSetLineRule() || spacing.getLineRule() == STLineSpacingRule.AUTO) {
+                return null;
+            }
+            Long line = writtenTwips(spacing.getLine());
+            if (line == null) {
+                return null;
+            }
+            int lines = 1;
+            for (XWPFRun run : para.getRuns()) {
+                org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR ctr = run.getCTR();
+                if (ctr.sizeOfDrawingArray() > 0 || ctr.sizeOfPictArray() > 0 || ctr.sizeOfObjectArray() > 0) {
+                    return null;
+                }
+                lines += ctr.sizeOfBrArray();
+            }
+            content += lines * line + twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null)
+                       + twipsOf(spacing.isSetAfter() ? spacing.getAfter() : null);
+            rounded += lines + (spacing.isSetBefore() ? 1 : 0) + (spacing.isSetAfter() ? 1 : 0);
+        }
+        return new WrittenContent(content, rounded);
+    }
+
+    /** A text cell's content as Word sets it, in twips, and how many parts of it are rounded to the twip. */
+    private record WrittenContent(long twips, int rounded) {
+    }
+
+    /**
      * What a table's row holds of its rules beyond the one {@link #verticalMargins} counts, in
      * twips: the most any of its cells takes above and below its content — its margins and the
      * rules it holds — less the most that counts of any; below zero where it holds less.
@@ -18300,6 +18408,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         for (int rowIdx = 0; rowIdx < rowCount; rowIdx++) {
             holdRowHeight(table, node, rowIdx);
         }
+        carryTheRowsRounding(table, node, cover);
         breakRowsWhereTheLayoutDoes(table, node);
         tablesWritten.put(node, table);
         indentTable(table);

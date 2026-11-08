@@ -76,6 +76,24 @@ class DocxWithoutLayoutTest {
     }
 
     @Test
+    void aPaintedShapeContainersOutlineIsNamedDroppedAndAnUnpaintedOneIsNot() throws Exception {
+        // With no layout there is no box to draw the outline in: what it paints is lost, and said.
+        DocxExportReport painted = DocxExports.reportWithoutLayout(400, 600, 20, page -> page
+                .addCircle(40, DocumentColor.BLACK, circle -> circle.name("Badge").center(paragraph("A"))));
+        DocxExportReport unpainted = DocxExports.reportWithoutLayout(400, 600, 20, page -> page
+                .add(new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Badge").circle(40)
+                        .center(paragraph("A")).build()));
+
+        assertThat(painted.bySubject().get("shape container outline")).singleElement().satisfies(note -> {
+            assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.DROPPED);
+            assertThat(note.path()).endsWith("Badge[0]");
+            assertThat(note.detail()).contains("ellipse outline")
+                    .endsWith(" outline has no shape this export draws, so it is not in the document");
+        });
+        assertThat(unpainted.bySubject()).as("nothing painted, nothing lost").doesNotContainKey("shape container outline");
+    }
+
+    @Test
     void aTablesFixedColumnBesideAnAutoOneIsNamedAndAllFixedOrAllAutoAreNot() throws Exception {
         String fixed = BASE + "; a table's fixed column beside an auto one is written with no width either";
         assertThat(sectionNote(page -> page.addTable(t -> t

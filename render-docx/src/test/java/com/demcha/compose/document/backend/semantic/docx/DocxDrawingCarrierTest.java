@@ -47,6 +47,88 @@ class DocxDrawingCarrierTest {
         assertThat(export.report().bySubject()).as("named on the shape, not on its page").doesNotContainKey("drawing");
     }
 
+    @Test
+    void aNodeDrawnOverThreePagesIsNamedForThePartNothingCarries() throws Exception {
+        // A node kind of the caller's own, split by its definition: one shape on each of three
+        // pages. Pages 1 and 3 have a paragraph to carry theirs; page 2 has none.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        XWPFDocument document;
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20))
+                .create()) {
+            session.registerNodeDefinition(new BarDefinition());
+            session.pageFlow(page -> page.addParagraph("Intro").add(new Bar("Bar", 1300)).addParagraph("After"));
+            assertThat(session.layoutGraph().fragments())
+                    .filteredOn(fragment -> fragment.path().endsWith("Bar[1]"))
+                    .extracting(com.demcha.compose.document.layout.PlacedFragment::pageIndex)
+                    .as("the premise: one shape on each page")
+                    .containsExactly(0, 1, 2);
+            document = new XWPFDocument(new ByteArrayInputStream(session.export(new DocxSemanticBackend(report::set))));
+        }
+
+        assertThat(document.getDocument().xmlText().split("<wp:anchor", -1))
+                .as("the shapes on pages 1 and 3, carried").hasSize(3);
+        assertThat(report.get().bySubject().get("Bar"))
+                .filteredOn(note -> note.severity() == DocxExportReport.Severity.DROPPED)
+                .singleElement().satisfies(note -> {
+                    assertThat(note.path()).isEqualTo("ContainerNode[0]/Bar[1]");
+                    assertThat(note.detail()).isEqualTo("part of what it is drawn as stands on a page no paragraph "
+                                                        + "is written on, and Word anchors a drawing in a paragraph "
+                                                        + "on its page: nothing carries that part, so it is not in "
+                                                        + "the document");
+                });
+        assertThat(report.get().bySubject()).as("named on the node, not on its page").doesNotContainKey("drawing");
+    }
+
+    /** A bar of a given height that its definition splits wherever a page ends. */
+    private record Bar(String name, double height) implements com.demcha.compose.document.node.DocumentNode {
+    }
+
+    private static final class BarDefinition implements com.demcha.compose.document.layout.NodeDefinition<Bar> {
+        @Override
+        public Class<Bar> nodeType() {
+            return Bar.class;
+        }
+
+        @Override
+        public com.demcha.compose.document.layout.PreparedNode<Bar> prepare(Bar node,
+                com.demcha.compose.document.layout.PrepareContext ctx,
+                com.demcha.compose.document.layout.BoxConstraints constraints) {
+            return com.demcha.compose.document.layout.PreparedNode.leaf(node,
+                    new com.demcha.compose.document.layout.MeasureResult(200, node.height()));
+        }
+
+        @Override
+        public com.demcha.compose.document.layout.PaginationPolicy paginationPolicy(Bar node) {
+            return com.demcha.compose.document.layout.PaginationPolicy.SPLITTABLE;
+        }
+
+        @Override
+        public com.demcha.compose.document.layout.PreparedSplitResult<Bar> split(
+                com.demcha.compose.document.layout.PreparedNode<Bar> prepared,
+                com.demcha.compose.document.layout.SplitRequest request) {
+            double height = prepared.node().height();
+            double room = request.remainingHeight();
+            if (height <= room) {
+                return com.demcha.compose.document.layout.PreparedSplitResult.whole(prepared);
+            }
+            return new com.demcha.compose.document.layout.PreparedSplitResult<>(
+                    com.demcha.compose.document.layout.PreparedNode.leaf(new Bar(prepared.node().name(), room),
+                            new com.demcha.compose.document.layout.MeasureResult(200, room)),
+                    com.demcha.compose.document.layout.PreparedNode.leaf(new Bar(prepared.node().name(), height - room),
+                            new com.demcha.compose.document.layout.MeasureResult(200, height - room)));
+        }
+
+        @Override
+        public java.util.List<com.demcha.compose.document.layout.LayoutFragment> emitFragments(
+                com.demcha.compose.document.layout.PreparedNode<Bar> prepared,
+                com.demcha.compose.document.layout.FragmentContext ctx,
+                com.demcha.compose.document.layout.FragmentPlacement placement) {
+            return java.util.List.of(new com.demcha.compose.document.layout.LayoutFragment(placement.path(), 0, 0, 0,
+                    placement.width(), placement.height(),
+                    new com.demcha.compose.document.layout.payloads.EllipseFragmentPayload(INK.color(), null, null, null)));
+        }
+    }
+
     private record Export(XWPFDocument document, DocxExportReport report) {
     }
 

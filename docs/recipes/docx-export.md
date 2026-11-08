@@ -1856,8 +1856,9 @@ rectangle's 10pt frame came out with rounded corners, and a star's points 4pt sh
 editor reads the miter limit: Word's own is the page's, so it mitres and bevels where the page
 does, and LibreOffice bevels a corner sharper than 30 degrees. A drawn line or path is dashed
 as the page dashes it (`a:custDash`), from the end the page starts it at: a line built with
-`vertical(h)` starts at its foot, so its preset is flipped to run up from there, and a path's
-dashes start at its first point. A pattern of odd length is written twice, as the page repeats
+`vertical(h)` starts at its foot, so its preset is flipped to run up from there, and each part
+of a path starts its dashes again at its first point, as the page does (measured with a path of
+two parts: Word and LibreOffice both start the second part with a whole dash). A pattern of odd length is written twice, as the page repeats
 it. The page's dash is the stroke's length before its caps, Word's the length it shows: a round
 or square dash is written an outline's width longer, and its gap as much shorter, and a gap the
 caps close as none, which moves the dashes after it in a pattern whose other gaps stay open

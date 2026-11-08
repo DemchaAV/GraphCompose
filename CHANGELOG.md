@@ -300,8 +300,8 @@ follow semantic versioning; release dates are ISO 8601.
   - A line or a path the export draws as a shape was drawn solid, and the report said so:
     `VioletGridCv`'s five dotted dividers between its skill columns came out as solid rules.
   - Its outline is now dashed as the page dashes it (`a:custDash`), in a table cell as
-    anywhere, from the end the page starts it at — `vertical(h)` from its foot, a path from its
-    first point — and a pattern of odd length twice over, as the page repeats it. The page's
+    anywhere, from the end the page starts it at — `vertical(h)` from its foot, each part of a
+    path from its first point — and a pattern of odd length twice over, as the page repeats it. The page's
     dash is the stroke's length before its caps and Word's the length it shows, so a round or
     square dash is written an outline's width longer and its gap as much shorter: written as the
     page's, a 6pt dash and gap with round caps on a 3pt line came out 6 and 6 in Word where the
@@ -311,8 +311,8 @@ follow semantic versioning; release dates are ISO 8601.
     and keeps the dots' proportion. LibreOffice reads a square dash as the stroke's length
     before its caps, so it draws one an outline's width longer than Word and its gap as much
     shorter, and it keeps at most two dash lengths and one gap length of a pattern; no template
-    has either. A line written
-    as a rule is still a paragraph border in Word's own dash, as before.
+    has either. A line written as a rule is still a paragraph border in Word's own dash, as
+    before.
   - The report no longer names the dash of a drawn line or path, and a table's note on what its
     cells draw names a transform or a gradient only. In the fidelity corpus only
     `VioletGridCv` changes: its text stands where it stood.
@@ -2100,7 +2100,8 @@ follow semantic versioning; release dates are ISO 8601.
   with the page's cap and join: see "A DOCX export ends and turns a drawing's outline as the page
   strokes it"), which Word and LibreOffice draw with flat ends and round joins (measured: a 10pt
   stroke's ends stood where the page ends them, and its mitred point 2.76pt short), so the note now
-  names a gradient, a dash, a cap that is not flat where the path has an open end, and a join that
+  names a gradient, a dash (since drawn: see "A DOCX export draws a dashed line or path dashed"),
+  a cap that is not flat where the path has an open end, and a join that
   is not round where two of its segments meet — the page's default mitre among them. A path painted
   only with a gradient was dropped as geometry Word has no analogue for; it is dropped for its
   gradient. Page numbers that do not count from 1 on page 1 were reported as numbered from 1 by
@@ -3281,13 +3282,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 - **A DOCX export's report names what each written or drawn node goes without.** The export
   wrote these nodes and said nothing of what it left behind: a linked logo became an unlinked
-  picture, a rotated photo stood upright, a dashed line was drawn solid, and a link to an anchor
+  picture, a rotated photo stood upright, a dashed line was drawn solid (since drawn dashed: see
+  "A DOCX export draws a dashed line or path dashed"), and a link to an anchor
   on a drawn shape pointed at no bookmark. Each node's report note now names:
   - on a shape, ellipse or line drawn as a shape: its link, its outline entry, its anchor (a drawing
     holds no bookmark, so a link to it points at none and a page reference to it is a fixed number),
     a shape's gradient fill and unequal corners (drawn at the largest radius), a line's dash pattern
-    (drawn solid) and caps (not written, so the editor ends the line its own way) (caps since
-    written: see "A DOCX export ends and turns a drawing's outline as the page strokes it") — added
+    (drawn solid; since drawn dashed: see "A DOCX export draws a dashed line or path dashed") and
+    caps (not written, so the editor ends the line its own way) (caps since written: see "A DOCX export ends and turns a drawing's outline as the page strokes it") — added
     to the note the drawing already had;
   - on a line or thin bar written as a rule: a bar's link (a line's was already `rule link`),
     either's outline entry, and a line's caps (a border ends flat), in a note `written as a
@@ -3300,7 +3302,8 @@ follow semantic versioning; release dates are ISO 8601.
     marks there (since bookmarked: see "A DOCX export bookmarks a layer stack's column, so a page
     reference or a link to its anchor works"), though a link or a page reference to it names one;
   - on a drawing composed in a table cell, whose drawing is its table's: its link, outline entry,
-    anchor, unequal corners and caps; its gradient and dash stay the table's note's to name.
+    anchor, unequal corners and caps; its gradient and dash stay the table's note's to name (its
+    dash since drawn: see "A DOCX export draws a dashed line or path dashed").
 
   A shape painted only with a gradient is dropped for that reason rather than for its geometry,
   and in a table cell it is no longer taken for drawn by its table and left unreported. None
@@ -4331,7 +4334,8 @@ follow semantic versioning; release dates are ISO 8601.
   Each is now a DrawingML shape of custom geometry through the same points and curves, anchored to
   the page as the other shapes are, in its fill and stroke colours; an unfilled path is left open.
   The dash pattern, caps and joins (caps and joins since carried: see "A DOCX export ends and turns
-  a drawing's outline as the page strokes it"), the clip round an SVG icon and a gradient paint are
+  a drawing's outline as the page strokes it"; the dash pattern since carried: see "A DOCX export
+  draws a dashed line or path dashed"), the clip round an SVG icon and a gradient paint are
   not carried — a shape filled only with a gradient is still dropped and reported. Measured in
   LibreOffice: `SidebarPortrait`'s portrait, drawn as 37 paths, and `CharcoalGold`'s certification
   icons are drawn as on the page.

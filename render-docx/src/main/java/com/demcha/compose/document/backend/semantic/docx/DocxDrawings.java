@@ -270,7 +270,8 @@ final class DocxDrawings {
                     List.of(), false, null, null, false, 0, 0, line.lineCap(), null, flipV,
                     line.dashPattern().segments())));
         } else if (fragment.payload() instanceof PathFragmentPayload path) {
-            // Custom geometry runs as the path's segments do, so its first dash is where the page's is.
+            // Custom geometry runs as the path's segments do, so each part's first dash is where the
+            // page's is: both editors start a part's dashes again at its first point, as the page does.
             add(shapes, visible(new Shape(Kind.CUSTOM, fragment.x(), top, fragment.width(), fragment.height(),
                     path.fillColor(), colourOf(path.stroke()), widthOf(path.stroke()), 0, false, page,
                     path.segments()).strokedWith(path.lineCap(), path.lineJoin()).dashedWith(path.dashPattern())));

@@ -1114,6 +1114,34 @@ class DocxDrawingsTest {
     }
 
     @Test
+    void aShapeCopiedInFrontHoldingTextOrRestrokedKeepsItsDirectionAndDashes() {
+        DocxDrawings.Shape dashed = new DocxDrawings.Shape(DocxDrawings.Kind.LINE, 10, 10, 0, 60, null,
+                java.awt.Color.BLACK, 2, 0, true, 0, List.of(), false, null, null, false, 0, 0, null, null,
+                true, List.of(4.0, 2.0));
+
+        assertThat(List.of(dashed.inFront(), dashed.holding("<w:p/>", 0, 0),
+                dashed.strokedWith(DocumentLineCap.ROUND, null)))
+                .allSatisfy(copy -> {
+                    assertThat(copy.flipH()).isTrue();
+                    assertThat(copy.flipV()).isTrue();
+                    assertThat(copy.dash()).containsExactly(4.0, 2.0);
+                });
+    }
+
+    @Test
+    void aDashTooLongForItsAttributeIsHeldToIt() throws Exception {
+        // A dash a million points long on a tenth of a point is ten billion percent of it, past
+        // the int the attribute holds.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addParagraph(p -> p.text("Long"))
+                .addLine(line -> line.vertical(60).thickness(0.1).color(ACCENT).dashed(1_000_000, 1))))) {
+
+            assertThat(dashes(document.getDocument().xmlText()))
+                    .containsExactly("<a:ds d=\"" + Integer.MAX_VALUE + "\" sp=\"1000000\"/>");
+        }
+    }
+
+    @Test
     void aDashPatternOfOddLengthIsWrittenTwiceAsThePageRepeatsIt() throws Exception {
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
                 .addParagraph(p -> p.text("One"))

@@ -7990,7 +7990,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // than the page, in a cell the export centres, and a centred layer of text set left
             // 83pt left. With no layout the section's note names what it writes from the left.
             report.add(DocxExportReport.Severity.APPROXIMATED, "overlapping layer", layout.pathOf(node),
-                    "the one layer it writes beside what it draws is set as its table cell's text, as its own "
+                    "the one layer it writes beside what it draws is set as its table cell's text, as its text's "
                     + "alignment and the cell's set it: composed in a table cell, it has no place of its own in the "
                     + "layout, and where the page sets that layer, by its alignment and offset, is not measured");
         }
@@ -13221,7 +13221,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * picture reaches below its box, for one set on the baseline; {@code NaN} for one set by
      * another alignment, which the line would measure; 0 for a run that is no picture.
      */
-    private static double offTheBaseline(InlineRun run) {
+    static double offTheBaseline(InlineRun run) {
         InlineImageAlignment alignment;
         double offset;
         double below = 0;
@@ -15931,16 +15931,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Names where a list item's pictures, its marker's and its own, stand off the page's.
      *
-     * <p>They are placed by {@link #itemLine} — the list's first line, its height raised to the
-     * item's own tallest picture — and the page places them by the item's own first line, the
-     * marker's line taking its metrics: an item in another size or face than the list's first
-     * line has its pictures higher or lower (measured, Word 16 and LibreOffice 24.2: a 20pt item
-     * after a 9pt one, its dot 2.8 and 2.9pt lower), named where its raise, in Word's half
-     * points, is not the one its own line gives. Where the layout's items are not the list's own,
-     * or the item's first line holds no text, its own line is not known, and that is named.
-     * Where the layout shows no line of the list at all — composed in a table cell and not found
-     * among the cell's lines — they stand on the text's baseline, named as a paragraph's are
-     * there. With no layout the section's note names it.</p>
+     * <p>They are all placed by {@link #itemLine} — the list's first line, its height raised to the
+     * item's own tallest picture — and the page places each by the item's line that holds it, a
+     * marker's by the item's first: an item in another size or face than the list's first line,
+     * or a picture on a later line of another height, stands higher or lower (measured, Word 16
+     * and LibreOffice 24.2: a 20pt item after a 9pt one, its dot 2.8 and 2.9pt lower), named
+     * where its raise, in Word's half points, is not the one its own line gives. Where the
+     * layout's items are not the list's own, the item's lines are not known, and that is named. Where the layout
+     * shows no line of the list at all — composed in a table cell and not found among the cell's
+     * lines — they stand on the text's baseline, named as a paragraph's are there. With no layout
+     * the section's note names it.</p>
      */
     private void reportTheItemsPictures(com.demcha.compose.document.node.ListMarker marker,
                                         com.demcha.compose.document.node.ListItem item,
@@ -15959,8 +15959,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         if (line.isEmpty()) {
-            // As a paragraph whose lines are not read (picturesLost): only a picture the page sets
-            // off the baseline stands apart from it.
+            // As a paragraph whose lines are not read (picturesLost): pictures with no text beside
+            // them are set at their size, and only a picture the page sets off the baseline stands
+            // apart from it.
+            boolean besideText = item.isRich()
+                    ? item.runs().stream().anyMatch(run -> textOf(run) != null && !textOf(run).text().isBlank())
+                    : item.label() != null && !item.label().isBlank();
+            if (!besideText) {
+                return;
+            }
             double off = 0;
             for (InlineRun run : pictures) {
                 double offThis = offTheBaseline(run);
@@ -15979,43 +15986,51 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             return;
         }
-        com.demcha.compose.document.layout.payloads.ParagraphLine own = laidOut == null ? null
-                : laidOut.lines().stream().filter(ownLine -> ownLine.spans().stream().anyMatch(
-                        span -> span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan))
-                .findFirst().orElse(null);
-        if (own == null) {
-            // The layout's items are not the list's own — one run onto the next page, a list in a
-            // cell partly matched — or the item's first line holds no text to stand them beside.
+        if (laidOut == null || laidOut.lines().isEmpty()) {
+            // The layout's items are not the list's own: one run onto the next page, or a list in a
+            // cell partly matched.
             report.add(DocxExportReport.Severity.APPROXIMATED, "list picture", path,
                     "its item's pictures are placed by the list's first line, and where the page sets them by "
-                    + "the item's own is not measured");
+                    + "the item's own lines is not measured");
             return;
         }
         // Word moves a picture in half points; both raises are rounded so, as picturesLost rounds a
         // paragraph's, and only a raise the item's own line would write otherwise is named.
         long apart = 0;
-        for (InlineRun run : pictures) {
-            InlineImageAlignment alignment;
-            double offset;
-            double height;
-            if (run instanceof InlineShapeRun shape) {
-                alignment = shape.alignment();
-                offset = shape.baselineOffset();
-                height = shape.height();
-            } else if (run instanceof InlineImageRun image) {
-                alignment = image.alignment();
-                offset = image.baselineOffset();
-                height = image.height();
-            } else {
-                InlineSvgRun svg = (InlineSvgRun) run;
-                alignment = svg.alignment();
-                offset = svg.baselineOffset();
-                height = svg.height();
+        com.demcha.compose.document.layout.payloads.ParagraphLine first = laidOut.lines().get(0);
+        if (marker.isRich()) {
+            // The page sets the marker on its item's first line, in that line's metrics.
+            for (InlineRun run : marker.runs()) {
+                InlineImageAlignment alignment;
+                double offset;
+                double height;
+                if (run instanceof InlineShapeRun shape) {
+                    alignment = shape.alignment();
+                    offset = shape.baselineOffset();
+                    height = shape.height();
+                } else if (run instanceof InlineImageRun image) {
+                    alignment = image.alignment();
+                    offset = image.baselineOffset();
+                    height = image.height();
+                } else if (run instanceof InlineSvgRun svg) {
+                    alignment = svg.alignment();
+                    offset = svg.baselineOffset();
+                    height = svg.height();
+                } else {
+                    continue;
+                }
+                apart = fartherOff(apart, alignment, offset, height, line.get(), first);
             }
-            long off = Math.round(inlineBottomFromBaseline(alignment, offset, height, line.get()) * 2)
-                       - Math.round(inlineBottomFromBaseline(alignment, offset, height, own) * 2);
-            if (Math.abs(off) > Math.abs(apart)) {
-                apart = off;
+        }
+        for (com.demcha.compose.document.layout.payloads.ParagraphLine own : laidOut.lines()) {
+            for (com.demcha.compose.document.layout.payloads.ParagraphSpan span : own.spans()) {
+                if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphImageSpan image) {
+                    apart = fartherOff(apart, image.alignment(), image.baselineOffset(), image.height(), line.get(), own);
+                } else if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphShapeSpan shape) {
+                    apart = fartherOff(apart, shape.alignment(), shape.baselineOffset(), shape.height(), line.get(), own);
+                } else if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphSvgSpan svg) {
+                    apart = fartherOff(apart, svg.alignment(), svg.baselineOffset(), svg.height(), line.get(), own);
+                }
             }
         }
         if (apart != 0) {
@@ -16024,6 +16039,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     + pointsOf(Math.abs(apart) / 2.0) + "pt " + (apart > 0 ? "higher" : "lower")
                     + " than the page sets them");
         }
+    }
+
+    /**
+     * The farther from zero of {@code apart} and how far a picture written by {@code written}
+     * stands above where {@code own} sets it, both raises in Word's half points.
+     */
+    private static long fartherOff(long apart, InlineImageAlignment alignment, double offset, double height,
+                                   com.demcha.compose.document.layout.payloads.ParagraphLine written,
+                                   com.demcha.compose.document.layout.payloads.ParagraphLine own) {
+        long off = Math.round(inlineBottomFromBaseline(alignment, offset, height, written) * 2)
+                   - Math.round(inlineBottomFromBaseline(alignment, offset, height, own) * 2);
+        return Math.abs(off) > Math.abs(apart) ? off : apart;
     }
 
     /**
@@ -18383,7 +18410,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param top    how much lower the other cells' text stands, the top kept past the smallest
      * @param bottom how much taller the row stands, the bottom kept past the smallest
      */
-    record KeptMargins(long top, long bottom) {
+    private record KeptMargins(long top, long bottom) {
 
         static final KeptMargins NONE = new KeptMargins(0, 0);
 

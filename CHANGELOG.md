@@ -299,14 +299,16 @@ follow semantic versioning; release dates are ISO 8601.
 - **A DOCX export's report names where it writes a list item's pictures, a stack's layer, a panel
   and a cell's padding off the page, and what a section with no layout loses of them.** Nothing is
   written differently; each was measured in Word 16 and LibreOffice 24.2.
-  - `list picture`: a list item's pictures, its marker's and its own, are placed by the list's
-    first line, its height raised to the item's own tallest picture, where the page places them
-    by the item's own first line. An item in another size or face has them higher or lower: a
-    20pt item after a 9pt one had its dot 2.8pt lower in Word and 2.9pt in LibreOffice. Named
-    where the raise, in Word's half points, is not the one the item's own line gives. Where that
-    line is not known (the layout's items are not the list's own, or the item's first line holds
-    no text), that is named. A list composed in a table cell whose lines are not found (an item
-    of runs) has its pictures on the baseline, named as a paragraph's are there.
+  - `list picture`: a list item's pictures, its marker's and its own, are all placed by the
+    list's first line, its height raised to the item's own tallest picture. The page places each
+    by the item's line that holds it, and a marker's by the item's first line. An item in another
+    size or face, or a picture on a later line of another height, stands higher or lower: a 20pt
+    item after a 9pt one had its dot 2.8pt lower in Word and 2.9pt in LibreOffice.
+    - Named where the raise, in Word's half points, is not the one that line gives.
+    - Where the item's lines are not known (an item the layout runs onto the next page), that is
+      named.
+    - A list composed in a table cell whose lines are not found (an item of runs) has its pictures
+      on the baseline, named as a paragraph's are there.
   - `overlapping layer`: the one layer a stack composed in a table cell writes beside what it
     draws is set as the cell's text: across as its own text is aligned, and as high as the
     cell's alignment sets it, not where the stack sets it. In a cell the export centres, a
@@ -324,7 +326,7 @@ follow semantic versioning; release dates are ISO 8601.
   - With no layout, the section's note names four more things: a row's fixed or weighted column
     beside an `auto` one is written with no width; a stack's layer its offset moves up or down is
     written where the stack starts; a paragraph's vertical alignment in its line is not written;
-    and a list item's pictures stand on the baseline.
+    and a list item's pictures stand on the baseline, named where the page sets them off it.
   - In the fidelity corpus, 39 list items in `TealPulse` and `OrangeOps` CVs go through the list
     picture rule, each in its list's own size, so none is named; `CobaltRota`'s swatches pass their
     cells by less than the threshold. The corpus exports byte for byte as before, with the same

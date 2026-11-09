@@ -202,9 +202,19 @@ final class DocxWithoutLayout {
             return marker != null && drawsPictures(marker.runs());
         }
 
+        /**
+         * Whether runs draw a picture the page sets off the baseline: by an alignment that needs a
+         * line, or half a point or more by an offset — a picture on the baseline stands there in
+         * Word too.
+         */
         private static boolean drawsPictures(List<InlineRun> runs) {
-            return runs != null && runs.stream().anyMatch(run -> run instanceof InlineImageRun
-                    || run instanceof InlineSvgRun || run instanceof InlineShapeRun);
+            return runs != null && runs.stream().anyMatch(run -> {
+                if (!(run instanceof InlineImageRun || run instanceof InlineSvgRun || run instanceof InlineShapeRun)) {
+                    return false;
+                }
+                double off = DocxSemanticBackend.offTheBaseline(run);
+                return Double.isNaN(off) || Math.abs(off) >= 0.5;
+            });
         }
 
         /** Whether a stack sets any of its layers in from its left edge: by alignment, or by offset. */

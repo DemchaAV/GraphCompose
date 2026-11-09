@@ -942,15 +942,16 @@ page.addParagraph(p -> p
   paragraph's lines are not read — with no layout, for one — nothing moves a picture beside
   text, and it stands on the baseline. The paragraph's report note names either: one the page
   sets by its alignment where no line says how far, and otherwise from half a point. A list
-  item's pictures, its marker's and its own, are moved by the list's first line, its height
-  raised to the item's own tallest picture, where the page moves them by the item's own: an
-  item in another size or face than that line has them higher or lower than the page sets
-  them — measured, a 20pt item after a 9pt one, its dot 2.8pt lower in Word 16 and 2.9pt in
+  item's pictures, its marker's and its own, are all moved by the list's first line, its height
+  raised to the item's own tallest picture, where the page moves each by the item's line that
+  holds it, a marker's by the item's first: an item in another size or face than that line, or
+  a picture on a later line of another height, stands higher or lower than the page sets it
+  — measured, a 20pt item after a 9pt one, its dot 2.8pt lower in Word 16 and 2.9pt in
   LibreOffice 24.2 — and the report names it where the raise, in Word's half points, is not
-  the one the item's own line gives (`list picture`), and where that line is not known: the
-  layout's items not the list's own, or an item's first line holding no text. Where no line of
-  the list is read — composed in a table cell and not matched to its lines — they stand on the
-  baseline, named as a paragraph's are there; with no layout, the section's note says it.
+  the one that line gives (`list picture`), and where the item's lines are not known, as for
+  an item the layout runs onto the next page. Where no line of the list is read — composed in a table cell and not
+  matched to its lines — they stand on the baseline, named as a paragraph's are there; with no
+  layout, the section's note says it where the page sets them off the baseline.
 - **Line height.** Lines are written at an exact height, and the editor clips a picture
   to it — where in that height it puts the baseline is its own, so no fixed room is
   enough: measured in LibreOffice, a 14pt icon centred over 9pt text lost its top up to

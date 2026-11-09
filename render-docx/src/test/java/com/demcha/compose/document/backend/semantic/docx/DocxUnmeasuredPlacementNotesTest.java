@@ -85,12 +85,35 @@ class DocxUnmeasuredPlacementNotesTest {
     }
 
     @Test
-    void anItemWhoseFirstLineHoldsNoTextHasItsPicturesNamedAsNotMeasured() throws Exception {
+    void aPictureOnALaterLineOfAnotherHeightIsNamed() throws Exception {
+        // The item's first line is in the list's size; its dot stands on a second, 20pt line.
+        assertThat(details("list picture", page -> page.addList(l -> l.hangingIndent(true).textStyle(NINE)
+                .addItem(i -> i.plain("A first line of nine point text running on past the width ")
+                        .size("Large ", 20).dot(6, RED)))))
+                .singleElement().asString().endsWith("pt lower than the page sets them");
+    }
+
+    @Test
+    void aLineOfPicturesAloneInTheListsMetricsIsNotNamed() throws Exception {
+        // Its line keeps the list's text metrics, raised to the picture: the raise is the same.
         assertThat(details("list picture", page -> page.addList(l -> l.hangingIndent(true).textStyle(NINE)
                 .addItem(i -> i.plain("First item"))
-                .addItem(i -> i.dot(6, RED)))))
-                .containsExactly("its item's pictures are placed by the list's first line, and where the page sets "
-                                 + "them by the item's own is not measured");
+                .addItem(i -> i.dot(20, RED))))).isEmpty();
+    }
+
+    @Test
+    void anItemTheLayoutRunsOntoTheNextPageHasItsPicturesNamedAsNotMeasured() throws Exception {
+        // Split a line apiece, the item is laid out as two: no item of the layout's is the list's own,
+        // and no item's lines are known.
+        Consumer<PageFlowBuilder> overPages = page -> page.addSpacer(spacer -> spacer.height(125))
+                .addList(l -> l.hangingIndent(true).textStyle(DocumentTextStyle.DEFAULT.withSize(10))
+                        .addItem(i -> i.plain("One highlight that wraps onto exactly two lines here ").dot(4, RED))
+                        .addItem(i -> i.plain("Short")));
+        List<String> notes = DocxExports.report(240, 200, 30, overPages).bySubject()
+                .getOrDefault("list picture", List.of()).stream().map(DocxExportReport.Note::detail).toList();
+
+        assertThat(notes).contains("its item's pictures are placed by the list's first line, and where the page sets "
+                                   + "them by the item's own lines is not measured");
     }
 
     @Test
@@ -101,19 +124,27 @@ class DocxUnmeasuredPlacementNotesTest {
         Consumer<PageFlowBuilder> onTheBaseline = beside(new ListBuilder().name("Items").noMarker().hangingIndent(true)
                 .textStyle(NINE).addItem(i -> i.plain("Support ").svgIcon(ICON, 8, InlineImageAlignment.BASELINE))
                 .build());
+        Consumer<PageFlowBuilder> raised = beside(new ListBuilder().name("Items").noMarker().hangingIndent(true)
+                .textStyle(NINE).addItem(i -> i.plain("Support ")
+                        .svgIcon(ICON, 8, InlineImageAlignment.BASELINE, 3, null)).build());
+        Consumer<PageFlowBuilder> alone = beside(new ListBuilder().name("Items").noMarker().hangingIndent(true)
+                .textStyle(NINE).addItem(i -> i.plain("Support ")).addItem(i -> i.dot(4, RED)).build());
         Consumer<PageFlowBuilder> pictureless = beside(new ListBuilder().name("Items").noMarker().hangingIndent(true)
                 .textStyle(NINE).addItem(i -> i.plain("Support")).build());
 
         assertThat(details("list picture", unmatched)).containsExactly(
                 "its item's pictures stand on the text's baseline, where the page sets them by their alignment: no "
                 + "line the layout set carries the list");
+        assertThat(details("list picture", raised)).containsExactly("its item's pictures stand on the text's "
+                + "baseline, up to 3pt from where the page sets them: no line the layout set carries the list");
         assertThat(details("list picture", onTheBaseline)).as("where the page sets it too").isEmpty();
+        assertThat(details("list picture", alone)).as("pictures alone, set at their size").isEmpty();
         assertThat(details("list picture", pictureless)).as("no picture to place").isEmpty();
     }
 
     @Test
     void theOneLayerAStackComposedInACellWritesIsNamed() throws Exception {
-        String note = "the one layer it writes beside what it draws is set as its table cell's text, as its own "
+        String note = "the one layer it writes beside what it draws is set as its table cell's text, as its text's "
                       + "alignment and the cell's set it: composed in a table cell, it has no place of its own in the "
                       + "layout, and where the page sets that layer, by its alignment and offset, is not measured";
         Consumer<PageFlowBuilder> labelled = inACell(new LayerStackBuilder().name("Labelled")
@@ -230,6 +261,9 @@ class DocxUnmeasuredPlacementNotesTest {
             page.addParagraph(p -> p.text(" ").verticalAlign(TextVerticalAlign.TOP));
             page.addParagraph(p -> p.text("Default"));
             page.addList(l -> l.hangingIndent(true).items("Plain"));
+            // A picture on the baseline stands there in Word too.
+            page.addList(l -> l.hangingIndent(true).addItem(i -> i.plain("Call ")
+                    .svgIcon(ICON, 8, InlineImageAlignment.BASELINE)));
             // A list whose author declared depth writes its items' markers, never its own.
             page.addList(l -> l.marker(m -> m.dot(4, RED)).addItem("Parent", children -> children.items("Child")));
         });

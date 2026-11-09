@@ -493,7 +493,8 @@ class DocxValueFieldLedgerTest {
                 + "; as the order Word stacks the drawings in, among those behind the text and among "
                 + "those in front of it");
         value(com.demcha.compose.document.node.LayerAlign.class,
-                "TOP_LEFT:REPORTED:" + COMPOSED_STACK_LAYER + "; on a layer after the first a shape's panel in a table cell writes, where that "
+                "TOP_LEFT:REPORTED:" + COMPOSED_STACK_LAYER
+                + "; on a layer after the first a shape's panel in a table cell writes, where that "
                 + "one is set lower: the cell sets all it holds at the first one's height; any other is written, "
                 + "where the layout places it",
                 "TOP_CENTER:REPORTED:" + COMPOSED_STACK_LAYER

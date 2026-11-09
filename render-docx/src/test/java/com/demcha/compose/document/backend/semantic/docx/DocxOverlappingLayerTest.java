@@ -222,7 +222,7 @@ class DocxOverlappingLayerTest {
         assertThat(labelled.report().bySubject().get(SUBJECT)).extracting(DocxExportReport.Note::detail)
                 .as("one layer written over a drawing lies over nothing written, but is set as the cell's text")
                 .containsExactly("the one layer it writes beside what it draws is set as its table cell's text, as "
-                                 + "its own alignment and the cell's set it: composed in a table cell, it has no place "
+                                 + "its text's alignment and the cell's set it: composed in a table cell, it has no place "
                                  + "of its own in the layout, and where the page sets that layer, by its alignment and "
                                  + "offset, is not measured");
     }

@@ -218,16 +218,17 @@ class DocxNodeFieldLedgerTest {
                                        + "spanning rows, which Word gives the row's other cells too, named from a "
                                        + "tenth of a point (cell padding)";
     static final String LIST_PICTURE = "in a list's item or marker, placed by the list's first line and the item's "
-                                       + "own tallest picture rather than its own line, named where its raise in "
-                                       + "Word's half points is not the one its own line gives, and where its own "
-                                       + "line is not known; where no line of the list is read, on the baseline, "
-                                       + "named as a paragraph's is (list picture); with no layout, in the "
-                                       + "section's note";
+                                       + "own tallest picture rather than the line of the item holding it, named "
+                                       + "where its raise in Word's half points is not the one that line gives, "
+                                       + "and where the item's lines are not known; where no line of the list is "
+                                       + "read, on the baseline, named as a paragraph's is (list picture); with no "
+                                       + "layout, off the baseline, in the section's note";
     static final String ROW_COLUMNS_UNLAID = "with no layout, a row's fixed or weighted column beside an auto one, "
                                              + "written with no width, in the section's note";
     static final String COMPOSED_STACK_LAYER = "of the one layer a stack composed in a table cell writes beside drawn "
-                                               + "ones, set as the cell's text, as its own alignment and the cell's set "
-                                               + "it, rather than where the stack sets it, named (overlapping layer)";
+                                               + "ones, set as the cell's text, as its text's alignment and the cell's "
+                                               + "set it, rather than where the stack sets it, named (overlapping "
+                                               + "layer)";
     static final String LAYER_UNLAID = "with no layout, a stack's layer its offset moves up or down written where the "
                                        + "stack starts, in the section's note";
     static final String PANEL_WIDER_THAN_ITS_CELL = "as a panel in a table cell narrower than it, held to the cell "

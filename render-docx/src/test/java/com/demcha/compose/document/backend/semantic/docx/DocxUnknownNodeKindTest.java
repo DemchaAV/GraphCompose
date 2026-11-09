@@ -176,16 +176,35 @@ class DocxUnknownNodeKindTest {
 
     @Test
     void childrenThePageSetsSideBySideAreNamedAsWrittenOneUnderAnother() throws Exception {
-        Export export = exportOf(session -> {
-            session.registerNodeDefinition(new CalloutDefinition(CompositeLayoutSpec.Axis.HORIZONTAL, false));
-            session.add(callout());
-        });
+        for (CompositeLayoutSpec.Axis axis : List.of(CompositeLayoutSpec.Axis.HORIZONTAL,
+                CompositeLayoutSpec.Axis.STACK)) {
+            Export export = exportOf(session -> {
+                session.registerNodeDefinition(new CalloutDefinition(axis, false));
+                session.add(callout());
+            });
 
-        assertThat(export.text()).containsSubsequence("Callout line one", "Callout line two");
-        assertThat(export.report().bySubject().get("Callout")).singleElement()
-                .extracting(DocxExportReport.Note::detail).asString()
-                .endsWith("; the page sets them side by side or over one another, and they are written one "
-                          + "under another");
+            assertThat(export.text()).as(axis.name()).containsSubsequence("Callout line one", "Callout line two");
+            assertThat(export.report().bySubject().get("Callout")).as(axis.name()).singleElement()
+                    .extracting(DocxExportReport.Note::detail).asString()
+                    .endsWith("; the page sets them side by side or over one another, and they are written one "
+                              + "under another");
+        }
+    }
+
+    @Test
+    void childrenThePageSetsSideBySideAreKeptOnOnePageAsTheLayoutMovesThemWhole() throws Exception {
+        for (CompositeLayoutSpec.Axis axis : List.of(CompositeLayoutSpec.Axis.HORIZONTAL,
+                CompositeLayoutSpec.Axis.STACK, CompositeLayoutSpec.Axis.VERTICAL)) {
+            Export export = exportOf(session -> {
+                session.registerNodeDefinition(new CalloutDefinition(axis, false));
+                session.add(callout());
+            });
+
+            XWPFParagraph first = paragraphHolding(export.document(), "Callout line one");
+            boolean kept = first.getCTP().getPPr() != null && first.getCTP().getPPr().isSetKeepNext();
+            assertThat(kept).as("%s: the first line kept with the next", axis)
+                    .isEqualTo(axis != CompositeLayoutSpec.Axis.VERTICAL);
+        }
     }
 
     @Test
@@ -266,8 +285,8 @@ class DocxUnknownNodeKindTest {
     }
 
     @Test
-    void aKindWhoseDefinitionLaysOutOtherChildrenThanItListsIsStillDropped() throws Exception {
-        // As many as it lists, but not they: the page prints others.
+    void aKindWhoseDefinitionLaysOutNodesAtOtherPlacesThanItListsIsStillDropped() throws Exception {
+        // As many as it lists, named otherwise, so at other places of the layout: the page prints others.
         Export export = exportOf(session -> {
             session.registerNodeDefinition(
                     new CalloutDefinition(CompositeLayoutSpec.Axis.VERTICAL, false, LaidOut.OTHERS));
@@ -279,14 +298,32 @@ class DocxUnknownNodeKindTest {
                 .extracting(DocxExportReport.Note::severity).isEqualTo(DocxExportReport.Severity.DROPPED);
     }
 
+    @Test
+    void otherNodesOfTheSameKindAtTheListedPlacesHaveTheListedOnesWritten() throws Exception {
+        // The layout knows a node by its place alone — its name or kind and its index — so copies laid
+        // out at the listed places stand for the listed nodes, whose text is what is written.
+        Export export = exportOf(session -> {
+            session.registerNodeDefinition(
+                    new CalloutDefinition(CompositeLayoutSpec.Axis.VERTICAL, false, LaidOut.COPIES));
+            session.add(callout());
+        });
+
+        assertThat(export.text()).containsSubsequence("Callout line one", "Callout line two")
+                .doesNotContain("Laid out by the definition");
+        assertThat(export.report().bySubject().get("Callout")).singleElement()
+                .extracting(DocxExportReport.Note::detail).isEqualTo(HOLDS_TWO);
+    }
+
     /** Which children a callout's definition lays out. */
     private enum LaidOut {
         /** The ones the node lists. */
         LISTED,
         /** One of its own before the ones the node lists. */
         ONE_MORE,
-        /** As many as the node lists, but named otherwise, so not they. */
-        OTHERS
+        /** As many as the node lists, but named otherwise, so at other places of the layout. */
+        OTHERS,
+        /** As many as the node lists, unnamed paragraphs as they are, so at their places. */
+        COPIES
     }
 
     private static Callout callout() {
@@ -363,6 +400,9 @@ class DocxUnknownNodeKindTest {
                         .map(child -> (DocumentNode) new ParagraphBuilder().name("Other")
                                 .text("Laid out by the definition").build())
                         .toList();
+                case COPIES -> node.children().stream()
+                        .map(child -> paragraph("Laid out by the definition"))
+                        .toList();
             };
         }
 
@@ -373,6 +413,17 @@ class DocxUnknownNodeKindTest {
                             NodeDefinitionSupport.toPadding(node.padding()), ctx, constraints,
                             DocumentFlowWidth.natural())
                     : new MeasureResult(constraints.availableWidth(), 30);
+            if (axis == CompositeLayoutSpec.Axis.STACK) {
+                // Layers over one another, each at the stack's top left.
+                int layers = children(node).size();
+                return PreparedNode.composite(node, measured,
+                        new com.demcha.compose.document.layout.payloads.PreparedStackLayout(
+                                java.util.Collections.nCopies(layers,
+                                        com.demcha.compose.document.node.LayerAlign.TOP_LEFT),
+                                java.util.Collections.nCopies(layers, 0.0),
+                                java.util.Collections.nCopies(layers, 0.0)),
+                        new CompositeLayoutSpec(0, axis));
+            }
             return PreparedNode.composite(node, measured, new CompositeLayoutSpec(SPACING, axis));
         }
 

@@ -4278,7 +4278,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // moves down, with two at the foot of the page above, a band of two layers with its first
         // layer there, and a canvas or an alignment wrapper with its first lines there (movedWhole).
         // In a cell their paragraphs are the table's, which a row keeps or breaks on its own terms.
-        boolean keepTogether = (node.keepTogether() || currentCell == null && movedWhole(node))
+        // So does a kind of the caller's own whose children the page sets side by side or over one
+        // another, written one under another (writeWhatAnUnknownKindHolds).
+        boolean keepTogether = (node.keepTogether() || currentCell == null && (movedWhole(node)
+                                    || writesWhatItHolds(node) && !setOneUnderAnother(node)))
                                && layout.onOnePage(node);
         PanelBreak panelBreak = keepThePanelMayBreak(node);
         boolean keepWithNext = node.keepWithNext() && layout.onOnePage(node);
@@ -5597,13 +5600,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>A kind this export does not know cannot be written as itself, but a definition that lays
      * its children out as a composite places paragraphs, tables and pictures, which it does know,
-     * and the page prints them. Only the children it lists are written, so the layout must have
-     * placed exactly those under it: every one, and no other a definition laid out in their place
-     * or beside them. A kind that lists no children, one whose definition lays out other children
-     * than it lists — one that paints what it holds itself lays out none —, one composed in a
-     * table's cell, where the layout gives what a cell holds no place of its own, and any kind
-     * exported with no layout behind the export are not written, and are named instead
-     * ({@link #warnUnsupported}).</p>
+     * and the page prints them. The children it lists are what is written, so the layout must have
+     * placed a node at each of their places — a layout path, its name or kind and its index — and
+     * none beside them. A path is all the layout says of a node: a definition that lays out other
+     * nodes of the same kinds and names at those places has the listed ones written there. A kind
+     * that lists no children, one whose definition lays out a node at another place than those it
+     * lists — one that paints what it holds itself lays out none —, one composed in a table's cell,
+     * where the layout gives what a cell holds no place of its own, and any kind exported with no
+     * layout behind the export are not written, and are named instead ({@link #warnUnsupported}).</p>
      */
     private boolean writesWhatItHolds(DocumentNode node) {
         if (isBuiltIn(node) || node.children().isEmpty()) {
@@ -5655,8 +5659,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Whether the layout sets each of a node's children below the one before it, read off the
      * neighbours that each stand whole on one page, the same one — as a vertical composite does, and
-     * a row or a stack does not. A child the page breaks says nothing here: the box the layout gives
-     * it is its first piece's, on its first page.
+     * a row or a stack does not. A child the page breaks says nothing here: the layout records it at
+     * its first piece's place, on its first page, at its whole height.
      */
     private boolean setOneUnderAnother(DocumentNode node) {
         com.demcha.compose.document.layout.PlacedNode before = null;

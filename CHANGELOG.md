@@ -300,22 +300,29 @@ follow semantic versioning; release dates are ISO 8601.
   - A `DocumentNode` with its own `NodeDefinition` that lays its children out as a composite
     (`PreparedNode.composite`) had its children placed by the layout and printed on the PDF page,
     and the Word file left out the node and every paragraph, table and picture in it, naming them
-    `DROPPED` at the node's kind.
+    `DROPPED` at the node's kind (`APPROXIMATED` where it painted a shape, which was drawn).
   - Its children are now written in its place, as an unpainted container's are: one after another,
     inside its margin and padding, with the space the layout sets between the first two that each
     stand whole on one page (the kind states no spacing of its own the export could read). The
-    shapes it paints itself are drawn where the page puts them, as before.
+    shapes it paints itself are drawn where the page puts them, as before. A fixed width it states
+    is not written, and not named. Where the page sets its children side by side or over one
+    another, on one page, the export keeps them on one page of the body in Word, as the layout moves them
+    whole.
   - The report names it once, `APPROXIMATED` at its kind: the nodes written in its place, and that
     they are written one under another where the page sets them side by side or over one another.
   - Measured on two Lato paragraphs at the root, in a section and in a row's cell: in Word 16 every
     line within 0.06pt of the engine's page; in Word and LibreOffice 24.2 where a built-in section
     of the same spacing sets it.
-  - Unchanged: a kind that lists no children, one whose definition does not place exactly the
-    children it lists — one that paints what it holds itself places none —, one composed in a
-    table's cell (`DocumentTableCell.node`), where the layout gives what a cell holds no place of its
-    own, and one exported with no layout (no definition registered, the layout failure in the
-    report) are not written, and are named as before. No
-    template or fidelity-corpus document holds a kind of the caller's own, and the corpus exports
+  - The export knows a node the layout placed only by its place, a layout path: its name or kind
+    and its index. It writes the listed children where the layout placed a node at each of their
+    places and none beside them; a definition that lays out other nodes of the same kinds and
+    names at those places has the listed ones written there.
+  - Unchanged: a kind that lists no children, one whose definition lays out a node at another
+    place than those it lists — one that paints what it holds itself lays out none —, one
+    composed in a table's cell (`DocumentTableCell.node`), where the layout gives what a cell
+    holds no place of its own, and one exported with no layout (no definition registered, the
+    layout failure in the report) are not written, and are named as before. No template or
+    fidelity-corpus document holds a kind of the caller's own, and the corpus exports
     byte-identically.
 
 - **A PDF header or footer says in the log what it draws otherwise than it states.**

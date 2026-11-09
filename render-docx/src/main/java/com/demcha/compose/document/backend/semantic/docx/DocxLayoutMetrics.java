@@ -2347,14 +2347,19 @@ final class DocxLayoutMetrics {
         if (path == null) {
             return 0;
         }
-        int count = 0;
-        for (PlacedNode placedNode : placed.values()) {
-            if (path.equals(placedNode.parentPath())) {
-                count++;
+        if (placedChildren == null) {
+            placedChildren = new HashMap<>();
+            for (PlacedNode placedNode : placed.values()) {
+                if (placedNode.parentPath() != null) {
+                    placedChildren.merge(placedNode.parentPath(), 1, Integer::sum);
+                }
             }
         }
-        return count;
+        return placedChildren.getOrDefault(path, 0);
     }
+
+    /** How many nodes the layout placed under each parent path, built on first use. */
+    private Map<String, Integer> placedChildren;
 
     /** Consecutive differences of an ascending boundary list. */
     private static double[] widthsBetween(List<Double> boundaries) {

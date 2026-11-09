@@ -33,6 +33,10 @@ import java.util.List;
 @Slf4j
 public final class PdfHeaderFooterRenderer {
 
+    /** The category the render's {@code render.pdf.*} warnings are logged on. */
+    private static final org.slf4j.Logger RENDER_LOG =
+            org.slf4j.LoggerFactory.getLogger("com.demcha.compose.engine.render");
+
     private PdfHeaderFooterRenderer() {
         // static helper
     }
@@ -210,18 +214,18 @@ public final class PdfHeaderFooterRenderer {
                        || hasText(config.getRightText());
         Color textColor = config.getTextColor();
         if (text && textColor != null && textColor.getAlpha() < 255) {
-            log.warn("render.pdf.header-footer.opaque zone={} part=text alpha={} drawn opaque", config.getZone(),
-                    textColor.getAlpha());
+            RENDER_LOG.warn("render.pdf.header-footer.opaque zone={} part=text alpha={} — drawn opaque",
+                    config.getZone(), textColor.getAlpha());
         }
         Color separatorColor = config.getSeparatorColor();
         if (config.isShowSeparator() && separatorColor != null && separatorColor.getAlpha() < 255) {
-            log.warn("render.pdf.header-footer.opaque zone={} part=separator alpha={} drawn opaque",
+            RENDER_LOG.warn("render.pdf.header-footer.opaque zone={} part=separator alpha={} — drawn opaque",
                     config.getZone(), separatorColor.getAlpha());
         }
         TextStyle style = config.textStyle();
         if (text && libraryFont(fonts, style) == null) {
-            log.warn("render.pdf.header-footer.font zone={} family={} not in the document's font library, drawn "
-                     + "in Helvetica", config.getZone(), style.fontName());
+            RENDER_LOG.warn("render.pdf.header-footer.font zone={} family={} — not in the document's font library, "
+                            + "drawn in Helvetica", config.getZone(), style.fontName());
         }
     }
 

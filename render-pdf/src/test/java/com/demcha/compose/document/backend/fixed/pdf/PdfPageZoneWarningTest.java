@@ -11,7 +11,6 @@ import com.demcha.compose.document.output.DocumentPageNumbering;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.engine.render.pdf.helpers.PdfHeaderFooterRenderer;
 import com.demcha.compose.font.FontName;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.cos.COSName;
@@ -32,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * A page's header or footer is drawn opaque, in a family the document's font library holds or
  * else in standard-14 Helvetica: where that is not what the zone states, the render says so in
- * the log, once per zone, and draws as before.
+ * the log, once per zone and section, and draws the same.
  */
 class PdfPageZoneWarningTest {
 
@@ -44,7 +43,7 @@ class PdfPageZoneWarningTest {
 
     @BeforeEach
     void attach() {
-        logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(PdfHeaderFooterRenderer.class);
+        logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("com.demcha.compose.engine.render");
         levelBefore = logger.getLevel();
         logger.setLevel(Level.WARN);
         appender = new ListAppender<>();
@@ -63,7 +62,7 @@ class PdfPageZoneWarningTest {
         byte[] pdf = render(3, FontName.HELVETICA, footer -> footer.textColor(TRANSLUCENT).centerText("Page {page}"));
 
         assertThat(warnings()).containsExactly(
-                "render.pdf.header-footer.opaque zone=FOOTER part=text alpha=64 drawn opaque");
+                "render.pdf.header-footer.opaque zone=FOOTER part=text alpha=64 — drawn opaque");
         assertThat(translucentStatesOfTheFirstPage(pdf)).as("the premise: drawn opaque").isZero();
     }
 
@@ -77,7 +76,7 @@ class PdfPageZoneWarningTest {
                 footer -> footer.centerText("Page {page}").showSeparator(false).separatorColor(TRANSLUCENT));
 
         assertThat(shown).containsExactly(
-                "render.pdf.header-footer.opaque zone=FOOTER part=separator alpha=64 drawn opaque");
+                "render.pdf.header-footer.opaque zone=FOOTER part=separator alpha=64 — drawn opaque");
         assertThat(translucentStatesOfTheFirstPage(pdf)).as("the premise: drawn opaque").isZero();
         assertThat(warnings()).as("a rule not drawn").isEmpty();
     }
@@ -95,10 +94,35 @@ class PdfPageZoneWarningTest {
         byte[] pdf = render(2, FontName.COURIER,
                 footer -> footer.fontName(FontName.of("NoSuchFace")).centerText("Page {page}"));
 
-        assertThat(warnings()).containsExactly("render.pdf.header-footer.font zone=FOOTER family=NoSuchFace not in "
-                                               + "the document's font library, drawn in Helvetica");
+        assertThat(warnings()).containsExactly("render.pdf.header-footer.font zone=FOOTER family=NoSuchFace — not "
+                                               + "in the document's font library, drawn in Helvetica");
         assertThat(fontsOfTheFirstPage(pdf)).as("the premise: drawn in Helvetica")
                 .anyMatch(name -> name.contains("Helvetica"));
+    }
+
+    @Test
+    void aFamilyTheLibraryDoesNotHoldWithNoTextIsNotNamed() throws Exception {
+        render(1, FontName.HELVETICA, footer -> footer.fontName(FontName.of("NoSuchFace")).showSeparator(true));
+
+        assertThat(warnings()).isEmpty();
+    }
+
+    @Test
+    void eachSectionWarnsOfItsOwnZone() throws Exception {
+        // Each section carries its own zone and window of pages, and is drawn on its own.
+        java.nio.file.Path out = java.nio.file.Files.createTempFile("zones", ".pdf");
+        try (com.demcha.compose.document.api.MultiSectionDocument document = GraphCompose.documents(out)
+                .section(section(footer -> footer.textColor(TRANSLUCENT).centerText("Page {page}")))
+                .section(section(footer -> footer.textColor(TRANSLUCENT).centerText("Page {page}")))
+                .create()) {
+            document.buildPdf();
+        } finally {
+            java.nio.file.Files.deleteIfExists(out);
+        }
+
+        assertThat(warnings()).containsExactly(
+                "render.pdf.header-footer.opaque zone=FOOTER part=text alpha=64 — drawn opaque",
+                "render.pdf.header-footer.opaque zone=FOOTER part=text alpha=64 — drawn opaque");
     }
 
     @Test
@@ -124,7 +148,8 @@ class PdfPageZoneWarningTest {
     private List<String> warnings() {
         List<String> warnings = new ArrayList<>();
         for (ILoggingEvent event : appender.list) {
-            if (event.getLevel() == Level.WARN) {
+            if (event.getLevel() == Level.WARN
+                && event.getFormattedMessage().startsWith("render.pdf.header-footer.")) {
                 warnings.add(event.getFormattedMessage());
             }
         }
@@ -148,6 +173,14 @@ class PdfPageZoneWarningTest {
             });
             return session.toPdfBytes();
         }
+    }
+
+    private static DocumentSession section(UnaryOperator<DocumentHeaderFooter.DocumentHeaderFooterBuilder> footer) {
+        DocumentSession session = GraphCompose.document().pageSize(300, 200).margin(DocumentInsets.of(20)).create();
+        session.footer(footer.apply(DocumentHeaderFooter.builder().zone(DocumentHeaderFooterZone.FOOTER).height(30))
+                .build());
+        session.pageFlow(page -> page.addParagraph(p -> p.text("Body")));
+        return session;
     }
 
     private static List<String> fontsOfTheFirstPage(byte[] pdf) throws Exception {

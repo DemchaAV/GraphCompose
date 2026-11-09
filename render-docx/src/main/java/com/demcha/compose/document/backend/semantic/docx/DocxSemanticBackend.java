@@ -5198,6 +5198,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // A fill or a border is the exception: the container is then a panel, written
             // as a one-cell table carrying both, instead of disappearing.
             writeContainerChildren(document, node);
+        } else if (writesWhatItHolds(node)) {
+            writeWhatAnUnknownKindHolds(document, node);
         } else {
             // Geometry-only node kinds (line, ellipse, shape, path, polygon) have no
             // semantic Word analogue: what a shape can show is drawn where the page puts
@@ -5590,6 +5592,116 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Whether a node is a kind of the caller's own whose children the layout placed, so that what
+     * it holds can be written in its place.
+     *
+     * <p>A kind this export does not know cannot be written as itself, but a definition that lays
+     * its children out as a composite places paragraphs, tables and pictures, which it does know,
+     * and the page prints them. Only the children it lists are written, so the layout must have
+     * placed exactly those under it: every one, and no other a definition laid out in their place
+     * or beside them. A kind that lists no children, one whose definition lays out other children
+     * than it lists — one that paints what it holds itself lays out none —, one composed in a
+     * table's cell, where the layout gives what a cell holds no place of its own, and any kind
+     * exported with no layout behind the export are not written, and are named instead
+     * ({@link #warnUnsupported}).</p>
+     */
+    private boolean writesWhatItHolds(DocumentNode node) {
+        if (isBuiltIn(node) || node.children().isEmpty()) {
+            return false;
+        }
+        for (DocumentNode child : node.children()) {
+            if (!layout.placed(child)) {
+                return false;
+            }
+        }
+        return layout.placedChildCount(node) == node.children().size();
+    }
+
+    /**
+     * Writes what a kind of the caller's own holds in its place, as a container with no paint of
+     * its own is written: its children one after another inside its margin and padding, with the
+     * space the layout sets between them. The shapes it paints itself are drawn where the page
+     * puts them, as those of a kind that holds nothing are; the note at its kind names what it was
+     * written as.
+     */
+    private void writeWhatAnUnknownKindHolds(XWPFDocument document, DocumentNode node) throws Exception {
+        if (warnedNodeKinds.add("held:" + node.nodeKind())) {
+            LOG.warn("DocxSemanticBackend: '{}' is a node kind the DOCX export does not know; the nodes "
+                     + "it holds are written in its place", node.nodeKind());
+        }
+        if (!drawOwnFragments(node)) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
+                    heldNodesWritten(node));
+        }
+        holdStackedLines(node.children(), Double.NaN);
+        writeContainerBody(document, node);
+    }
+
+    /**
+     * How a report names what is written of a kind of the caller's own whose children the layout
+     * placed ({@link #writesWhatItHolds}): its children, and, where the page does not set them one
+     * under another, that they are.
+     */
+    private String heldNodesWritten(DocumentNode node) {
+        int held = node.children().size();
+        String note = "a node kind the DOCX export does not know: the " + held + (held == 1 ? " node" : " nodes")
+                      + " it holds " + (held == 1 ? "is" : "are") + " written in its place, and nothing of its "
+                      + "own but the shapes it paints";
+        return setOneUnderAnother(node) ? note
+                : note + "; the page sets them side by side or over one another, and they are written one "
+                  + "under another";
+    }
+
+    /**
+     * Whether the layout sets each of a node's children below the one before it, read off the
+     * neighbours that each stand whole on one page, the same one — as a vertical composite does, and
+     * a row or a stack does not. A child the page breaks says nothing here: the box the layout gives
+     * it is its first piece's, on its first page.
+     */
+    private boolean setOneUnderAnother(DocumentNode node) {
+        com.demcha.compose.document.layout.PlacedNode before = null;
+        for (DocumentNode child : node.children()) {
+            com.demcha.compose.document.layout.PlacedNode placed = layout.placement(child);
+            if (before != null && onOnePage(before, placed)
+                && placed.placementY() + placed.placementHeight() > before.placementY() + 0.5) {
+                return false;
+            }
+            before = placed;
+        }
+        return true;
+    }
+
+    /** Whether two placed boxes each stand whole on one page, the same one. */
+    private static boolean onOnePage(com.demcha.compose.document.layout.PlacedNode above,
+                                     com.demcha.compose.document.layout.PlacedNode below) {
+        return above.startPage() == above.endPage() && below.startPage() == below.endPage()
+               && above.endPage() == below.startPage();
+    }
+
+    /**
+     * The space the layout sets between two of a kind's children of the caller's own, read from the
+     * first two neighbours that each stand whole on one page, the same one: the gap between their
+     * boxes less the margins facing across it, which are written as theirs. Zero where no two do, or
+     * the page sets them otherwise than one under another.
+     */
+    private double spacingTheLayoutSets(DocumentNode node) {
+        if (!setOneUnderAnother(node)) {
+            return 0;
+        }
+        List<DocumentNode> children = node.children();
+        for (int index = 1; index < children.size(); index++) {
+            com.demcha.compose.document.layout.PlacedNode above = layout.placement(children.get(index - 1));
+            com.demcha.compose.document.layout.PlacedNode below = layout.placement(children.get(index));
+            if (onOnePage(above, below)) {
+                double gap = above.placementY() - (below.placementY() + below.placementHeight())
+                             - above.margin().bottom() - below.margin().top();
+                return Math.max(0, gap);
+            }
+        }
+        return 0;
+    }
+
+    /**
      * Draws the shapes a node paints itself where the page puts them, anchored in a paragraph
      * written on their page (see {@link DocxDrawings} and {@link DocxDrawingAnchors}).
      *
@@ -5670,7 +5782,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 message.append("; its keep with the next block is not carried, so a page can end between "
                         + "the two");
             }
-            if (!isBuiltIn(node)) {
+            if (writesWhatItHolds(node)) {
+                message.append("; ").append(heldNodesWritten(node));
+            } else if (!isBuiltIn(node)) {
                 message.append("; a node kind the DOCX export does not know: only the shapes it "
                         + "paints itself are written, not its text, its pictures").append(heldNodes(node));
             }
@@ -9647,11 +9761,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             layerOffsetNotWritten += layerOffsetDown(node);
         }
         boolean followed = followedInFlow.remove(node);
+        // A kind of the caller's own says nothing of its spacing but where the layout sets its children.
+        double spacing = isBuiltIn(node) ? spacingOf(node) : spacingTheLayoutSets(node);
         try {
             if (window == null) {
-                writeChildren(document, node.children(), spacingOf(node), followed);
+                writeChildren(document, node.children(), spacing, followed);
             } else {
-                writeParts(document, window.parts(), spacingOf(node), closes && followed, null,
+                writeParts(document, window.parts(), spacing, closes && followed, null,
                         DocxPanelPieces.followsABreak(window.parts(), opens));
             }
         } finally {

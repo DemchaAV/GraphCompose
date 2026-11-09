@@ -7442,6 +7442,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFParagraph para = newBodyParagraph(document);
         applyLineHeight(para, lineHeight);
         DocxLayoutMetrics.ItemText laidOut = applyItemLineGap(para);
+        reportTheItemsPictures(marker, item, line, laidOut, path);
         // A nested item with no marker stands where the layout set its text, every line of it,
         // rather than two spaces a level past the list's edge: Panel's project descriptions,
         // set under their names, started 3.2pt short of them and wrapped back 7.8pt short.
@@ -7981,6 +7982,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     "its layers are written one after another, and with no place of its own in the layout — "
                     + "composed in a table cell, or with no layout behind the export — whether the page lays one "
                     + "over another is not measured");
+        } else if (node instanceof com.demcha.compose.document.node.LayerStackNode stack && stack.layers().size() > 1
+                   && composedInACell(node) && writesALayer(node)) {
+            // The one layer it writes beside what it draws goes into the cell as the cell's text,
+            // across as its own text is aligned and as high as the cell's alignment sets it:
+            // measured, Word 16 and LibreOffice 24.2 set a top-left layer 13.9 and 10.3pt lower
+            // than the page, in a cell the export centres, and a centred layer of text set left
+            // 83pt left. With no layout the section's note names what it writes from the left.
+            report.add(DocxExportReport.Severity.APPROXIMATED, "overlapping layer", layout.pathOf(node),
+                    "the one layer it writes beside what it draws is set as its table cell's text, as its own "
+                    + "alignment and the cell's set it: composed in a table cell, it has no place of its own in the "
+                    + "layout, and where the page sets that layer, by its alignment and offset, is not measured");
         }
         ContainerPaint paint = paintOf(node);
         // A panel the layout placed is a table that wide; an unpainted box is only its contents,
@@ -9301,6 +9313,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private record PanelWidth(double width, double slack) {
     }
 
+    /** How far past its cell a panel composed in it may reach before the report names it, in points. */
+    private static final double PANEL_PAST_ITS_CELL_POINTS = 0.1;
+
     /**
      * How wide a panel is: as the layout placed it, or else what is left where it is written,
      * less its own side margins — or unknown, left to the editor, where neither is known: no
@@ -9313,6 +9328,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                        + (node instanceof ShapeContainerNode ? node.padding().horizontal() : 0);
         double available = known ? availableWidth() - sides : Double.NaN;
         java.util.OptionalDouble placed = layout.placedWidth(node);
+        if (node instanceof ShapeContainerNode shape && placed.isEmpty() && Double.isFinite(available)
+            && shape.outline().width() - available >= PANEL_PAST_ITS_CELL_POINTS) {
+            // The page draws it past the cell's edge; Word holds a table to its cell. Measured, Word
+            // 16 and LibreOffice 24.2: a 160pt panel in a 100pt cell drawn 92pt wide, LibreOffice
+            // breaking its one word. CobaltRota's legend swatches pass their cells by 0.046pt.
+            report.add(DocxExportReport.Severity.APPROXIMATED, "panel width", layout.pathOf(node),
+                    "composed in a table cell narrower than it, it is held to the cell, "
+                    + pointsOf(shape.outline().width() - available) + "pt narrower than the page draws it past "
+                    + "the cell's edge, its text set in what the cell leaves");
+        }
         if (node instanceof ShapeContainerNode shape) {
             // Composed in a table cell, it has no placement; its outline states its size, within
             // the cell it is composed in, and it gets the same slack below. Placed, it is its
@@ -15904,6 +15929,104 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Names where a list item's pictures, its marker's and its own, stand off the page's.
+     *
+     * <p>They are placed by {@link #itemLine} — the list's first line, its height raised to the
+     * item's own tallest picture — and the page places them by the item's own first line, the
+     * marker's line taking its metrics: an item in another size or face than the list's first
+     * line has its pictures higher or lower (measured, Word 16 and LibreOffice 24.2: a 20pt item
+     * after a 9pt one, its dot 2.8 and 2.9pt lower), named where its raise, in Word's half
+     * points, is not the one its own line gives. Where the layout's items are not the list's own,
+     * or the item's first line holds no text, its own line is not known, and that is named.
+     * Where the layout shows no line of the list at all — composed in a table cell and not found
+     * among the cell's lines — they stand on the text's baseline, named as a paragraph's are
+     * there. With no layout the section's note names it.</p>
+     */
+    private void reportTheItemsPictures(com.demcha.compose.document.node.ListMarker marker,
+                                        com.demcha.compose.document.node.ListItem item,
+                                        java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line,
+                                        DocxLayoutMetrics.ItemText laidOut, String path) {
+        List<InlineRun> pictures = new ArrayList<>();
+        for (List<InlineRun> runs : List.of(marker.isRich() ? marker.runs() : List.<InlineRun>of(),
+                item.isRich() ? item.runs() : List.<InlineRun>of())) {
+            for (InlineRun run : runs) {
+                if (run instanceof InlineImageRun || run instanceof InlineSvgRun || run instanceof InlineShapeRun) {
+                    pictures.add(run);
+                }
+            }
+        }
+        if (pictures.isEmpty() || layout.isEmpty()) {
+            return;
+        }
+        if (line.isEmpty()) {
+            // As a paragraph whose lines are not read (picturesLost): only a picture the page sets
+            // off the baseline stands apart from it.
+            double off = 0;
+            for (InlineRun run : pictures) {
+                double offThis = offTheBaseline(run);
+                if (Double.isNaN(offThis)) {
+                    report.add(DocxExportReport.Severity.APPROXIMATED, "list picture", path,
+                            "its item's pictures stand on the text's baseline, where the page sets them by their "
+                            + "alignment: no line the layout set carries the list");
+                    return;
+                }
+                off = Math.max(off, Math.abs(offThis));
+            }
+            if (off >= HALF_A_POINT) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, "list picture", path,
+                        "its item's pictures stand on the text's baseline, up to " + pointsOf(off)
+                        + "pt from where the page sets them: no line the layout set carries the list");
+            }
+            return;
+        }
+        com.demcha.compose.document.layout.payloads.ParagraphLine own = laidOut == null ? null
+                : laidOut.lines().stream().filter(ownLine -> ownLine.spans().stream().anyMatch(
+                        span -> span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan))
+                .findFirst().orElse(null);
+        if (own == null) {
+            // The layout's items are not the list's own — one run onto the next page, a list in a
+            // cell partly matched — or the item's first line holds no text to stand them beside.
+            report.add(DocxExportReport.Severity.APPROXIMATED, "list picture", path,
+                    "its item's pictures are placed by the list's first line, and where the page sets them by "
+                    + "the item's own is not measured");
+            return;
+        }
+        // Word moves a picture in half points; both raises are rounded so, as picturesLost rounds a
+        // paragraph's, and only a raise the item's own line would write otherwise is named.
+        long apart = 0;
+        for (InlineRun run : pictures) {
+            InlineImageAlignment alignment;
+            double offset;
+            double height;
+            if (run instanceof InlineShapeRun shape) {
+                alignment = shape.alignment();
+                offset = shape.baselineOffset();
+                height = shape.height();
+            } else if (run instanceof InlineImageRun image) {
+                alignment = image.alignment();
+                offset = image.baselineOffset();
+                height = image.height();
+            } else {
+                InlineSvgRun svg = (InlineSvgRun) run;
+                alignment = svg.alignment();
+                offset = svg.baselineOffset();
+                height = svg.height();
+            }
+            long off = Math.round(inlineBottomFromBaseline(alignment, offset, height, line.get()) * 2)
+                       - Math.round(inlineBottomFromBaseline(alignment, offset, height, own) * 2);
+            if (Math.abs(off) > Math.abs(apart)) {
+                apart = off;
+            }
+        }
+        if (apart != 0) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "list picture", path,
+                    "its item's pictures are placed by the list's first line, not their own: up to "
+                    + pointsOf(Math.abs(apart) / 2.0) + "pt " + (apart > 0 ? "higher" : "lower")
+                    + " than the page sets them");
+        }
+    }
+
+    /**
      * The text-carrying form of one inline run, or null for a run that carries no text.
      *
      * <p>Asks the one reduction — {@link InlineRun#textRuns} — about a single run rather
@@ -18180,8 +18303,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * vertical merge spans rows whose margins are evened apart. A table the page ends with
      * keeps the space moved below its cells' text: {@link #dropTheSpaceBelow} leaves a table
      * with a drawn bottom alone, and every table written here has one.</p>
+     *
+     * @return how much further the margins kept as they are move the row's other cells: their
+     *         text lower, by the top kept past the smallest, and the row taller, by the bottom
      */
-    private static void evenTheRowsMargins(XWPFTableRow row) {
+    private static KeptMargins evenTheRowsMargins(XWPFTableRow row) {
         long top = Long.MAX_VALUE;
         long bottom = Long.MAX_VALUE;
         long keptTop = 0;
@@ -18197,8 +18323,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         if (top == Long.MAX_VALUE) {
-            return;
+            return KeptMargins.NONE;
         }
+        KeptMargins kept = new KeptMargins(Math.max(0, keptTop - top), Math.max(0, keptBottom - bottom));
         top = Math.max(top, keptTop);
         bottom = Math.max(bottom, keptBottom);
         for (XWPFTableCell cell : row.getTableCells()) {
@@ -18217,6 +18344,51 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
                 setCellMarginTwips(cell, false, bottom);
             }
+        }
+        return kept;
+    }
+
+    /** How far past the page's a kept margin may move a row's other cells before the report names it, in points. */
+    private static final double KEPT_MARGIN_POINTS = 0.1;
+
+    /**
+     * Names what a table's margins kept as they are cost its rows ({@link #evenTheRowsMargins}):
+     * a cell opening with a table, or spanning rows, keeps its padding in its margins, and Word
+     * gives every cell of the row the largest. Measured, Word 16: beside a cell padded 12pt that
+     * opens with a table, a cell padded 2pt has its text 5.3pt lower than the page's; beside one
+     * padded 12pt spanning two rows, 9.6pt lower in the first row.
+     */
+    private void reportTheKeptMargins(TableNode node, KeptMargins kept) {
+        double top = kept.top() / TWIPS_PER_POINT;
+        double bottom = kept.bottom() / TWIPS_PER_POINT;
+        List<String> lost = new ArrayList<>(2);
+        if (top >= KEPT_MARGIN_POINTS) {
+            // Where one of those cells is the row's tallest, the row grows by as much.
+            lost.add("the other cells' text up to " + pointsOf(top) + "pt lower than the page sets it, the row as "
+                     + "much taller where one of them is its tallest");
+        }
+        if (bottom >= KEPT_MARGIN_POINTS) {
+            lost.add("the row up to " + pointsOf(bottom) + "pt taller");
+        }
+        if (!lost.isEmpty()) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "cell padding", layout.pathOf(node),
+                    "a cell opening with a table or spanning rows keeps its padding, which Word gives every cell "
+                    + "of its row: " + String.join(", and ", lost));
+        }
+    }
+
+    /**
+     * How much further a row's margins kept as they are move its other cells, in twips.
+     *
+     * @param top    how much lower the other cells' text stands, the top kept past the smallest
+     * @param bottom how much taller the row stands, the bottom kept past the smallest
+     */
+    record KeptMargins(long top, long bottom) {
+
+        static final KeptMargins NONE = new KeptMargins(0, 0);
+
+        KeptMargins max(KeptMargins other) {
+            return new KeptMargins(Math.max(top, other.top), Math.max(bottom, other.bottom));
         }
     }
 
@@ -18446,6 +18618,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         java.util.Set<Double> ruleWidths = new java.util.TreeSet<>();
         // What Word sets the table taller by, for the room it makes in its rows for the rules.
         DocxRuleRoom ruleRoom = new DocxRuleRoom(rowCount);
+        KeptMargins keptMargins = KeptMargins.NONE;
         for (int rowIdx = 0; rowIdx < rowCount; rowIdx++) {
             XWPFTableRow row = table.getRow(rowIdx);
             List<TableGrid.Placement> physical = new ArrayList<>();
@@ -18514,9 +18687,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     surfaceBehind = outerSurface;
                 }
             }
-            evenTheRowsMargins(row);
+            keptMargins = keptMargins.max(evenTheRowsMargins(row));
             moveTheRowsText(row);
         }
+        reportTheKeptMargins(node, keptMargins);
         // A row's share of the rule under it is the next row's rule, written after it.
         for (int rowIdx = 0; rowIdx < rowCount; rowIdx++) {
             holdRowHeight(table, node, rowIdx);
@@ -20584,6 +20758,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * other as a band.
      */
     private boolean writesOneLayer(DocumentNode node) {
+        return writtenLayers(node) <= 1;
+    }
+
+    /** Whether a container writes one of its layers, exactly, the others being drawn. */
+    private boolean writesALayer(DocumentNode node) {
+        return writtenLayers(node) == 1;
+    }
+
+    /** How many of a container's layers it writes rather than draws. */
+    private int writtenLayers(DocumentNode node) {
         int written = 0;
         for (DocumentNode layer : node.children()) {
             boolean drawn = layer instanceof ImageNode image
@@ -20593,7 +20777,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 written++;
             }
         }
-        return written <= 1;
+        return written;
     }
 
     /**

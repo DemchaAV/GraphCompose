@@ -1728,7 +1728,7 @@ final class DocxLayoutMetrics {
         }
     }
 
-    private static String authoredText(ParagraphNode paragraph) {
+    static String authoredText(ParagraphNode paragraph) {
         if (paragraph.inlineRuns() == null || paragraph.inlineRuns().isEmpty()) {
             return paragraph.text() == null ? "" : paragraph.text();
         }

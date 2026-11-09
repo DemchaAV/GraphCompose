@@ -57,7 +57,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
 
-        <poi.version>5.5.1</poi.version>
+        <poi.version>6.0.0</poi.version>
         <!-- Keep in lockstep with render-pdf/pom.xml: a drift would mix fontbox
              and pdfbox versions at runtime (the direct fontbox wins mediation). -->
         <pdfbox.version>3.0.8</pdfbox.version>

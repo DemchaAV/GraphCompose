@@ -296,6 +296,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A PDF header or footer says in the log what it draws otherwise than it states.**
+  - A zone of `DocumentHeaderFooter` draws its text and its separator opaque. A translucent
+    `textColor` or `separatorColor` was drawn at full strength with nothing said; the render now
+    logs `render.pdf.header-footer.opaque` with the part and its alpha.
+  - A `fontName` the session's font library does not hold was drawn in standard-14 Helvetica with
+    nothing said; the render now logs `render.pdf.header-footer.font` naming the family.
+  - Each warning is given once per zone and section (once per render for a document of one
+    section), for a zone drawn on at least one page: text alpha and the family only where the
+    zone has text, the separator's alpha only where it is drawn. Nothing is drawn differently.
+  - No template's header or footer sets either: across the fidelity corpus every zone is opaque and
+    in a family its library holds.
+
 - **A DOCX export's report names where it writes a list item's pictures, a stack's layer, a panel
   and a cell's padding off the page, and what a section with no layout loses of them.** Nothing is
   written differently; each was measured in Word 16 and LibreOffice 24.2.

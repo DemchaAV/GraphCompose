@@ -16,6 +16,7 @@ import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.List;
 
@@ -83,6 +84,12 @@ public final class PdfHeaderFooterRenderer {
                              int basePageOffset,
                              int sectionPageCount) throws IOException {
         if (configs == null || configs.isEmpty()) return;
+
+        for (HeaderFooterConfig config : configs) {
+            if (appliesToAPage(config, sectionPageCount)) {
+                warnWhatItDrawsOtherwise(config, fonts);
+            }
+        }
 
         for (int local = 0; local < sectionPageCount; local++) {
             int physical = basePageOffset + local;
@@ -181,6 +188,52 @@ public final class PdfHeaderFooterRenderer {
         }
     }
 
+    /** Whether a zone is drawn on any page of a window of {@code pageCount} pages. */
+    private static boolean appliesToAPage(HeaderFooterConfig config, int pageCount) {
+        for (int page = 1; page <= pageCount; page++) {
+            if (config.appliesTo(page)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Warns, once per zone and section (once per render for a document of one section), where
+     * the zone draws otherwise than it states: a translucent text or rule colour is drawn opaque,
+     * as the content stream is given no graphics state with an alpha, and a family the document's
+     * font library cannot supply is drawn in standard-14 Helvetica ({@link #resolveFont}).
+     * Neither stops the render: a zone is chrome.
+     */
+    private static void warnWhatItDrawsOtherwise(HeaderFooterConfig config, FontLibrary fonts) {
+        boolean text = hasText(config.getLeftText()) || hasText(config.getCenterText())
+                       || hasText(config.getRightText());
+        Color textColor = config.getTextColor();
+        if (text && textColor != null && textColor.getAlpha() < 255) {
+            log.warn("render.pdf.header-footer.opaque zone={} part=text alpha={} drawn opaque", config.getZone(),
+                    textColor.getAlpha());
+        }
+        Color separatorColor = config.getSeparatorColor();
+        if (config.isShowSeparator() && separatorColor != null && separatorColor.getAlpha() < 255) {
+            log.warn("render.pdf.header-footer.opaque zone={} part=separator alpha={} drawn opaque",
+                    config.getZone(), separatorColor.getAlpha());
+        }
+        TextStyle style = config.textStyle();
+        if (text && libraryFont(fonts, style) == null) {
+            log.warn("render.pdf.header-footer.font zone={} family={} not in the document's font library, drawn "
+                     + "in Helvetica", config.getZone(), style.fontName());
+        }
+    }
+
+    private static boolean hasText(String part) {
+        return part != null && !part.isEmpty();
+    }
+
+    /** The zone's family from the document's font library, or {@code null} where it holds none. */
+    private static PdfFont libraryFont(FontLibrary fonts, TextStyle style) {
+        return fonts == null ? null : fonts.getFont(style.fontName(), PdfFont.class).orElse(null);
+    }
+
     /**
      * Resolves the zone's font family through the document's own font library, so
      * a header or footer draws in the same face as the body asked for rather than
@@ -188,15 +241,13 @@ public final class PdfHeaderFooterRenderer {
      *
      * <p>Falls back to standard-14 Helvetica when the library cannot supply the
      * family — a zone is chrome, and failing to draw it would cost the caller the
-     * whole document over a font name.</p>
+     * whole document over a font name — and {@link #warnWhatItDrawsOtherwise} says so.</p>
      */
     private static PDFont resolveFont(FontLibrary fonts, HeaderFooterConfig config) {
         TextStyle style = config.textStyle();
-        if (fonts != null) {
-            PdfFont resolved = fonts.getFont(style.fontName(), PdfFont.class).orElse(null);
-            if (resolved != null) {
-                return resolved.fontType(style.decoration());
-            }
+        PdfFont resolved = libraryFont(fonts, style);
+        if (resolved != null) {
+            return resolved.fontType(style.decoration());
         }
         return new PDType1Font(Standard14Fonts.FontName.HELVETICA);
     }

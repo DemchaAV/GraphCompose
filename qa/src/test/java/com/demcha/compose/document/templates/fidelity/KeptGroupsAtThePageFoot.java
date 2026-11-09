@@ -31,15 +31,16 @@ import static com.demcha.compose.document.style.DocumentRowColumn.weight;
  * of two layers; a shape container holding text; a one-layer stack holding a table; a heading kept
  * with the paragraph after it; a panel kept with what follows it, holding a table; and a panel
  * kept together holding rows of an icon beside a label. Above each group stand only lines of
- * filler; after it, the paragraph it is kept with where it has one, then one closing line. The
- * panel of icon rows is the shape of {@link SyntheticDocxCorpus}'s kept icon panel, which stands
- * only where the layout moves it; here it also stands as low as it fits.</p>
+ * filler, and after it one closing line; the heading has the paragraph it is kept with between
+ * them, and the panel kept with the next is kept with the closing line. The panel of icon rows is
+ * modelled on {@link SyntheticDocxCorpus}'s kept icon panel, which stands only where the layout
+ * moves it; here it also stands as low as it fits.</p>
  *
- * <p>The gate holds where each editor sets every line of them, the group's included, so a change
- * that lets an editor break a group the page holds whole, or set it on another page than it does
- * now, fails it. Their text is set in a face the export embeds: in a face an editor substitutes, a cell's text
- * can break where the page's does not, and its row then grows, which moves the group for a reason
- * that is the face's and not the keep's.</p>
+ * <p>The fidelity gate holds where each editor sets every line of them, the group's included, so a
+ * change that lets an editor break a group the page holds whole, or set it on another page than it
+ * does now, fails it. Their text is set in a face the export embeds: in a face an editor
+ * substitutes, a cell's text can break where the page's does not, and its row then grows, which
+ * moves the group for a reason that is the face's and not the keep's.</p>
  */
 final class KeptGroupsAtThePageFoot {
 
@@ -96,11 +97,17 @@ final class KeptGroupsAtThePageFoot {
     /**
      * A form of group, and the most lines of filler it fits under on page 1.
      *
-     * @param name       the form's name in the document's stem
-     * @param mostFiller the most lines of filler the group fits under on page 1
-     * @param group      adds the group to the page's flow
+     * @param name         the form's name in the document's stem
+     * @param mostFiller   the most lines of filler the group fits under on page 1
+     * @param keptWithNext whether the group is kept with the block after it, which then stands on
+     *                     the group's page
+     * @param group        adds the group to the page's flow
      */
-    record Form(String name, int mostFiller, Consumer<PageFlowBuilder> group) {
+    record Form(String name, int mostFiller, boolean keptWithNext, Consumer<PageFlowBuilder> group) {
+
+        Form(String name, int mostFiller, Consumer<PageFlowBuilder> group) {
+            this(name, mostFiller, false, group);
+        }
     }
 
     private KeptGroupsAtThePageFoot() {
@@ -150,11 +157,11 @@ final class KeptGroupsAtThePageFoot {
                                         .addParagraph("GTOP opening", TEXT)
                                         .addTable(KeptGroupsAtThePageFoot::threeRows)
                                         .build()))),
-                new Form("heading_kept_with_next", 11, page -> page
+                new Form("heading_kept_with_next", 11, true, page -> page
                         .addSection(GROUP, group -> group.keepWithNext()
                                 .addParagraph("GTOP heading", TEXT))
                         .addParagraph("R2 body follows the heading", TEXT)),
-                new Form("panel_kept_with_next", 5, page -> page
+                new Form("panel_kept_with_next", 5, true, page -> page
                         .addSection(GROUP, group -> group.keepWithNext()
                                 .fillColor(PANEL).padding(DocumentInsets.of(6))
                                 .addParagraph("GTOP heading", TEXT)

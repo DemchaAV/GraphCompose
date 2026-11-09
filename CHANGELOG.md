@@ -5370,8 +5370,9 @@ follow semantic versioning; release dates are ISO 8601.
     a table composed in a cell; a panel kept together holding a table, or rows of an icon beside a
     label; a band of two layers; a shape container holding text; a one-layer stack holding a table;
     a heading kept with the paragraph after it; and a panel kept with what follows it, holding a
-    table. The gate now holds where Word and LibreOffice set each of their lines, so a change
-    that lets an editor break such a group, or set it on another page than it does now, fails it.
+    table. CI holds where LibreOffice sets each of their lines, and `word-fidelity.ps1` holds
+    Word's, so a change that lets an editor break such a group, or set it on another page than it
+    does now, fails them.
     `KeptGroupsAtThePageFootTest` holds that the layout sets each group where its document's name
     says.
   - Their text is set in Lato, which the export embeds. Set in the session's face, which it does

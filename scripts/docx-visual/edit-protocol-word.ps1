@@ -63,7 +63,14 @@ try {
     exit 2
 }
 
-$wordVersion = "$($word.Version) ($($word.Build))"
+# The build as the file Word runs as states it: Word's own Build stops at the third part, so an
+# update inside a build — 16.0.20527.20150 replacing an earlier 16.0.20527 — would leave no trace.
+# The four parts as numbers: FileVersion itself is a free-form string a file may add to.
+$wordBuild = try {
+    $file = (Get-Item (Join-Path $word.Path 'WINWORD.EXE')).VersionInfo
+    '{0}.{1}.{2}.{3}' -f $file.FileMajorPart, $file.FileMinorPart, $file.FileBuildPart, $file.FilePrivatePart
+} catch { "$($word.Build); the full build could not be read: $($_.Exception.Message)" }
+$wordVersion = "$($word.Version) ($wordBuild)"
 $word.Visible = $false
 $word.DisplayAlerts = 0
 

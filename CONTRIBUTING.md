@@ -452,7 +452,8 @@ Choose the smallest tests that match the change:
   which Word's COM cannot make. They, the save with no edit and the typing onto a new page are
   also read from Word's own PDFs, by that protocol's verdicts: the script sets the document as
   exported, the save and each edited copy as PDFs and hands each pair to
-  `edit-protocol-libreoffice.py --judge`, so both editors are held to one set of verdicts. That
+  `edit-protocol-libreoffice.py --judge`, so both editors are held to one set of verdicts. The
+  drawings scenario reads how far drawings and text moved from Word's PDFs too (below). That
   wants a Python 3.10 or later whose PyMuPDF leaves clipped text out (`-Python`, `python` on the PATH when left
   out), whose self-check the protocol runs before it asks for Word; without one it records
   `NOT_RUN` and exits 2, and where that self-check fails it records `FAILED` and exits 1, unless
@@ -468,23 +469,34 @@ Choose the smallest tests that match the change:
     text it continues (or, after an empty paragraph, on lines that fit it);
   - each drawing beside text the lengthening moved moving with it, by as much and onto the same
     page, and each drawing beside text the lengthening left standing staying where it was.
-    "By as much" is read within a point and a half and half a twip. A drawing's place comes from
-    the page geometry in whole points and a paragraph's line from a range, which gives Word's own
-    layout in twips, so two readings of a drawing that moved with its text exactly can be a point
-    apart between them and the limit has to clear that; and it is held half a twip off the twip
-    grid rather than on it, because a limit of a whole number of twips is a difference the
-    readings can produce exactly and the verdict would then turn on the last digit of a float
-    instead of on where Word drew anything. At a point and a half it did: of the 279 drawings in
-    the verdict of the documents that hold every finding, 15 passed with the difference at exactly
-    1.50 and three failed by between 0.00002 and 0.05 of a point, and two runs of the script on
-    bytes that had not changed came to report five fewer followers over one more drawing in the
-    set. Neither bound of the limit moves with the half twip, drift landing on that same grid
-    — a drawing that drifted half a point still passes always, one that drifted two and a half can
-    still pass, and 0.55 and 2.55, the next drifts there are, still cannot. Which of the two sets
+    "By as much" is read within a point and a half and half a twip, and how far each moved is read
+    from the PDFs Word sets before the edit and after it (`edit-protocol-libreoffice.py
+    --places`): Word's page geometry and a range say which drawing stands beside which paragraph
+    and on which page, and the PDF says how far down that page — a drawing as the box of its own
+    size the PDF draws nearest where the geometry puts it or, where it draws none, by the text the
+    drawing holds or what it draws wholly inside the drawing's rectangle; a paragraph as the
+    baseline of the first letters of its text nearest where a range puts its first line, or as the
+    picture its line holds where it has no letter. Word's COM states a layout other than the one it
+    prints: on Word 16.0.20527.20150 a line of `cv-serif_headline` that its PDF moves
+    22.08pt reads as moving 22.6pt through a range, and the drawings beside it, which the PDF moves
+    22.1pt, read 21pt in the page geometry's whole points — so drawings that follow their text
+    were failed. The limit, and the half point and half a twip past which text counts as moved,
+    were set against those COM readings — a whole point of reading and half a point of drift,
+    held half a twip off the twip grid those readings land on because, set on it, two runs on
+    bytes that had not changed once reported five fewer followers — and they are kept where they
+    were, so that the verdict means what it meant. Read from the PDF on Word 16.0.20527.20150,
+    every drawing of the corpus that follows its text
+    does so within 0.16pt, and every one that does not is 8.04pt or more out. A
+    drawing or a paragraph the PDF does not show near where the geometry puts it, or reads one way
+    before the edit and another after it, is named, and fails the scenario where a paragraph
+    carries the drawing, as one the geometry does not give does. A drawing Word puts wholly off
+    its page after the edit is one: its PDF prints nothing of it, where COM's geometry used to
+    measure it as standing there. Which of the two sets
     a drawing is counted in — beside text the edit moved, or beside text it left standing — is read
-    the same way: the text counts as moved past half a point and half a twip, the half point being
-    the noise its reading leaves and the half twip keeping a move of exactly ten twips off the
-    comparison. Both thresholds are held from either side, and off that grid, by `-SelfCheck`. Only
+    from the same PDFs: the text counts as moved past half a point and half a twip, set against
+    COM's readings as the limit was, the half point being the noise those left and the half twip
+    keeping a move of exactly ten twips off the comparison. Both thresholds are held from either
+    side, and off that grid, by `-SelfCheck`. Only
     a drawing a paragraph carries is asked that. One nailed to the sheet — `wp:positionV
     relativeFrom="page"` — is placed from the top of the page it is drawn on and by nothing else,
     so the text beside it has no claim on where it stands: measured on the self-check's two alike
@@ -545,7 +557,9 @@ Choose the smallest tests that match the change:
     thresholds the verdict is read by — each from either side, and each off the grid its readings
     land on — and need no document at all, so they run before Word is asked for: a machine without
     Word holds both thresholds, and exits 1 where either of them is wrong or the grid under them
-    is. Run it after changing how a
+    is. The probes read their moves from Word's PDF through the same Python as the scenario, so
+    that is held next, before Word: without one `-SelfCheck` exits 2 having held the thresholds,
+    and 1 where that Python's own self-check fails. Run it after changing how a
     place is read, how an owner is chosen, what the verdict is taken over, or either threshold it
     is read by. What no probe reaches is
     broken on purpose and recorded as caught by nothing rather than claimed: a drawing the reading

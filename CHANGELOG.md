@@ -296,6 +296,42 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A DOCX export's report names where it writes a list item's pictures, a stack's layer, a panel
+  and a cell's padding off the page, and what a section with no layout loses of them.** Nothing is
+  written differently; each was measured in Word 16 and LibreOffice 24.2.
+  - `list picture`: a list item's pictures, its marker's and its own, are all placed by the
+    list's first line, its height raised to the item's own tallest picture. The page places each
+    by the item's line that holds it, and a marker's by the item's first line. An item in another
+    size or face, or a picture on a later line of another height, stands higher or lower: a 20pt
+    item after a 9pt one had its dot 2.8pt lower in Word and 2.9pt in LibreOffice.
+    - Named where the raise, in Word's half points, is not the one that line gives.
+    - Where the item's lines are not known (an item the layout runs onto the next page), that is
+      named.
+    - A list composed in a table cell whose lines are not found (an item of runs) has its pictures
+      on the baseline, named as a paragraph's are there.
+  - `overlapping layer`: the one layer a stack composed in a table cell writes beside what it
+    draws is set as the cell's text: across as its own text is aligned, and as high as the
+    cell's alignment sets it, not where the stack sets it. In a cell the export centres, a
+    top-left label stood 13.9pt lower in Word and 10.3pt in LibreOffice; a centred layer of text
+    set left stood 83pt left.
+  - `panel width`: a panel composed in a table cell narrower than it is held to the cell, where
+    the page draws it past the cell's edge. A 160pt panel in a 100pt cell stood 92pt wide in
+    both editors. Named from a tenth of a point; `CobaltRota`'s legend swatches, 0.046pt past
+    their cells, are not named.
+  - `cell padding`: a cell opening with a table, or spanning rows, keeps its padding in its
+    margins, and Word gives every cell of the row the largest. Beside a cell padded 12pt that
+    opens with a table, a cell padded 2pt had its text 5.3pt lower in Word; beside one spanning
+    two rows, 9.6pt lower. Named from a tenth of a point: the other cells' text lower, the row as
+    much taller where one of them is its tallest, and the row taller by a kept bottom.
+  - With no layout, the section's note names four more things: a row's fixed or weighted column
+    beside an `auto` one is written with no width; a stack's layer its offset moves up or down is
+    written where the stack starts; a paragraph's vertical alignment in its line is not written;
+    and a list item's pictures stand on the baseline, named where the page sets them off it.
+  - In the fidelity corpus, 39 list items in `TealPulse` and `OrangeOps` CVs go through the list
+    picture rule, each in its list's own size, so none is named; `CobaltRota`'s swatches pass their
+    cells by less than the threshold. The corpus exports byte for byte as before, with the same
+    notes.
+
 - **A DOCX export writes the shaded spaces closing a paragraph as no-break spaces, so Word fills
   them and counts them in the line.**
   - Word draws nothing for the spaces at the end of a paragraph, their run's shading included. A

@@ -202,28 +202,38 @@ class DocxNodeFieldLedgerTest {
                                                   + "row's column set at its middle or foot, which Word does not "
                                                   + "count there, the block set that much lower, not named but for "
                                                   + "a shape container";
-    static final String CELL_PADDING = "a top or bottom a cell keeps where Word sets it, one opening with a table or "
-                                       + "spanning rows, which Word gives the row's other cells too, not named";
-    static final String LIST_PICTURE = "in a list's item or marker, placed by the list's first line and the item's "
-                                       + "tallest picture rather than its own line, and with no line read not moved "
-                                       + "off the baseline, not named";
-    static final String SEAT_UNREAD = "where a paragraph's lines are not read, no seat written, not named";
-    static final String ROW_COLUMNS_UNLAID = "with no layout, a row's fixed or weighted column beside an auto one, "
-                                             + "written with no width, not named";
+    static final String SEAT_UNREAD = "composed in a table cell, where the export finds no line of its text among the "
+                                      + "cell's, no seat written, not named; with no layout, in the section's note";
     static final String DRAWING_OVER_TEXT = "a drawing the page paints over a text or picture layer, drawn behind it, "
                                             + "not named";
-    static final String COMPOSED_STACK_LAYER = "of the one layer a stack composed in a table cell writes beside drawn "
-                                               + "ones, written at the cell's top left, not named";
     static final String LAYER_PAST_THE_EDGE = "set past its stack's right edge in a table cell the layout places, its "
                                               + "lines held to the edge and broken narrower, not named";
-    static final String LAYER_UNLAID = "with no layout, a stack's one layer written where the stack starts, not named";
-    static final String PANEL_WIDER_THAN_ITS_CELL = "as a panel in a table cell narrower than it, held to the cell "
-                                                    + "where the page draws it past, not named";
     static final String STAND_IN_LEFT_EMPTY = "of a layer, level with another layer's content in a band or a stack "
                                               + "written as columns, where that content is not written in its place, "
                                               + "not written, not named";
     static final String LINE_GAP_UNREAD = "composed in a table cell, where no line the layout set carries its text, "
                                           + "no line gap written, not named";
+    // Where the export writes these off the page's, the report says so (DocxUnmeasuredPlacementNotesTest).
+    static final String CELL_PADDING = "a top or bottom a cell keeps where Word sets it, one opening with a table or "
+                                       + "spanning rows, which Word gives the row's other cells too, named from a "
+                                       + "tenth of a point (cell padding)";
+    static final String LIST_PICTURE = "in a list's item or marker, placed by the list's first line and the item's "
+                                       + "own tallest picture rather than the line of the item holding it, named "
+                                       + "where its raise in Word's half points is not the one that line gives, "
+                                       + "and where the item's lines are not known; where no line of the list is "
+                                       + "read, on the baseline, named as a paragraph's is (list picture); with no "
+                                       + "layout, off the baseline, in the section's note";
+    static final String ROW_COLUMNS_UNLAID = "with no layout, a row's fixed or weighted column beside an auto one, "
+                                             + "written with no width, in the section's note";
+    static final String COMPOSED_STACK_LAYER = "of the one layer a stack composed in a table cell writes beside drawn "
+                                               + "ones, set as the cell's text, as its text's alignment and the cell's "
+                                               + "set it, rather than where the stack sets it, named (overlapping "
+                                               + "layer)";
+    static final String LAYER_UNLAID = "with no layout, a stack's layer its offset moves up or down written where the "
+                                       + "stack starts, in the section's note";
+    static final String PANEL_WIDER_THAN_ITS_CELL = "as a panel in a table cell narrower than it, held to the cell "
+                                                    + "where the page draws it past, named from a tenth of a point "
+                                                    + "(panel width)";
     // A keep is written only for a block the layout keeps on one page.
     private static final String KEEP = "with no layout, in the section's note; inside a panel the layout runs on to "
                                        + "the next page, named as one Word may break; composed in a table cell, "
@@ -242,8 +252,7 @@ class DocxNodeFieldLedgerTest {
 
     /** The known cases: a gap's note opens with one of them, or the ledger fails. */
     private static final List<String> GAPS = List.of(TOP_PULL, BOTTOM_PULL, PADDING_BELOW_ZERO, SPACE_BELOW_AT_THE_FOOT,
-            PULL_UNRECKONED, CELL_PADDING, LIST_PICTURE, SEAT_UNREAD, ROW_COLUMNS_UNLAID, DRAWING_OVER_TEXT,
-            COMPOSED_STACK_LAYER, LAYER_PAST_THE_EDGE, LAYER_UNLAID, PANEL_WIDER_THAN_ITS_CELL, STAND_IN_LEFT_EMPTY,
+            PULL_UNRECKONED, SEAT_UNREAD, DRAWING_OVER_TEXT, LAYER_PAST_THE_EDGE, STAND_IN_LEFT_EMPTY,
             LINE_GAP_UNREAD);
 
     private static final Map<Class<?>, Map<String, Entry>> NODES = new LinkedHashMap<>();
@@ -355,7 +364,7 @@ class DocxNodeFieldLedgerTest {
                 "transform:REPORTED",
                 "anchor:WRITTEN");
         node(LayerStackNode.class, "name:INERT",
-                "layers:GAP:" + DRAWING_OVER_TEXT + "; " + COMPOSED_STACK_LAYER + "; " + LAYER_PAST_THE_EDGE + "; "
+                "layers:GAP:" + DRAWING_OVER_TEXT + "; " + LAYER_PAST_THE_EDGE + "; " + COMPOSED_STACK_LAYER + "; "
                 + LAYER_UNLAID + "; one the page starts above where the layers before it end, which is written under "
                 + "them; composed in a table cell or with no layout, more than one of them written, not measured; "
                 + "their drawings stack as the page paints them, by their z-index, among those behind the text "
@@ -385,14 +394,14 @@ class DocxNodeFieldLedgerTest {
                 "fillWidth:WRITTEN",
                 "keepWithNext:REPORTED:of a line drawn in the flow the page keeps blocks together in; " + KEEP);
         node(ListNode.class, "name:INERT",
-                "items:GAP:" + LIST_PICTURE + "; a blank one a hangingIndent list draws as its marker alone, the "
+                "items:REPORTED:" + LIST_PICTURE + "; a blank one a hangingIndent list draws as its marker alone, the "
                 + "marks of one "
                 + "the page reads as markdown, and a chip's translucent fill, flattened against the colour under "
                 + "it; any other is written",
-                "nestedItems:GAP:" + LIST_PICTURE + "; the marks of one the page reads as markdown, and a chip's "
+                "nestedItems:REPORTED:" + LIST_PICTURE + "; the marks of one the page reads as markdown, and a chip's "
                 + "translucent fill, "
                 + "flattened against the colour under it; any other is written",
-                "marker:GAP:" + LIST_PICTURE + "; any other is written",
+                "marker:REPORTED:" + LIST_PICTURE + "; any other is written",
                 "textStyle:WRITTEN", "align:REPORTED",
                 "lineSpacing:REPORTED:where the layout's items are not its own and one wraps, an item run "
                 + "onto the next page among them; composed in a table cell, its wrapping not measured; "
@@ -470,7 +479,7 @@ class DocxNodeFieldLedgerTest {
                 "cornerRadius:REPORTED:a panel's corners, which a Word table cell does not round; with no paint "
                 + "it paints nothing",
                 "borders:REPORTED:" + RIGHT_BORDER + "; " + RIGHT_END + "; " + LEFT_EDGE + "; " + ROW_PAINT,
-                "columns:GAP:" + ROW_COLUMNS_UNLAID + "; " + ROW_AUTO_ROOM + "; " + ROW_COLUMNS,
+                "columns:REPORTED:" + ROW_COLUMNS_UNLAID + "; " + ROW_AUTO_ROOM + "; " + ROW_COLUMNS,
                 "verticalAlign:WRITTEN",
                 "arrangement:REPORTED:" + ROW_COLUMNS);
         // The wrappers the layout adds round a timeline's parts, public records the export writes
@@ -497,7 +506,7 @@ class DocxNodeFieldLedgerTest {
                 "bookmarkOptions:REPORTED", "keepWithNext:REPORTED:" + KEEP,
                 "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");
         node(ShapeContainerNode.class, "name:INERT",
-                "outline:GAP:" + PANEL_WIDER_THAN_ITS_CELL + "; drawn as a shape, corners whose radii differ once "
+                "outline:REPORTED:" + PANEL_WIDER_THAN_ITS_CELL + "; drawn as a shape, corners whose radii differ once "
                 + "held to half its shorter side "
                 + "at the largest of them; a painted box holding text "
                 + "written as a panel, in a table cell or placed in the body — but a badge's few letters and a title "
@@ -564,10 +573,10 @@ class DocxNodeFieldLedgerTest {
                 + "them; with no layout, in the section's note; an auto one's room for an editor's face, where "
                 + "its cells' margins do not hold it, written past the page's width, named (right end); any "
                 + "other is written",
-                "rows:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO + "; " + CELL_TRANSLUCENCY,
-                "defaultCellStyle:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO + "; " + CELL_TRANSLUCENCY,
-                "rowStyles:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO + "; " + CELL_TRANSLUCENCY,
-                "columnStyles:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO + "; " + CELL_TRANSLUCENCY,
+                "rows:GAP:" + PADDING_BELOW_ZERO + "; " + CELL_PADDING + "; " + CELL_TRANSLUCENCY,
+                "defaultCellStyle:GAP:" + PADDING_BELOW_ZERO + "; " + CELL_PADDING + "; " + CELL_TRANSLUCENCY,
+                "rowStyles:GAP:" + PADDING_BELOW_ZERO + "; " + CELL_PADDING + "; " + CELL_TRANSLUCENCY,
+                "columnStyles:GAP:" + PADDING_BELOW_ZERO + "; " + CELL_PADDING + "; " + CELL_TRANSLUCENCY,
                 "width:WRITTEN", "linkTarget:REPORTED",
                 "bookmarkOptions:REPORTED",
                 "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT

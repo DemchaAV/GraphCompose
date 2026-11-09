@@ -207,11 +207,11 @@ class DocxValueFieldLedgerTest {
                 "text:WRITTEN:each line break as Word's; characters the page draws nothing for left out",
                 "textStyle:WRITTEN:its own, else its paragraph's or list's, as the page falls back");
         value(com.demcha.compose.document.node.InlineImageRun.class,
-                "alignment:GAP:" + LIST_PICTURE
+                "alignment:REPORTED:" + LIST_PICTURE
                 + "; written as the picture's raise off the baseline, by the first line's measure; "
                 + "where its paragraph's lines are not read, set other than on the baseline, and on a later line of "
                 + "another height, named; in a page zone, named; any other is written",
-                "baselineOffset:GAP:" + LIST_PICTURE
+                "baselineOffset:REPORTED:" + LIST_PICTURE
                 + "; added to that raise; where its paragraph's lines are not read, named from "
                 + "half a point or with its alignment; in a page zone, named; any other is written",
                 "height:WRITTEN",
@@ -220,22 +220,22 @@ class DocxValueFieldLedgerTest {
                 "linkTarget:WRITTEN:its own link before its paragraph's",
                 "width:WRITTEN");
         value(com.demcha.compose.document.node.InlineShapeRun.class,
-                "alignment:GAP:" + LIST_PICTURE
+                "alignment:REPORTED:" + LIST_PICTURE
                 + "; as an inline image's, a raised picture carrying its rise as transparent rows; "
                 + "where its paragraph's lines are not read, set other than on the baseline, and on a later line of "
                 + "another height, named; in a page zone, named; any other is written",
-                "baselineOffset:GAP:" + LIST_PICTURE
+                "baselineOffset:REPORTED:" + LIST_PICTURE
                 + "; as an inline image's: where its paragraph's lines are not read, named from "
                 + "half a point or with its alignment; in a page zone, named; any other is written",
                 "layers:REPORTED:drawn as one picture of its layers, named; where no text beside it gives back how "
                 + "much wider than its box the picture is, how far that moves its line, named from half a point",
                 "linkTarget:WRITTEN:its own link before its paragraph's");
         value(com.demcha.compose.document.node.InlineSvgRun.class,
-                "alignment:GAP:" + LIST_PICTURE
+                "alignment:REPORTED:" + LIST_PICTURE
                 + "; as an inline image's, a raised picture carrying its rise as transparent rows; "
                 + "where its paragraph's lines are not read, set other than on the baseline, and on a later line of "
                 + "another height, named; in a page zone, named; any other is written",
-                "baselineOffset:GAP:" + LIST_PICTURE
+                "baselineOffset:REPORTED:" + LIST_PICTURE
                 + "; as an inline image's: where its paragraph's lines are not read, named from "
                 + "half a point or with its alignment; in a page zone, named; any other is written",
                 "height:WRITTEN:the picture's, a raised one grown by its rise",
@@ -249,19 +249,19 @@ class DocxValueFieldLedgerTest {
                 "text:WRITTEN:its line breaks as spaces, as the page keeps a chip on one line",
                 "textStyle:WRITTEN:its own, else its paragraph's or list's");
         value(com.demcha.compose.document.node.InlineImageAlignment.class,
-                "BASELINE:GAP:" + LIST_PICTURE
+                "BASELINE:REPORTED:" + LIST_PICTURE
                 + "; its foot on the baseline, where Word stands a picture; where its paragraph's lines "
                 + "are not read, a drawn shape's picture, which reaches below its box, stands that much high, named "
                 + "from half a point; any other is written",
-                "CENTER:GAP:" + LIST_PICTURE
+                "CENTER:REPORTED:" + LIST_PICTURE
                 + "; written as a raise off the baseline, by the first line's measure; where its "
                 + "paragraph's lines are not read, standing on the baseline, and on a later line of another height, "
                 + "named; in a page zone, named; any other is written",
-                "TEXT_BOTTOM:GAP:" + LIST_PICTURE
+                "TEXT_BOTTOM:REPORTED:" + LIST_PICTURE
                 + "; written as a raise off the baseline, by the first line's measure; where its "
                 + "paragraph's lines are not read, standing on the baseline, and on a later line of another height, "
                 + "named; in a page zone, named; any other is written",
-                "TEXT_TOP:GAP:" + LIST_PICTURE
+                "TEXT_TOP:REPORTED:" + LIST_PICTURE
                 + "; written as a raise off the baseline, by the first line's measure; where its "
                 + "paragraph's lines are not read, standing on the baseline, and on a later line of another height, "
                 + "named; in a page zone, named; any other is written");
@@ -429,7 +429,7 @@ class DocxValueFieldLedgerTest {
                 "type:REPORTED:an auto column, with those beside it, where the layout does not show where the row's "
                 + "children start, Word's, sized to their text; with no layout, in the section's note; "
                 + ROW_AUTO_ROOM + "; any other is written",
-                "value:GAP:" + ROW_COLUMNS_UNLAID
+                "value:REPORTED:" + ROW_COLUMNS_UNLAID
                 + "; a fixed width or a weight beside an auto column, where the layout does not show where the "
                 + "row's children start, Word's with the rest, named; in a row its arrangement or a growing spacer "
                 + "divides, the page reads none of them; any other is written");
@@ -438,10 +438,10 @@ class DocxValueFieldLedgerTest {
                 + "cell with a child its lines do not place, or inside a panel or another table in its cell — Word's, "
                 + "sized to its text, with the columns beside it; with no layout, in the section's note; "
                 + ROW_AUTO_ROOM + "; any other is written",
-                "FIXED:GAP:" + ROW_COLUMNS_UNLAID
+                "FIXED:REPORTED:" + ROW_COLUMNS_UNLAID
                 + "; beside an auto column, where the layout does not show where the row's children start, "
                 + "Word's with the rest, named; any other is written",
-                "WEIGHT:GAP:" + ROW_COLUMNS_UNLAID
+                "WEIGHT:REPORTED:" + ROW_COLUMNS_UNLAID
                 + "; beside an auto column, where the layout does not show where the row's children start, "
                 + "Word's with the rest, named; any other is written");
         value(com.demcha.compose.document.layout.LayoutAnchorId.class,
@@ -474,17 +474,17 @@ class DocxValueFieldLedgerTest {
                 + "is written there; a drawing is drawn where it is placed");
         value(com.demcha.compose.document.node.LayerStackNode.Layer.class,
                 "node:WRITTEN:as its own node's entries say",
-                "align:GAP:" + COMPOSED_STACK_LAYER
+                "align:REPORTED:" + COMPOSED_STACK_LAYER
                 + "; with no layout, set in from the left, written from the left; among several layers "
                 + "written with no place of their own, not measured; in a shape's panel in a table cell, at "
                 + "another height than its first written layer, or across by a box the layout does not give; any "
                 + "other is written, where the layout places it",
-                "offsetX:GAP:" + COMPOSED_STACK_LAYER + "; " + LAYER_PAST_THE_EDGE
+                "offsetX:GAP:" + LAYER_PAST_THE_EDGE + "; " + COMPOSED_STACK_LAYER
                 + "; of a stack's one layer, in a table cell or with no place of its own in the "
                 + "layout; left of its stack in a table cell further than the indents round it give; in a shape's "
                 + "panel in a table cell, past its right edge or by a box the layout does not give; with no "
                 + "layout; any other is written",
-                "offsetY:GAP:" + COMPOSED_STACK_LAYER + "; " + LAYER_UNLAID
+                "offsetY:REPORTED:" + COMPOSED_STACK_LAYER + "; " + LAYER_UNLAID
                 + "; moving a stack's one layer down or up where no band or column sets the space "
                 + "above it, or with no place of its own in the layout; one the page starts above where the "
                 + "layers before it end, written under them; in a shape's panel in a table cell; among several "
@@ -493,43 +493,44 @@ class DocxValueFieldLedgerTest {
                 + "; as the order Word stacks the drawings in, among those behind the text and among "
                 + "those in front of it");
         value(com.demcha.compose.document.node.LayerAlign.class,
-                "TOP_LEFT:REPORTED:on a layer after the first a shape's panel in a table cell writes, where that "
+                "TOP_LEFT:REPORTED:" + COMPOSED_STACK_LAYER
+                + "; on a layer after the first a shape's panel in a table cell writes, where that "
                 + "one is set lower: the cell sets all it holds at the first one's height; any other is written, "
                 + "where the layout places it",
-                "TOP_CENTER:GAP:" + COMPOSED_STACK_LAYER
+                "TOP_CENTER:REPORTED:" + COMPOSED_STACK_LAYER
                 + "; across, with no layout, written from the left, and in a shape's panel in a "
                 + "table cell where the layout gives no box to set it across by, from the shape's left; there, on "
                 + "a layer after the first written, where that one is set lower, at its height; any other is "
                 + "written",
-                "TOP_RIGHT:GAP:" + COMPOSED_STACK_LAYER
+                "TOP_RIGHT:REPORTED:" + COMPOSED_STACK_LAYER
                 + "; across, with no layout, written from the left, and in a shape's panel in a "
                 + "table cell where the layout gives no box to set it across by, from the shape's left; there, on "
                 + "a layer after the first written, where that one is set lower, at its height; any other is "
                 + "written",
-                "CENTER_LEFT:GAP:" + COMPOSED_STACK_LAYER
+                "CENTER_LEFT:REPORTED:" + COMPOSED_STACK_LAYER
                 + "; on a layer after the first a shape's panel in a table cell writes, where "
                 + "that one is set at another height: the cell sets all it holds at the first one's height; any "
                 + "other is written, where the layout places it",
-                "CENTER:GAP:" + COMPOSED_STACK_LAYER
+                "CENTER:REPORTED:" + COMPOSED_STACK_LAYER
                 + "; across, with no layout, written from the left, and in a shape's panel in a table "
                 + "cell where the layout gives no box to set it across by, from the shape's left; there, on a layer "
                 + "after the first written, where that one is set at another height, at its height; any other is "
                 + "written",
-                "CENTER_RIGHT:GAP:" + COMPOSED_STACK_LAYER
+                "CENTER_RIGHT:REPORTED:" + COMPOSED_STACK_LAYER
                 + "; across, with no layout, written from the left, and in a shape's panel in a "
                 + "table cell where the layout gives no box to set it across by, from the shape's left; there, on "
                 + "a layer after the first written, where that one is set at another height, at its height; any "
                 + "other is written",
-                "BOTTOM_LEFT:GAP:" + COMPOSED_STACK_LAYER
+                "BOTTOM_LEFT:REPORTED:" + COMPOSED_STACK_LAYER
                 + "; on a layer after the first a shape's panel in a table cell writes, where "
                 + "that one is set higher: the cell sets all it holds at the first one's height; any other is "
                 + "written, where the layout places it",
-                "BOTTOM_CENTER:GAP:" + COMPOSED_STACK_LAYER
+                "BOTTOM_CENTER:REPORTED:" + COMPOSED_STACK_LAYER
                 + "; across, with no layout, written from the left, and in a shape's panel in a "
                 + "table cell where the layout gives no box to set it across by, from the shape's left; there, on "
                 + "a layer after the first written, where that one is set higher, at its height; any other is "
                 + "written",
-                "BOTTOM_RIGHT:GAP:" + COMPOSED_STACK_LAYER
+                "BOTTOM_RIGHT:REPORTED:" + COMPOSED_STACK_LAYER
                 + "; across, with no layout, written from the left, and in a shape's panel in a "
                 + "table cell where the layout gives no box to set it across by, from the shape's left; there, on "
                 + "a layer after the first written, where that one is set higher, at its height; any other is "
@@ -539,17 +540,17 @@ class DocxValueFieldLedgerTest {
                 "y:WRITTEN:as its share of the drawn shape's height, up from its foot, in its custom geometry or a "
                 + "picture's path");
         value(com.demcha.compose.document.style.ShapeOutline.Rectangle.class,
-                "width:GAP:" + PANEL_WIDER_THAN_ITS_CELL
+                "width:REPORTED:" + PANEL_WIDER_THAN_ITS_CELL
                 + "; as the drawn outline's, a panel's in a table cell, or an inline shape's picture's",
                 "height:WRITTEN:as the drawn outline's, a panel's in a table cell, or an inline shape's picture's");
         value(com.demcha.compose.document.style.ShapeOutline.RoundedRectangle.class,
-                "width:GAP:" + PANEL_WIDER_THAN_ITS_CELL
+                "width:REPORTED:" + PANEL_WIDER_THAN_ITS_CELL
                 + "; as the drawn outline's, a panel's in a table cell, or an inline shape's picture's",
                 "height:WRITTEN:as the drawn outline's, a panel's in a table cell, or an inline shape's picture's",
                 "cornerRadius:REPORTED:as a panel in a table cell, its corners square; any other is written, held "
                 + "to half the shorter side as the page holds it");
         value(com.demcha.compose.document.style.ShapeOutline.RoundedRectanglePerCorner.class,
-                "width:GAP:" + PANEL_WIDER_THAN_ITS_CELL
+                "width:REPORTED:" + PANEL_WIDER_THAN_ITS_CELL
                 + "; as the drawn outline's, a panel's in a table cell, or an inline shape's picture's",
                 "height:WRITTEN:as the drawn outline's, a panel's in a table cell, or an inline shape's picture's",
                 "corners:REPORTED:drawn as a shape, radii that differ once held to half its shorter side, drawn at "
@@ -670,7 +671,7 @@ class DocxValueFieldLedgerTest {
                 "fill:WRITTEN:as the marker's fill",
                 "stroke:WRITTEN:as the marker's outline");
         value(com.demcha.compose.document.table.DocumentTableStyle.class,
-                "padding:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO
+                "padding:GAP:" + PADDING_BELOW_ZERO + "; " + CELL_PADDING
                 + "; a text cell's thinner than its rules' share, which Word makes room for, where its "
                 + "row then stands taller than the page's, named with the rules; any other is written, less "
                 + "that share, and a text cell's in a column sized to its content less what of the room an "
@@ -758,7 +759,7 @@ class DocxValueFieldLedgerTest {
         value(com.demcha.compose.document.table.DocumentTableCell.class,
                 "lines:WRITTEN:a text cell's, a line each; a composed cell's are read neither by the page nor by "
                 + "the export",
-                "style:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO
+                "style:GAP:" + PADDING_BELOW_ZERO + "; " + CELL_PADDING
                 + "; as the cell style's parts say: the translucency of its fill and its rules, a rule's "
                 + "width Word does not draw, and the room Word makes for its rules past a text cell's thinner "
                 + "padding; any other is written",

@@ -219,8 +219,12 @@ class DocxOverlappingLayerTest {
                                  + "the page lays one over another is not measured");
         assertThat(drawn.report().bySubject()).as("drawing alone writes nothing in the flow")
                 .doesNotContainKey(SUBJECT);
-        assertThat(labelled.report().bySubject()).as("one layer written over a drawing lies over nothing written")
-                .doesNotContainKey(SUBJECT);
+        assertThat(labelled.report().bySubject().get(SUBJECT)).extracting(DocxExportReport.Note::detail)
+                .as("one layer written over a drawing lies over nothing written, but is set as the cell's text")
+                .containsExactly("the one layer it writes beside what it draws is set as its table cell's text, as "
+                                 + "its text's alignment and the cell's set it: composed in a table cell, it has no place "
+                                 + "of its own in the layout, and where the page sets that layer, by its alignment and "
+                                 + "offset, is not measured");
     }
 
     @Test

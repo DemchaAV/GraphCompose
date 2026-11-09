@@ -187,7 +187,7 @@ class DocxUnknownNodeKindTest {
             assertThat(export.report().bySubject().get("Callout")).as(axis.name()).singleElement()
                     .extracting(DocxExportReport.Note::detail).asString()
                     .endsWith("; the page sets them side by side or over one another, and they are written one "
-                              + "under another");
+                              + "after another");
         }
     }
 
@@ -200,11 +200,69 @@ class DocxUnknownNodeKindTest {
                 session.add(callout());
             });
 
-            XWPFParagraph first = paragraphHolding(export.document(), "Callout line one");
-            boolean kept = first.getCTP().getPPr() != null && first.getCTP().getPPr().isSetKeepNext();
-            assertThat(kept).as("%s: the first line kept with the next", axis)
+            assertThat(kept(export.document(), "Callout line one")).as("%s: the first line kept with the next", axis)
                     .isEqualTo(axis != CompositeLayoutSpec.Axis.VERTICAL);
         }
+    }
+
+    @Test
+    void childrenThatFitThePageSetOverOneAnotherButNotWrittenOneAfterAnotherAreNotKept() throws Exception {
+        // Two layers of some 25 lines each: the stack fits its page, the two written in turn do not.
+        String layer = "Callout line one " + "words to fill a layer of the stack. ".repeat(45);
+        Export export = exportOf(session -> {
+            session.registerNodeDefinition(new CalloutDefinition(CompositeLayoutSpec.Axis.STACK, false));
+            session.add(new Callout("Callout", List.of(paragraph(layer), paragraph(layer.replace("one", "two")))));
+            List<com.demcha.compose.document.layout.PlacedNode> held = session.layoutGraph().nodes().stream()
+                    .filter(node -> "Callout[0]".equals(node.parentPath())).toList();
+            double page = 600 - 40;
+            assertThat(held).as("the premise: each layer under the page's height, the two over it")
+                    .allSatisfy(node -> assertThat(node.placementHeight()).isLessThan(page))
+                    .extracting(com.demcha.compose.document.layout.PlacedNode::placementHeight)
+                    .satisfies(heights -> assertThat(heights.get(0) + heights.get(1)).isGreaterThan(page));
+        });
+
+        assertThat(export.text()).containsSubsequence("Callout line one", "Callout line two");
+        assertThat(keepsAnything(export.document(), "Callout line one")).isFalse();
+    }
+
+    @Test
+    void childrenSetOverOneAnotherInARowCellAreLeftToTheRow() throws Exception {
+        // A row's cell is the table's, which a row keeps or breaks on its own terms. (The layout
+        // refuses a horizontal composite nested in a row.)
+        Export export = exportOf(session -> {
+            session.registerNodeDefinition(new CalloutDefinition(CompositeLayoutSpec.Axis.STACK, false));
+            session.pageFlow(page -> page.addRow(row -> row.weights(1, 1)
+                    .addSection("Left", cell -> cell.addParagraph("Left cell"))
+                    .addSection("Right", cell -> cell.add(callout()))));
+        });
+
+        assertThat(export.text()).containsSubsequence("Left cell", "Callout line one", "Callout line two");
+        assertThat(keepsAnything(export.document(), "Callout line one")).isFalse();
+    }
+
+    /** Whether a paragraph is kept with the next and its lines together, as a block kept on one page is. */
+    private static boolean kept(XWPFDocument document, String text) {
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr properties = propertiesOf(document, text);
+        return properties != null && properties.isSetKeepNext() && properties.isSetKeepLines();
+    }
+
+    /** Whether a paragraph is kept with the next or its lines together. */
+    private static boolean keepsAnything(XWPFDocument document, String text) {
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr properties = propertiesOf(document, text);
+        return properties != null && (properties.isSetKeepNext() || properties.isSetKeepLines());
+    }
+
+    /** The paragraph properties of the first paragraph, in the body or a table's cell, holding a text. */
+    private static org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr propertiesOf(XWPFDocument document,
+                                                                                               String text) {
+        XWPFParagraph paragraph = document.getParagraphs().stream()
+                .filter(candidate -> candidate.getText().contains(text)).findFirst()
+                .orElseGet(() -> document.getTables().stream()
+                        .flatMap(table -> table.getRows().stream())
+                        .flatMap(row -> row.getTableCells().stream())
+                        .flatMap(cell -> cell.getParagraphs().stream())
+                        .filter(candidate -> candidate.getText().contains(text)).findFirst().orElseThrow());
+        return paragraph.getCTP().getPPr();
     }
 
     @Test
@@ -412,7 +470,10 @@ class DocxUnknownNodeKindTest {
                     ? NodeDefinitionSupport.measureComposite(children(node), SPACING,
                             NodeDefinitionSupport.toPadding(node.padding()), ctx, constraints,
                             DocumentFlowWidth.natural())
-                    : new MeasureResult(constraints.availableWidth(), 30);
+                    : new MeasureResult(constraints.availableWidth(), tallest(children(node), ctx,
+                            axis == CompositeLayoutSpec.Axis.HORIZONTAL
+                                    ? constraints.availableWidth() / children(node).size()
+                                    : constraints.availableWidth()));
             if (axis == CompositeLayoutSpec.Axis.STACK) {
                 // Layers over one another, each at the stack's top left.
                 int layers = children(node).size();
@@ -425,6 +486,16 @@ class DocxUnknownNodeKindTest {
                         new CompositeLayoutSpec(0, axis));
             }
             return PreparedNode.composite(node, measured, new CompositeLayoutSpec(SPACING, axis));
+        }
+
+        /** The height of the tallest child laid out in a width, its margins included. */
+        private static double tallest(List<DocumentNode> children, PrepareContext ctx, double width) {
+            double tallest = 0;
+            for (DocumentNode child : children) {
+                tallest = Math.max(tallest, ctx.prepare(child, BoxConstraints.natural(width)).measureResult().height()
+                                            + child.margin().top() + child.margin().bottom());
+            }
+            return tallest;
         }
 
         @Override

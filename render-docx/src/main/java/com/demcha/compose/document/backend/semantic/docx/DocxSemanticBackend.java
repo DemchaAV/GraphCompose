@@ -4279,9 +4279,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // layer there, and a canvas or an alignment wrapper with its first lines there (movedWhole).
         // In a cell their paragraphs are the table's, which a row keeps or breaks on its own terms.
         // So does a kind of the caller's own whose children the page sets side by side or over one
-        // another, written one under another (writeWhatAnUnknownKindHolds).
+        // another, written one after another (keptAsTheLayoutMovesIt).
         boolean keepTogether = (node.keepTogether() || currentCell == null && (movedWhole(node)
-                                    || writesWhatItHolds(node) && !setOneUnderAnother(node)))
+                                    || keptAsTheLayoutMovesIt(node)))
                                && layout.onOnePage(node);
         PanelBreak panelBreak = keepThePanelMayBreak(node);
         boolean keepWithNext = node.keepWithNext() && layout.onOnePage(node);
@@ -5644,7 +5644,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * How a report names what is written of a kind of the caller's own whose children the layout
      * placed ({@link #writesWhatItHolds}): its children, and, where the page does not set them one
-     * under another, that they are.
+     * under another, that it sets them otherwise than they are written — one after another, as a
+     * container's layers are.
      */
     private String heldNodesWritten(DocumentNode node) {
         int held = node.children().size();
@@ -5653,7 +5654,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                       + "own but the shapes it paints";
         return setOneUnderAnother(node) ? note
                 : note + "; the page sets them side by side or over one another, and they are written one "
-                  + "under another";
+                  + "after another";
     }
 
     /**
@@ -5673,6 +5674,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             before = placed;
         }
         return true;
+    }
+
+    /**
+     * Whether a kind of the caller's own whose children the page sets side by side or over one
+     * another is kept on one page in Word, as the layout moves such a block whole: where what it
+     * writes, its children one after another, fits the page the layout sets it on. Its children's
+     * boxes and margins and its own margin and padding are counted; the space between them is
+     * none ({@link #spacingTheLayoutSets}). A block taller than its page is not held, as the layout
+     * lets one flow ({@link #keepOnOnePage}).
+     */
+    private boolean keptAsTheLayoutMovesIt(DocumentNode node) {
+        if (!writesWhatItHolds(node) || setOneUnderAnother(node) || Double.isNaN(canvasHeight)) {
+            return false;
+        }
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(node);
+        com.demcha.compose.engine.components.style.Margin page =
+                placed == null ? null : layout.marginOf(placed.startPage());
+        if (page == null) {
+            return false;
+        }
+        double written = node.margin().top() + node.margin().bottom() + node.padding().top()
+                         + node.padding().bottom();
+        for (DocumentNode child : node.children()) {
+            com.demcha.compose.document.layout.PlacedNode box = layout.placement(child);
+            written += box.placementHeight() + box.margin().top() + box.margin().bottom();
+        }
+        return written <= canvasHeight - page.top() - page.bottom() + 0.01;
     }
 
     /** Whether two placed boxes each stand whole on one page, the same one. */

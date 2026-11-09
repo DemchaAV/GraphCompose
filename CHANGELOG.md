@@ -306,10 +306,10 @@ follow semantic versioning; release dates are ISO 8601.
     stand whole on one page (the kind states no spacing of its own the export could read). The
     shapes it paints itself are drawn where the page puts them, as before. A fixed width it states
     is not written, and not named. Where the page sets its children side by side or over one
-    another, on one page, the export keeps them on one page of the body in Word, as the layout moves them
-    whole.
+    another, on one page, the export keeps them on one page of the body in Word, as the layout
+    moves them whole — where, written one after another, they fit a page.
   - The report names it once, `APPROXIMATED` at its kind: the nodes written in its place, and that
-    they are written one under another where the page sets them side by side or over one another.
+    they are written one after another where the page sets them side by side or over one another.
   - Measured on two Lato paragraphs at the root, in a section and in a row's cell: in Word 16 every
     line within 0.06pt of the engine's page; in Word and LibreOffice 24.2 where a built-in section
     of the same spacing sets it.

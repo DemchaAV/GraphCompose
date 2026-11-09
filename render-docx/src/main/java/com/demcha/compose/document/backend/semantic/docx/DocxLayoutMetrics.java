@@ -2334,6 +2334,33 @@ final class DocxLayoutMetrics {
         return path == null ? null : placed.get(path);
     }
 
+    /**
+     * How many nodes the layout placed directly inside a node: those whose parent path is its own.
+     * A definition can lay out other children than the node lists ({@code NodeDefinition.children}),
+     * which this tells apart from the nodes it lists by count.
+     *
+     * @param node any authored node
+     * @return the count, 0 where the layout placed the node nothing to hold
+     */
+    int placedChildCount(DocumentNode node) {
+        String path = paths.get(node);
+        if (path == null) {
+            return 0;
+        }
+        if (placedChildren == null) {
+            placedChildren = new HashMap<>();
+            for (PlacedNode placedNode : placed.values()) {
+                if (placedNode.parentPath() != null) {
+                    placedChildren.merge(placedNode.parentPath(), 1, Integer::sum);
+                }
+            }
+        }
+        return placedChildren.getOrDefault(path, 0);
+    }
+
+    /** How many nodes the layout placed under each parent path, built on first use. */
+    private Map<String, Integer> placedChildren;
+
     /** Consecutive differences of an ascending boundary list. */
     private static double[] widthsBetween(List<Double> boundaries) {
         if (boundaries.size() < 2) {

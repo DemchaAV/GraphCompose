@@ -191,6 +191,19 @@ is a good reference — it logs a one-time capability warning and
 recurses into the children when the backend cannot express the
 container's semantics.
 
+A node kind of your own reaches `DocxSemanticBackend` the same way.
+It cannot write the kind itself; where your definition lays the
+children the node lists out as a composite (`PreparedNode.composite`),
+so the layout places a node at each of their places and none beside
+them, it writes them in the node's place and names the kind in its
+`DocxExportReport`. Lay out the nodes the node lists, as
+`NodeDefinition.children` does by default: the export knows a laid-out
+node only by its place — its name or kind and its index — and writes
+the listed node there. A definition that
+paints what the node holds itself, as a leaf, gives the export nothing
+to write: only the shapes it paints in built-in payloads are drawn, and
+the report names its text and what it holds as not in the file.
+
 ## 5. Layout-snapshot tests for your own nodes
 
 Layout snapshots are the regression net for layout changes. They

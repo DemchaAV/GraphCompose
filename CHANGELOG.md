@@ -40,8 +40,7 @@ follow semantic versioning; release dates are ISO 8601.
   line by line against the engine's own page. A document passes when the editor sets it on as many
   pages as the engine does, finds 95% of its lines, sets them a median of 1pt or less from the page
   and no more than 10% of them past 2pt. Measured on 2026-11-09, Word 16 passes 95 of the 104, all 64
-  presets among them; on 2026-11-06, LibreOffice 24.2 on CI's Linux passed 48 of the 84 the corpus
-  then had, 40 of them presets. CI holds a change
+  presets among them, and LibreOffice 24.2 on CI's Linux 60, 40 of them presets. CI holds a change
   to the engine, a backend, a template or the corpus to a LibreOffice baseline;
   `scripts/docx-visual/word-fidelity.ps1` holds it to Word's.
 - **A copied line keeps its emoji.** A PDF carries the text an inline SVG icon stands for, so
@@ -5388,7 +5387,9 @@ follow semantic versioning; release dates are ISO 8601.
     page 2 whole, and where the layout moves it there its caption stands a line low. In the panel
     of icon rows Word sets each icon where the page draws it, and each label within 0.1pt.
   - Word passes 95 of the corpus's 104 documents, 18 of the 20 added; LibreOffice on Windows
-    passes the same 18, the two bands short of their lines there too.
+    passes the same 18, the two bands short of their lines there too. LibreOffice 24.2 on CI's
+    Linux passes 60 of the 104, 12 of the 20: besides the two bands, it sets four lines of each
+    of the six painted panels more than 2pt across, the panels still whole on their page.
 
 - **Word's editing protocol reads how far drawings and text moved from Word's own PDF.**
   - `drawings-follow-text` lengthens the first paragraph of body text and holds each drawing a

@@ -85,11 +85,12 @@ wholly above or below its page is not looked for: the PDF shows nothing of it. A
 first twelve letters and digits of its text — or, with none, its other characters, or the picture
 in its line — drawn nearest where the editor puts its first line: starting between 4pt left of
 that line and 4pt past the right its text runs to, on a baseline below the top of that line and
-no more than 40pt below it or twice its letters' size, or than a drawing's height for a drawing's
-text. A drawing or a
-paragraph is read by the same means before an edit and after it, or its move is not read. What is printed is the top of the box, or the baseline of the letters, the PDF
-draws it at, or why it found nothing. edit-protocol-corpus.ps1 reads how far drawings and text
-moved this way, since what Word's COM states is a layout other than the one Word prints.
+no more than 40pt below it or twice its letters' size, or than a drawing's height and 4pt for a
+drawing's text. One box is never read for two drawings: both are refused. What is printed is the
+top of the box, or the baseline of the letters, the PDF draws it at, how it was found, or why it
+found nothing. edit-protocol-corpus.ps1 reads how far drawings and text moved this way, since
+what Word's COM states is a layout other than the one Word prints; it reads a move only between
+two readings found the same way.
 
 --self-check holds every verdict to probe PDFs it writes with PyMuPDF: each rule is broken once, in
 a probe only that rule can fail, and the limits a move, a crossing, the spacing of typed lines and
@@ -239,7 +240,7 @@ SIZE_REACH = 1.5
 # a line Word holds to a height of its own sets its letters at its foot, as far down as that height
 # runs; and letters of a large size stand their baseline further down — a 44pt monogram's stood
 # 46.0pt below the top — so the paragraph's own letters may drop twice their size where that is the
-# more. A drawing's text may stand anywhere down the drawing's own height. Never above that top: the
+# more. A drawing's text may stand anywhere down its height and 4pt more. Never above that top: the
 # line above ends there, and its letters can begin with the same words — two bullets that open
 # "Responsible for" — so a baseline above the top is the line above's. Over the corpus every
 # paragraph's baseline stood between 5.3 and 46.0pt below the top COM reads.
@@ -305,16 +306,16 @@ def find_drawing(boxes, want):
     is then found by its box alone."""
     best = None
     reach = (want["left"] - PLACE_REACH, want.get("right", want["left"]) + PLACE_REACH)
-    for left, top, width, height in boxes:
+    for index, (left, top, width, height) in enumerate(boxes):
         if abs(width - want["width"]) > SIZE_REACH or abs(height - want["height"]) > SIZE_REACH:
             continue
         dx, dy = left - want["left"], top - want["top"]
         if not reach[0] <= left <= reach[1] or abs(dy) > PLACE_REACH:
             continue
         if best is None or abs(dx) + abs(dy) < best[0]:
-            best = (abs(dx) + abs(dy), top, dx, dy)
+            best = (abs(dx) + abs(dy), top, dx, dy, index)
     if best is not None:
-        return {"top": best[1], "dx": best[2], "dy": best[3], "by": "box"}
+        return {"top": best[1], "dx": best[2], "dy": best[3], "by": "box", "box": best[4]}
     if "right" in want:
         return {"why": "Word's PDF draws no picture of its %gx%gpt across its paragraph within %gpt of where its line"
                        " stands" % (round(want["width"], 1), round(want["height"], 1), PLACE_REACH)}
@@ -333,8 +334,8 @@ def find_letters(letters, want):
     """The baseline of the first letter of a paragraph's text where the PDF draws its first letters
     nearest where COM puts its first line, or why there are none: the letters must start within the
     width the text runs to, and stand on a baseline below the top of the line and no further below it
-    than LETTERS_DROP or twice the size of its first letter, or than a drawing's own height where the
-    text is a drawing's."""
+    than LETTERS_DROP or twice the size of its first character, or than a drawing's own height and
+    PLACE_REACH where the text is a drawing's."""
     drop = want.get("drop") or max(LETTERS_DROP, LETTERS_DROP_SIZES * (want.get("size") or 0))
     key = letter_key(want["text"])[:LETTERS_LOOKED_FOR]
     if not key:
@@ -393,6 +394,18 @@ def places(pdf, job):
                 found = find_letters(read[1], dict(want, right=want["left"] + want["width"],
                                                    drop=want["height"] + PLACE_REACH))
             out[want["key"]] = found
+    # One box read for two drawings would give the second the first's move — a drawing whose own box
+    # is not drawn reading a neighbour of its size that followed — so neither of them is read.
+    claimed = collections.defaultdict(list)
+    for want in job.get("drawings", []):
+        found = out[want["key"]]
+        if found.get("by") == "box":
+            claimed[(want["page"], found["box"])].append(want["key"])
+    for keys in claimed.values():
+        if len(keys) > 1:
+            for key in keys:
+                out[key] = {"why": "is read from a box of Word's PDF that %s is read from too"
+                                   % " and ".join(k for k in keys if k != key)}
     for want in job.get("paragraphs", []):
         read = page(want["page"])
         if not read:
@@ -1065,6 +1078,8 @@ def run_self_check(scratch):
     read_at("--places, a drawing where COM puts it, read off any whole point", one(drawn, want), 200.37)
     read_by("--places, a box 3.9pt below where COM puts it is the drawing", one(drawn, dict(want, top=196.47)), "box")
     refused("--places, a box 4.1pt below where COM puts it is not", one(drawn, dict(want, top=196.27)))
+    read_by("--places, a box 3.9pt above where COM puts it is the drawing", one(drawn, dict(want, top=204.27)), "box")
+    refused("--places, a box 4.1pt above where COM puts it is not", one(drawn, dict(want, top=204.47)))
     read_by("--places, a box 3.9pt left of where COM puts it is the drawing", one(drawn, dict(want, left=103.9)), "box")
     refused("--places, a box 4.1pt left of where COM puts it is not", one(drawn, dict(want, left=104.1)))
     read_by("--places, a box 1.4pt narrower than COM states is the drawing's own", one(drawn, dict(want, width=21.4)), "box")
@@ -1078,6 +1093,12 @@ def run_self_check(scratch):
             one(drawn, dict(want, width=26, height=26, left=97, top=201.77)), 200.37)
     refused("--places, what stands 1.6pt out of the drawing's rectangle is not inside it",
             one(drawn, dict(want, width=26, height=26, left=97, top=201.97)))
+    two = probe_pdf(1, pictures_at=[(0, (100, 203.0, 120, 213.0), old_png), (0, (100, 200.37, 120, 210.37), old_png)])
+    read_at("--places, of two boxes of its size, the nearer is the drawing's, not the first the PDF draws",
+            one(two, want), 200.37)
+    twice = places(drawn, {"drawings": [want, dict(want, key="e", top=201)]})
+    refused("--places, a box two drawings would both be read from is read for neither", twice["d"],
+            "that e is read from too")
     read_by("--places, a drawing that holds text and draws its own box is read by the box",
             one(drawn, dict(want, text="Never drawn here.")), "box")
     boxed = probe_pdf(1, [(0, 104, 214, "Text a text box holds.", 10)], pictures_at=[(0, (110, 204, 116, 210), old_png)])

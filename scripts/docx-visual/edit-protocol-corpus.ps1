@@ -268,16 +268,16 @@ $FOLLOWS_WITHIN_POINTS = 1.525
 $LAYOUT_GRID_POINTS = 0.05
 
 # How far the text a drawing stands beside must move for the edit to count as having moved it, in
-# points — which decides which of the two sets the drawing is counted in, and so the denominator
-# the figure is taken over. Half a point is the floor this wants, and it is set half a twip above
-# it for the same reason the limit above is: a paragraph's move, read through COM, was a difference
-# of two places read from a range, so it was a whole number of twips, and half a point is ten of
-# them — a move of exactly half a point would sit on the comparison, and which set the drawing fell
-# in would turn on the last digit of a single rather than on the page. Measured over the corpus's
-# 728 drawings in the verdict, as this script divided them then: the text that stayed stayed exactly, not one of
-# those 403 moving by so much as a twip, and the least any of the other 325 moved by was 9.35pt
-# (proposal-northline's Drawing 16). So the threshold stands with half a point of clear air below
-# it and 8.825pt above, and the half twip moves no drawing of the corpus from one set to the
+# points — which decides which of the two sets the drawing is counted in, and so the denominator the
+# figure is taken over. Half a point is the floor this wants, and it is set half a twip above it for
+# the same reason the limit above is: a paragraph's move, read through COM, was a difference of two
+# places read from a range, so it was a whole number of twips, and half a point is ten of them — a
+# move of exactly half a point would sit on the comparison, and which set the drawing fell in would
+# turn on the last digit of a single rather than on the page. Measured over the corpus's 728
+# drawings in the verdict, as this script divided them then: the text that stayed stayed exactly,
+# not one of those 403 moving by so much as a twip, and the least any of the other 325 moved by was
+# 9.35pt (proposal-northline's Drawing 16). So the threshold stands with half a point of clear air
+# below it and 8.825pt above, and the half twip moves no drawing of the corpus from one set to the
 # other. It is here against a document that would sit on it, which the corpus does not hold.
 $MOVED_AT_ALL_POINTS = 0.525
 
@@ -962,7 +962,7 @@ function Get-ParagraphPlaces {
             $picture = $p.Range.InlineShapes.Item(1)
             $inline = [ordered]@{ width = [double]$picture.Width; height = [double]$picture.Height }
         }
-        # The size of its first letter, which the depth its baseline may stand at below the line
+        # The size of its first character, which the depth its baseline may stand at below the line
         # grows with. Nought where Word gives no single size.
         $size = 0
         try { $size = [double]$p.Range.Characters(1).Font.Size } catch { }
@@ -1128,17 +1128,16 @@ function Get-PdfMove {
 # what places() in the script the PDF verdicts are read by found, the top in points down the page
 # the geometry names, or why it found nothing there.
 #
-# The places COM states are of a layout other than the one Word prints: on Word 16.0.20527.20150, in cv-serif_headline, a line Word's PDF moves 22.08pt reads as moving
-# 22.6pt through a range, and the drawings beside it, which the PDF moves 22.1pt with it, read 21pt
-# in the page geometry's whole points. So which drawing and which paragraph is read through COM, and
-# how far they moved is read from the PDF.
+# The places COM states are of a layout other than the one Word prints: on Word 16.0.20527.20150, in
+# cv-serif_headline, a line Word's PDF moves 22.08pt reads as moving 22.6pt through a range, and the
+# drawings beside it, which the PDF moves 22.1pt with it, read 21pt in the page geometry's whole
+# points. So which drawing and which paragraph is read through COM, and how far they moved is read
+# from the PDF.
 #
 # The job is written beside the PDF with each drawing's paragraph in it, and what was found beside
 # that, so a move can be read again by hand.
 function Read-PdfPlaces {
     param([string]$Pdf, $Drawings, $Paragraphs, $Owners, [int]$Pages)
-    # Python's stderr is read as text here, as in Test-PdfVerdicts.
-    $ErrorActionPreference = 'Continue'
     $wanted = [ordered]@{ pdf = $Pdf; pages = $Pages; drawings = @(); paragraphs = @() }
     foreach ($name in $Owners.Keys) {
         $d = $Drawings[$name]
@@ -1158,7 +1157,11 @@ function Read-PdfPlaces {
     }
     $job = $Pdf -replace '\.pdf$', '.places.json'
     $wanted | ConvertTo-Json -Depth 4 | Set-Content -Path $job -Encoding utf8
+    # Python's stderr is read as text, as in Test-PdfVerdicts: Windows PowerShell 5.1 would raise it
+    # under Stop. That call alone, so a file that cannot be written or read here still raises.
+    $ErrorActionPreference = 'Continue'
     $output = & $Python $JUDGE --places $job 2>&1
+    $ErrorActionPreference = 'Stop'
     # What was found is the one line of JSON the script prints; a warning on stderr is not it.
     $line = @($output | Where-Object { "$_".StartsWith('{') } | Select-Object -Last 1)
     if ($LASTEXITCODE -ne 0 -or $line.Count -eq 0) { throw "the places could not be read from Word's PDF: $(($output | Select-Object -Last 3) -join ' ')" }
@@ -1716,7 +1719,8 @@ function Invoke-Protocol {
         $paragraphs = Get-ParagraphPlaces $doc $geometry
         $pdfAfter = $doc.FullName -replace '\.docx$', '.pdf'
         Export-Pdf $doc $pdfAfter
-        # Both sets, carried and nailed: the nailed ones are measured too, though nothing is asked of them.
+        # Both sets, carried and nailed: the nailed ones are measured too, though nothing is asked of
+        # them.
         $asked = @{}
         foreach ($set in $state.owners, $state.onTheSheet) { foreach ($name in $set.Keys) { $asked[$name] = $set[$name] } }
         $readBefore = Read-PdfPlaces $state.pdfBefore $state.drawings $state.paragraphs $asked $state.pagesLaidOut

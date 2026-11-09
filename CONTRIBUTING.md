@@ -484,7 +484,8 @@ Choose the smallest tests that match the change:
     were set against those COM readings — a whole point of reading and half a point of drift,
     held half a twip off the twip grid those readings land on because, set on it, two runs on
     bytes that had not changed once reported five fewer followers — and they are kept where they
-    were, so that the verdict means what it meant. Read from the PDF on Word 16.0.20527.20150, every drawing of the corpus that follows its text
+    were, so that the verdict means what it meant. Read from the PDF on Word 16.0.20527.20150,
+    every drawing of the corpus that follows its text
     does so within 0.16pt, and every one that does not is 8.04pt or more out. A
     drawing or a paragraph the PDF does not show near where the geometry puts it, or reads one way
     before the edit and another after it, is named, and fails the scenario where a paragraph
@@ -494,7 +495,8 @@ Choose the smallest tests that match the change:
     a drawing is counted in — beside text the edit moved, or beside text it left standing — is read
     from the same PDFs: the text counts as moved past half a point and half a twip, set against
     COM's readings as the limit was, the half point being the noise those left and the half twip
-    keeping a move of exactly ten twips off the comparison. Both thresholds are held from either side, and off that grid, by `-SelfCheck`. Only
+    keeping a move of exactly ten twips off the comparison. Both thresholds are held from either
+    side, and off that grid, by `-SelfCheck`. Only
     a drawing a paragraph carries is asked that. One nailed to the sheet — `wp:positionV
     relativeFrom="page"` — is placed from the top of the page it is drawn on and by nothing else,
     so the text beside it has no claim on where it stands: measured on the self-check's two alike

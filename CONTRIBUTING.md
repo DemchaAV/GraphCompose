@@ -369,7 +369,8 @@ Choose the smallest tests that match the change:
   — a page break inside a
   panel, a break in a row's column, a shape container narrower than the block it stands in
   or clipped short of its text, an icon a layer stack lays over a card's corner — goes in
-  `SyntheticDocxCorpus`. Its baseline holds it as the editors set it, a defect of the export
+  `SyntheticDocxCorpus`, and a form of group the layout holds on one page goes in
+  `KeptGroupsAtThePageFoot`, which sets each form as low on a page as it fits and one line lower. Its baseline holds it as the editors set it, a defect of the export
   included, and the change fixing that rewrites its rows nearer the page.
   CI runs it on Linux (the `DOCX Fidelity` job) against `libreoffice-linux.tsv`, and uploads
   what it measured: LibreOffice sets text a little differently per platform, so a change that

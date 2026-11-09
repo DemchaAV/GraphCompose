@@ -7,7 +7,8 @@ import java.util.function.Consumer;
 
 /**
  * One document of the DOCX fidelity corpus: a template preset composed on its fixture, or a
- * document built for a shape no preset has ({@link SyntheticDocxCorpus}).
+ * document built for a shape no preset has ({@link SyntheticDocxCorpus},
+ * {@link KeptGroupsAtThePageFoot}).
  *
  * @param family  the template family, such as {@code cv} or {@code invoice}, or {@code synthetic}
  * @param name    the preset, or the shape, unique within its family

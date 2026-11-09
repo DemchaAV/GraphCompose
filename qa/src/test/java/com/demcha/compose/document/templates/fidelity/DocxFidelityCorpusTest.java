@@ -27,7 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Every template preset's DOCX, and that of each document built for a shape no preset has
- * ({@link SyntheticDocxCorpus}), set by an editor, stands where its baseline holds it.
+ * ({@link SyntheticDocxCorpus}, {@link KeptGroupsAtThePageFoot}), set by an editor, stands where
+ * its baseline holds it.
  *
  * <p>The engine draws each corpus document to PDF and exports it to DOCX; an editor converts the
  * DOCX to PDF; each document is measured line by line against the page
@@ -407,6 +408,7 @@ class DocxFidelityCorpusTest {
         corpus.addAll(ReceiptDocxCorpus.documents());
         corpus.addAll(RotaDocxCorpus.documents());
         corpus.addAll(SyntheticDocxCorpus.documents());
+        corpus.addAll(KeptGroupsAtThePageFoot.documents());
         return corpus;
     }
 

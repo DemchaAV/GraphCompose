@@ -22,7 +22,9 @@
     Where a drawing stands, which page a paragraph is drawn on, and the space above a paragraph
     the geometry draws a box for all come from Word's own page geometry, in points down the page
     Word draws them on; a paragraph's first line and the width its text runs to come from a
-    range. It reads letters' size, face and
+    range. Those say which drawing stands beside which text; how far each of them moved is read
+    from the PDFs Word sets before the edit and after it, since Word's COM states its screen
+    layout and not the layout it prints. It reads letters' size, face and
     visibility from the text alone, not the paragraph mark, which a range's font reports with
     it. Whether an edited page still looks right is read by a person from the PDFs written
     beside the lengthened copy and the new-page copy.
@@ -40,7 +42,9 @@
     verdicts. The save with no edit is made first, whichever of them run. Where those verdicts
     cannot be read — no Python, or none whose PyMuPDF leaves clipped text out — the protocol
     records NOT_RUN and exits 2 before asking for Word, and exits 1 where their own self-check
-    fails; run without any of those six scenarios, it needs no Python.
+    fails. drawings-follow-text reads how far drawings and text moved from Word's PDFs under the
+    same Python (that script's --places); run without any of those seven scenarios, it needs no
+    Python.
 
     A scenario a document has nothing to edit for — no table, no list, no drawing — is recorded
     N/A with what the document lacks. Word is not installed by the build. When it is absent the
@@ -55,7 +59,9 @@
     off the grid its readings land on — and need no document at all, so they run before Word is
     asked for: a machine without Word holds both thresholds, exits 1 if either of them is wrong or
     the grid under them is, and exits
-    2 otherwise, having run nothing else.
+    2 otherwise, having run nothing else. The probes read how far a drawing and its text moved
+    from Word's PDF, so the Python that reads it is held next, before Word as well: without one
+    the self-check exits 2 having held the thresholds, and 1 where its own self-check fails.
 
 .PARAMETER Docx
     One or more exported .docx files. All are copied into the output directory before the first
@@ -66,8 +72,9 @@
     left out.
 
 .PARAMETER Python
-    The Python the verdicts read from a PDF are run under: 3.10 or later, importing a PyMuPDF that leaves
-    clipped text out, as PyMuPDF 1.27 and 2.1 from pip do. `python` on the PATH when left out.
+    The Python the verdicts read from a PDF, and drawings-follow-text's moves, are run under: 3.10
+    or later, importing a PyMuPDF that leaves clipped text out, as PyMuPDF 1.27 and 2.1 from pip
+    do. `python` on the PATH when left out. -SelfCheck takes it too.
 
 .PARAMETER SelfCheck
     Runs the protocol against probe documents it writes itself, instead of over a corpus. It
@@ -99,7 +106,7 @@ param(
     [Parameter(Mandatory = $true, ParameterSetName = 'Corpus')][string[]]$Docx,
     [Parameter(Mandatory = $true)][string]$OutputDir,
     [Parameter(ParameterSetName = 'Corpus')][string[]]$Scenario,
-    [Parameter(ParameterSetName = 'Corpus')][string]$Python = 'python',
+    [Parameter(ParameterSetName = 'Corpus')][Parameter(ParameterSetName = 'SelfCheck')][string]$Python = 'python',
     [Parameter(Mandatory = $true, ParameterSetName = 'SelfCheck')][switch]$SelfCheck
 )
 
@@ -111,6 +118,9 @@ $SCENARIOS = 'round-trip', 'lengthen-a-paragraph', 'shorten-a-paragraph', 'inser
 # The scenarios whose verdict is read from Word's PDFs, by the LibreOffice protocol's own verdicts:
 # the save with no edit against the document as exported, every edit against that save.
 $PDF_JUDGED = 'round-trip', 'add-a-page', 'lengthen-in-a-panel', 'lengthen-in-a-drawing', 'edit-the-footer', 'edit-a-link'
+# The scenarios that read anything from Word's PDFs through Python: those, and drawings-follow-text,
+# which reads how far drawings and text moved from them (see Read-PdfPlaces).
+$PDF_READ = $PDF_JUDGED + 'drawings-follow-text'
 $JUDGE = Join-Path $PSScriptRoot 'edit-protocol-libreoffice.py'
 # `-File` hands "a,b" over as one string: split it, and refuse a name no scenario has rather
 # than run nothing and report an empty protocol.
@@ -162,6 +172,19 @@ $WD_FRAME_EXACT = 2
 # its runs and mark a point tall, and text typed on from it would continue at that point.
 $READABLE_POINTS = 4
 
+# The two thresholds below — how far a drawing may stand from the text it follows, and how far that
+# text must move to count as moved — are compared against moves read from Word's own PDFs (see
+# Read-PdfPlaces). They were set when the moves were read through COM, a drawing's in the page
+# geometry's whole points and a line's from a range in twips, and what follows down to
+# $MOVED_AT_ALL_POINTS is why they stand where they do against those readings. They are kept
+# there, so that the verdict and the figure taken from it mean what they meant: a drawing passes
+# within a point and a half and half a twip, and text counts as moved past half a point and half a
+# twip. Read from the PDF a move is no longer a whole number of points or twips, so the grid they
+# are held off is the one COM's readings landed on and not the PDF's, and the slack they leave is
+# room the PDF reading does not need: over the corpus on Word 16.0.20527.20150, every drawing read
+# as following its text did so within 0.16pt, and every one read as not following was 8.04pt or
+# more out.
+#
 # How far a drawing may stand from the text it follows, in points. Word gives its page geometry
 # in whole points, so the place read before an edit and the place read after it can each be half
 # a point out, and a drawing that moved with its text exactly can read a whole point adrift. The
@@ -203,12 +226,16 @@ $FOLLOWS_WITHIN_POINTS = 1.525
 # The grid Word's own layout lands on, in points: it lays a document out in twips, so a paragraph
 # place read from a range is a whole number of them, and so is a difference of two such places.
 # $FOLLOWS_WITHIN_POINTS and $MOVED_AT_ALL_POINTS are both held off this grid (see there, and
-# Test-TheThresholds).
+# Test-TheThresholds). The moves they are compared against are now read from Word's PDF, which is
+# not on this grid, so holding them off it now keeps them where they were set rather than off the
+# readings; what follows went through the comparisons when every reading came from COM.
 #
-# Those two are the only numbers the drawings-follow-text verdict compares a reading against that
-# could fall on a value its readings produce exactly. Every comparison that verdict is read from
+# Those two were the only numbers the drawings-follow-text verdict compared a reading against that
+# could fall on a value its readings produced exactly. Every comparison that verdict was read from
 # was gone through once the first was found, and all but one of the rest are sound each for a
-# reason of its own; the one that is not is the tie below.
+# reason of its own; the one that is not is the tie below. The reach, size and drop the PDF is
+# searched within (in the script the PDF verdicts are read by) decide only where a thing is looked
+# for, and are held from both sides by that script's own self-check.
 # Find-ShapeRectangle's point of slack on a rectangle's size stands a deliberate half point off
 # the rounding bound it allows for. Invoke-SelfCheck's half point of slack on a probe's place is
 # compared against places taken from Word's own PDF, which does not round, and not one of them
@@ -243,11 +270,11 @@ $LAYOUT_GRID_POINTS = 0.05
 # How far the text a drawing stands beside must move for the edit to count as having moved it, in
 # points — which decides which of the two sets the drawing is counted in, and so the denominator
 # the figure is taken over. Half a point is the floor this wants, and it is set half a twip above
-# it for the same reason the limit above is: a paragraph's move is a difference of two places read
-# from a range, so it is a whole number of twips, and half a point is ten of them — a move of
-# exactly half a point would sit on the comparison, and which set the drawing fell in would turn
-# on the last digit of a single rather than on the page. Measured over the corpus's 728 drawings
-# in the verdict, as this script now divides them: the text that stayed stayed exactly, not one of
+# it for the same reason the limit above is: a paragraph's move, read through COM, was a difference
+# of two places read from a range, so it was a whole number of twips, and half a point is ten of
+# them — a move of exactly half a point would sit on the comparison, and which set the drawing fell
+# in would turn on the last digit of a single rather than on the page. Measured over the corpus's
+# 728 drawings in the verdict, as this script divided them then: the text that stayed stayed exactly, not one of
 # those 403 moving by so much as a twip, and the least any of the other 325 moved by was 9.35pt
 # (proposal-northline's Drawing 16). So the threshold stands with half a point of clear air below
 # it and 8.825pt above, and the half twip moves no drawing of the corpus from one set to the
@@ -282,6 +309,19 @@ $ADDED = ' The editing protocol appended this sentence to make the paragraph abo
 $PANEL_ADDED = ' The protocol added this sentence so the text grows, and whatever stands below it has to move down to make room.'
 $FOOTER_EDIT = 'Edited footer. '
 $LINK_EDIT = 'EDIT'
+
+# Word's full build, from the file Word runs as: 16.0.20527.20150, where Word's own Build gives
+# 16.0.20527 alone. Word's own, said to be so, where the file cannot be read.
+function Get-WordBuild {
+    param($Word)
+    try {
+        # The four parts as numbers: FileVersion itself is a free-form string a file may add to.
+        $file = (Get-Item (Join-Path $Word.Path 'WINWORD.EXE')).VersionInfo
+        return '{0}.{1}.{2}.{3}' -f $file.FileMajorPart, $file.FileMinorPart, $file.FileBuildPart, $file.FilePrivatePart
+    } catch {
+        return "$($Word.Build); the full build could not be read: $($_.Exception.Message)"
+    }
+}
 
 function New-Result {
     param([string]$Name, [string]$Status, [string]$Detail)
@@ -648,8 +688,8 @@ function Get-Links {
 # PDF: the page geometry is right within 0.41pt in every one, while the paragraph reckoning is
 # out by the space above the paragraph, and for a drawing whose row begins on the page before
 # the one it is drawn on it names the wrong page altogether. Word gives the geometry in whole
-# points, which is why a drawing is held to following its text within a point and a half and
-# half a twip (see $FOLLOWS_WITHIN_POINTS).
+# points, and of a layout other than the one Word prints, so the geometry says which drawing stands
+# where and how far it moved is read from Word's PDF (see Read-PdfPlaces).
 #
 # The lines are what the text side is read from: see Get-ParagraphPlaces for what they do and do
 # not give.
@@ -690,6 +730,10 @@ function Get-PageGeometry {
                     $byAnchor[$start] += @{
                         id     = "$page.$i"
                         place  = $page * 10000 + [double]$rectangle.Top
+                        # The page and the top apart as well: a drawing can stand above the top of
+                        # the page it is drawn on, and its place then counts as the page before.
+                        page   = $page
+                        top    = [double]$rectangle.Top
                         left   = [double]$rectangle.Left
                         width  = [double]$rectangle.Width
                         height = [double]$rectangle.Height
@@ -721,7 +765,8 @@ function Get-PageGeometry {
     } finally {
         $window.View.Type = $view
     }
-    return @{ shapes = $byAnchor; lines = $lines }
+    # The number of pages laid out, which Word's PDF of the same layout must have (see Read-PdfPlaces).
+    return @{ shapes = $byAnchor; lines = $lines; pages = $pageCount }
 }
 
 # The rectangle Word drew one shape in: anchored on the same character, of the shape's own size,
@@ -756,7 +801,10 @@ function Find-ShapeRectangle {
         return @{ place = 0; left = 0; unreadable = $why }
     }
     $Taken[$sized[0].id] = $true
-    return @{ place = $sized[0].place; left = $sized[0].left; unreadable = $null }
+    return @{
+        place = $sized[0].place; page = $sized[0].page; top = $sized[0].top
+        left = $sized[0].left; width = $sized[0].width; height = $sized[0].height; unreadable = $null
+    }
 }
 
 # Where each floating drawing of the main story stands, by its name: its place and its left
@@ -783,6 +831,10 @@ function Get-DrawingPlaces {
         if ($places.ContainsKey($shape.Name)) { $places[$shape.Name] = $null; continue }
         $place = Find-ShapeRectangle $shape $rectangles $taken
         $place.placedDownFrom = [int]$shape.RelativeVerticalPosition
+        # The text it holds, which Word's PDF finds it by where it draws no box of its own size (see
+        # Read-PdfPlaces). A picture has no text frame to ask, and says so by throwing.
+        $place.text = $null
+        try { if ($shape.TextFrame.HasText) { $place.text = $shape.TextFrame.TextRange.Text } } catch { }
         $places[$shape.Name] = $place
     }
     # No geometry at all, for a document that has drawings to read, is the instrument failing and
@@ -900,6 +952,21 @@ function Get-ParagraphPlaces {
             continue
         }
         $line = [double]$start.Information($WD_VERTICAL_POSITION_ON_PAGE)
+        # What Word's PDF finds the paragraph by (see Read-PdfPlaces): its text, or, where that holds
+        # no letter or digit and the paragraph holds a picture in its line, the picture's size.
+        # Word gives such a picture as a '/' of the text — a photo's paragraph is nothing else — and
+        # its PDF draws the picture there, not the character.
+        $text = Get-Text $p
+        $inline = $null
+        if ($text -notmatch '[\p{L}\p{N}]' -and $p.Range.InlineShapes.Count -gt 0) {
+            $picture = $p.Range.InlineShapes.Item(1)
+            $inline = [ordered]@{ width = [double]$picture.Width; height = [double]$picture.Height }
+        }
+        # The size of its first letter, which the depth its baseline may stand at below the line
+        # grows with. Nought where Word gives no single size.
+        $size = 0
+        try { $size = [double]$p.Range.Characters(1).Font.Size } catch { }
+        if ($size -gt 1638) { $size = 0 }
         # At least one line holding where the paragraph starts is on this page — the page was taken
         # from those lines — and such a line is a line of this box too, so the box is never empty.
         $box = @($Geometry.lines | Where-Object { $_.page -eq $page -and $_.start -lt $to -and $_.end -gt $from })
@@ -922,6 +989,9 @@ function Get-ParagraphPlaces {
             right      = $right
             page       = $page
             drawnTwice = $drawnTwice
+            text       = $text
+            inline     = $inline
+            size       = $size
         }
     }
     # No line for any paragraph of a document that has text is the instrument failing, not a
@@ -1002,16 +1072,26 @@ function Find-Owner {
 # the document or one that can no longer be told apart, which is not a matter of what it was placed
 # from, so it fails for either set. Text that cannot be placed again is the instrument losing the
 # paragraph a drawing was held to, which answers nothing about a drawing nothing is asked of.
+#
+# How far each moved is read from Word's own PDFs, before the edit and after it (see
+# Read-PdfPlaces): the page geometry and the range say which drawing and which paragraph, and on
+# which page, and the PDF says how far down that page. A drawing or a paragraph the PDF does not
+# show near where Word's geometry puts it is named among the unreadable, which fails, as one the
+# geometry does not give is.
 function Measure-Following {
-    param($Doc, $Owners, $Before, $After, $ParagraphsBefore, $ParagraphsAfter)
+    param($Doc, $Owners, $Before, $After, $ParagraphsBefore, $ParagraphsAfter, $ReadBefore, $ReadAfter)
     $m = @{ moved = 0; followed = 0; stayed = 0; stood = 0; gone = 0; lost = 0; stray = @(); adrift = @(); unreadable = @() }
     foreach ($name in $Owners.Keys) {
         $owner = $Owners[$name]
         if (-not $After.ContainsKey($name) -or $null -eq $After[$name]) { $m.gone++; continue }
         if (-not $ParagraphsAfter.ContainsKey($owner) -or $ParagraphsAfter[$owner].unplaced) { $m.lost++; continue }
         if ($After[$name].unreadable) { $m.unreadable += "$name $($After[$name].unreadable) after the edit"; continue }
-        $ownerMoved = $ParagraphsAfter[$owner].place - $ParagraphsBefore[$owner].place
-        $drawingMoved = $After[$name].place - $Before[$name].place
+        $text = Get-PdfMove "p:$owner" $ParagraphsBefore[$owner].page $ParagraphsAfter[$owner].page $ReadBefore $ReadAfter
+        if ($text.why) { $m.unreadable += "$name stands beside paragraph $owner, whose first letters $($text.why)"; continue }
+        $drawing = Get-PdfMove "d:$name" $Before[$name].page $After[$name].page $ReadBefore $ReadAfter
+        if ($drawing.why) { $m.unreadable += "$name $($drawing.why)"; continue }
+        $ownerMoved = $text.move
+        $drawingMoved = $drawing.move
         if ([Math]::Abs($ownerMoved) -gt $MOVED_AT_ALL_POINTS) {
             $m.moved++
             if ([Math]::Abs($drawingMoved - $ownerMoved) -le $FOLLOWS_WITHIN_POINTS) { $m.followed++; continue }
@@ -1025,6 +1105,67 @@ function Measure-Following {
         }
     }
     return $m
+}
+
+# How far one drawing ('d:<name>') or one paragraph's first letters ('p:<index>') moved between two
+# of Word's PDFs: the page Word's geometry names before and after, counted as Get-Place counts it,
+# and the top the PDF draws it at on that page. Or why the move cannot be read.
+function Get-PdfMove {
+    param([string]$Key, [int]$PageBefore, [int]$PageAfter, $ReadBefore, $ReadAfter)
+    $before = $ReadBefore[$Key]
+    $after = $ReadAfter[$Key]
+    if ($null -eq $before -or $null -eq $after) { return @{ why = "was not looked for in Word's PDF" } }
+    if ($before.why) { return @{ why = "cannot be found before the edit: $($before.why)" } }
+    if ($after.why) { return @{ why = "cannot be found after the edit: $($after.why)" } }
+    # A box's top, a baseline and the top of what is drawn inside a rectangle are different places,
+    # so a move is read between two readings of the same kind, the same number of things inside.
+    if ($before.by -ne $after.by) { return @{ why = "is found by $($before.by) before the edit and by $($after.by) after it, which are not one place" } }
+    return @{ move = ($PageAfter * 10000 + [double]$after.top) - ($PageBefore * 10000 + [double]$before.top) }
+}
+
+# Where Word's own PDF draws the drawings and the paragraphs named, each found near where Word's page
+# geometry and a range put it: by key — 'd:' and a drawing's name, 'p:' and a paragraph's index —
+# what places() in the script the PDF verdicts are read by found, the top in points down the page
+# the geometry names, or why it found nothing there.
+#
+# The places COM states are of a layout other than the one Word prints: on Word 16.0.20527.20150, in cv-serif_headline, a line Word's PDF moves 22.08pt reads as moving
+# 22.6pt through a range, and the drawings beside it, which the PDF moves 22.1pt with it, read 21pt
+# in the page geometry's whole points. So which drawing and which paragraph is read through COM, and
+# how far they moved is read from the PDF.
+#
+# The job is written beside the PDF with each drawing's paragraph in it, and what was found beside
+# that, so a move can be read again by hand.
+function Read-PdfPlaces {
+    param([string]$Pdf, $Drawings, $Paragraphs, $Owners, [int]$Pages)
+    # Python's stderr is read as text here, as in Test-PdfVerdicts.
+    $ErrorActionPreference = 'Continue'
+    $wanted = [ordered]@{ pdf = $Pdf; pages = $Pages; drawings = @(); paragraphs = @() }
+    foreach ($name in $Owners.Keys) {
+        $d = $Drawings[$name]
+        if ($null -eq $d -or $d.unreadable) { continue }
+        $wanted.drawings += [ordered]@{
+            key = "d:$name"; page = $d.page; top = $d.top
+            left = $d.left; width = $d.width; height = $d.height; text = $d.text; beside = "p:$($Owners[$name])"
+        }
+    }
+    foreach ($index in @($Owners.Values | Sort-Object -Unique)) {
+        $p = $Paragraphs[$index]
+        if ($null -eq $p -or $p.unplaced) { continue }
+        $wanted.paragraphs += [ordered]@{
+            key = "p:$index"; page = $p.page; top = $p.place - $p.page * 10000; left = $p.left; right = $p.right
+            text = $p.text; inline = $p.inline; size = $p.size
+        }
+    }
+    $job = $Pdf -replace '\.pdf$', '.places.json'
+    $wanted | ConvertTo-Json -Depth 4 | Set-Content -Path $job -Encoding utf8
+    $output = & $Python $JUDGE --places $job 2>&1
+    # What was found is the one line of JSON the script prints; a warning on stderr is not it.
+    $line = @($output | Where-Object { "$_".StartsWith('{') } | Select-Object -Last 1)
+    if ($LASTEXITCODE -ne 0 -or $line.Count -eq 0) { throw "the places could not be read from Word's PDF: $(($output | Select-Object -Last 3) -join ' ')" }
+    $line[0] | Set-Content -Path ($job -replace '\.json$', '.found.json') -Encoding utf8
+    $found = @{}
+    foreach ($property in ($line[0] | ConvertFrom-Json).PSObject.Properties) { $found[$property.Name] = $property.Value }
+    return $found
 }
 
 # Sets a document Word has open as a PDF, as Word draws it.
@@ -1471,6 +1612,7 @@ function Invoke-Protocol {
         $state.index = Find-FirstBodyParagraph $doc
         if ($state.index -lt 0 -or $doc.Shapes.Count -eq 0) { return $false }
         $geometry = Get-PageGeometry $doc
+        $state.pagesLaidOut = $geometry.pages
         $state.drawings = Get-DrawingPlaces $doc $geometry
         $state.paragraphs = Get-ParagraphPlaces $doc $geometry
         # What the reading could not do before the edit, named rather than left silent: the
@@ -1562,13 +1704,24 @@ function Invoke-Protocol {
             $state.placedFromElsewhere.Count -eq 0 -and $state.sharedNames.Count -eq 0) { return $false }
         $p = $doc.Paragraphs($state.index)
         $state.target = (Get-Text $p).Substring(0, 30)
+        # Word's own PDF of the document before the edit, which the moves are read from with the PDF
+        # of the save after it (see Read-PdfPlaces).
+        $state.pdfBefore = $doc.FullName -replace '\.docx$', '.before.pdf'
+        Export-Pdf $doc $state.pdfBefore
         (Get-TextRange $p).InsertAfter($ADDED)
     } -Verify {
         param($doc, $state)
         $geometry = Get-PageGeometry $doc
         $drawings = Get-DrawingPlaces $doc $geometry
         $paragraphs = Get-ParagraphPlaces $doc $geometry
-        $carried = Measure-Following $doc $state.owners $state.drawings $drawings $state.paragraphs $paragraphs
+        $pdfAfter = $doc.FullName -replace '\.docx$', '.pdf'
+        Export-Pdf $doc $pdfAfter
+        # Both sets, carried and nailed: the nailed ones are measured too, though nothing is asked of them.
+        $asked = @{}
+        foreach ($set in $state.owners, $state.onTheSheet) { foreach ($name in $set.Keys) { $asked[$name] = $set[$name] } }
+        $readBefore = Read-PdfPlaces $state.pdfBefore $state.drawings $state.paragraphs $asked $state.pagesLaidOut
+        $readAfter = Read-PdfPlaces $pdfAfter $drawings $paragraphs $asked $geometry.pages
+        $carried = Measure-Following $doc $state.owners $state.drawings $drawings $state.paragraphs $paragraphs $readBefore $readAfter
         $moved = $carried.moved; $followed = $carried.followed; $stayed = $carried.stayed
         $stood = $carried.stood; $gone = $carried.gone; $lost = $carried.lost
         $stray = $carried.stray; $adrift = $carried.adrift
@@ -1594,7 +1747,7 @@ function Invoke-Protocol {
         $nailedCount = $state.onTheSheet.Count + $state.onTheSheetSilent.Count
         $nailedGone = 0
         if ($nailedCount -gt 0) {
-            $onTheSheet = Measure-Following $doc $state.onTheSheet $state.drawings $drawings $state.paragraphs $paragraphs
+            $onTheSheet = Measure-Following $doc $state.onTheSheet $state.drawings $drawings $state.paragraphs $paragraphs $readBefore $readAfter
             $nailedGone = $onTheSheet.gone
             $named = @($state.onTheSheet.Keys | Sort-Object $byItsNumber, { $_ }) +
                 @($state.onTheSheetSilent | Sort-Object $byItsNumber, { $_ })
@@ -1605,7 +1758,7 @@ function Invoke-Protocol {
             $detail += " — of the $($state.onTheSheet.Count) with text beside them, $($onTheSheet.moved) beside text that moved, " +
                 "$($onTheSheet.followed) of them followed it, $($onTheSheet.stayed) beside text that stayed, $($onTheSheet.stood) of them stood still, " +
                 "$($onTheSheet.gone) the reading no longer finds, $($onTheSheet.lost) whose own text could not be placed again, " +
-                "$($onTheSheet.unreadable.Count) whose place the geometry no longer gives"
+                "$($onTheSheet.unreadable.Count) whose place or move the geometry or Word's PDF does not give"
             # Each nailed drawing that left its text or lost its place, by name and with its
             # reason, as the carried ones are given: the count alone would not say which of
             # thirteen tiles were the eleven over moved text. Only the two the reading can say
@@ -1627,7 +1780,7 @@ function Invoke-Protocol {
         if ($stray.Count -gt 0) { $detail += "; not following: " + (($stray | Select-Object -First 3) -join '; ') }
         if ($adrift.Count -gt 0) { $detail += "; moving from text that did not: " + (($adrift | Select-Object -First 3) -join '; ') }
         if ($unreadable.Count -gt 0) {
-            $detail += "; $($unreadable.Count) whose place Word's page geometry does not give: " +
+            $detail += "; $($unreadable.Count) whose place or move Word's page geometry or its PDF does not give: " +
                 (($unreadable | Sort-Object $byItsNumber, { $_ } | Select-Object -First 3) -join '; ')
         }
         if ($state.placedFromElsewhere.Count -gt 0) {
@@ -1772,10 +1925,13 @@ function Invoke-Protocol {
 # drawings Word names alike, which are read as no drawing at all and must not be passed over. One
 # came with reading a cell's text to the cell's own edges: a drawing standing in the gutter of its
 # own column with another column's text beside it at the same height, which must be read as
-# standing beside its own. Sixteen documents, and two checks that need none, one for each of the
-# thresholds the verdict is read by: each held to the grid its readings land on, and each held to
-# the promise it makes from both sides, since no document can be laid out to put a difference
-# exactly on a threshold. Eighteen checks in all.
+# standing beside its own. Two came with reading the moves from Word's PDF: a drawing anchored to a
+# paragraph that does not move, beside text that does, which must be caught as left behind with
+# both moves read from the PDF; and a drawing the PDF draws nothing of, which must be named and
+# fail. Eighteen documents, and two checks that need none, one for each of the thresholds the
+# verdict is read by: each held to the grid COM's readings landed on, and each held to the promise
+# it makes from both sides, since no document can be laid out to put a difference exactly on a
+# threshold. Twenty checks in all.
 
 $PROBE_CONTENT_TYPES = @'
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -1823,7 +1979,7 @@ $EMU_A_POINT = 12700
 
 function New-ProbeDrawing {
     param([string]$From = 'paragraph', [double]$OffsetPoints = 0, [switch]$InCell, [int]$Id = 1,
-          [double]$AcrossPoints = 0)
+          [double]$AcrossPoints = 0, [switch]$Unpainted)
     $cell = [int]$InCell.IsPresent
     $across = if ($InCell) { 'column' } else { 'page' }
     $offset = [long]($OffsetPoints * $EMU_A_POINT)
@@ -1840,7 +1996,8 @@ function New-ProbeDrawing {
         '<wps:wsp><wps:cNvSpPr/><wps:spPr>' +
         '<a:xfrm><a:off x="0" y="0"/><a:ext cx="' + $PROBE_WIDTH + '" cy="' + $PROBE_HEIGHT + '"/></a:xfrm>' +
         '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>' +
-        '<a:solidFill><a:srgbClr val="FF0000"/></a:solidFill><a:ln><a:noFill/></a:ln>' +
+        $(if ($Unpainted) { '<a:noFill/>' } else { '<a:solidFill><a:srgbClr val="FF0000"/></a:solidFill>' }) +
+        '<a:ln><a:noFill/></a:ln>' +
         '</wps:spPr><wps:bodyPr/></wps:wsp></a:graphicData></a:graphic></wp:anchor></w:drawing>'
 }
 
@@ -2131,6 +2288,32 @@ function New-ProbeFollows {
                      (New-ProbeParagraph -Text $PROBE_SHORT -Drawing (New-ProbeDrawing -OffsetPoints -20))
         }
         @{
+            name   = 'a-drawing-the-pdf-does-not-draw'
+            status = 'FAIL'
+            detail = '*Drawing 1 cannot be found before the edit: Word''s PDF draws nothing of its 20x10pt*'
+            # The same rectangle as the first probe, beside the same text and carried by it, with no
+            # fill and no outline: Word's geometry gives it a place, and its PDF draws nothing there
+            # to read a move from. The move cannot be read, so the drawing is named and the scenario
+            # fails, as it does for a drawing the geometry does not give.
+            what   = 'a carried drawing Word''s PDF draws nothing of is named and fails'
+            body   = (New-ProbeParagraph -Text $PROBE_LONG) +
+                     (New-ProbeParagraph -Text $PROBE_SHORT -Drawing (New-ProbeDrawing -Unpainted))
+        }
+        @{
+            name   = 'a-drawing-its-text-leaves-behind'
+            status = 'FAIL'
+            detail = '*1 beside text that moved, 0 of them followed it*not following: Drawing 1 by 0*'
+            # The other way round from the probe above: the drawing stands beside the short
+            # paragraph's line, but is anchored to the lengthened paragraph above it, 28pt below
+            # that paragraph's top — two lines of $PROBE_LONG, where the short paragraph begins. The
+            # edit moves the short paragraph down and leaves the top of the lengthened one where it
+            # was, so the drawing stays while the text it stands beside moves on. Both moves are
+            # read from Word's PDF, so this holds that reading to catching a drawing left behind.
+            what   = 'a drawing anchored to a paragraph that does not move, beside text that does'
+            body   = (New-ProbeParagraph -Text $PROBE_LONG -Drawing (New-ProbeDrawing -OffsetPoints 28)) +
+                     (New-ProbeParagraph -Text $PROBE_SHORT)
+        }
+        @{
             name   = 'a-row-the-page-breaks-through'
             status = 'PASS'
             # The count of paragraphs in a row Word draws on more than one page is in the detail
@@ -2244,9 +2427,11 @@ function New-ProbeFollows {
     )
 }
 
-# The two thresholds the verdict is read by, against what the readings they compare can take. The
-# checks of the self-check that need no document: every probe holds a reading to a document, and
-# these hold two constants to the grid those readings land on. A threshold of a whole number of
+# The two thresholds the verdict is read by, against what the readings they compared could take
+# when they were read through COM; the moves are read from Word's PDF now (see the comment over
+# $FOLLOWS_WITHIN_POINTS), and these checks keep the two where they were set. The checks of the
+# self-check that need no document: every probe holds a reading to a document, and these hold two
+# constants to the grid COM's readings landed on. A threshold of a whole number of
 # twips is a value the readings can produce exactly, and what it decides then turns on the last
 # digit of a single-precision float instead of on where Word drew anything — which is how two runs
 # of this script, on bytes that had not changed, came to report five fewer followers over one more
@@ -2413,6 +2598,19 @@ if ($SelfCheck) {
     # them by hand as well, which is the pair that did come to disagree once.
     $WITHOUT_A_DOCUMENT = 2
     $thresholds = @(Test-TheThresholds)
+    # The probes read how far a drawing and its text moved from Word's PDF, through Python, so that
+    # is held next, before Word: where it cannot be read nothing past the thresholds can be checked.
+    $verdicts = Test-PdfVerdicts
+    if ($verdicts) {
+        foreach ($failure in $thresholds) { Write-Host "SELF-CHECK FAIL $failure" }
+        Write-Host "$WITHOUT_A_DOCUMENT checks, $($thresholds.Count) failed; the rest were not run: $($verdicts.why)"
+        if ($thresholds.Count -gt 0 -or $verdicts.code -ne 2) {
+            Write-Warning "FAILED: a threshold, or the PDF reading, is wrong: $($verdicts.why)"
+            exit 1
+        }
+        Write-Warning "NOT_RUN: $($verdicts.why)"
+        exit 2
+    }
     try {
         $word = New-Object -ComObject Word.Application
     } catch {
@@ -2447,7 +2645,7 @@ New-Item -ItemType Directory -Force $inputs | Out-Null
 $sources = @($Docx | ForEach-Object { Copy-Item $_ $inputs -Force -PassThru })
 # The PDF verdicts are held before Word is asked for, where a scenario that reads them runs: one
 # that cannot be read is not run at all, rather than recorded as an error on every document.
-if (@($PDF_JUDGED | Where-Object { -not $Scenario -or $_ -in $Scenario }).Count -gt 0) {
+if (@($PDF_READ | Where-Object { -not $Scenario -or $_ -in $Scenario }).Count -gt 0) {
     $verdicts = Test-PdfVerdicts
     if ($verdicts) {
         $status = if ($verdicts.code -eq 2) { 'NOT_RUN' } else { 'FAILED' }
@@ -2465,7 +2663,9 @@ try {
     Write-Warning 'NOT_RUN: Microsoft Word is not available'
     exit 2
 }
-$wordVersion = "$($word.Version) ($($word.Build))"
+# The build as the file states it: Word's own Build stops at the third part, so an update inside a
+# build — 16.0.20527.20150 replacing an earlier 16.0.20527 — would leave no trace in the protocol.
+$wordVersion = "$($word.Version) ($(Get-WordBuild $word))"
 $word.Visible = $false
 $word.DisplayAlerts = 0
 

@@ -5362,6 +5362,43 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **Word's editing protocol reads how far drawings and text moved from Word's own PDF.**
+  - `drawings-follow-text` lengthens the first paragraph of body text and holds each drawing a
+    paragraph carries to moving with the text it stands beside. It read both moves through Word's
+    COM: a drawing's place from the page geometry, in whole points, and a line's from a range.
+    Since a Word update (16.0.20527.20150), COM states a layout other than the one Word prints.
+    In `cv-serif_headline` a line that Word's PDF moves 22.08pt reads as moving 22.6pt through a
+    range, and the drawings beside it, which the PDF moves 22.1pt, read 21pt. Drawings that
+    visibly follow their text were failed: the corpus read 277 of 321 following.
+  - COM still says which drawing stands beside which paragraph and on which page. How far each
+    moved is now read from the PDFs Word sets before the edit and after the save, by
+    `edit-protocol-libreoffice.py --places`. A drawing is the box of its own size the PDF draws
+    nearest where the geometry puts it. A drawing that draws no box of its own size is found by the
+    text it holds, or by what it draws inside its rectangle — an icon's glyph, a ring inside its
+    square. A paragraph is the baseline of the first letters of its text, below the top of its line
+    — the line above can open with the same words — or the picture in its line where it has no
+    letter. A drawing or paragraph the PDF does not show there, or reads one way before the edit
+    and another after it, is named and fails the scenario where a paragraph carries the drawing.
+  - The limit a drawing is held to (a point and a half and half a twip) and the move past which
+    text counts as moved (half a point and half a twip) are unchanged. Read from the PDF, every
+    drawing that follows its text does so within 0.16pt, and every one that does not is 8.04pt or
+    more out.
+  - Run over the 84 documents of the corpus in Word 16.0.20527.20150, the scenario reads 305 of
+    316 following (96.52%). `cv-serif_headline` goes from 43 of 70 to 69 of 70, the one left
+    standing on page 2 while its heading stays on page 1; `cv-panel` from 3 of 5 to 5 of 5.
+  - One verdict changes the other way. In `cv-orange_ops` Word puts two 1x11pt rules 23pt above
+    the top of page 2 after the edit and prints nothing of them; COM's geometry read them as having
+    followed their heading there. They are now named as standing off the page, and the scenario
+    fails for that document.
+  - The protocol's JSON records Word's full build, `16.0.20527.20150`, read from the file Word
+    runs as: Word's own `Build` stops at `16.0.20527`, so an update inside a build left no trace.
+    `edit-protocol-word.ps1` records it the same way.
+  - `--self-check` holds each limit the PDF is searched within from both sides with numbers
+    written out, and a bullet that opens with the words of the bullet above being read on its own
+    line. The Word protocol's `-SelfCheck` adds two probes — a drawing anchored to a paragraph
+    that does not move, beside text that does, and a drawing the PDF draws nothing of — and holds
+    the Python it reads the PDF with before it asks for Word.
+
 - **Word's editing protocol makes the edits the LibreOffice one makes, and reads them by the same
   verdicts.**
   - `edit-protocol-corpus.ps1` adds four scenarios: a sentence added to the longest paragraph in a

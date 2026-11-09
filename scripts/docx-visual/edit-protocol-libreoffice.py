@@ -73,6 +73,24 @@ plus the words typed where they are not this script's). edit-protocol-corpus.ps1
 edits through Word and reads them this way, so both editors are held to one set of verdicts. It
 needs the PyMuPDF the self-check does, and exits 2 without one.
 
+--places JOB finds where another editor's PDF draws drawings and the first letters of paragraphs,
+and prints it as JSON: JOB is a JSON file of the PDF and of each drawing (its page, top, left,
+width, height and any text it holds) and each paragraph (its page, the top of its first line, its
+left, the right its text runs to, its text, and the size of the picture it holds where its text
+has no letter) as that editor states them. A drawing is the box of its own size, within a point
+and a half, the PDF draws nearest where the editor puts it, within 4pt; where there is none, a
+drawing that holds text is found by that text, and one that holds none by what the PDF draws wholly
+inside its rectangle — the glyph of an icon whose frame is not drawn. A drawing the editor puts
+wholly above or below its page is not looked for: the PDF shows nothing of it. A paragraph is the
+first twelve letters and digits of its text — or, with none, its other characters, or the picture
+in its line — drawn nearest where the editor puts its first line: starting between 4pt left of
+that line and 4pt past the right its text runs to, on a baseline below the top of that line and
+no more than 40pt below it or twice its letters' size, or than a drawing's height for a drawing's
+text. A drawing or a
+paragraph is read by the same means before an edit and after it, or its move is not read. What is printed is the top of the box, or the baseline of the letters, the PDF
+draws it at, or why it found nothing. edit-protocol-corpus.ps1 reads how far drawings and text
+moved this way, since what Word's COM states is a layout other than the one Word prints.
+
 --self-check holds every verdict to probe PDFs it writes with PyMuPDF: each rule is broken once, in
 a probe only that rule can fail, and the limits a move, a crossing, the spacing of typed lines and
 the header and footer bands are read by are each held from both sides. It needs a PyMuPDF that
@@ -199,6 +217,191 @@ def read_pictures(pdf):
             x0, y0, x1, y1 = image["bbox"]
             if (x1 - x0) * (y1 - y0) > PICTURE_AREA:
                 out.append((pno, (x0, y0, x1, y1), (image["width"], image["height"])))
+    return out
+
+
+# --- Places in another editor's PDF -----------------------------------------------------------
+#
+# Word's protocol asks whether a drawing moved with the text beside it. Word's COM geometry tells it
+# which drawing stands beside which paragraph, but the places it states are of a layout other than
+# the one Word prints: on Word 16.0.20527.20150 a line its PDF moves 22.08pt reads as 22.6pt through
+# a range, and the drawings beside it, which its PDF moves 22.1pt, read 21pt in the whole points of
+# the page geometry — further out than rounding alone could put them. So the moves are read here,
+# from the PDF Word itself sets, and COM only says where to look (see places()).
+
+# How far the PDF may draw a drawing from where COM puts it, in points, and how far left of where COM
+# starts a line its letters may start. Over the corpus on Word 16.0.20527.20150, every drawing found
+# by its own box stood within 0.9pt of where COM puts it.
+PLACE_REACH = 4.0
+# How far a drawing's box in the PDF may differ in size from the size COM states for it.
+SIZE_REACH = 1.5
+# How far below the top of the line COM reads a paragraph's first letters may stand their baseline:
+# a line Word holds to a height of its own sets its letters at its foot, as far down as that height
+# runs; and letters of a large size stand their baseline further down — a 44pt monogram's stood
+# 46.0pt below the top — so the paragraph's own letters may drop twice their size where that is the
+# more. A drawing's text may stand anywhere down the drawing's own height. Never above that top: the
+# line above ends there, and its letters can begin with the same words — two bullets that open
+# "Responsible for" — so a baseline above the top is the line above's. Over the corpus every
+# paragraph's baseline stood between 5.3 and 46.0pt below the top COM reads.
+LETTERS_DROP = 40.0
+LETTERS_DROP_SIZES = 2.0
+# How many letters of a paragraph's start are looked for; fewer where the paragraph has fewer.
+LETTERS_LOOKED_FOR = 12
+
+
+def folded(text):
+    """A text's visible characters, compatibility-folded and case-folded: a ligature the PDF draws as
+    one glyph reads as its letters, and a tab or a space reads as nothing."""
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFKC", text).casefold() if not c.isspace())
+
+
+def letter_key(text):
+    """What a paragraph is looked for by: its letters and digits, a bullet or a dash before them
+    reading as nothing; or, for a paragraph that has none — a lone "/" between two contact details
+    — the characters it does have."""
+    shown = folded(text)
+    return "".join(c for c in shown if c.isalnum()) or shown
+
+
+def page_letters(page):
+    """Every character a person can see on a page, in the PDF's own order: the folded character, the
+    left of the glyph it came from and the baseline it stands on, and whether it is a letter or a
+    digit. The baseline and not the glyph's top: the top PyMuPDF gives a glyph is its face's ascent,
+    which for a 58pt capital of one face stood 24pt above the text box holding it."""
+    out = []
+    for block in page.get_text("rawdict", flags=fitz.TEXTFLAGS_RAWDICT | clip_flag())["blocks"]:
+        for line in block.get("lines", []):
+            for span in line["spans"]:
+                for char in span["chars"]:
+                    for c in folded(char["c"]):
+                        out.append((c, char["bbox"][0], char["origin"][1], c.isalnum()))
+    return out
+
+
+def drawn_boxes(page):
+    """The box of every path and every image the PDF draws on a page: (left, top, width, height)."""
+    boxes = [(d["rect"].x0, d["rect"].y0, d["rect"].width, d["rect"].height) for d in page.get_drawings()]
+    for image in page.get_image_info():
+        x0, y0, x1, y1 = image["bbox"]
+        boxes.append((x0, y0, x1 - x0, y1 - y0))
+    return boxes
+
+
+def find_drawing(boxes, want):
+    """Where the PDF draws a drawing, or why it draws nothing there: the top of the box of the
+    drawing's own size nearest where COM puts its corner; or, where it draws none, the top of what
+    it draws inside the drawing's own rectangle.
+
+    The second is what a drawing whose frame is not drawn leaves: an icon of 15pt whose glyph is
+    12.5pt, a ring stroked 6pt inside its 72pt square. Its top is not the frame's, but it moves as
+    the frame does, and a move is all that is read from it. A rectangle that draws nothing of its
+    own and holds what another drawing draws would be read by that drawing's place, so a drawing
+    that holds text is found by its text instead (see places()).
+
+    With a right, the drawing is a picture in a paragraph's line, and its box may start anywhere
+    across the width that paragraph's text runs to: where a range says such a paragraph starts is
+    not where the picture is drawn — a photo's paragraph indented 28.1pt reads as starting at 0. It
+    is then found by its box alone."""
+    best = None
+    reach = (want["left"] - PLACE_REACH, want.get("right", want["left"]) + PLACE_REACH)
+    for left, top, width, height in boxes:
+        if abs(width - want["width"]) > SIZE_REACH or abs(height - want["height"]) > SIZE_REACH:
+            continue
+        dx, dy = left - want["left"], top - want["top"]
+        if not reach[0] <= left <= reach[1] or abs(dy) > PLACE_REACH:
+            continue
+        if best is None or abs(dx) + abs(dy) < best[0]:
+            best = (abs(dx) + abs(dy), top, dx, dy)
+    if best is not None:
+        return {"top": best[1], "dx": best[2], "dy": best[3], "by": "box"}
+    if "right" in want:
+        return {"why": "Word's PDF draws no picture of its %gx%gpt across its paragraph within %gpt of where its line"
+                       " stands" % (round(want["width"], 1), round(want["height"], 1), PLACE_REACH)}
+    inside = [(left, top) for left, top, width, height in boxes
+              if left >= want["left"] - SIZE_REACH and left + width <= want["left"] + want["width"] + SIZE_REACH
+              and top >= want["top"] - SIZE_REACH and top + height <= want["top"] + want["height"] + SIZE_REACH]
+    if inside:
+        top = min(t for _, t in inside)
+        return {"top": top, "dx": min(l for l, _ in inside) - want["left"], "dy": top - want["top"],
+                "by": "%d inside" % len(inside)}
+    return {"why": "Word's PDF draws nothing of its %gx%gpt within %gpt of where its geometry puts it, and"
+                   " nothing inside it" % (round(want["width"], 1), round(want["height"], 1), PLACE_REACH)}
+
+
+def find_letters(letters, want):
+    """The baseline of the first letter of a paragraph's text where the PDF draws its first letters
+    nearest where COM puts its first line, or why there are none: the letters must start within the
+    width the text runs to, and stand on a baseline below the top of the line and no further below it
+    than LETTERS_DROP or twice the size of its first letter, or than a drawing's own height where the
+    text is a drawing's."""
+    drop = want.get("drop") or max(LETTERS_DROP, LETTERS_DROP_SIZES * (want.get("size") or 0))
+    key = letter_key(want["text"])[:LETTERS_LOOKED_FOR]
+    if not key:
+        return {"why": "its text holds nothing visible to find in Word's PDF"}
+    # Letters and digits are looked for among the PDF's letters and digits alone, as the key leaves
+    # out everything else; a key of other characters among everything the PDF shows.
+    if any(c.isalnum() for c in key):
+        letters = [letter for letter in letters if letter[3]]
+    stream = "".join(letter[0] for letter in letters)
+    best = None
+    at = stream.find(key)
+    while at >= 0:
+        _, left, top, _ = letters[at]
+        dx, dy = left - want["left"], top - want["top"]
+        if -PLACE_REACH <= dx and left <= want["right"] + PLACE_REACH and 0 <= dy <= drop:
+            if best is None or abs(dy) + abs(dx) < best[0]:
+                best = (abs(dy) + abs(dx), top, dx, dy)
+        at = stream.find(key, at + 1)
+    if best is None:
+        return {"why": "Word's PDF draws no '%s' within the width its text runs to, on a baseline no more"
+                       " than %gpt below where its first line stands" % (key, round(drop, 1))}
+    return {"top": best[1], "dx": best[2], "dy": best[3], "by": "letters"}
+
+
+def places(pdf, job):
+    """Where the PDF draws each drawing and each paragraph's first letters that COM placed: by key,
+    the top in points down its page, or why it could not be found there. Pages count from 1, as
+    Word's do, and a PDF of another number of pages than the job's is not read at all: every page
+    after the one where the two part would be looked for on the wrong page."""
+    out = {}
+    pages = {}
+    if job.get("pages") is not None and job["pages"] != len(pdf):
+        why = {"why": "Word's PDF has %d pages where its layout has %d" % (len(pdf), job["pages"])}
+        return {want["key"]: why for want in job.get("drawings", []) + job.get("paragraphs", [])}
+
+    def page(number):
+        if number not in pages:
+            p = pdf[number - 1] if 1 <= number <= len(pdf) else None
+            pages[number] = (drawn_boxes(p), page_letters(p), p.rect.height) if p else None
+        return pages[number]
+
+    for want in job.get("drawings", []):
+        read = page(want["page"])
+        if not read:
+            out[want["key"]] = {"why": "Word's PDF has no page %d" % want["page"]}
+        elif want["top"] + want["height"] <= 0 or want["top"] >= read[2]:
+            # Word puts it wholly above or below the page it is drawn on, and prints nothing of it.
+            out[want["key"]] = {"why": "stands off page %d, at %gpt, where Word's PDF shows nothing of it"
+                                       % (want["page"], round(want["top"], 1))}
+        else:
+            found = find_drawing(read[0], want)
+            if found.get("by") != "box" and letter_key(want.get("text") or ""):
+                # A drawing that holds text and draws no box of its own size — a text box with no
+                # fill and no outline draws only its text — is found by its text, as a paragraph is:
+                # what else is drawn inside its rectangle can be another drawing's.
+                found = find_letters(read[1], dict(want, right=want["left"] + want["width"],
+                                                   drop=want["height"] + PLACE_REACH))
+            out[want["key"]] = found
+    for want in job.get("paragraphs", []):
+        read = page(want["page"])
+        if not read:
+            out[want["key"]] = {"why": "Word's PDF has no page %d" % want["page"]}
+        elif want.get("inline"):
+            # A paragraph of no letter that holds a picture in its line is found by that picture.
+            out[want["key"]] = find_drawing(read[0], dict(want, **want["inline"]))
+        else:
+            out[want["key"]] = find_letters(read[1], want)
     return out
 
 
@@ -834,6 +1037,109 @@ def run_self_check(scratch):
                    "PASS" if abs(MOVE_LIMIT / GRID - round(MOVE_LIMIT / GRID)) > 0.25 else "FAIL", "PASS", MOVE_LIMIT))
     checks.append(("this PyMuPDF leaves clipped text out", "PASS" if clip_honoured() else "FAIL", "PASS", fitz.VersionBind))
 
+    # Places in another editor's PDF (--places). A drawing is an image of 20x10pt whose top stands at
+    # 200.37pt, off any whole point, and COM is taken to put it at 200, as the page geometry would.
+    # Lines are set on baselines the probe names, and COM is taken to read a line's top above them.
+    # Every limit is held from both sides by numbers written out here, not taken from the constants,
+    # so a limit widened or narrowed fails one side or the other.
+    def read_at(name, read, top):
+        if "why" in read:
+            checks.append((name, "FAIL", "PASS", read["why"]))
+        else:
+            checks.append((name, "PASS" if abs(read["top"] - top) < 0.01 else "FAIL", "PASS",
+                           "read %.3f by %s, drawn at %.3f" % (read["top"], read.get("by"), top)))
+
+    def read_by(name, read, by):
+        checks.append((name, "PASS" if read.get("by") == by else "FAIL", "PASS",
+                       "found by %s" % (read.get("by") or read.get("why"))))
+
+    def refused(name, read, because=""):
+        ok = "why" in read and because in read["why"]
+        checks.append((name, "PASS" if ok else "FAIL", "PASS", read.get("why") or "read %.3f" % read["top"]))
+
+    def one(pdf, want, kind="drawings"):
+        return places(pdf, {kind: [want]})[want["key"]]
+
+    drawn = probe_pdf(1, pictures_at=[(0, (100, 200.37, 120, 210.37), old_png)])
+    want = {"key": "d", "page": 1, "top": 200, "left": 100, "width": 20, "height": 10}
+    read_at("--places, a drawing where COM puts it, read off any whole point", one(drawn, want), 200.37)
+    read_by("--places, a box 3.9pt below where COM puts it is the drawing", one(drawn, dict(want, top=196.47)), "box")
+    refused("--places, a box 4.1pt below where COM puts it is not", one(drawn, dict(want, top=196.27)))
+    read_by("--places, a box 3.9pt left of where COM puts it is the drawing", one(drawn, dict(want, left=103.9)), "box")
+    refused("--places, a box 4.1pt left of where COM puts it is not", one(drawn, dict(want, left=104.1)))
+    read_by("--places, a box 1.4pt narrower than COM states is the drawing's own", one(drawn, dict(want, width=21.4)), "box")
+    read_by("--places, a box 1.6pt narrower is not its own, but what it draws inside",
+            one(drawn, dict(want, width=21.6)), "1 inside")
+    read_by("--places, a box 1.4pt shorter than COM states is the drawing's own", one(drawn, dict(want, height=11.4)), "box")
+    read_by("--places, a box 1.6pt shorter is not its own, but what it draws inside",
+            one(drawn, dict(want, height=11.6)), "1 inside")
+    refused("--places, a box of another size that will not fit inside the drawing is refused", one(drawn, dict(want, width=16)))
+    read_at("--places, a drawing that draws no frame is read by what it draws inside its rectangle",
+            one(drawn, dict(want, width=26, height=26, left=97, top=201.77)), 200.37)
+    refused("--places, what stands 1.6pt out of the drawing's rectangle is not inside it",
+            one(drawn, dict(want, width=26, height=26, left=97, top=201.97)))
+    read_by("--places, a drawing that holds text and draws its own box is read by the box",
+            one(drawn, dict(want, text="Never drawn here.")), "box")
+    boxed = probe_pdf(1, [(0, 104, 214, "Text a text box holds.", 10)], pictures_at=[(0, (110, 204, 116, 210), old_png)])
+    box = dict(want, top=202, left=101, width=120, height=16, text="Text a text box holds.")
+    read_at("--places, a text box that draws only its text is read by its text, not by what else is inside",
+            one(boxed, box), 214)
+    refused("--places, a text box whose text is not drawn there is refused", one(boxed, dict(box, text="Other words entirely.")))
+    refused("--places, a page the PDF does not have is refused", one(drawn, dict(want, page=2)), "has no page 2")
+    refused("--places, a drawing Word puts wholly above its page is not looked for", one(drawn, dict(want, top=-10.1)),
+            "stands off page")
+    refused("--places, one that reaches onto its page is looked for", one(drawn, dict(want, top=-9.9)),
+            "draws nothing")
+    refused("--places, a PDF of another number of pages than the layout is not read",
+            places(drawn, {"pages": 2, "drawings": [want]})["d"], "has 1 pages where its layout has 2")
+    read_at("--places, a PDF of as many pages as the layout is read",
+            places(drawn, {"pages": 1, "drawings": [want]})["d"], 200.37)
+    photo = {"key": "p", "page": 1, "top": 200, "left": 72, "right": 250, "text": "/",
+             "inline": {"width": 20, "height": 10}}
+    read_at("--places, a picture's paragraph is found by its picture anywhere across its width",
+            one(drawn, photo, "paragraphs"), 200.37)
+    read_by("--places, a picture starting 3.9pt past the width its paragraph runs to is its picture",
+            one(drawn, dict(photo, right=96.1), "paragraphs"), "box")
+    refused("--places, a picture starting 4.1pt past it is not", one(drawn, dict(photo, right=95.9), "paragraphs"))
+    refused("--places, a picture's paragraph is never read by what is drawn inside a rectangle",
+            one(drawn, dict(photo, left=97, top=197.5, inline={"width": 26, "height": 16}), "paragraphs"))
+    sentence = "Delivery timeline for the programme."
+    para = {"key": "p", "page": 1, "top": 98, "left": 72, "right": 250, "text": sentence}
+    alone = probe_pdf(1, [(0, 72, 100, sentence, 10)])
+    read_at("--places, a paragraph's first letters on their baseline", one(alone, para, "paragraphs"), 100)
+    read_at("--places, a baseline 39.9pt below the line COM reads is the paragraph's",
+            one(alone, dict(para, top=60.1), "paragraphs"), 100)
+    refused("--places, a baseline 40.1pt below it is not", one(alone, dict(para, top=59.9), "paragraphs"))
+    read_at("--places, letters of 30pt standing their baseline 59.9pt below the line are the paragraph's",
+            one(alone, dict(para, top=40.1, size=30), "paragraphs"), 100)
+    refused("--places, letters of 30pt 60.1pt below it are not", one(alone, dict(para, top=39.9, size=30), "paragraphs"))
+    read_at("--places, a baseline 0.1pt below the line's top is the paragraph's",
+            one(alone, dict(para, top=99.9), "paragraphs"), 100)
+    refused("--places, a baseline 0.1pt above the line's top is the line above's, not the paragraph's",
+            one(alone, dict(para, top=100.1), "paragraphs"))
+    read_at("--places, letters starting 3.9pt left of where COM starts the line are the paragraph's",
+            one(alone, dict(para, left=75.9), "paragraphs"), 100)
+    refused("--places, letters starting 4.1pt left of it are not", one(alone, dict(para, left=76.1), "paragraphs"))
+    read_at("--places, letters starting 3.9pt past the right the text runs to are the paragraph's",
+            one(alone, dict(para, left=0, right=68.1), "paragraphs"), 100)
+    refused("--places, letters starting 4.1pt past it are not", one(alone, dict(para, left=0, right=67.9), "paragraphs"))
+    farther_first = probe_pdf(1, [(0, 72, 130, sentence, 10), (0, 72, 100, sentence, 10)])
+    read_at("--places, of the same words twice, the nearer to the line is read, not the first the PDF holds",
+            one(farther_first, para, "paragraphs"), 100)
+    bullets = probe_pdf(1, [(0, 72, 100, "Responsible for hiring.", 10), (0, 72, 112, "Responsible for budgets.", 10)])
+    read_at("--places, a bullet opening with the words of the bullet above is read on its own line",
+            one(bullets, dict(para, top=102.5, text="Responsible for budgets."), "paragraphs"), 112)
+    read_at("--places, letters spaced apart read as the word they spell",
+            one(probe_pdf(1, [(0, 300, 100, "D e l i v e r y   t i m e l i n e", 10)]),
+                dict(para, left=300, right=550), "paragraphs"), 100)
+    read_at("--places, a bullet Word gives as a symbol of its own font is not looked for, the letters after it are",
+            one(alone, dict(para, text="\uf0b7\t" + sentence), "paragraphs"), 100)
+    refused("--places, a paragraph with nothing visible to look for is refused",
+            one(alone, dict(para, text=" \t "), "paragraphs"), "nothing visible")
+    slash = probe_pdf(1, [(0, 90, 100, "a@example.com", 10), (0, 72, 100, "/", 10)])
+    read_at("--places, a paragraph of no letter is found by the characters it has",
+            one(slash, dict(para, text="/"), "paragraphs"), 100)
+
     # The round trip.
     ref = probe_pdf(1, body, links=[link])
     shifted = lambda dx, dy: probe_pdf(1, [(0, 72 + dx, 100 + dy, body[0][3], 10), body[1]], links=[link])
@@ -1074,6 +1380,11 @@ class Parser(argparse.ArgumentParser):
 
 
 def main():
+    # A detail can name any character a document holds, and a Windows console's code page cannot
+    # print most of them: escaped rather than raised, so a check that fails is still reported.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="backslashreplace")
     parser = Parser(description=__doc__.split("\n\n")[0])
     parser.add_argument("docx", nargs="*", help="exported .docx files; copies are opened, never the files themselves")
     parser.add_argument("--output-dir", help="where the copies, their PDFs and edit-protocol-libreoffice.json go")
@@ -1083,8 +1394,20 @@ def main():
     parser.add_argument("--judge", metavar="JOB",
                         help="give one scenario's verdict from two PDFs another editor set, and exit: JOB is a JSON"
                              " file of scenario, reference, edited and facts; the verdict is printed as JSON")
+    parser.add_argument("--places", metavar="JOB",
+                        help="find where another editor's PDF draws drawings and paragraphs, and exit: JOB is a"
+                             " JSON file of the pdf and of the drawings and paragraphs to find, each with its key,"
+                             " page and the place that editor states for it; what was found is printed as JSON")
     args = parser.parse_args()
 
+    if args.places:
+        if fitz is None or not clip_honoured():
+            print("NOT_RUN: this Python has no PyMuPDF that leaves clipped text out (TEXT_CLIP)")
+            return 2
+        with open(args.places, encoding="utf-8-sig") as f:
+            job = json.load(f)
+        print(json.dumps(places(fitz.open(job["pdf"]), job)))
+        return 0
     if args.self_check or args.judge:
         if fitz is None or not clip_honoured():
             print("NOT_RUN: this Python has no PyMuPDF that leaves clipped text out (TEXT_CLIP)")

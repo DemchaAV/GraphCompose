@@ -35,12 +35,12 @@ follow semantic versioning; release dates are ISO 8601.
 - **Word export without naming the backend.** `session.buildDocx(path)`, `writeDocx(stream)` and
   `toDocxBytes()` (`@Beta`) find the backend on the classpath, and a `MultiSectionDocument` exports
   to Word as well, a section per section.
-- **The DOCX export is held to a corpus in Word and LibreOffice.** 84 documents — the 64 template
-  presets and 20 built for cases no preset has — are exported, converted by each editor and measured
+- **The DOCX export is held to a corpus in Word and LibreOffice.** 104 documents — the 64 template
+  presets and 40 built for cases no preset has — are exported, converted by each editor and measured
   line by line against the engine's own page. A document passes when the editor sets it on as many
   pages as the engine does, finds 95% of its lines, sets them a median of 1pt or less from the page
-  and no more than 10% of them past 2pt. Measured on 2026-11-06, Word 16 passes 77 of the 84, all 64
-  presets among them, and LibreOffice 24.2 on CI's Linux 48, 40 of them presets. CI holds a change
+  and no more than 10% of them past 2pt. Measured on 2026-11-09, Word 16 passes 95 of the 104, all 64
+  presets among them, and LibreOffice 24.2 on CI's Linux 60, 40 of them presets. CI holds a change
   to the engine, a backend, a template or the corpus to a LibreOffice baseline;
   `scripts/docx-visual/word-fidelity.ps1` holds it to Word's.
 - **A copied line keeps its emoji.** A PDF carries the text an inline SVG icon stands for, so
@@ -5362,6 +5362,35 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The DOCX fidelity corpus holds kept groups at the foot of a page.**
+  - `KeptGroupsAtThePageFoot` adds twenty documents: ten forms of group the layout holds on one
+    page, each as low on page 1 as it fits and one line of filler lower, where the layout moves it
+    whole onto page 2. The forms are a block kept together holding a table, a row of four lines or
+    a table composed in a cell; a panel kept together holding a table, or rows of an icon beside a
+    label; a band of two layers; a shape container holding text; a one-layer stack holding a table;
+    a heading kept with the paragraph after it; and a panel kept with what follows it, holding a
+    table. CI holds where LibreOffice sets each of their lines, and `word-fidelity.ps1` holds
+    Word's, so a change that lets an editor break such a group, or set it on another page than it
+    does now, fails them.
+    `KeptGroupsAtThePageFootTest` holds that the layout sets each group where its document's name
+    says.
+  - Their text is set in Lato, which the export embeds. Set in the session's face, which it does
+    not embed, the LibreOffice 24.2 they were first measured in set the cells' text in DejaVu Sans,
+    wider, and broke the cells' text onto two lines (`R1` / `alpha`, `N1` / `nested`); the rows
+    grew, and six of the groups moved to the next page for a reason that was the face's.
+  - Measured in Word 16.0.20527 in two sittings, which set every line in the same place, and in
+    LibreOffice 24.2 on Linux: every group stands whole in both editors, with no row broken, and
+    on the page the layout set it on in 19 of the 20. The one that is not is the band fitting at
+    the foot. The page sets the band's caption on the last line of its text, and the export writes
+    the caption as a paragraph of its own under it, which its report names (`overlapping layer`),
+    so the band is a line taller in both editors: where it only just fits at the foot it moves to
+    page 2 whole, and where the layout moves it there its caption stands a line low. In the panel
+    of icon rows Word sets each icon where the page draws it, and each label within 0.1pt.
+  - Word passes 95 of the corpus's 104 documents, 18 of the 20 added; LibreOffice on Windows
+    passes the same 18, the two bands short of their lines there too. LibreOffice 24.2 on CI's
+    Linux passes 60 of the 104, 12 of the 20: besides the two bands, it sets four lines of each
+    of the six painted panels more than 2pt across, the panels still whole on their page.
+
 - **Word's editing protocol reads how far drawings and text moved from Word's own PDF.**
   - `drawings-follow-text` lengthens the first paragraph of body text and holds each drawing a
     paragraph carries to moving with the text it stands beside. It read both moves through Word's
@@ -5741,12 +5770,12 @@ follow semantic versioning; release dates are ISO 8601.
     table composed in a cell, a painted panel holding a table, a band, a shape container, a stack
     holding a table, a block kept with the next, a painted panel kept with the next holding a
     table — each stood whole in both editors, with no group and no row broken. Where the editors
-    differ it is which page holds the whole block, never whether it is broken: LibreOffice sets a
-    table's rows taller — a three-row table's 33.9pt apart against the page's 21.0 — so a block
-    whose table only just fits at the foot of a page there moves to the next one whole, which six
-    of the nine did; the band of two layers moved in both editors, from a cause not measured,
-    making seven that LibreOffice moved. The 33.9pt was read off the three-row shape; the other
-    five were not measured apart.
+    differ from the page it is which page holds the whole block, never whether it is broken: the
+    band of two layers moved to the next page in both editors, and LibreOffice moved six more,
+    whose tables' rows it set taller. Those six were set in a face the export does not embed,
+    which that LibreOffice set wider, breaking their cells' text onto two lines; set in a face it
+    embeds, LibreOffice holds them where the layout does (see the documents the fidelity corpus now
+    holds at the foot of a page, under Tests).
   - Counted over the 71-document fidelity corpus, with every node of every document classified and
     none of the 1116 found left unclassified: 1116 blocks are held on one page — 214 in the body,
     902 in a cell or a row's column, layer stacks and shape containers among them as well as the

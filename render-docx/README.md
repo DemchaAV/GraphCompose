@@ -12,29 +12,34 @@ Upgrading a 2.4 export: [2.5 Word export migration note](../docs/migration/v2.5.
 
 ## When to depend on it
 
-Add it (at compile scope) only when you export `.docx`. It is **not** included by
+**From 2.5.0, `graph-compose-core` and this module are all you add.** You do not declare
+`graph-compose-render-pdf` yourself: this module brings it, at compile scope, because the
+export needs it. Opening a `DocumentSession` resolves a `FontMetricsProvider` to measure
+text, and the PDF module is the only one that publishes it. A barcode is written from the
+same encoder the PDF and PPTX backends draw with, and text set off its baseline is moved by
+the same seating code. Add it only when you export `.docx`. It is **not** included by
 `graph-compose`, `graph-compose-core`, or `graph-compose-bundle` — DOCX is opt-in.
-
-**From 2.5.0 it is sufficient on its own.** Opening a `DocumentSession` resolves a
-`FontMetricsProvider` so text can be measured, and `graph-compose-render-pdf` is the only
-artifact that publishes one — so this module brings it, at compile scope, as the PPTX
-module does: a barcode is written as a picture of the same matrix the PDF backend draws,
-through that module's encoder. A classpath of `graph-compose-core` +
-`graph-compose-render-docx` opens a session and exports `.docx`.
-
-**On 2.4.x and earlier it was not.** Those versions declared the PDF backend at test scope
-only, and core + render-docx failed at `create()` with `MissingBackendException` before any
-export happened. Add the PDF backend alongside it there — or depend on `graph-compose`,
-which is core + render-pdf already:
 
 ```xml
 <dependency>
     <groupId>io.github.demchaav</groupId>
-    <artifactId>graph-compose-render-pdf</artifactId>
+    <artifactId>graph-compose-core</artifactId>
     <version>2.4.1</version>
-    <scope>runtime</scope>
+</dependency>
+<dependency>
+    <groupId>io.github.demchaav</groupId>
+    <artifactId>graph-compose-render-docx</artifactId>
+    <version>2.4.1</version>
 </dependency>
 ```
+
+Already on `graph-compose` or `graph-compose-bundle`? Add `graph-compose-render-docx` beside
+it; the PDF module is already there.
+
+**Upgrading from 2.4.x?** Those versions did not bring the PDF module, so core +
+render-docx alone failed at `create()`; the
+[2.5 Word export migration note](../docs/migration/v2.5.0-docx.md#graph-compose-render-docx-on-24x)
+has the dependency they needed. From 2.5.0 you can remove it.
 
 **Logging.** Apache POI logs through the Log4j API. Without a Log4j provider on the
 classpath it prints one line at the first export —

@@ -134,8 +134,9 @@ log nothing — silence means the deck carries its own glyphs.
 Opt-in, at compile scope, when you want PowerPoint output. It is not pulled in
 by `graph-compose`, `graph-compose-core`, or `graph-compose-bundle`.
 
-Note that this artifact depends on `graph-compose-render-pdf` at compile scope:
-the PDF backend supplies the shared font-measurement library (so glyph widths
+`graph-compose-core` and this module are all you add: it brings
+`graph-compose-render-pdf` at compile scope, so you do not declare it yourself. The
+PDF backend supplies the shared font-measurement library (so glyph widths
 stay aligned with the widths that produced the layout graph) and performs the
 raster pass behind the clipping fallback. A PPTX-only consumer therefore also
 resolves the PDF stack. Extracting a backend-neutral measurement artifact is

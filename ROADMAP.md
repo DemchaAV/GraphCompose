@@ -4,7 +4,7 @@ GraphCompose is solo-maintained. This roadmap is a direction, not a contract. Da
 
 ## Now — after 2.5
 
-The live threads are tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues): graduating the Java API of the Word and PowerPoint outputs from `@Beta` to Stable, moving the office backends to Apache POI 6, growing the built-in layered template line-up, and keeping the knowledge pack current as the API moves. Vector clipping for the PPTX backend remains open.
+The live threads are tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues): moving the office backends to Apache POI 6, growing the built-in layered template line-up, and keeping the knowledge pack current as the API moves. Vector clipping for the PPTX backend remains open.
 
 ## Upcoming — 2.5
 

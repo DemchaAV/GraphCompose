@@ -587,7 +587,7 @@ two points larger, its lines grow with it. A line the page sets tighter than its
 Poppins', Gothic A1's — or in a face the document does not ship, as the default Helvetica, is
 exact, and Word keeps its height: letters grown taller than the line are cut off at its top, on
 screen (Word's PDF export draws them whole). The report says how many paragraphs are written so,
-once for the document (`line height`).
+once for the document (`line height`), counting those in headers, footers and text boxes.
 
 The part also states the paragraph defaults — no space after a paragraph, single lines —
 because Word otherwise takes them from its own new-document template, 8pt after every

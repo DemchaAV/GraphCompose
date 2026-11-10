@@ -245,6 +245,87 @@ class DocxExportReportTest {
                 .satisfies(note -> assertThat(note.detail()).startsWith("the lines of one paragraph are"));
     }
 
+    @Test
+    void aTextBoxsLinesAreCountedAmongTheExactOnes() throws Exception {
+        // A container the page gives no room is set in text boxes, whose lines are exact: the
+        // lockup's three lines, in Helvetica, are written so; the masthead's Lato line grows.
+        AtomicReference<DocxExportReport> captured = new AtomicReference<>();
+        byte[] docx;
+        try (DocumentSession session = session(page -> page
+                .add(sidebarOverTheFlow())
+                .addParagraph(p -> p.text("Masthead").textStyle(
+                        com.demcha.compose.document.style.DocumentTextStyle.builder()
+                                .fontName(com.demcha.compose.font.FontName.LATO).size(10).build())))) {
+            docx = session.export(new DocxSemanticBackend(captured::set));
+        }
+        String body = new String(partsBesidesTheDates(docx).get("word/document.xml"),
+                java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(body).as("the lockup is set in text boxes").contains("<w:txbxContent>");
+        assertThat(exactLinesIn(textBoxesOf(body))).as("three exact lines in the text boxes").isEqualTo(3);
+        assertThat(exactLinesIn(body)).as("and none elsewhere").isEqualTo(3);
+
+        assertThat(captured.get().bySubject().get(DocxExports.EXACT_LINES)).singleElement()
+                .satisfies(note -> assertThat(note.detail()).startsWith("the lines of 3 paragraphs are"));
+    }
+
+    @Test
+    void aBadgesInitialsInTheirTextBoxAreNotCountedAmongTheExactOnes() throws Exception {
+        // A badge's initials are its shape's text, in a text box of their own, on a line Word sets
+        // single: nothing in the document is exact, so there is no note.
+        AtomicReference<DocxExportReport> captured = new AtomicReference<>();
+        byte[] docx;
+        try (DocumentSession session = session(page -> page.add(
+                new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Monogram").circle(40)
+                        .fillColor(DocumentColor.rgb(160, 80, 50))
+                        .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("AR").build())
+                        .build()))) {
+            docx = session.export(new DocxSemanticBackend(captured::set));
+        }
+        String body = new String(partsBesidesTheDates(docx).get("word/document.xml"),
+                java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(textBoxesOf(body)).as("the initials are the shape's text, spaced but not exact")
+                .contains(">AR<").contains("<w:spacing").doesNotContain("w:lineRule=\"exact\"");
+
+        assertThat(captured.get().bySubject()).doesNotContainKey(DocxExports.EXACT_LINES);
+    }
+
+    /** What the text boxes of a part hold, one after another. */
+    private static String textBoxesOf(String xml) {
+        StringBuilder boxes = new StringBuilder();
+        java.util.regex.Matcher box = java.util.regex.Pattern.compile("<w:txbxContent>.*?</w:txbxContent>",
+                java.util.regex.Pattern.DOTALL).matcher(xml);
+        while (box.find()) {
+            boxes.append(box.group());
+        }
+        return boxes.toString();
+    }
+
+    /** How many paragraphs of some XML are written at an exact height. */
+    private static int exactLinesIn(String xml) {
+        return xml.split("w:lineRule=\"exact\"", -1).length - 1;
+    }
+
+    /**
+     * A brand block with three lines of lockup over it, given no room by its margins: laid over
+     * the flow, its lines in text boxes.
+     */
+    private static com.demcha.compose.document.node.DocumentNode sidebarOverTheFlow() {
+        double tall = 120;
+        return new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Sidebar")
+                .rectangle(100, tall).clipPolicy(com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE)
+                .margin(new DocumentInsets(-20, 0, 20 - tall, -20))
+                .position(new com.demcha.compose.document.dsl.ShapeBuilder().name("BrandBlock").size(100, tall)
+                        .fillColor(DocumentColor.rgb(160, 80, 50)).build(),
+                        0, 0, com.demcha.compose.document.node.LayerAlign.TOP_LEFT, 0)
+                .position(new com.demcha.compose.document.dsl.ParagraphBuilder().name("Top").text("L").build(),
+                        10, 10, com.demcha.compose.document.node.LayerAlign.TOP_LEFT, 1)
+                .position(new com.demcha.compose.document.dsl.ParagraphBuilder().name("Middle").text("&Co.").build(),
+                        10, 40, com.demcha.compose.document.node.LayerAlign.TOP_LEFT, 2)
+                .position(new com.demcha.compose.document.dsl.ParagraphBuilder().name("Bottom").text("Design.").build(),
+                        10, 70, com.demcha.compose.document.node.LayerAlign.TOP_LEFT, 3)
+                .build();
+    }
+
     private static DocxExportReport reportOf(Consumer<PageFlowBuilder> content) throws Exception {
         AtomicReference<DocxExportReport> captured = new AtomicReference<>();
         try (DocumentSession session = session(content)) {

@@ -382,6 +382,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // How many nodes laid over the flow the writer is inside: their paragraphs go in text boxes
     // (see laidOverTheFlow).
     private int overTheFlowDepth;
+    // The layout paths of the nodes the section wrote over the flow, whose drawings may hang below
+    // where the flow ends (see hangBelowTheFlow).
+    private final List<String> writtenOverTheFlow = new ArrayList<>();
+    // Those of them whose own box this export draws, an outline or a fill, which then counts as
+    // drawn too.
+    private final java.util.Set<String> boxesDrawnOverTheFlow = new java.util.HashSet<>();
     // How many of those overlays are layer stacks of one layer, which lay nothing over anything.
     private int oneLayerDepth;
     // How far down the stacks of one layer being written the page sets their layers, which Word
@@ -1336,6 +1342,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         overlayDepth = 0;
         bandDepth = 0;
         overTheFlowDepth = 0;
+        writtenOverTheFlow.clear();
+        boxesDrawnOverTheFlow.clear();
         oneLayerDepth = 0;
         layerOffsetNotWritten = 0;
         panelLastEndPage = -1;
@@ -2165,15 +2173,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** Makes a paragraph that exists only for Word's structure take a single point. */
     private static XWPFParagraph collapsed(XWPFParagraph paragraph) {
-        CTPPr properties = paragraph.getCTP().isSetPPr()
-                ? paragraph.getCTP().getPPr()
-                : paragraph.getCTP().addNewPPr();
-        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
-        spacing.setBefore(BigInteger.ZERO);
-        spacing.setAfter(BigInteger.ZERO);
-        spacing.setLineRule(STLineSpacingRule.EXACT);
-        spacing.setLine(BigInteger.valueOf(Math.round(CLOSING_LINE_POINTS * POINT_TO_TWIP)));
-        return paragraph;
+        return exactLine(paragraph, Math.round(CLOSING_LINE_POINTS * POINT_TO_TWIP));
     }
 
     private static CTSectPr bodySectPr(XWPFDocument document) {
@@ -4666,7 +4666,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     + "where the page draws them and its text where the page sets it — a paragraph in "
                     + "a text box, a badge's letters in the shape drawn for them — and nothing of it "
                     + "is written in the flow");
-            writeOverTheFlow(document, node);
+            String path = layout.placement(node).path();
+            writtenOverTheFlow.add(path);
+            if (writeOverTheFlow(document, node)) {
+                boxesDrawnOverTheFlow.add(path);
+            }
             return;
         }
         if (overTheFlowDepth > 0 && !node.children().isEmpty()) {
@@ -4902,9 +4906,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * draws them, and each of its paragraphs in a text box where the page sets it. Nothing of it
      * is written in the flow, which it takes no room in: the containers inside it are only what
      * they hold (see {@link #writeNodeContent}), so none of their edges is owed as space.
+     *
+     * @return whether its own box was drawn
      */
-    private void writeOverTheFlow(XWPFDocument document, DocumentNode node) throws Exception {
-        drawOutlineOf(node);
+    private boolean writeOverTheFlow(XWPFDocument document, DocumentNode node) throws Exception {
+        boolean drewItsBox = drawOutlineOf(node);
         overlayDepth++;
         overTheFlowDepth++;
         try {
@@ -4915,6 +4921,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             overlayDepth--;
             overTheFlowDepth--;
         }
+        return drewItsBox;
     }
 
     /**
@@ -6165,11 +6172,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * shape shows it. Where no outline is drawn, it names the transform that turns the
      * container's layers, which only a drawn outline's note otherwise names; where its table
      * draws it, the corners it draws at the largest of their radii.
+     *
+     * @return whether it drew the node's own box
      */
-    private void drawOutlineOf(DocumentNode node) {
+    private boolean drawOutlineOf(DocumentNode node) {
         if (drawOwnFragments(node)) {
             // A drawn outline's note names its transform and its corners.
-            return;
+            return true;
         }
         if (drawnByItsTable(node)) {
             // The table's note names its cells' transforms; the corners are this outline's.
@@ -6177,10 +6186,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
                         "composed in a table cell, whose drawing is its table's; " + CORNERS_AT_THE_LARGEST);
             }
-            return;
+            return false;
         }
         if (!(node instanceof ShapeContainerNode container)) {
-            return;
+            return false;
         }
         if (container.fillColor() != null || container.stroke() != null && container.stroke().width() > 0) {
             String outline = container.outline().getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT);
@@ -6196,6 +6205,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
                     "its transform is not carried, so what it holds stands upright at its size");
         }
+        return false;
     }
 
     /**
@@ -11419,6 +11429,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Where there is no layout to measure the room in, the paragraph is the hairline, and the
      * report says nothing more than that the section was not laid out.</p>
      *
+     * <p>A block written over the flow ({@link #laidOverTheFlow}) holds no room in it, and may
+     * hang below where the flow ends: {@code LumaStudioInvoice}'s closing banner takes 0.3pt of
+     * the flow and draws 62.7pt below it. The ordinary closing paragraph stood under the table,
+     * at the banner's top, and text typed at the end of the document ran under the banner, eight
+     * lines of it in Word and in LibreOffice. Where the room is counted from below such a block,
+     * an empty paragraph of exact height stands first, as tall as the block hangs below the
+     * flow's end, and the closing paragraph under it, where typing begins below the banner; space
+     * written into the closing paragraph itself was not that, as Word gives each line typed after
+     * it the same space above.</p>
+     *
      * @param room        how far above its bottom margin the last page's content ends, in points,
      *                    or NaN where there is no layout to say
      * @param lastSection whether the section is the document's last, whose closing paragraph is
@@ -11432,13 +11452,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Nothing under the section's last list gives back what its items were lowered by, and
         // its last page would run that much longer.
         letTheLoweringGo(loweringHung, 0);
+        double hang = hangBelowTheFlow();
+        writtenOverTheFlow.clear();
+        boxesDrawnOverTheFlow.clear();
         List<IBodyElement> body = document.getBodyElements();
         if (!body.isEmpty() && body.get(body.size() - 1) instanceof XWPFTable table) {
             dropTheSpaceBelow(table);
-            XWPFParagraph closing = document.createParagraph();
+            // The room is counted from below everything the last page holds, a block written over
+            // the flow included, so where it is enough the line stands under the block with room.
             if (room >= roomForAClosingLine()) {
-                return closing;
+                if (hang > 0) {
+                    exactLine(document.createParagraph(), (long) Math.ceil(hang * POINT_TO_TWIP));
+                }
+                return document.createParagraph();
             }
+            XWPFParagraph closing = document.createParagraph();
             if (!Double.isNaN(room)) {
                 report.add(DocxExportReport.Severity.APPROXIMATED, "closing paragraph",
                         sectioned ? "section " + (sectionIndex + 1) : null,
@@ -11451,6 +11479,54 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return collapsed(closing);
         }
         return null;
+    }
+
+    /**
+     * How far, in points, what the section wrote over the flow ({@link #writtenOverTheFlow}) hangs
+     * below the lowest of everything else its last page holds: 0 where nothing written over the
+     * flow stands lower, or where there is no layout to say.
+     */
+    private double hangBelowTheFlow() {
+        if (writtenOverTheFlow.isEmpty() || layout.pageCount() <= 0) {
+            return 0;
+        }
+        // What such a block draws is what it holds, and its own box only where this export draws
+        // that box: the box stands where its margins put it, which is not where its layers are
+        // drawn. LumaStudioInvoice's banner box, its bottom margin taking back all but 0.3pt of it,
+        // stands 62.4pt below the band it holds, where the page paints nothing.
+        java.util.function.Predicate<String> drawnOver = path -> writtenOverTheFlow.stream()
+                .anyMatch(block -> path.startsWith(block + "/"))
+                || boxesDrawnOverTheFlow.contains(path);
+        java.util.function.Predicate<String> over = path -> writtenOverTheFlow.stream()
+                .anyMatch(block -> path.equals(block) || path.startsWith(block + "/"));
+        int lastPage = layout.pageCount() - 1;
+        double drawn = layout.lowestContentOn(lastPage, drawnOver);
+        double flow = layout.lowestContentOn(lastPage, over.negate());
+        if (Double.isNaN(drawn) || Double.isNaN(flow)) {
+            return 0;
+        }
+        // Under a twip it is the layout's arithmetic, not a hang.
+        double hang = flow - drawn;
+        return hang * POINT_TO_TWIP < 1 ? 0 : hang;
+    }
+
+    /**
+     * Makes a paragraph's lines exactly so tall, with no space above or below it.
+     *
+     * @param paragraph the paragraph
+     * @param twips     its line's height
+     * @return the paragraph
+     */
+    private static XWPFParagraph exactLine(XWPFParagraph paragraph, long twips) {
+        CTPPr properties = paragraph.getCTP().isSetPPr()
+                ? paragraph.getCTP().getPPr()
+                : paragraph.getCTP().addNewPPr();
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        spacing.setBefore(BigInteger.ZERO);
+        spacing.setAfter(BigInteger.ZERO);
+        spacing.setLineRule(STLineSpacingRule.EXACT);
+        spacing.setLine(BigInteger.valueOf(twips));
+        return paragraph;
     }
 
     /**

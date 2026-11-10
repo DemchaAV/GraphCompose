@@ -2037,9 +2037,21 @@ final class DocxLayoutMetrics {
      * @return the bottom of its lowest fragment, or {@code NaN} where it holds no content
      */
     double lowestContentOn(int page) {
+        return lowestContentOn(page, path -> true);
+    }
+
+    /**
+     * Where a page's content ends, as {@link #lowestContentOn(int)} reads it, counting only the
+     * fragments whose path a test accepts.
+     *
+     * @param page    the page, from 0
+     * @param counted which fragments' paths count
+     * @return the bottom of the lowest fragment counted, or {@code NaN} where none is
+     */
+    double lowestContentOn(int page, java.util.function.Predicate<String> counted) {
         double lowest = Double.NaN;
         for (PlacedFragment fragment : paintedOn(page)) {
-            if (fragment.path() != null && !fragment.path().startsWith("@")) {
+            if (fragment.path() != null && !fragment.path().startsWith("@") && counted.test(fragment.path())) {
                 lowest = Double.isNaN(lowest) ? fragment.y() : Math.min(lowest, fragment.y());
             }
         }

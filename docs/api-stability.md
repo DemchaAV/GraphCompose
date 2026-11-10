@@ -47,8 +47,11 @@ matrix.
 > fragment-payload interfaces designed for extension) will gain the
 > marker incrementally as their contract solidifies.
 >
-> The Experimental surface currently carrying `@Beta` is the **fixed-layout
-> PPTX backend**, shipping its first release in 2.1.0: the
+> `@Beta` marks the shape of a Java API, not whether its output is finished:
+> PDF, PPTX and DOCX are all full outputs from 2.5.
+>
+> The Experimental surface carrying `@Beta` since 2.1.0 is the **fixed-layout
+> PPTX backend's API**: the
 > `document.backend.fixed.pptx` and `…pptx.handlers` packages (package-level
 > marker plus explicit markers on `PptxFixedLayoutBackend`,
 > `PptxFixedLayoutBackendProvider`, `PptxFragmentRenderHandler`,

@@ -10,8 +10,8 @@ compiled in core before either of them runs.
 
 ## Status
 
-**Experimental (`@Beta`), first shipped in 2.1.0.** The backend is complete
-enough for production decks: text, tables, shapes, images, gradients, hyperlinks
+**A full output; its Java API is Experimental (`@Beta`), first shipped in 2.1.0.**
+The backend is complete enough for production decks: text, tables, shapes, images, gradients, hyperlinks
 and slide jumps, headers/footers/watermarks, and multi-section documents all
 arrive as native PowerPoint objects rather than pictures.
 

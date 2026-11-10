@@ -2062,9 +2062,13 @@ try {
     Write-Host "Release $tag committed locally." -ForegroundColor Green
     Write-Host ""
     Write-Host "Next steps (manual):" -ForegroundColor Cyan
-    Write-Host "  - Merge $Branch into main on GitHub (fast-forward) so GitHub Pages picks up $tag." -ForegroundColor Cyan
-    Write-Host "  - Create a GitHub Release for $tag with the CHANGELOG section as body." -ForegroundColor Cyan
+    Write-Host "  - The tag push runs release.yml (the GitHub Release, CHANGELOG section as body) and, for a final tag," -ForegroundColor Cyan
+    Write-Host "    publish.yml (the whole train as ONE Maven Central deployment, stopped at VALIDATED)." -ForegroundColor Cyan
     if ($isFinalRelease) {
+        Write-Host "  - Smoke the staged deployment: download the run's central-bundle-$tag-attempt-<N> artifact, unzip its" -ForegroundColor Cyan
+        Write-Host "    central-bundle.zip and run: bash scripts/release-smoke/run.sh --staged-repo <dir>" -ForegroundColor Cyan
+        Write-Host "  - Publish it once on central.sonatype.com (Deployments -> GraphCompose $tag -> Publish). Never re-run the deploy" -ForegroundColor Cyan
+        Write-Host "    once its log shows a deploymentId." -ForegroundColor Cyan
         Write-Host "  - Verify the Maven Central publish resolved: mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graph-compose -Dversion=$Version" -ForegroundColor Cyan
         Write-Host "  - Smoke-test the PUBLISHED train once Central has indexed it: dispatch the Release Smoke" -ForegroundColor Cyan
         Write-Host "    workflow with version=$Version, or run: bash scripts/release-smoke/run.sh --version $Version" -ForegroundColor Cyan
@@ -2072,6 +2076,7 @@ try {
         Write-Host "  - Pre-release: NOT published to Maven Central (publish.yml skips hyphenated tags), so there" -ForegroundColor Cyan
         Write-Host "    is no Central verify or release-smoke; the GitHub Release ships as a pre-release only." -ForegroundColor Cyan
     }
+    Write-Host "  - Merge $Branch into main on GitHub (fast-forward) so GitHub Pages picks up $tag." -ForegroundColor Cyan
     Write-Host "  - Open the next development line + restore showcase links: pwsh ./scripts/cut-release.ps1 -PostReleaseOnly -Branch $Branch" -ForegroundColor Cyan
 } finally {
     Pop-Location

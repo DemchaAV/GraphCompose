@@ -242,8 +242,8 @@ same layout graph, compiled in core before either runs. Glyphs are
 still drawn by the viewer, so the rendered text depends on the fonts
 installed on the viewing machine.
 
-The backend ships as `@Beta` (Experimental) in 2.1.0: it is usable for
-production decks, but its API shape may change in a minor release.
+PowerPoint is a full output. Its Java API is Experimental (`@Beta`) since
+2.1.0, so its shape may still change in a minor release.
 Per-capability fidelity — what is a native shape, what is approximated,
 and the raster fallback used for clipped regions — is documented in the
 [backend capability matrix](architecture/backend-capability-matrix.md).

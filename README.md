@@ -20,7 +20,7 @@
 
 > **Release status** &mdash;
 > 🟢 **Latest stable**: [v2.4.1](https://github.com/DemchaAV/GraphCompose/releases/tag/v2.4.1) &mdash; **a much larger template line-up**: two new families, **receipt** and **rota**, new invoice, proposal and CV presets, and every CV preset marked ATS-friendly or design-first after three resume parsers read it; plus **real letter spacing** that keeps tracked caps searchable, one continuous timeline rail, and list items with hanging indents and drawn markers. See [CHANGELOG.md](./CHANGELOG.md).
-> &nbsp;·&nbsp; 🟡 **In development**: v2.4.2 on `develop` &mdash; see [CHANGELOG.md](./CHANGELOG.md).
+> &nbsp;·&nbsp; 🟡 **In development**: v2.5.0 on `develop` &mdash; **PDF, PowerPoint and Word as three full outputs**: the **DOCX export writes the page the engine laid out** &mdash; line heights, column widths, real Word lists, anchored drawings, page zones, headers and footers, and the faces the document is set in &mdash; with charts as Word charts and a report naming every node it could not carry, held to a 104-document corpus in Word and LibreOffice; plus the release train on Maven Central as one deployment, and a line copied out of a PDF keeps its emoji. See [CHANGELOG.md](./CHANGELOG.md).
 
 <p align="center">
   <img src="./assets/readme/repository_showcase_render.png" alt="Documents rendered with GraphCompose" width="780"/>
@@ -48,12 +48,15 @@ and other documents assembled from application data.
 
 ### Outputs and templates
 
-- **PDF** — the main production output, included in `graph-compose`.
-- **PPTX** — editable fixed-layout export, currently **beta**, provided by the
-  separate [`graph-compose-render-pptx`](./render-pptx/README.md) module.
-- **DOCX** — semantic export with partial capability coverage, not full PDF parity,
-  provided by the separate [`graph-compose-render-docx`](./render-docx/README.md)
-  module.
+Three full outputs from one document. The PPTX Java API, and the DOCX API added in
+2.5, are Experimental (`@Beta`).
+
+- **PDF** — fixed-layout output, included in `graph-compose`.
+- **PPTX** — editable fixed-layout slides, provided by the separate
+  [`graph-compose-render-pptx`](./render-pptx/README.md) module.
+- **DOCX** — an editable Word document written from the laid-out page, which Word
+  paginates, provided by the separate
+  [`graph-compose-render-docx`](./render-docx/README.md) module.
 - **Templates** — 58 maintained designs across six document families in the separate
   `graph-compose-templates` module: invoice, proposal, receipt and rota for business
   documents, CV and cover letter for profiles. Start with
@@ -256,15 +259,17 @@ reference catalogue — useful for finding a page, never required reading.
 <details>
 <summary><b>Output formats and optional modules</b></summary>
 
-PDF is the production, fixed-layout output: [`graph-compose`](./wrapper/README.md)
-includes the [`graph-compose-render-pdf`](./render-pdf/README.md) backend.
+PDF, PPTX and DOCX are full outputs. [`graph-compose`](./wrapper/README.md) includes
+the [`graph-compose-render-pdf`](./render-pdf/README.md) backend; the PPTX and DOCX
+backends are separate modules. The PPTX Java API, and the DOCX API added in 2.5, are
+Experimental (`@Beta`).
 
 | Need | Add |
 |---|---|
 | Built-in templates, bundled fonts, and emoji together | [`graph-compose-bundle`](./bundle/README.md) |
 | Built-in document templates — invoice, proposal, receipt, rota, CV, cover letter | [`graph-compose-templates`](./templates/README.md) |
-| Editable PowerPoint output (**beta**) | [`graph-compose-render-pptx`](./render-pptx/README.md) |
-| Semantic DOCX output (**partial**) | [`graph-compose-render-docx`](./render-docx/README.md) |
+| Editable PowerPoint output | [`graph-compose-render-pptx`](./render-pptx/README.md) |
+| Editable Word (DOCX) output | [`graph-compose-render-docx`](./render-docx/README.md) |
 | Layout snapshots and PDF visual diffs in tests | [`graph-compose-testing`](./testing/README.md) |
 | Only the authoring surface and engine | [`graph-compose-core`](./core/README.md) |
 
@@ -315,8 +320,8 @@ flowchart LR
     A["Java application"] --> B["DocumentSession + semantic DSL"]
     B --> C["Document node tree"]
     C --> D["measure → paginate → place"]
-    D --> E["PDF / PPTX backend"]
-    C -.-> F["semantic DOCX backend"]
+    D --> E["PDF / PPTX / DOCX backend"]
+    C -. "DOCX also walks the tree" .-> E
     D -.-> G["layout snapshot"]
 ```
 

@@ -39,6 +39,7 @@ GraphCompose itself.
 | Render a CV or cover letter with my own data | [CV and cover-letter quickstart](templates/v2-layered/quickstart.md) |
 | Design a custom CV style | [Authoring presets](templates/v2-layered/authoring-presets.md) |
 | Upgrade a pre-2.0 caller | [2.0 migration guide](migration/v2.0.0-modules.md) |
+| Upgrade a 2.4 Word export | [2.5 Word export migration note](migration/v2.5.0-docx.md) |
 | Add a new template family | [Template contributor guide](templates/v2-layered/contributor-guide.md) |
 | Add a node or backend handler | [Extension guide](contributing/extension-guide.md) → [Package map](architecture/package-map.md) |
 | Operate GraphCompose in production | [Production rendering](operations/production-rendering.md) → [Performance](operations/performance.md) → [Logging](operations/logging.md) |
@@ -78,7 +79,7 @@ GraphCompose itself.
 - **[recipes/in-pdf-navigation.md](recipes/in-pdf-navigation.md)** — anchors, links, page references, bookmarks, and tables of contents.
 - **[recipes/streaming.md](recipes/streaming.md)** — streaming PDFs to HTTP responses.
 - **[recipes/snapshot-testing.md](recipes/snapshot-testing.md)** — layout regression baselines in consumer projects.
-- **[recipes/docx-export.md](recipes/docx-export.md)** — semantic DOCX output and capability fallbacks.
+- **[recipes/docx-export.md](recipes/docx-export.md)** — the Word output, what it measures from the page, and its capability fallbacks.
 - **[recipes/extending.md](recipes/extending.md)** — extension patterns by example.
 - **[recipes/page-backgrounds.md](recipes/page-backgrounds.md)** — per-page fills: sidebars, bands, layered tints.
 - **[recipes/layered-page-design.md](recipes/layered-page-design.md)** — page background vs. row vs. layer stack vs. canvas.
@@ -95,13 +96,14 @@ GraphCompose itself.
 - **[operations/logging.md](operations/logging.md)** — logger configuration, what each logger emits.
 
 ### Output backends
-- **[architecture/backend-capability-matrix.md](architecture/backend-capability-matrix.md)** — what each render backend supports, per capability. The source of truth for PDF vs PPTX fidelity.
-- **[../render-pptx/README.md](../render-pptx/README.md)** — `graph-compose-render-pptx`: editable PowerPoint decks from the same session that prints the PDF (`@Beta`, first shipped in 2.1.0).
-- **[../render-docx/README.md](../render-docx/README.md)** — `graph-compose-render-docx`: semantic Word export with partial capability coverage and no full PDF parity.
+- **[architecture/backend-capability-matrix.md](architecture/backend-capability-matrix.md)** — what each render backend supports, per capability. The source of truth for what the PDF, PPTX and DOCX outputs each carry.
+- **[../render-pptx/README.md](../render-pptx/README.md)** — `graph-compose-render-pptx`: editable PowerPoint decks from the same session that prints the PDF. A full output; its Java API is Experimental (`@Beta`).
+- **[../render-docx/README.md](../render-docx/README.md)** — `graph-compose-render-docx`: editable Word documents written from the laid-out page, which Word paginates. A full output; the Java API added in 2.5 is Experimental (`@Beta`). Per-capability gaps are in the capability matrix.
 - **[api-stability.md](api-stability.md)** — stability tier per package, and what a tier promises.
 
 ### Migrations
-- **[migration/v2.0.0-modules.md](migration/v2.0.0-modules.md)** — the current upgrade guide: the 1.x → 2.x module split, the one dependency-level break, and every removed API with its replacement.
+- **[migration/v2.5.0-docx.md](migration/v2.5.0-docx.md)** — the Word export from 2.4 to 2.5: what code keeps working, what changes in the file, and what the export report now tells you.
+- **[migration/v2.0.0-modules.md](migration/v2.0.0-modules.md)** — the 1.x → 2.x upgrade guide: the module split, the one dependency-level break, and every removed API with its replacement.
 - **[migration/v1.8.0-fonts.md](migration/v1.8.0-fonts.md)** — the fonts artifact split, still relevant to anyone adding `graph-compose-fonts`.
 - **[../ROADMAP.md](../ROADMAP.md)** — direction for the line after 2.1.
 - **[roadmaps/post-2.0-engineering.md](roadmaps/post-2.0-engineering.md)** — internal refactors, scale, and tooling deferred past the 2.0 line.

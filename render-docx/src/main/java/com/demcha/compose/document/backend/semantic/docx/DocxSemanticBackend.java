@@ -1883,17 +1883,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
-    /** How many paragraphs under {@code part} hold text of their own and are written at an exact height. */
+    /**
+     * How many paragraphs under {@code part} hold text of their own and are written at an exact
+     * height, a text box's among them. A text box is written in Word 2010's shape namespace, which
+     * POI's schemas do not cover, so its paragraphs come back untyped: each paragraph is asked for
+     * its spacing by name.
+     */
     private static int exactLinesOfTextIn(org.apache.xmlbeans.XmlObject part) {
         int exact = 0;
         try (org.apache.xmlbeans.XmlCursor cursor = part.newCursor()) {
             cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' "
                               + ".//w:p");
             while (cursor.toNextSelection()) {
-                if (cursor.getObject() instanceof org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP paragraph
-                    && paragraph.isSetPPr() && paragraph.getPPr().isSetSpacing()
-                    && paragraph.getPPr().getSpacing().getLineRule() == STLineSpacingRule.EXACT
-                    && holdsTextOfItsOwn(paragraph)) {
+                org.apache.xmlbeans.XmlObject paragraph = cursor.getObject();
+                if (isWrittenExact(paragraph) && holdsTextOfItsOwn(paragraph)) {
                     exact++;
                 }
             }
@@ -1901,8 +1904,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return exact;
     }
 
+    /** Whether a paragraph's own properties write its lines at an exact height. */
+    private static boolean isWrittenExact(org.apache.xmlbeans.XmlObject paragraph) {
+        try (org.apache.xmlbeans.XmlCursor cursor = paragraph.newCursor()) {
+            cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' "
+                              + "./w:pPr/w:spacing");
+            return cursor.toNextSelection()
+                   && STLineSpacingRule.EXACT.toString().equals(cursor.getAttributeText(new javax.xml.namespace.QName(
+                    "http://schemas.openxmlformats.org/wordprocessingml/2006/main", "lineRule")));
+        }
+    }
+
     /** Whether a paragraph's own runs, its links' among them, hold any text. */
-    private static boolean holdsTextOfItsOwn(org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP paragraph) {
+    private static boolean holdsTextOfItsOwn(org.apache.xmlbeans.XmlObject paragraph) {
         try (org.apache.xmlbeans.XmlCursor cursor = paragraph.newCursor()) {
             cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' "
                               + "./w:r/w:t | ./w:hyperlink/w:r/w:t");

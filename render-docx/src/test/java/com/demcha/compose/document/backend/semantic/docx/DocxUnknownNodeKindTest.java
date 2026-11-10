@@ -240,6 +240,53 @@ class DocxUnknownNodeKindTest {
         assertThat(keepsAnything(export.document(), "Callout line one")).isFalse();
     }
 
+    @Test
+    void aShapeAKindOfTheCallersOwnLaysAPictureOverStaysBehindAPaintedNeighbour() throws Exception {
+        // The kind lays its children over one another, the picture over the pin, and the stack lays
+        // the kind over a painted band. A picture is never brought in front, so a pin brought in
+        // front would be drawn over the picture the page draws over it: where the tree holds a kind
+        // of the caller's own, the export cannot read what it lays over what, and lifts nothing.
+        // The picture is wider and taller than the pin, so its centre lies outside the pin's box:
+        // the pin frames no picture, and only the climb through the kind can keep it behind.
+        Export export = exportOf(session -> {
+            session.registerNodeDefinition(new CalloutDefinition(CompositeLayoutSpec.Axis.STACK, false));
+            session.pageFlow(page -> page.add(new com.demcha.compose.document.dsl.LayerStackBuilder().name("Stack")
+                    .layer(new com.demcha.compose.document.dsl.SectionBuilder().name("Band")
+                            .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(90, 120, 200))
+                            .fixedWidth(200).addParagraph(p -> p.text("Stage two")).build(),
+                            com.demcha.compose.document.node.LayerAlign.TOP_LEFT, 0)
+                    .layer(new Callout("Callout", List.of(
+                                    new com.demcha.compose.document.dsl.ShapeBuilder().name("Pin").size(30, 14)
+                                            .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148))
+                                            .build(),
+                                    new com.demcha.compose.document.dsl.ImageBuilder().name("Photo")
+                                            .source(pngBytes()).size(80, 40).build())),
+                            com.demcha.compose.document.node.LayerAlign.TOP_LEFT, 1)
+                    .build()));
+        });
+
+        List<String> pins = java.util.regex.Pattern.compile("<wp:anchor.*?</wp:anchor>", java.util.regex.Pattern.DOTALL)
+                .matcher(export.document().getDocument().xmlText()).results()
+                .map(java.util.regex.MatchResult::group).filter(anchor -> anchor.contains("1A5694")).toList();
+        assertThat(pins).singleElement().asString()
+                .as("the picture the kind lays over the pin keeps the pin behind it")
+                .contains("behindDoc=\"1\"");
+        assertThat(export.report().notes())
+                .as("and the band is named as covering it, so the pin was judged at all")
+                .anyMatch(note -> note.path() != null && note.path().contains("Pin")
+                                  && note.detail() != null && note.detail().contains("a panel painted beside it"));
+    }
+
+    private static byte[] pngBytes() {
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(
+                    new java.awt.image.BufferedImage(40, 40, java.awt.image.BufferedImage.TYPE_INT_RGB), "png", out);
+            return out.toByteArray();
+        } catch (Exception failure) {
+            throw new IllegalStateException(failure);
+        }
+    }
+
     /** Whether a paragraph is kept with the next and its lines together, as a block kept on one page is. */
     private static boolean kept(XWPFDocument document, String text) {
         org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr properties = propertiesOf(document, text);

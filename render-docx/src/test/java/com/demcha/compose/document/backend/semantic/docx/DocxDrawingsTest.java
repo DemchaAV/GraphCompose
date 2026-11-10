@@ -229,25 +229,70 @@ class DocxDrawingsTest {
     }
 
     @Test
-    void aFillUnderTextInAPaintedPanelStaysBehindIt() throws Exception {
+    void aFillUnderTextInAPaintedPanelStaysBehindItAndThePanelHidesIt() throws Exception {
         // A track holding only drawing, with its label laid over it: in front, it would cover
         // the label. Only a badge whose glyph is drawn over it frames nothing of the flow.
-        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+        //
+        // behindDoc on its own says nothing about whether the reader sees it: measured at 300 dpi,
+        // the same fixture with its panel unpainted keeps behindDoc="1" and Word draws every pixel
+        // of the shape. What tells the two apart is the fill the panel paints over it, and the
+        // control below is this fixture less that fill — so the pair is the sign of an overlapping
+        // fill, and neither half is green both ways.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument document = export(report, session -> session.pageFlow(page -> page
                 .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
                         .addLayerStack(stack -> stack
-                                .layer(new ShapeContainerBuilder().name("Track").rectangle(200, 20)
-                                                .fillColor(DocumentColor.rgb(90, 120, 200))
-                                                .center(new com.demcha.compose.document.dsl.ShapeBuilder().name("Fill")
-                                                        .size(100, 20).fillColor(ACCENT).build())
-                                                .build(),
-                                        LayerAlign.TOP_LEFT)
+                                .layer(trackHoldingItsFill(), LayerAlign.TOP_LEFT)
                                 .layer(new ParagraphBuilder().name("Label").text("80%").build(),
-                                        LayerAlign.CENTER))))) ) {
-            List<String> tracks = anchors(document.getDocument().xmlText()).stream()
-                    .filter(anchor -> anchor.contains("5A78C8")).toList();
-
-            assertThat(tracks).singleElement().asString().contains("behindDoc=\"1\"");
+                                        LayerAlign.CENTER)))))) {
+            assertThat(trackAnchors(document)).singleElement().asString().contains("behindDoc=\"1\"");
+            assertThat(hidingNotes(report.get(), "/Track"))
+                    .as("the panel's shading over it is named, not lost in silence")
+                    .isNotEmpty();
         }
+
+        AtomicReference<DocxExportReport> unpainted = new AtomicReference<>();
+        try (XWPFDocument document = export(unpainted, session -> session.pageFlow(page -> page
+                .addSection("Card", s -> s
+                        .addLayerStack(stack -> stack
+                                .layer(trackHoldingItsFill(), LayerAlign.TOP_LEFT)
+                                .layer(new ParagraphBuilder().name("Label").text("80%").build(),
+                                        LayerAlign.CENTER)))))) {
+            assertThat(trackAnchors(document)).singleElement().asString()
+                    .as("behind the text here too, and seen: the flag is not the difference")
+                    .contains("behindDoc=\"1\"");
+            assertThat(hidingNotes(unpainted.get(), "/Track"))
+                    .as("nothing painted over it, so nothing to name")
+                    .isEmpty();
+        }
+    }
+
+    /** A progress track whose own fill is the drawing inside it. */
+    private static com.demcha.compose.document.node.DocumentNode trackHoldingItsFill() {
+        return new ShapeContainerBuilder().name("Track").rectangle(200, 20)
+                .fillColor(DocumentColor.rgb(90, 120, 200))
+                .center(new com.demcha.compose.document.dsl.ShapeBuilder().name("Fill")
+                        .size(100, 20).fillColor(ACCENT).build())
+                .build();
+    }
+
+    /** The anchors drawn in the track's own ink. */
+    private static List<String> trackAnchors(XWPFDocument document) {
+        return anchors(document.getDocument().xmlText()).stream()
+                .filter(anchor -> anchor.contains("5A78C8")).toList();
+    }
+
+    /**
+     * The notes saying a panel's shading hides a drawing on a node whose path ends in {@code path}
+     * — the export's own sign that a fill is painted over it, which {@code behindDoc} is not.
+     */
+    private static List<String> hidingNotes(DocxExportReport report, String path) {
+        return report.notes().stream()
+                .filter(note -> note.path() != null && note.path().contains(path)
+                                && note.detail() != null
+                                && note.detail().contains("the panel's shading hides it"))
+                .map(DocxExportReport.Note::detail)
+                .toList();
     }
 
     @Test
@@ -687,16 +732,43 @@ class DocxDrawingsTest {
     }
 
     @Test
-    void aRingRoundAPhotoInAPaintedCardStaysBehindThePhoto() throws Exception {
-        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+    void aRingRoundAPhotoInAPaintedCardStaysBehindThePhotoAndTheCardHidesIt() throws Exception {
+        // A disc exactly under its own photo: it frames that picture, so it stays behind it, and
+        // the card's shading then takes what the photo does not cover — measured at 300 dpi, 623
+        // pixels of the engine's ink down to 50, the disc being 97.8% under its photo in the
+        // engine's own PDF too.
+        //
+        // As above, behindDoc is not the sign of that: the control is this fixture less the card's
+        // fill, where the flag is the same and nothing is painted over the disc.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument document = export(report, session -> session.pageFlow(page -> page
                 .addSection("Card", card -> card.fillColor(DocumentColor.rgb(220, 230, 240))
-                        .add(new ShapeContainerBuilder().name("Portrait").circle(60)
-                                .stroke(DocumentStroke.of(ACCENT, 1)).fillColor(ACCENT)
-                                .center(new ImageBuilder().name("Photo").source(pngBytes()).size(60, 60).build())
-                                .build()))))) {
+                        .add(portraitRingingItsPhoto()))))) {
             assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
                     .contains("behindDoc=\"1\"");
+            assertThat(hidingNotes(report.get(), "/Portrait"))
+                    .as("the card's shading over the ring is named")
+                    .isNotEmpty();
         }
+
+        AtomicReference<DocxExportReport> unpainted = new AtomicReference<>();
+        try (XWPFDocument document = export(unpainted, session -> session.pageFlow(page -> page
+                .addSection("Card", card -> card.add(portraitRingingItsPhoto()))))) {
+            assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
+                    .as("behind the text here too, and seen: the flag is not the difference")
+                    .contains("behindDoc=\"1\"");
+            assertThat(hidingNotes(unpainted.get(), "/Portrait"))
+                    .as("nothing painted over it, so nothing to name")
+                    .isEmpty();
+        }
+    }
+
+    /** A portrait disc with its photo drawn over it at the disc's own size. */
+    private static com.demcha.compose.document.node.DocumentNode portraitRingingItsPhoto() {
+        return new ShapeContainerBuilder().name("Portrait").circle(60)
+                .stroke(DocumentStroke.of(ACCENT, 1)).fillColor(ACCENT)
+                .center(new ImageBuilder().name("Photo").source(pngBytes()).size(60, 60).build())
+                .build();
     }
 
     @Test

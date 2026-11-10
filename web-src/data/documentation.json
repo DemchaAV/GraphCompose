@@ -80,12 +80,12 @@
         {
           "title": "PowerPoint backend",
           "path": "render-pptx/README.md",
-          "summary": "graph-compose-render-pptx, in Beta: an editable deck from the same session that prints the PDF."
+          "summary": "graph-compose-render-pptx: an editable deck from the same session that prints the PDF. A full output; its Java API is Experimental (@Beta)."
         },
         {
           "title": "Word backend",
           "path": "render-docx/README.md",
-          "summary": "graph-compose-render-docx: a semantic Word export, with partial coverage and no PDF parity."
+          "summary": "graph-compose-render-docx: an editable Word document written from the laid-out page, which Word paginates. A full output; the Java API added in 2.5 is Experimental (@Beta)."
         }
       ]
     },

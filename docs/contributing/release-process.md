@@ -127,7 +127,7 @@ The script does **not** handle these. They are either pre-release or post-releas
 
 Run within 1 hour of the tag push. Independent steps can run in parallel.
 
-1. **Wait for Maven Central artefact** — once `.github/workflows/publish.yml` turns green (see step 9 below), poll `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graph-compose -Dversion=<target>` until it resolves (usually 5–15 minutes after the workflow finishes). Then:
+1. **Publish the deployment, then wait for the Maven Central artefact** — `.github/workflows/publish.yml` leaves the train as one deployment at `VALIDATED` (step 9 below): smoke the staged bundle, press Publish once, then poll `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graph-compose -Dversion=<target>` until it resolves (usually 5–15 minutes after the deployment is published). Then:
 2. **README install snippets** — already flipped to `<target>` by `cut-release.ps1` in the release commit (section 1, Step 2/6) and enforced by `VersionConsistencyGuardTest`. No separate post-release commit is needed; just confirm the Central artefact resolves (step 1 above) means the version the README now advertises actually exists.
 3. **Merge `develop` → `main`** on GitHub so GitHub Pages picks up the new docs. Fast-forward only — never force-push `main`. If the push is rejected with `non-fast-forward`, a hotfix landed on `main` after the audit and the merge has to be redone after merging `origin/main` back into `develop`.
 4. **Verify CI green on main** — `gh run list --branch main --limit 1` shows `success` for the tag commit.
@@ -235,18 +235,19 @@ aggregate. They all carry the **same** version.
   you depend on, and upgrade them together.
 - **What bumps when:** a fix in *any* train module bumps the **whole train** by a
   patch; a feature bumps it by a minor. There is no per-module version drift within
-  the train. `cut-release.ps1` Step 1 bumps every train pom (`pom.xml`, `render-pdf`,
-  `render-docx`, `render-pptx`, `templates`, `testing`, `wrapper`, `bundle`) plus
-  `aggregator` / `examples` / `benchmarks` to the same `<X.Y.Z>` in one pass; each
-  module's `graph-compose-core` dependency is `${project.version}`, so it follows
-  automatically, and `VersionConsistencyGuardTest` enforces the agreement.
+  the train. `cut-release.ps1` Step 1 bumps the 13 poms listed in §0.D — the root
+  reactor, `core`, the three render modules, `templates`, `testing`, `wrapper` and
+  `bundle`, and the inheriting `examples`, `benchmarks`, `qa` and `coverage` — to the
+  same `<X.Y.Z>` in one pass; each module's `graph-compose-core` dependency is
+  `${project.version}`, so it follows automatically, and `VersionConsistencyGuardTest`
+  enforces the agreement.
 - **Not in the train:** `graph-compose-fonts` and `graph-compose-emoji` keep their
   own version lines and are pinned explicitly (§2.D / §2.E). They are the only
   published artifacts that do *not* move with the engine version.
 - **Beta / pre-release tags:** a hyphenated train tag (e.g. `v2.0.0-beta.1`) publishes
   the whole train to the **GitHub Release pre-release surface only** — `publish.yml`
-  skips Central for hyphenated tags (§2.B step 9). A beta is therefore installable from
-  the GitHub pre-release (and from JitPack, which builds any tag), not from Central.
+  skips Central for hyphenated tags (§2.B step 9). A beta is therefore not on Central;
+  it ships only as a GitHub pre-release.
 - **One Central deployment per train release.** Maven Central counts every distinct
   publish operation against the organisation's monthly Release Count (the
   [Usage Center](https://central.sonatype.com/publishing/usage) is the source of truth

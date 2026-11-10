@@ -16,18 +16,18 @@ Legend:
 - ❌ not supported — no implementation, no current plan
 - n/a — concept does not apply to this backend's output model
 
-Backends:
+Backends — PDF, PPTX and DOCX are all full outputs. The tables below say,
+per capability, what each one carries. The PPTX and DOCX Java APIs are
+Experimental (`@Beta`), so their shape may still change in a minor (see
+[../api-stability.md](../api-stability.md)).
 
 - **PDF (fixed-layout)** — `graph-compose-render-pdf`,
   `com.demcha.compose.document.backend.fixed.pdf`. Consumes the resolved
-  `LayoutGraph`; the reference implementation.
+  `LayoutGraph`; the reference the other two are measured against.
 - **PPTX (fixed-layout)** — `graph-compose-render-pptx`,
   `com.demcha.compose.document.backend.fixed.pptx`. Consumes the same
   resolved `LayoutGraph`; geometry-identical to PDF by construction, since
-  layout is compiled in core before any backend runs. Ships as `@Beta`
-  (Experimental) in its first release — usable, with the per-capability
-  status in the tables below; the API shape may still change in a minor
-  while feedback lands (see [../api-stability.md](../api-stability.md)).
+  layout is compiled in core before any backend runs.
 - **DOCX (semantic)** — `graph-compose-render-docx`,
   `DocxSemanticBackend`. Walks the semantic node tree and writes editable
   Word content, which Word paginates and re-flows after an edit. It reads

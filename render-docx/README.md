@@ -2,8 +2,13 @@
 
 `io.github.demchaav:graph-compose-render-docx`
 
-The semantic DOCX export backend for GraphCompose, backed by Apache POI. It carries
+The DOCX export backend for GraphCompose, backed by Apache POI. It carries
 `DocxSemanticBackend` and brings POI transitively, so a PDF-only consumer never pays for it.
+
+Word is a full output from 2.5, beside PDF and PowerPoint: the export writes the page the
+engine laid out as a document an editor can change, and Word paginates it. The Java API added
+in 2.5 is Experimental (`@Beta`); `session.export(new DocxSemanticBackend())` is Stable.
+Upgrading a 2.4 export: [2.5 Word export migration note](../docs/migration/v2.5.0-docx.md).
 
 ## When to depend on it
 

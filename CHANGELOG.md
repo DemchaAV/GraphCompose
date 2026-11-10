@@ -7,6 +7,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Highlights
 
+- **PDF, PowerPoint and Word are three full outputs of one document.** `graph-compose-render-pdf`,
+  `graph-compose-render-pptx` and `graph-compose-render-docx` each write the same session's
+  document, and the capability matrix says per capability what each one carries. The Java API of
+  the PowerPoint and Word outputs stays Experimental (`@Beta`): `new DocxSemanticBackend()` and
+  `session.export(...)` are Stable, and the rest may still change shape in a minor.
+- **A release reaches Maven Central as one deployment.** The eight modules of the train — core,
+  the PDF, PowerPoint and Word backends, the `graph-compose` wrapper, templates, testing and the
+  bundle — are uploaded, validated and published together, so a version is never half on Central.
 - **The DOCX export writes the page the engine laid out, as a document an editor can change.** In
   2.4 it walked the document without laying it out: Word chose every line height and column width, a
   list was marker text, a chart was a table of its data, a page zone was one line of runs on every
@@ -48,6 +56,9 @@ follow semantic versioning; release dates are ISO 8601.
   own.
 
 ### Migrating the DOCX export from 2.4
+
+The same notes, grouped for an upgrade, are in
+[docs/migration/v2.5.0-docx.md](docs/migration/v2.5.0-docx.md).
 
 - **Code that exports today compiles and runs unchanged.** `session.export(new
   DocxSemanticBackend())` stays the Stable path. What is new is additive — the report, the
@@ -6734,6 +6745,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Build
 
+- **Dependency updates from the `maven-minor-patch` group (#767, #991, #1034).** Two reach a
+  consumer: `slf4j-api`, a compile dependency of `graph-compose-core`, moves from 2.0.19 to
+  2.0.20, and the Jackson BOM behind `graph-compose-testing`'s `jackson-databind` from 2.22.2 to
+  2.22.4. The rest are build, test and benchmark tooling: Logback 1.6.3 → 1.6.6, Mockito 5.23.0 →
+  5.24.0, ArchUnit 1.5.0 → 1.5.1, Byte Buddy 1.18.14 → 1.18.17, jqwik 1.10.1 → 1.10.2, JavaFX
+  21.0.12 → 21.0.13, iText 9.7.1 → 9.8.0 and JasperReports 7.0.8 → 7.1.1 (benchmarks only),
+  JaCoCo 0.8.15 → 0.8.16, japicmp 0.26.2 → 0.27.0, the Central publishing plugin 0.11.0 →
+  0.12.0, Surefire 3.6.0 → 3.6.1 and the Enforcer plugin 3.6.3 → 3.7.0.
 - **The coverage aggregate counts the Word export.** `graph-compose-render-docx` ran its tests
   without the JaCoCo agent and was not among the modules `graph-compose-coverage` reports on, so
   the export had no coverage figure and its classes were outside the ratchet. Its pom now runs the
@@ -6777,6 +6796,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The docs present PDF, PowerPoint and Word as three full outputs.** The README, the docs
+  index, getting started, the capability overview, the capability matrix, the `render-pptx` and `render-docx`
+  READMEs, `api-stability.md` and the site no longer rank the outputs as "the main production
+  output", "beta" and "partial"; each says the output is full and that the PowerPoint and Word
+  Java API is Experimental (`@Beta`), and the per-capability gaps stay in the matrix. The site's
+  Word card listed 2.4's limits — fonts named and not embedded, no shapes, lines or links — and
+  now lists 2.5's. The README's architecture diagram drew the Word backend from the node tree; it
+  reads the layout. A migration note for the Word export,
+  [docs/migration/v2.5.0-docx.md](docs/migration/v2.5.0-docx.md), groups the changelog's notes
+  for an upgrade. The release process says a beta tag ships only as a GitHub pre-release, lists
+  the 13 poms a cut moves, and publishes the deployment before waiting on Central;
+  `CONTRIBUTING.md` says the train uploads as one deployment.
 - **The knowledge pack routes a Word export.** `api-query --task export.docx` recommends
   `session.buildDocx(path)` — or `writeDocx` / `toDocxBytes` — and says when to export through
   another path instead: `DocxSemanticBackend.builder().deterministic(true).reportSink(...)` for

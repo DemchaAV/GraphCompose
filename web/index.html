@@ -99,7 +99,7 @@
           "26 CV presets and 15 matching cover letters out of the box",
           "Theme tokens via BrandTheme.modernProfessional() / executive() / boxedClassic()",
           "Markdown-aware bodies (bold, italic) in every paragraph and list block",
-          "PDFBox-backed render pipeline, an editable PowerPoint backend geometry-identical to the PDF, and a semantic DOCX backend",
+          "PDFBox-backed render pipeline, an editable PowerPoint backend geometry-identical to the PDF, and an editable Word backend written from the laid-out page",
           "Full-reactor verify gate with layout snapshots and pixel-diff visual parity"
         ]
       },
@@ -535,8 +535,8 @@
 <pre class="language-groovy"><code class="language-groovy">implementation 'io.github.demchaav:graph-compose-bundle:2.4.1'</code></pre>
         </article>
         <article class="install-block">
-          <h3>An editable PowerPoint deck <span class="install-badge">Beta</span></h3>
-          <p>Add it beside <code>graph-compose</code> or the bundle: the layout of the PDF, as shapes on slides.</p>
+          <h3>An editable PowerPoint deck</h3>
+          <p>Add it beside <code>graph-compose</code> or the bundle: the layout of the PDF, as shapes on slides. A full output; its Java API is Experimental (<code>@Beta</code>).</p>
           <p class="install-form">Maven</p>
 <pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
   &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
@@ -548,7 +548,7 @@
         </article>
         <article class="install-block">
           <h3>A Word document</h3>
-          <p>Add it beside <code>graph-compose</code> or the bundle: a semantic export, laid out by Word itself.</p>
+          <p>Add it beside <code>graph-compose</code> or the bundle: an editable document written from the laid-out page, which Word paginates. A full output; the Java API added in 2.5 is Experimental (<code>@Beta</code>).</p>
           <p class="install-form">Maven</p>
 <pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
   &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
@@ -577,7 +577,7 @@
       <div class="section-heading">
         <p class="section-label">Output formats</p>
         <h2 id="formats-title">One document, three kinds of file.</h2>
-        <p class="section-text">PDF and PowerPoint are drawn from the same resolved layout; Word receives the document's structure and lays it out itself. What each format keeps, capability by capability, is in the <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/architecture/backend-capability-matrix.md">backend capability matrix</a>.</p>
+        <p class="section-text">Three full outputs. PDF and PowerPoint are drawn from the same resolved layout; Word receives the document's structure with the line heights, widths and positions that layout measured, and paginates it itself. What each format keeps, capability by capability, is in the <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/architecture/backend-capability-matrix.md">backend capability matrix</a>.</p>
       </div>
       <div class="feature-grid">
         <article class="feature-card">
@@ -586,7 +586,7 @@
           <p>The reference output. Fonts you register or take from the bundle are embedded and subset; the standard fonts, the default Helvetica among them, are not. Links, bookmarks and metadata are written, a document can be encrypted, and a deterministic mode renders byte-identical files.</p>
         </article>
         <article class="feature-card">
-          <h3>PowerPoint <span class="install-badge">Beta</span></h3>
+          <h3>PowerPoint</h3>
           <p><code>graph-compose-render-pptx</code></p>
           <p>Geometry-identical to the PDF, with text, panels and most vector drawing as editable shapes.</p>
           <ul class="format-limits">
@@ -598,11 +598,11 @@
         <article class="feature-card">
           <h3>Word</h3>
           <p><code>graph-compose-render-docx</code></p>
-          <p>Paragraphs, tables and block images become Word content, and page zones become real headers and footers with live page numbers.</p>
+          <p>Written from the laid-out page: line heights and column widths, real Word lists and tables, drawings anchored to the text that carries them, charts as Word charts, page zones and headers and footers with live page numbers, links and bookmarks, and the faces the document is set in. A report names every node it could not carry.</p>
           <ul class="format-limits">
-            <li>The text header and footer (<code>DocumentHeaderFooter</code>) are not written; a page zone is.</li>
-            <li>Shapes, lines, barcodes, inline images, links and watermarks are not written.</li>
-            <li>Fonts are named, not embedded, and list hanging indents are ignored.</li>
+            <li>Word paginates the document and reflows it after an edit, so a page can break where the PDF's does not.</li>
+            <li>Gradients, rotation and scale are not written, nor a watermark, protection options or viewer preferences.</li>
+            <li>Deterministic bytes hold on one platform; Apache POI's line separator differs across platforms.</li>
           </ul>
         </article>
       </div>
@@ -616,7 +616,7 @@
       <ol class="pipeline" aria-label="Document pipeline">
         <li><strong>Semantic DSL.</strong> You build a tree of <code>ParagraphNode</code>, <code>TableNode</code>, <code>SectionNode</code>, <code>LayerStackNode</code>, <code>CanvasLayerNode</code>.</li>
         <li><strong>Layout pass.</strong> The engine resolves measurements, pagination, decoration, overlays. Output is a <code>LayoutGraph</code> &mdash; geometry only, no draw calls.</li>
-        <li><strong>Render backend.</strong> The <code>FixedLayoutBackend</code> consumes placed fragments. Default: <code>PdfFixedLayoutBackend</code> via PDFBox. <code>PptxFixedLayoutBackend</code> consumes the same fragments, so a deck is geometry-identical to the PDF by construction. A semantic DOCX backend maps the node tree instead, with much narrower coverage.</li>
+        <li><strong>Render backend.</strong> The <code>FixedLayoutBackend</code> consumes placed fragments. Default: <code>PdfFixedLayoutBackend</code> via PDFBox. <code>PptxFixedLayoutBackend</code> consumes the same fragments, so a deck is geometry-identical to the PDF by construction. <code>DocxSemanticBackend</code> writes the node tree as editable Word content, taking line heights, widths and where each drawing stands from the same layout, and Word paginates it.</li>
       </ol>
     </section>
 

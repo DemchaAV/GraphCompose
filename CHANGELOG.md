@@ -6815,6 +6815,15 @@ The same notes, grouped for an upgrade, are in
 
 ### Documentation
 
+- **The README banner and the twin-output page show the Word output beside PDF and PowerPoint.**
+  The banner (`MavenBannerPptxExample`, re-rendered by each release cut with its version) traced
+  one model to two output icons; it now branches to three — PDF, DOCX and PPTX — with "One model.
+  PDF, Word and PowerPoint outputs." under them, and a DOCX pill in the tag row. Its pipeline page
+  says a backend writes PDF, DOCX or PPTX, and its "One model, three formats" card replaces "two
+  formats". The twin-output page (`TwinOutputExample`) branches its layout graph to three cards,
+  "Written once. Rendered three times.", with the Word export on its code card and no "beta" chip;
+  being a canvas, it still writes the PDF and the deck. The committed previews these examples own
+  are re-rendered with them.
 - **The Word docs say which canvas pages read right in Word.** A canvas is written as its
   contents in reading order: its drawings stand where it places them, its text does not. The
   `render-docx` README, the DOCX recipe and the capability matrix already said so; they now add

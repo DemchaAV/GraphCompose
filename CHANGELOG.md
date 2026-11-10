@@ -307,7 +307,8 @@ follow semantic versioning; release dates are ISO 8601.
     an empty paragraph of exact height, as tall as the block hangs below the flow's lowest
     content, now stands before the closing paragraph. Typing begins below the banner. Where no
     line fits under it, the closing paragraph is a point tall, as before. Space written above the
-    closing paragraph itself was not used: Word gives every line typed after it the same space.
+    closing paragraph itself was not used: Word gives every line typed after it the same space. A
+    section ending with a paragraph gets no such line: typing continues that paragraph.
   - Of the 104 documents of the fidelity corpus only `invoice-luma_studio_long` changes: one
     paragraph is added, and no other paragraph of it, and no report note, changes.
 

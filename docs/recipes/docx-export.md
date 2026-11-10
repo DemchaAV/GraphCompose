@@ -456,7 +456,8 @@ room in it, may hang below where the flow ends — `LumaStudioInvoice`'s closing
 0.3pt of the flow and draws 62.7pt below it. Where it hangs below the table and a line still
 fits under it, an empty line of exact height, as tall as it hangs, stands before the ordinary
 closing paragraph, so text typed at the end begins below the banner, not under it (measured:
-eight typed lines ran under the banner in Word and LibreOffice 24.2; held, none). Where no
+eight typed lines ran under the banner in Word and LibreOffice 24.2; with the line written,
+none). Where no
 line fits under it, the paragraph is the point-tall one, as above. The line is reckoned down
 the page only: a block over the flow standing beside the text column, as a sidebar does, that
 hangs below the table holds the closing paragraph down too, though typing would not have run

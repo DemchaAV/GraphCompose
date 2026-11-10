@@ -69,9 +69,19 @@ class DocxTypedBelowTheFlowTest {
     void aBlockWhoseOwnBoxIsDrawnCountsThatBoxToo() throws Exception {
         // Filled, the container's own box is drawn where the layout places it, which its bottom
         // margin sets below its band: typed text must clear the box as well.
-        long withoutFill = spacerTwips(banner(HANG, DocumentInsets.bottom(-HANG)));
-        long withFill = spacerTwips(filled(banner(HANG, DocumentInsets.bottom(-HANG))));
-        assertThat(withFill).as("the drawn box hangs lower than the band").isGreaterThan(withoutFill);
+        DocumentNode block = filled(banner(HANG, DocumentInsets.bottom(-HANG)));
+        long hang;
+        try (com.demcha.compose.document.api.DocumentSession session = section(page -> page
+                .addTable(t -> t.autoColumns(2).row("Item", "Amount")).add(block))) {
+            com.demcha.compose.document.layout.LayoutGraph graph = session.layoutGraph();
+            int last = graph.totalPages() - 1;
+            double box = lowest(graph, last, path -> path.contains("/Banner"));
+            double band = lowest(graph, last, path -> path.contains("/BannerBand"));
+            double flow = lowest(graph, last, path -> !path.contains("/Banner"));
+            assertThat(box).as("the layout sets the box below its band").isLessThan(band);
+            hang = (long) Math.ceil((flow - box) * 20);
+        }
+        assertThat(spacerTwips(block)).as("an empty line as tall as the box hangs below the table").isEqualTo(hang);
     }
 
     @Test
@@ -81,6 +91,8 @@ class DocxTypedBelowTheFlowTest {
                 .add(banner(HANG, DocumentInsets.bottom(-HANG)))
                 .addPageBreak(pageBreak -> { })
                 .addTable(t -> t.autoColumns(1).row("Total")))) {
+            assertThat(document.getDocument().getBody().xmlText()).as("the block is written over the flow")
+                    .contains("<w:txbxContent>");
             List<IBodyElement> body = document.getBodyElements();
             assertThat(body.get(body.size() - 2)).as("the last table, then the closing paragraph")
                     .isInstanceOf(XWPFTable.class);
@@ -89,6 +101,8 @@ class DocxTypedBelowTheFlowTest {
 
     @Test
     void anExportWithNoLayoutHoldsNoLine() throws Exception {
+        // A guard rather than a reach of the rule: with no layout nothing is written over the flow
+        // and there is no room to measure, so the closing paragraph is the point-tall one.
         try (XWPFDocument document = DocxExports.withoutLayout(400, 600, 40, page -> page
                 .addTable(t -> t.autoColumns(2).row("Item", "Amount"))
                 .add(banner(HANG, DocumentInsets.bottom(-HANG))))) {
@@ -147,6 +161,8 @@ class DocxTypedBelowTheFlowTest {
                 .addTable(t -> t.autoColumns(2).row("Item", "Amount"))
                 .add(banner(HANG, DocumentInsets.bottom(-HANG)))
                 .addParagraph("Signed"))) {
+            assertThat(document.getDocument().getBody().xmlText()).as("the block is written over the flow")
+                    .contains("<w:txbxContent>");
             List<IBodyElement> body = document.getBodyElements();
             XWPFParagraph last = (XWPFParagraph) body.get(body.size() - 1);
             // Its text, after the banner's text box anchored in it.
@@ -178,8 +194,14 @@ class DocxTypedBelowTheFlowTest {
             List<IBodyElement> body = document.getBodyElements();
             assertThat(body.get(body.size() - 2)).as("the second section's table, then its closing paragraph")
                     .isInstanceOf(XWPFTable.class);
-            assertThat(body.stream().filter(e -> e instanceof XWPFParagraph p && p.getText().isEmpty()
-                    && exactTwips(p) > 1000).count()).as("while the first section holds its line").isEqualTo(1);
+            List<IBodyElement> lines = body.stream().filter(e -> e instanceof XWPFParagraph p && p.getText().isEmpty()
+                    && exactTwips(p) > 1000).toList();
+            assertThat(lines).as("while the first section holds its line").hasSize(1);
+            XWPFParagraph line = (XWPFParagraph) lines.get(0);
+            XWPFParagraph closing = (XWPFParagraph) body.get(body.indexOf(line) + 1);
+            assertThat(line.getCTP().getPPr().isSetSectPr()).as("the line does not end the section").isFalse();
+            assertThat(closing.getCTP().getPPr() != null && closing.getCTP().getPPr().isSetSectPr())
+                    .as("the closing paragraph after it does").isTrue();
         }
     }
 

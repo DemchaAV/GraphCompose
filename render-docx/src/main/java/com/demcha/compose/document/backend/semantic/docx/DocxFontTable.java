@@ -441,7 +441,7 @@ final class DocxFontTable {
             return;
         }
         byte[] bytes;
-        // A classpath source reports a missing resource unchecked, not as an IOException.
+        // Any source may fail unchecked; the classpath one does for a missing resource.
         try (InputStream in = source.openStream()) {
             bytes = in.readAllBytes();
         } catch (IOException | RuntimeException failure) {

@@ -305,6 +305,11 @@ follow semantic versioning; release dates are ISO 8601.
   - Both now end the same way. The face is not shipped, the report adds a `DROPPED` note on the
     embedded font naming the face and why it could not be read, and the document is written. A
     face that loads ships as before.
+  - The bundled Google families are built from the classpath too, so a document set in one of
+    them without `graph-compose-fonts` on the classpath now exports to DOCX instead of failing.
+    The message naming the missing dependency is in that `DROPPED` note and in the layout
+    failure the report's `measured geometry` note gives; a PDF or PPTX render still fails fast
+    with it.
 
 - **Centred and right-aligned DOCX text set at a size Word rounds stands where the page sets it,
   over several lines, beside a picture and in a header or footer slot.**

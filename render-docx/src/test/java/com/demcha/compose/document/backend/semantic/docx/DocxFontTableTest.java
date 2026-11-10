@@ -221,10 +221,13 @@ class DocxFontTableTest {
                         com.demcha.compose.font.FontFamilyDefinition.classpath("Absent", resource).build()),
                 DocumentTextStyle.builder().fontName(FontName.of("Absent")).size(10).build());
 
-        assertThat(exported.layoutFailure()).as("the premise: the page could not lay the face out").isNotEmpty();
+        assertThat(exported.layoutFailure()).as("the premise: the page could not lay out the missing face")
+                .contains(resource);
         assertThat(exported.fontNote()).satisfies(note -> {
             assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.DROPPED);
             assertThat(note.detail()).startsWith("the embedRegular face of 'Absent' could not be read (")
+                    .as("the premise: the source failed unchecked, the path this test guards")
+                    .contains("IllegalArgumentException")
                     .contains(resource)
                     .endsWith("), so a reader without it installed sees a substituted face");
         });

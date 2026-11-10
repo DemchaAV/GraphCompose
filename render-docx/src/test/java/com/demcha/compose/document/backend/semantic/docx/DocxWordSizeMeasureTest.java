@@ -226,6 +226,34 @@ class DocxWordSizeMeasureTest {
     }
 
     @Test
+    void aParagraphWithALineWordSetsWiderAndOneItSetsNarrowerIsNotSpaced() throws Exception {
+        // 7.8pt is set at 8, wider; 8.2pt at 8, narrower. One spacing would take one further off.
+        String[] words = LONG.split(" ");
+        for (int count = 6; count < words.length - 6; count++) {
+            String first = String.join(" ", java.util.Arrays.copyOf(words, count));
+            String rest = String.join(" ", java.util.Arrays.copyOfRange(words, count, words.length));
+            java.util.function.Consumer<com.demcha.compose.document.dsl.ParagraphBuilder> paragraph = p -> p
+                    .align(TextAlign.CENTER)
+                    .rich(rich -> rich.size(first, 7.8).size(" " + rest, 8.2));
+            List<ParagraphLine> lines = laidOut(ROOM, paragraph);
+            if (lines.size() != 2 || !lines.get(0).text().strip().equals(first)) {
+                continue;
+            }
+            double grown = asked(lines.get(0)) - wordsWidth(lines.get(0));
+            double shrunk = asked(lines.get(1)) - wordsWidth(lines.get(1));
+            if (!(grown <= -1) || !(shrunk >= 1)) {
+                continue;
+            }
+            try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page.addParagraph(paragraph))) {
+                assertThat(text(document, "Platform engineer").getRuns())
+                        .allSatisfy(run -> assertThat(run.getCharacterSpacing()).isZero());
+            }
+            return;
+        }
+        throw new AssertionError("no split sets a line a point wider in Word over one a point narrower");
+    }
+
+    @Test
     void aParagraphOfALineOfTextAndALineOfAPictureIsWeighedAsOneOfSeveralLines() throws Exception {
         // Its text line grows past a point, but the line under it opens with a picture, which the
         // guard has no word of to weigh: the text is not narrowed.

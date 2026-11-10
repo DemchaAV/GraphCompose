@@ -2804,7 +2804,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * 3.6pt left of the page's. Only where the difference is a point or more
      * ({@link #LINE_WIDTH_CLEARANCE}); a slot holding a page number or a page count is left as it
      * is, since Word writes those digits itself, and so is one in a face the measured fonts do
-     * not hold.</p>
+     * not hold. A slot is one line of its own, at its stop: to the nearest twentieth, its width
+     * comes within a fortieth of a point a letter of the page's, which a slot that just fits
+     * beside another could pass by — under a point for a slot of forty letters.</p>
      *
      * @param runs  the slot's runs, as written
      * @param text  the slot's text, its tokens unresolved
@@ -12572,8 +12574,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * hundred letters moves a line by up to two and a half points: widened, a line could run past
      * the measure and push a word onto the next line; narrowed, it could take up the next line's
      * first word. A paragraph of one line of text and a line of pictures alone is weighed so too,
-     * and one whose {@code bulletOffset} prefix is written as an indent is left as Word sets it:
-     * the indent narrows Word's measure past the room it is written in.
+     * and one with a {@code bulletOffset} prefix is left as Word sets it, since an indent written
+     * for the prefix can narrow Word's measure past the room it is written in; so is one with a
+     * line Word sets a point wider and another a point narrower, which one spacing would take
+     * one of further off.
      * {@code ClassicSerif}'s 9.8pt profile, three centred lines set at 10pt, stood 3.7 to 4.9pt
      * left of the page's.</p>
      *
@@ -12588,6 +12592,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         int texts = 0;
         double furthest = 0;
         int furthestLetters = 0;
+        double widened = 0;
+        double narrowed = 0;
         for (com.demcha.compose.document.layout.payloads.ParagraphLine line : lines) {
             int letters = 0;
             for (com.demcha.compose.document.layout.payloads.ParagraphSpan span : line.spans()) {
@@ -12603,13 +12609,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (letters > 0) {
                 texts++;
                 double difference = askedWidth(line) - widthAtWordsSize(line);
+                widened = Math.max(widened, difference);
+                narrowed = Math.min(narrowed, difference);
                 if (Math.abs(difference) > Math.abs(furthest)) {
                     furthest = difference;
                     furthestLetters = letters;
                 }
             }
         }
-        if (texts == 0 || !(Math.abs(furthest) >= LINE_WIDTH_CLEARANCE)) {
+        if (texts == 0 || !(Math.abs(furthest) >= LINE_WIDTH_CLEARANCE)
+            || widened >= LINE_WIDTH_CLEARANCE && narrowed <= -LINE_WIDTH_CLEARANCE) {
+            // A line Word sets wider and another it sets narrower, each by a point: one spacing
+            // takes one of them further off.
             return 0;
         }
         int twentieths = (int) Math.round(furthest / furthestLetters * 20.0);
@@ -12617,7 +12628,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return twentieths;
         }
         if (!node.bulletOffset().isEmpty() && node.indentStrategy() != DocumentTextIndent.NONE) {
-            // Its prefix's indent narrows Word's measure by more than the room it is written in.
+            // Its prefix's indent can narrow Word's measure past the room it is written in.
             return 0;
         }
         for (; twentieths != 0; twentieths -= Integer.signum(twentieths)) {
@@ -12633,11 +12644,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * ({@link #WORDS_MEASURE_CLEARANCE}); narrowed, no line but the last comes within a point of
      * taking up the next line's first word and the space before it, as Word sets them. A
      * narrowed line is not held inside the measure: it is narrower than Word sets it unspaced.
-     * The next word is weighed whole: a hyphen in it is written non-breaking
-     * ({@link DocxLineStartHyphens}) — though not in a text box over the flow, where Word may
-     * still take up its first part. A next line opening with a picture, or with a word the
-     * measured fonts do not hold, keeps every line unnarrowed; a line the page ended at a line
-     * break is weighed as any other, so a paragraph of such lines is held back too.
+     * The next word is weighed whole: where {@link DocxLineStartHyphens} holds a hyphen in it,
+     * Word does not break there — not in a text box over the flow, nor in a paragraph it leaves as
+     * written, where Word may still take up the word's first part. A next line opening with a
+     * picture, or with a word the measured fonts do not hold, keeps every line unnarrowed; a line
+     * the page ended at a line break is weighed as any other, so a paragraph of such lines is
+     * held back too. Widened, a line is held a point inside the measure, not the few hundredths
+     * a line of its own is given for a face Word sets wider than the page
+     * ({@link #ONE_LINE_FACE_SLACK}).
      *
      * @param twentieths the spacing, in twentieths of a point, not 0
      * @param room       the width the paragraph's text is written in, in points

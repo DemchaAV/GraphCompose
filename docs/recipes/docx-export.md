@@ -580,8 +580,8 @@ of several lines keeps the page's measure and has one spacing: the line Word set
 off, its difference over its letters, to the nearest twentieth, then less, as far as none,
 until no line, widened, runs within a point of the measure, or, narrowed, comes within a point
 of taking up the next line's first word. A next line opening with a picture holds the
-paragraph unnarrowed, and so does a paragraph whose `bulletOffset` prefix is written as an
-indent. A line of narrower letters than the one it is spaced by grows less, and comes out a
+paragraph unnarrowed. A paragraph with a `bulletOffset` prefix is left unspaced, and so is
+one with a line Word sets a point wider and another a point narrower. A line of narrower letters than the one it is spaced by grows less, and comes out a
 little past its own. A picture or a shape in a line keeps its
 own size, and only the text's letters are
 spaced, by what the text alone grows. A line that carries tracking is left as it is, and so is

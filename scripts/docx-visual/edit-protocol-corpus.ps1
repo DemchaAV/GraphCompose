@@ -54,7 +54,9 @@
     -SelfCheck runs the protocol over probe documents it writes itself instead: it holds where it
     reads a drawing's place to where Word's own PDF draws the same drawing, holds the attribution
     with documents one wrong owner fails, and holds what is asked of whom with a document carrying
-    a drawing nailed to the sheet beside one that ought to follow its text and does not. Two of
+    a drawing nailed to the sheet beside one that ought to follow its text and does not. It holds
+    the page typing onto a new page is read from to the saved copy's, with a document whose top
+    margin is shorter than the header Word makes when its footer is read. Two of
     its checks hold the two thresholds the verdict is read by — each from either side, and each
     off the grid its readings land on — and need no document at all, so they run before Word is
     asked for: a machine without Word holds both thresholds, exits 1 if either of them is wrong or
@@ -80,7 +82,8 @@
     Runs the protocol against probe documents it writes itself, instead of over a corpus. It
     holds where it reads a drawing's place to where Word's own PDF puts the same drawing, holds
     the paragraph a drawing is attributed to with documents one wrong owner fails, holds what
-    is asked of whom with documents that carry a drawing nailed to the sheet, and holds each of the
+    is asked of whom with documents that carry a drawing nailed to the sheet, holds the page
+    typing onto a new page is read from to the saved copy's, and holds each of the
     two thresholds the verdict is read by to the grid its readings land on and to the promise it
     makes from either side — those two without a document, so they are held even where Word is not
     there to run the rest. Run it after changing
@@ -1234,7 +1237,11 @@ function Invoke-Scenario {
 # Edits a copy, saves it, reopens it and verifies it. With a reference PDF the reopened copy is set
 # as a PDF too and read against it, with the facts the edit and its verification recorded: the
 # scenario passes when both what Word reports and what its PDF shows hold, and one that verifies
-# nothing through Word is judged by its PDF alone.
+# nothing through Word is judged by its PDF alone. The PDF is set before the verification reads
+# the copy: reading a header's or footer's text gives a document without a header an empty one,
+# and Word then sets the body below it. On a page whose top margin is shorter than the header's
+# distance and a line, the whole body moved down — 18.96pt on cv-editorial_blue — and the PDF
+# showed a page the reader of the saved file never sees.
 function Invoke-ScenarioOnce {
     param($Word, $Source, [string]$Name, [scriptblock]$Edit, [scriptblock]$Verify, [switch]$Pdf, [string]$Reference)
     $copy = Join-Path $OutputDir ($Source.BaseName + '-' + $Name + '.docx')
@@ -1266,8 +1273,8 @@ function Invoke-ScenarioOnce {
         $state.charactersAfter = $reopened.Content.Text.Length
         $state.paragraphsAfter = $reopened.Paragraphs.Count
         $state.tablesAfter = $reopened.Tables.Count
-        $result = & $Verify $reopened $state
         if ($Pdf -or $Reference) { Export-Pdf $reopened $pdfPath }
+        $result = & $Verify $reopened $state
     } finally {
         $reopened.Close([ref]$false)
         [Runtime.InteropServices.Marshal]::ReleaseComObject($reopened) | Out-Null
@@ -1932,10 +1939,12 @@ function Invoke-Protocol {
 # standing beside its own. Two came with reading the moves from Word's PDF: a drawing anchored to a
 # paragraph that does not move, beside text that does, which must be caught as left behind with
 # both moves read from the PDF; and a drawing the PDF draws nothing of, which must be named and
-# fail. Eighteen documents, and two checks that need none, one for each of the thresholds the
-# verdict is read by: each held to the grid COM's readings landed on, and each held to the promise
-# it makes from both sides, since no document can be laid out to put a difference exactly on a
-# threshold. Twenty checks in all.
+# fail. One came with setting a typed copy as a PDF before its verification reads it: a document
+# with no header under a 28pt top margin, typed onto a new page, whose first line must stand where
+# the save with no edit sets it. Nineteen documents, and two checks that need none, one for each
+# of the thresholds the verdict is read by: each held to the grid COM's readings landed on, and
+# each held to the promise it makes from both sides, since no document can be laid out to put a
+# difference exactly on a threshold. Twenty-one checks in all.
 
 $PROBE_CONTENT_TYPES = @'
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -1976,6 +1985,10 @@ $PROBE_NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/ma
 $PROBE_RPR = '<w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>'
 $PROBE_SECT = '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>' +
     '<w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr>'
+# A section with a 28pt top margin, as cv-editorial_blue's, and no header distance written, so
+# Word gives a header it makes its own 36pt.
+$PROBE_SECT_SHORT_TOP = '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>' +
+    '<w:pgMar w:top="560" w:right="560" w:bottom="560" w:left="560"/></w:sectPr>'
 # 20x10pt in EMU, and a point in EMU.
 $PROBE_WIDTH = 254000
 $PROBE_HEIGHT = 127000
@@ -2048,18 +2061,18 @@ function New-ProbeTable {
 }
 
 function New-ProbeDocument {
-    param([string]$Path, [string]$Body, [string]$Header = '')
+    param([string]$Path, [string]$Body, [string]$Header = '', [string]$Section = $PROBE_SECT)
     if (-not ('System.IO.Compression.ZipFile' -as [type])) {
         Add-Type -AssemblyName System.IO.Compression.FileSystem
     }
     if (Test-Path $Path) { Remove-Item $Path -Force }
     $namespaces = $PROBE_NS
-    $sect = $PROBE_SECT
+    $sect = $Section
     $types = $PROBE_CONTENT_TYPES
     $rels = $PROBE_DOCUMENT_RELS
     if ($Header) {
         $namespaces += ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"'
-        $sect = $PROBE_SECT -replace '<w:sectPr>', '<w:sectPr><w:headerReference w:type="default" r:id="rId1"/>'
+        $sect = $Section -replace '<w:sectPr>', '<w:sectPr><w:headerReference w:type="default" r:id="rId1"/>'
         $types = $PROBE_CONTENT_TYPES -replace '</Types>', ($PROBE_HEADER_TYPE + "`n</Types>")
         $rels = $PROBE_HEADER_RELS
     }
@@ -2568,6 +2581,46 @@ function Invoke-SelfCheck {
         } catch {
             $failures += "$($probe.name): $($probe.what) — the check itself failed: $($_.Exception.Message)"
         }
+    }
+    # Typing onto a new page, on a document with no header and a top margin shorter than the
+    # distance Word gives a header it makes: the page its PDF shows is the saved copy's, so the
+    # first line stands where the save with no edit sets it. Its verification reads the footer,
+    # and read before the PDF is set, that gave the copy an empty header and the body ran lower:
+    # 22.68pt on this probe, 18.96pt on cv-editorial_blue.
+    $checked++
+    $name = 'no-header-under-a-short-top-margin'
+    try {
+        $script:Scenario = @('round-trip', 'add-a-page')
+        # Fails closed: no PDF of an earlier run is read for this one's, and a scenario that came to
+        # no verdict, or a PDF that cannot be read, is a failure rather than a first line at 0pt.
+        $pdfs = @('round-trip', 'add-a-page' | ForEach-Object { Join-Path $OutputDir "$name-$_.pdf" })
+        $pdfs | Where-Object { Test-Path $_ } | Remove-Item -Force
+        $file = New-ProbeDocument (Join-Path $Directory "$name.docx") ((New-ProbeParagraph -Text $PROBE_LONG) * 3) -Section $PROBE_SECT_SHORT_TOP
+        $results = @(Invoke-Protocol $Word $file)
+        $verdicts = ($results | ForEach-Object { "$($_.scenario) $($_.status)" }) -join ', '
+        $read = "import sys, fitz; p = fitz.open(sys.argv[1])[0]; print(min(s['origin'][1] for b in p.get_text('dict')['blocks'] for l in b.get('lines', []) for s in l['spans'] if s['text'].strip()))"
+        $tops = @(foreach ($pdf in $pdfs) {
+            # Python's stderr is read as text, as in Read-PdfPlaces: Windows PowerShell 5.1 would
+            # raise a warning there under Stop.
+            $ErrorActionPreference = 'Continue'
+            $output = & $Python -c $read $pdf 2>&1
+            $ErrorActionPreference = 'Stop'
+            $top = @($output | Where-Object { "$_" -match '^[0-9.]+$' } | Select-Object -Last 1)
+            if ($LASTEXITCODE -ne 0 -or $top.Count -eq 0) { throw "no first line read from $pdf ($verdicts)" }
+            [double]"$($top[0])"
+        })
+        $typed = @($results | Where-Object { $_.scenario -eq 'add-a-page' })
+        if (@($results | Where-Object { $_.status -eq 'ERROR' }).Count -gt 0) {
+            $failures += "${name}: typing onto a new page — a scenario came to no verdict: $verdicts"
+        } elseif ($typed.Count -ne 1 -or $typed[0].detail -notlike '*footer there*') {
+            # The probe is for a verification that reads the footer; one that no longer reaches it
+            # holds nothing here.
+            $failures += "${name}: typing onto a new page — its verification read no footer: $verdicts"
+        } elseif ([Math]::Abs($tops[1] - $tops[0]) -gt 0.1) {
+            $failures += "${name}: typing onto a new page — its PDF sets the first line at $($tops[1])pt, the save with no edit at $($tops[0])pt: $verdicts"
+        }
+    } catch {
+        $failures += "${name}: typing onto a new page — the check itself failed: $($_.Exception.Message)"
     }
     # The scenario itself, on the one scenario these documents are for. Nothing runs after the
     # self-check, so the narrowing is not put back.

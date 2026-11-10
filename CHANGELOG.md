@@ -303,9 +303,9 @@ follow semantic versioning; release dates are ISO 8601.
     POI's schemas do not cover, so its paragraphs were read untyped and skipped. A paragraph laid
     over the flow in a text box is written exact.
   - The note now counts them. On the 104-document fidelity corpus it changes in two documents, the
-    invoices whose sidebar lockup is set in text boxes: `LumaStudioInvoice` from 56 paragraphs to
-    62, and its long form from 129 to 135, as many as each file holds. Every exported file is byte
-    for byte as before.
+    invoices whose sidebar lockup and closing banner are laid over the flow in text boxes:
+    `LumaStudioInvoice` from 56 paragraphs to 62, and its long form from 129 to 135, as many as
+    each file holds. Every exported file is byte for byte as before.
 
 - **A DOCX export draws a shape laid over a painted neighbour in front of the text, as the layer
   stack paints it, instead of under that neighbour's shading.**

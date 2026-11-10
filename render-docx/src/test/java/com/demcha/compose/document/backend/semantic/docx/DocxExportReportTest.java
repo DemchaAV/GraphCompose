@@ -283,7 +283,8 @@ class DocxExportReportTest {
         }
         String body = new String(partsBesidesTheDates(docx).get("word/document.xml"),
                 java.nio.charset.StandardCharsets.UTF_8);
-        assertThat(textBoxesOf(body)).as("the initials are the shape's text").contains(">AR<");
+        assertThat(textBoxesOf(body)).as("the initials are the shape's text, spaced but not exact")
+                .contains(">AR<").contains("<w:spacing").doesNotContain("w:lineRule=\"exact\"");
 
         assertThat(captured.get().bySubject()).doesNotContainKey(DocxExports.EXACT_LINES);
     }

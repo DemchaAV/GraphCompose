@@ -4,9 +4,15 @@ import com.demcha.compose.qa.RepoPaths;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -69,9 +75,24 @@ class DocxCapabilityMatrixGuardTest {
             "the node's own row",
             "the DOCX backend, at the top of this file");
 
+    /** What the export's sources write, read once for the tests that compare it. */
+    private static Map<String, Set<String>> exportWritten;
+
+    private static synchronized Map<String, Set<String>> exportWritten() throws IOException {
+        if (exportWritten == null) {
+            List<Source> sources = exportSources();
+            assertThat(sources.stream().filter(source -> REPORT_BUILDER.matcher(source.code()).find()))
+                    .describedAs("no source holds a DocxExportReport.Builder: the check that every call "
+                            + "handing it a note writes its severity out is reading nothing")
+                    .isNotEmpty();
+            exportWritten = written(sources);
+        }
+        return exportWritten;
+    }
+
     @Test
     void everySubjectTheExportWritesIsListedWithItsSeverity() throws IOException {
-        Map<String, Set<String>> written = written(exportSources());
+        Map<String, Set<String>> written = exportWritten();
         Map<String, Set<String>> listed = listed(Files.readString(MATRIX));
 
         assertThat(written.keySet())
@@ -87,7 +108,7 @@ class DocxCapabilityMatrixGuardTest {
 
     @Test
     void everySubjectTheMatrixListsIsOneTheExportWrites() throws IOException {
-        Map<String, Set<String>> written = written(exportSources());
+        Map<String, Set<String>> written = exportWritten();
         Map<String, Set<String>> listed = listed(Files.readString(MATRIX));
 
         assertThat(listed.keySet())
@@ -131,7 +152,7 @@ class DocxCapabilityMatrixGuardTest {
     void everyDocxClassTheMatrixNamesExists() throws IOException {
         String matrix = Files.readString(MATRIX);
         Map<String, Path> types = declaredTypes();
-        Map<Path, String> read = new java.util.HashMap<>();
+        Map<Path, String> read = new HashMap<>();
         Pattern symbol = Pattern.compile("`(Docx\\w+)(?:\\.(\\w+))?(?:\\([^`]*\\))?`");
         Set<String> unknown = new TreeSet<>();
         int named = 0;
@@ -268,6 +289,14 @@ class DocxCapabilityMatrixGuardTest {
                     void f() { report.add(Severity.DROPPED, subject, path, "a"); }
                 }
                 """)))).isInstanceOf(AssertionError.class).hasMessageContaining("assigns no String local");
+        assertThatThrownBy(() -> written(List.of(source("A", """
+                class A {
+                    void f() {
+                        String subject = "a";
+                        subjects.forEach(subject -> report.add(Severity.DROPPED, subject, path, "a"));
+                    }
+                }
+                """)))).isInstanceOf(AssertionError.class).hasMessageContaining("a lambda's parameter");
     }
 
     @Test
@@ -302,6 +331,13 @@ class DocxCapabilityMatrixGuardTest {
                 import static com.demcha.compose.document.backend.semantic.docx.DocxExportReport.Severity.DROPPED;
                 class A { void f() { report.add(DROPPED, "chart", path, "a"); } }
                 """)))).isInstanceOf(AssertionError.class).hasMessageContaining("A:1");
+        // A note passed on with its own severity: no Severity token in the call to be found by.
+        assertThatThrownBy(() -> written(List.of(source("A", """
+                class A {
+                    private DocxExportReport.Builder report;
+                    void f(DocxExportReport.Note note) { report.add(note.severity(), "chart", path, "a"); }
+                }
+                """)))).isInstanceOf(AssertionError.class).hasMessageContaining("without Severity.DROPPED");
     }
 
     @Test
@@ -353,6 +389,7 @@ class DocxCapabilityMatrixGuardTest {
                 }
                 continue;
             }
+            requireASeverityInEveryNoteCall(source);
             Matcher token = SEVERITY.matcher(source.code());
             while (token.find()) {
                 Matcher site = SITE.matcher(source.code()).region(token.start(), source.code().length());
@@ -372,6 +409,32 @@ class DocxCapabilityMatrixGuardTest {
             }
         }
         return written;
+    }
+
+    private static final Pattern REPORT_BUILDER = Pattern.compile("\\bDocxExportReport\\.Builder\\s+(\\w+)\\s*[,;=)]");
+
+    /**
+     * Every call that hands the report builder a note — through any name a source holds it under —
+     * writes its severity out. One that does not (a note's own {@code severity()} passed on, a
+     * severity in a variable) has no {@code Severity} token to be found by, and would go unread.
+     */
+    private static void requireASeverityInEveryNoteCall(Source source) {
+        Set<String> names = new TreeSet<>();
+        Matcher held = REPORT_BUILDER.matcher(source.code());
+        while (held.find()) {
+            names.add(held.group(1));
+        }
+        for (String name : names) {
+            Matcher call = Pattern.compile("(?<!\\w)" + name + "\\s*\\.\\s*(?:add|set|insert|replace|addTo)\\s*\\(")
+                    .matcher(source.code());
+            while (call.find()) {
+                if (!SITE.matcher(argumentList(source.code(), call.end())).find()) {
+                    throw new AssertionError(source.name() + ":" + source.line(call.start())
+                            + " hands the report a note without Severity.DROPPED or Severity.APPROXIMATED "
+                            + "written in the call: its subject cannot be read");
+                }
+            }
+        }
     }
 
     private static Set<String> resolve(String raw, Source source, int at, List<Source> sources, int depth) {
@@ -417,7 +480,11 @@ class DocxCapabilityMatrixGuardTest {
                 throw unreadable(expr, source, at, "name the record it reads in CARRIED");
             }
             String declaredAs = declaredType(carried.group(1), source, at);
-            if (declaredAs != null && !declaredAs.equals(record.substring(record.indexOf('.') + 1))) {
+            // A qualified type names its class too: another class's record of the same name is not it.
+            boolean same = declaredAs == null || (declaredAs.contains(".")
+                    ? record.equals(declaredAs) || declaredAs.endsWith("." + record)
+                    : record.endsWith("." + declaredAs));
+            if (!same) {
                 throw unreadable(expr, source, at, "its method declares it a " + declaredAs + ", not the "
                         + record + " CARRIED names");
             }
@@ -438,20 +505,21 @@ class DocxCapabilityMatrixGuardTest {
         }
         Matcher call = Pattern.compile("(\\w+)\\(", Pattern.DOTALL).matcher(expr);
         if (call.lookingAt() && argumentList(expr, call.end()).length() == expr.length() - call.end() - 1) {
+            // Every overload's returns: which one the call reaches is not read.
             for (Source each : callerFirst(source, sources)) {
                 Matcher method = Pattern.compile("\\bString\\s+" + call.group(1) + "\\s*\\([^)]*\\)\\s*\\{").matcher(each.code());
-                if (method.find()) {
+                Set<String> values = new LinkedHashSet<>();
+                while (method.find()) {
                     int open = method.end() - 1;
                     String body = block(each.code(), open);
                     Matcher returned = Pattern.compile("\\breturn\\b").matcher(body);
-                    Set<String> values = new LinkedHashSet<>();
                     while (returned.find()) {
                         values.addAll(resolve(statement(body, returned.end()), each, open + returned.end(),
                                 sources, depth + 1));
                     }
-                    if (!values.isEmpty()) {
-                        return values;
-                    }
+                }
+                if (!values.isEmpty()) {
+                    return values;
                 }
             }
         }
@@ -472,7 +540,7 @@ class DocxCapabilityMatrixGuardTest {
                 .matcher(source.code()).region(method[0], at);
         String type = null;
         while (typed.find()) {
-            type = typed.group(1).substring(typed.group(1).lastIndexOf('.') + 1);
+            type = typed.group(1);
         }
         return type;
     }
@@ -670,9 +738,9 @@ class DocxCapabilityMatrixGuardTest {
         return rows;
     }
 
+    /** Whether a row's capability is that name: its cell up to the dash or the bracket that explains it. */
     private static boolean namesRow(String capability, String name) {
-        return capability.startsWith(name)
-               && (capability.length() == name.length() || !Character.isLetterOrDigit(capability.charAt(name.length())));
+        return capability.split(" — | \\(", 2)[0].strip().equals(name);
     }
 
     private static List<String> cells(String line) {
@@ -690,29 +758,27 @@ class DocxCapabilityMatrixGuardTest {
         Map<String, Path> types = new TreeMap<>();
         Pattern declaration = Pattern.compile("\\b(?:class|record|interface|enum)\\s+(\\w+)");
         List<Path> files = new ArrayList<>();
-        Files.walkFileTree(ROOT, new java.nio.file.SimpleFileVisitor<>() {
+        Files.walkFileTree(ROOT, new SimpleFileVisitor<>() {
             @Override
-            public java.nio.file.FileVisitResult preVisitDirectory(Path dir,
-                    java.nio.file.attribute.BasicFileAttributes attributes) {
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attributes) {
                 String name = dir.getFileName() == null ? "" : dir.getFileName().toString();
                 boolean skipped = !dir.equals(ROOT)
                         && (name.startsWith(".") || name.equals("target") || name.equals("node_modules"));
-                return skipped ? java.nio.file.FileVisitResult.SKIP_SUBTREE : java.nio.file.FileVisitResult.CONTINUE;
+                return skipped ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
             }
 
             @Override
-            public java.nio.file.FileVisitResult visitFile(Path file,
-                    java.nio.file.attribute.BasicFileAttributes attributes) {
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
                 if (file.toString().endsWith(".java")) {
                     files.add(file);
                 }
-                return java.nio.file.FileVisitResult.CONTINUE;
+                return FileVisitResult.CONTINUE;
             }
         });
         // A main source first, so a test declaring a type of the same name does not stand for it.
-        java.util.Comparator<Path> mainFirst = java.util.Comparator.comparing(
+        Comparator<Path> mainFirst = Comparator.comparing(
                 (Path file) -> !ROOT.relativize(file).toString().replace('\\', '/').contains("src/main/"));
-        for (Path file : files.stream().sorted(mainFirst.thenComparing(java.util.Comparator.naturalOrder())).toList()) {
+        for (Path file : files.stream().sorted(mainFirst.thenComparing(Comparator.naturalOrder())).toList()) {
             // Strings blanked too: a test's source in a text block declares nothing.
             Matcher found = declaration.matcher(blankStrings(readWithoutComments(file)));
             while (found.find()) {
@@ -726,7 +792,7 @@ class DocxCapabilityMatrixGuardTest {
         try {
             return withoutComments(Files.readString(file));
         } catch (IOException failed) {
-            throw new java.io.UncheckedIOException(failed);
+            throw new UncheckedIOException(failed);
         }
     }
 

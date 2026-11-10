@@ -179,14 +179,14 @@ class or method no source declares.
 | `anchor` | `APPROXIMATED` | one bookmark for an anchor two nodes declare, on the last; one bookmark for an anchor in a header row the page repeats, where the table starts | Anchor markers |
 | `barcode` | `APPROXIMATED` | a picture of the symbol, its data the description | Barcode / QR |
 | `border width` | `APPROXIMATED`, `DROPPED` | a border, rule or separator held to Word's widths; a separator set at no width a border has, not written | Rectangle shape, Line, Table rows, Repeating headers / footers |
-| `cell drawing` | `APPROXIMATED`, `DROPPED` | what a table's cells draw, as shapes where the layout puts them, without a transform or gradient; or, on a page no paragraph is written on, not in the file | Table rows, Clip region |
+| `cell drawing` | `APPROXIMATED`, `DROPPED` | what a table's cells draw, as shapes where the layout puts them, without a transform or gradient; or, on a page no paragraph is written on, not in the file | Table rows, Clip region open/close |
 | `cell padding` | `APPROXIMATED` | a cell opening with a table, or spanning rows, keeping its padding as its margins, which Word gives every cell of its row: the row's other cells' text lower, the row as much taller where one of them is its tallest, and taller by a bottom padding kept | Table rows |
 | `cell rule` | `APPROXIMATED` | a table's rows taller than the page, where a rule is wider than the padding that takes it | Table rows |
 | `chart` | `APPROXIMATED` | a Word chart Word lays out itself, or the chart's data table | Chart |
-| `clipped cell content` | `APPROXIMATED` | what a clip composed in a table's cells cuts, written whole | Clip region |
-| `clipped <kind>` | `APPROXIMATED` | a clip of a node kind of the caller's own, its content written whole | Clip region; A node kind of the caller's own |
-| `clipped layer stack` | `APPROXIMATED` | its layers written whole, what the clip cuts away included | Clip region, Layer stack |
-| `clipped shape container` | `APPROXIMATED` | its layers written whole, what the clip cuts away included; or, written as a panel, the panel held at the outline's height, which Word cuts its content at, square | Clip region |
+| `clipped cell content` | `APPROXIMATED` | what a clip composed in a table's cells cuts, written whole | Clip region open/close |
+| `clipped <kind>` | `APPROXIMATED` | a clip of a node kind of the caller's own, its content written whole | Clip region open/close; A node kind of the caller's own |
+| `clipped layer stack` | `APPROXIMATED` | its layers written whole, what the clip cuts away included | Clip region open/close, Layer stack |
+| `clipped shape container` | `APPROXIMATED` | its layers written whole, what the clip cuts away included; or, written as a panel, the panel held at the outline's height, which Word cuts its content at, square | Clip region open/close |
 | `closing paragraph` | `APPROXIMATED` | the paragraph after a closing table, a point tall, where text typed at the end goes into the table | Table rows |
 | `corner radius` | `APPROXIMATED` | a panel with square corners | Rectangle shape |
 | `dash pattern` | `APPROXIMATED` | a rule in Word's own dash for a border | Line |
@@ -214,8 +214,8 @@ class or method no source declares.
 | `right end` | `APPROXIMATED` | a panel's table, or a row's or table's columns sized to their content, wider than the page draws them, by the room an editor setting the text in its own face may need | Rectangle shape, Table rows |
 | `row paint` | `APPROXIMATED`, `DROPPED` | a row's fill and borders drawn as a shape, or not written — in a page zone, or where the row is its columns alone | Rectangle shape, Page zones |
 | `rule link` | `APPROXIMATED` | a rule without its link | Line |
-| `shape container` | `APPROXIMATED` | a panel that grows past its outline, stands upright, or a container's layers written inline | Clip region, Transform, Layer stack |
-| `shape container outline` | `DROPPED` | nothing, for an outline no shape this export draws can show | Clip region |
+| `shape container` | `APPROXIMATED` | a panel that grows past its outline, stands upright, or a container's layers written inline | Clip region open/close, Transform open/close, Layer stack |
+| `shape container outline` | `DROPPED` | nothing, for an outline no shape this export draws can show | Clip region open/close |
 | `space above` | `APPROXIMATED` | a block standing lower than the page sets it, where a top edge below zero pulls further than the space above gives | Paragraph, Rectangle shape |
 | `timeline rail` | `APPROXIMATED`, `DROPPED` | the rail drawn per page as a filled bar, which keeps the length the layout gives it, or hidden by a panel painted beside it; or, on a page no paragraph is written on, not in the file | Timeline rail |
 | `translucency` | `APPROXIMATED` | an opaque colour flattened against what is painted under it | Alpha / opacity |

@@ -1044,6 +1044,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private FontLibrary seatFonts;
     // Those fonts' line heights, for a line the layout placed none of (see styleLineHeight).
     private com.demcha.compose.document.chart.ChartTextMetrics styleMetrics;
+    // Those fonts' widths, for a word the layout set on a line of its own (see keepsItsBreaks).
+    private com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem measurement;
     // What this export could not carry as authored. Collected whether or not anyone asked
     // for it: building it costs a list, and deciding later that nobody wanted it is not
     // something the writers can do halfway through.
@@ -1441,6 +1443,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         measuredFamilies = List.copyOf(fonts);
         seatFonts = null;
         styleMetrics = null;
+        measurement = null;
         grownLines = DocxGrownLines.NONE;
         documentDefaultStyle = dominantTextStyle(whole);
         currentCell = null;
@@ -2729,11 +2732,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         appendBandSlot(para, band.getLeftText(), style, numbers);
         if (centre) {
             appendTab(para, style);
+            int first = para.getRuns().size();
             appendBandSlot(para, band.getCenterText(), style, numbers);
+            spaceTheSlotAsThePage(para.getRuns().subList(first, para.getRuns().size()), band.getCenterText(), style);
         }
         if (right) {
             appendTab(para, style);
+            int first = para.getRuns().size();
             appendBandSlot(para, band.getRightText(), style, numbers);
+            spaceTheSlotAsThePage(para.getRuns().subList(first, para.getRuns().size()), band.getRightText(), style);
         }
         // Its mark in its text's style, as a body paragraph's, so Enter in the band continues it
         // rather than Normal.
@@ -2784,6 +2791,62 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFRun tab = para.createRun();
         applyStyle(tab, style);
         tab.addTab();
+    }
+
+    /**
+     * Spaces the letters of a text band's centred or right slot so Word sets it as wide as the
+     * page does, as a centred or right-aligned paragraph's are ({@link #setTheLineAsWideAsThePage}).
+     *
+     * <p>The page sets the slot at its width in the band's size, measured in the band's face, and
+     * stands it from the middle of the band or against its right edge; Word sets it at the size to
+     * the half point and stands it at a tab stop there, so its first letter moves with the
+     * difference. {@code CobaltRota}'s 7.28pt footer, set at 7.5pt against the right stop, stood
+     * 3.6pt left of the page's. Only where the difference is a point or more
+     * ({@link #LINE_WIDTH_CLEARANCE}); a slot holding a page number or a page count is left as it
+     * is, since Word writes those digits itself, and so is one in a face the measured fonts do
+     * not hold.</p>
+     *
+     * @param runs  the slot's runs, as written
+     * @param text  the slot's text, its tokens unresolved
+     * @param style the band's text style
+     */
+    private void spaceTheSlotAsThePage(List<XWPFRun> runs, String text, DocumentTextStyle style) {
+        if (style == null || !(style.size() > 0) || !style.letterSpacing().isNone()) {
+            return;
+        }
+        for (DocxTextBands.Segment segment : DocxTextBands.segments(text)) {
+            if (segment.kind() == DocxTextBands.Kind.PAGE || segment.kind() == DocxTextBands.Kind.PAGES) {
+                return;
+            }
+        }
+        StringBuilder written = new StringBuilder();
+        for (XWPFRun run : runs) {
+            String letters = run.text();
+            if (letters != null) {
+                written.append(letters);
+            }
+        }
+        int letters = written.codePointCount(0, written.length());
+        if (letters == 0) {
+            return;
+        }
+        double asked;
+        try {
+            asked = styleMetrics().width(style, written.toString());
+        } catch (RuntimeException unknownFace) {
+            return;
+        }
+        double difference = asked - asked * wordsSize(style.size()) / style.size();
+        if (!(Math.abs(difference) >= LINE_WIDTH_CLEARANCE)) {
+            return;
+        }
+        int twentieths = (int) Math.round(difference / letters * 20.0);
+        for (XWPFRun run : runs) {
+            String letter = run.text();
+            if (twentieths != 0 && letter != null && !letter.isEmpty()) {
+                run.setCharacterSpacing(run.getCharacterSpacing() + twentieths);
+            }
+        }
     }
 
     /**
@@ -12401,8 +12464,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * text past the left edge, the right edge gives what the left indent cannot:
      * {@code VioletGrid}'s 6.8pt "INFORMATION ARCHITECTURE", set at 7pt and centred in a tile
      * it fills, broke onto two lines, and the tile's text stood 7.5pt low under it. A centred
-     * paragraph of several lines is left as it is — a wider measure there takes another word
-     * onto a line Word already breaks elsewhere than the page — and so is a short line, whose
+     * paragraph of several lines is left as it is — a wider measure there would take another
+     * word onto a line; where Word sets its text a point or more off, its letters are spaced
+     * instead, as far as no line, widened, runs within a point of the measure, or, narrowed, comes within a point
+     * of taking up the next line's first word ({@link #twentiethsToThePage}) — and so is a short
+     * line, whose
      * box has room for it: measured, {@code MerchantInvoice}'s centred amounts, their cells'
      * indents taken past the cells' edges, stood 0.12pt off their place. A list's items, a line pair, text over the flow and
      * a header's or footer's line are written elsewhere and keep the page's measure.</p>
@@ -12468,54 +12534,175 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (text) {
                 // As wide as Word ends up setting it: the page's width where its letters are
                 // spaced to it (setTheLineAsWideAsThePage), its own at Word's size where not.
-                set = Math.max(set, twentiethsToThePage(node) != 0 ? askedWidth(line) : widthAtWordsSize(line));
+                set = Math.max(set, twentiethsToThePage(node, room) != 0 ? askedWidth(line) : widthAtWordsSize(line));
             }
         }
         return Math.max(room, set * (1 + ONE_LINE_FACE_SLACK));
     }
 
     /**
-     * How far apart to space a centred or right-aligned line's letters so Word sets it as wide
-     * as the page does, in twentieths of a point; 0 where it is left as Word sets it.
+     * How far apart to space a centred or right-aligned paragraph's letters so Word sets its
+     * lines as wide as the page does, in twentieths of a point; 0 where it is left as Word sets
+     * it.
      *
-     * <p>Only a left-to-right line of its own, which Word sets a point or more wider or narrower
-     * at its size to the half point ({@link #LINE_WIDTH_CLEARANCE}), with text and nothing else
-     * in it, none of it tracked. Under a point the size alone mispredicts what Word sets: measured,
+     * <p>Only a left-to-right paragraph one of whose lines' text Word sets a point or more wider or
+     * narrower at its size to the half point ({@link #LINE_WIDTH_CLEARANCE}), none of its text
+     * tracked. Under a point the size alone mispredicts what Word sets: measured,
      * {@code ObsidianInvoice}'s 9.34pt amounts, half a point wider by it, came out as wide as the
      * page's in Word, and spacing them moved them half a point off. Word sets tracking its own way
      * and spaces the last letter too, which the size does not tell: spaced on its tracking,
-     * {@code TealPulse}'s tagline stood a point further off than it was. A picture or a shape is
-     * written at its own size, and the run beside it may be closed up to make room for it
-     * ({@link #giveBackWidth}). Twentieths, to the nearest: on the corpus they put 74 lines in
-     * Word nearer the page where whole tenths put 64.</p>
+     * {@code TealPulse}'s tagline stood a point further off than it was. A paragraph of one line
+     * is spaced in twentieths, to the nearest: on the corpus they put 74 lines in Word nearer the
+     * page where whole tenths put 64; its room is then reckoned from the page's width
+     * ({@link #oneLinesMeasure}).</p>
+     *
+     * <p>A picture or a shape in a line is written at its own size and keeps it: only the text's
+     * letters are spaced, by what the text alone grows ({@link #widthAtWordsSize}), and the room
+     * a shape's picture takes past its box is given back on its own ({@link #giveBackWidth}).
+     * {@code TimelineMinimal}'s 7.8pt e-mail beside its icon, right-aligned and set at 8pt, stood
+     * 2.7pt left.</p>
+     *
+     * <p>A paragraph of several lines keeps the page's measure, and Word has one spacing for a run
+     * whatever line it falls on, so the paragraph is spaced once, by the line Word sets furthest
+     * off, its difference over its letters, to the nearest twentieth — then less, a twentieth at
+     * a time and as far as none, until no line, widened, runs within a point of the measure, or, narrowed, comes
+     * within a point of taking up the next line's first word ({@link #keepsItsBreaks}). Spaced
+     * to one line's difference, a line of
+     * narrower letters, which grows less a letter, comes out past its own, and rounding over a
+     * hundred letters moves a line by up to two and a half points: widened, a line could run past
+     * the measure and push a word onto the next line; narrowed, it could take up the next line's
+     * first word. A paragraph of one line of text and a line of pictures alone is weighed so too,
+     * and one whose {@code bulletOffset} prefix is written as an indent is left as Word sets it:
+     * the indent narrows Word's measure past the room it is written in.
+     * {@code ClassicSerif}'s 9.8pt profile, three centred lines set at 10pt, stood 3.7 to 4.9pt
+     * left of the page's.</p>
+     *
+     * @param room the width the paragraph's text is written in, in points
      */
-    private int twentiethsToThePage(ParagraphNode node) {
+    private int twentiethsToThePage(ParagraphNode node, double room) {
         if (node.align() != TextAlign.CENTER && node.align() != TextAlign.RIGHT
-            || ParagraphDirection.resolve(node) == TextDirection.RTL || layout.lineCount(node) != 1) {
+            || ParagraphDirection.resolve(node) == TextDirection.RTL) {
             return 0;
         }
         List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines = layout.lines(node);
-        if (lines.size() != 1) {
-            return 0;
-        }
-        int letters = 0;
-        for (com.demcha.compose.document.layout.payloads.ParagraphSpan span : lines.get(0).spans()) {
-            if (!(span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan text)) {
-                if (span.width() > 0) {
+        int texts = 0;
+        double furthest = 0;
+        int furthestLetters = 0;
+        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : lines) {
+            int letters = 0;
+            for (com.demcha.compose.document.layout.payloads.ParagraphSpan span : line.spans()) {
+                // A picture or a shape is written at its own size.
+                if (!(span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan text)) {
+                    continue;
+                }
+                if (text.textStyle() == null || text.textStyle().letterSpacing() != 0) {
                     return 0;
                 }
-                continue;
+                letters += lettersIn(text);
             }
-            if (text.textStyle() == null || text.textStyle().letterSpacing() != 0) {
-                return 0;
+            if (letters > 0) {
+                texts++;
+                double difference = askedWidth(line) - widthAtWordsSize(line);
+                if (Math.abs(difference) > Math.abs(furthest)) {
+                    furthest = difference;
+                    furthestLetters = letters;
+                }
             }
-            letters += text.text() == null ? 0 : text.text().codePointCount(0, text.text().length());
         }
-        double difference = askedWidth(lines.get(0)) - widthAtWordsSize(lines.get(0));
-        if (letters == 0 || !(Math.abs(difference) >= LINE_WIDTH_CLEARANCE)) {
+        if (texts == 0 || !(Math.abs(furthest) >= LINE_WIDTH_CLEARANCE)) {
             return 0;
         }
-        return (int) Math.round(difference / letters * 20.0);
+        int twentieths = (int) Math.round(furthest / furthestLetters * 20.0);
+        if (lines.size() == 1) {
+            return twentieths;
+        }
+        if (!node.bulletOffset().isEmpty() && node.indentStrategy() != DocumentTextIndent.NONE) {
+            // Its prefix's indent narrows Word's measure by more than the room it is written in.
+            return 0;
+        }
+        for (; twentieths != 0; twentieths -= Integer.signum(twentieths)) {
+            if (keepsItsBreaks(lines, twentieths, room)) {
+                return twentieths;
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Whether a paragraph's letters may be spaced so: widened, every line stays a point inside the measure
+     * ({@link #WORDS_MEASURE_CLEARANCE}); narrowed, no line but the last comes within a point of
+     * taking up the next line's first word and the space before it, as Word sets them. A
+     * narrowed line is not held inside the measure: it is narrower than Word sets it unspaced.
+     * The next word is weighed whole: a hyphen in it is written non-breaking
+     * ({@link DocxLineStartHyphens}) — though not in a text box over the flow, where Word may
+     * still take up its first part. A next line opening with a picture, or with a word the
+     * measured fonts do not hold, keeps every line unnarrowed; a line the page ended at a line
+     * break is weighed as any other, so a paragraph of such lines is held back too.
+     *
+     * @param twentieths the spacing, in twentieths of a point, not 0
+     * @param room       the width the paragraph's text is written in, in points
+     */
+    private boolean keepsItsBreaks(List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
+                                   int twentieths, double room) {
+        if (!Double.isFinite(room)) {
+            return false;
+        }
+        for (int index = 0; index < lines.size(); index++) {
+            com.demcha.compose.document.layout.payloads.ParagraphLine line = lines.get(index);
+            double set = widthAtWordsSize(line) + lettersOf(line) * twentieths / 20.0;
+            if (twentieths > 0 && set > room - WORDS_MEASURE_CLEARANCE) {
+                return false;
+            }
+            if (twentieths < 0 && index + 1 < lines.size()
+                && !(set + nextWordAtWordsSize(lines.get(index + 1), twentieths) > room + WORDS_MEASURE_CLEARANCE)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * How wide Word sets a space and the first word of a line, its letters spaced so, in points;
+     * 0 where the line opens with anything but a word the measured fonts hold.
+     */
+    private double nextWordAtWordsSize(com.demcha.compose.document.layout.payloads.ParagraphLine line,
+                                       int twentieths) {
+        if (line.spans().isEmpty()
+            || !(line.spans().get(0) instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan text)
+            || text.text() == null || text.textStyle() == null || !(text.textStyle().size() > 0)) {
+            return 0;
+        }
+        String opening = text.text().stripLeading();
+        int end = 0;
+        while (end < opening.length() && !Character.isWhitespace(opening.charAt(end))) {
+            end++;
+        }
+        if (end == 0) {
+            return 0;
+        }
+        String word = " " + opening.substring(0, end);
+        try {
+            double size = text.textStyle().size();
+            return measurement().textWidth(text.textStyle(), word) * wordsSize(size) / size
+                   + word.codePointCount(0, word.length()) * twentieths / 20.0;
+        } catch (RuntimeException unknownFace) {
+            return 0;
+        }
+    }
+
+    /** The letters of a line's text, which its spacing is set after. */
+    private static int lettersOf(com.demcha.compose.document.layout.payloads.ParagraphLine line) {
+        int letters = 0;
+        for (com.demcha.compose.document.layout.payloads.ParagraphSpan span : line.spans()) {
+            if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan text) {
+                letters += lettersIn(text);
+            }
+        }
+        return letters;
+    }
+
+    private static int lettersIn(com.demcha.compose.document.layout.payloads.ParagraphTextSpan text) {
+        return text.text() == null ? 0 : text.text().codePointCount(0, text.text().length());
     }
 
     /**
@@ -13130,11 +13317,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** The measured fonts' metrics for a style, built when first asked for. */
     private com.demcha.compose.document.chart.ChartTextMetrics styleMetrics() {
         if (styleMetrics == null) {
-            styleMetrics = new com.demcha.compose.document.layout.ChartTextMetricsSupport(
-                    new com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem(
-                            measuredFonts(), com.demcha.compose.engine.render.pdf.PdfFont.class));
+            styleMetrics = new com.demcha.compose.document.layout.ChartTextMetricsSupport(measurement());
         }
         return styleMetrics;
+    }
+
+    /** The measured fonts' widths, as the layout measures text, built when first asked for. */
+    private com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem measurement() {
+        if (measurement == null) {
+            measurement = new com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem(
+                    measuredFonts(), com.demcha.compose.engine.render.pdf.PdfFont.class);
+        }
+        return measurement;
     }
 
     /**
@@ -13619,7 +13813,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         DocxStackedLines.Line stacked = stackedLineHeights.get(node);
         writeParagraphRuns(para, node, rightToLeft, stacked == null ? 0 : stacked.topAbove(), stacked == null);
         if (!rightToLeft) {
-            setTheLineAsWideAsThePage(para, node);
+            setTheLineAsWideAsThePage(para, node, room);
         }
         closeAnchor(para, anchor);
         lastWrittenNode = node;
@@ -14306,7 +14500,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Spaces a centred or right-aligned line's letters so Word sets it as wide as the page does.
+     * Spaces a centred or right-aligned paragraph's letters so Word sets its lines as wide as the
+     * page does.
      *
      * <p>Word states a type size in half points, so it sets a size the page gives to the tenth a
      * little larger or smaller, and a line that much wider or narrower. A line set from its left
@@ -14318,8 +14513,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * page's. Which lines, and by how much, is {@link #twentiethsToThePage}'s; their measure
      * reckons with it ({@link #oneLinesMeasure}).</p>
      */
-    private void setTheLineAsWideAsThePage(XWPFParagraph para, ParagraphNode node) {
-        int twentieths = twentiethsToThePage(node);
+    private void setTheLineAsWideAsThePage(XWPFParagraph para, ParagraphNode node, double room) {
+        int twentieths = twentiethsToThePage(node, room);
         if (twentieths == 0) {
             return;
         }

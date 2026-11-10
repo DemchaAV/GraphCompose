@@ -296,6 +296,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **Centred and right-aligned DOCX text set at a size Word rounds stands where the page sets it,
+  over several lines, beside a picture and in a header or footer slot.**
+  - Word states a type size in half points, so text the page sets at 9.8pt is set at 10pt and a
+    line of it is 2% wider; a centred or right-aligned line moves its first letter with that.
+    The export already spaced the letters of such a line back to the page's width, but only in
+    a paragraph of one line of text alone. `ClassicSerif`'s 9.8pt profile, three centred lines,
+    stood 3.7 to 4.9pt left of the page's in Word; `TimelineMinimal`'s 7.8pt e-mail, right-aligned
+    beside its icon, 2.7pt left; `CobaltRota`'s 7.28pt footer, at the right tab stop, 3.6pt left.
+  - A centred or right-aligned paragraph of several lines is now spaced once, by the line Word
+    sets furthest off, to the nearest twentieth of a point, then less until no line, widened,
+    runs within a point of the measure, or, narrowed, comes within a point of taking up the next
+    line's first word. A picture or a shape in a line keeps its own size, and only the text's
+    letters are spaced. A text band's centred or right slot is spaced the same way, its width
+    measured in the band's face; a slot holding a page number or a page count is left as it is.
+    A difference under a point is left as before.
+  - Of the 104 documents of the fidelity corpus five change: `cv-classic_serif`,
+    `cv-timeline_minimal`, `letter-timeline_minimal`, `cv-violet_grid` (five of its six centred
+    tile texts, the sixth held back) and `rota-cobalt`'s footer; the report's notes are
+    unchanged. In Word 24 lines move, all nearer the page, and lines more than 2pt off across
+    fall from 87 to 81, the six in templates to none. In LibreOffice on Windows the same lines move nearer. LibreOffice 24.2 on
+    Linux sets `ClassicSerif`'s profile panel 18pt right, its heading too; its lines' centres stay
+    there, and their first letters, no longer pulled left by a line 9pt wider, stand 18pt right
+    where they stood 13 to 14pt.
+
 - **Text typed at the end of a DOCX document starts below a block written over the flow.**
   - A block the page gives no room — its margins take back its height — is written over the
     flow, in drawings and text boxes, and may hang below where the flow ends.

@@ -570,16 +570,28 @@ it. In a table cell, where Word draws no text past the cell's left edge, the lef
 gives no more than it has, and the right edge gives the rest, the line moving by that much.
 Any other centred or right-aligned paragraph keeps the page's measure: in one of several
 lines a wider measure takes another word onto a line, and a short line's box already has
-room for it. A centred or right-aligned paragraph of one line moves its first letter with
-the line's width, so where Word sets a left-to-right one of text alone a point or more wider
-or narrower than the page, its letters are spaced by the difference (`w:spacing`, in
-twentieths of a point, the size left as Word sets it) and its ends stand within a fraction of
-a point of the page's; its room is then reckoned from the page's width, a few hundredths past
-it. A line that carries tracking, or a picture or a shape, is left as it is, and so is its
-room: Word rounds tracking its own way and spaces the last letter too, which the size does
-not tell. So is a difference under a point — measured, `ObsidianInvoice`'s 9.34pt amounts,
-half a point wider by the size alone, came out as wide as the page's in Word. Text typed into
-a spaced line takes the same spacing. A list's items, a line pair's line, text over the flow
+room for it. A centred or right-aligned paragraph moves its lines' first letters with their
+width, so where Word sets a left-to-right one's text a point or more wider or narrower than
+the page, its letters are spaced by the difference (`w:spacing`, in twentieths of a point, the
+size left as Word sets it). A paragraph of one line is spaced by its line's difference over its
+letters, to the nearest twentieth, and its ends stand within a fraction of a point of the
+page's; its room is then reckoned from the page's width, a few hundredths past it. A paragraph
+of several lines keeps the page's measure and has one spacing: the line Word sets furthest
+off, its difference over its letters, to the nearest twentieth, then less, as far as none,
+until no line, widened, runs within a point of the measure, or, narrowed, comes within a point
+of taking up the next line's first word. A next line opening with a picture holds the
+paragraph unnarrowed. A paragraph with a `bulletOffset` prefix is left unspaced, and so is
+one with a line Word sets a point wider and another a point narrower. A line of narrower letters than the one it is spaced by grows less, and comes out a
+little past its own. A picture or a shape in a line keeps its
+own size, and only the text's letters are
+spaced, by what the text alone grows. A line that carries tracking is left as it is, and so is
+its room: Word rounds tracking its own way and spaces the last letter too, which the size
+does not tell. So is a difference under a point — measured, `ObsidianInvoice`'s 9.34pt
+amounts, half a point wider by the size alone, came out as wide as the page's in Word. Text
+typed into a spaced paragraph takes the same spacing. A text band's centred or right slot —
+the text a page header or footer sets at a tab stop — is spaced the same way, its width
+measured in the band's face; a slot holding a page number or a page count is left as it is,
+since Word writes those digits itself. A list's items, a line pair's line, text over the flow
 and a header's or footer's line keep the page's measure too.
 
 ## Named styles, so the document can be restyled

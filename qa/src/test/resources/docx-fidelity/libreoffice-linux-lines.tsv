@@ -1,5 +1,6 @@
 # libreoffice build 420(Build:2) on linux — document, line, drift below the page (pt), drift right of the page (pt), wider than the page (pt), letters
 # rows of invoice-consulting and invoice-consulting_long: from CI run 42480884766, when a table's rows came to carry what each is written taller than the page by and settle it in their bottom margins, the item rows set level where each had stood a fiftieth of a point lower than the one above
+# rows of cv-classic_serif, cv-timeline_minimal, cv-violet_grid, letter-timeline_minimal and rota-cobalt: from CI run 42843379275, when centred and right-aligned text Word sets at a rounded size came to be spaced over several lines, beside a picture and in a header or footer slot; ClassicSerif's profile lines stand as wide as the page, their centres where they stood, 18pt right with their panel
 # every other row from CI run 41696246504, shot whole when the gate came to hold each line to its width, which the column before the letters records: no line moved more than half a point down or across from the row it replaces, none was lost and none found anew, and every document's row reads as it did
 cv-blue_banner	0:8f1010120ed6	0.02	1.90	-3.84	jordanrivera
 cv-blue_banner	0:8d7a2cca3060	0.00	0.14	-0.10	+442055551000|jordan.rivera@exam
@@ -257,9 +258,9 @@ cv-charcoal_gold	0:eb04bd42c7fb	2.51	-1.19	2.62	microsoft365|jira|confluence|asa
 cv-classic_serif	0:8f1010120ed6	0.00	2.60	-5.24	jordanrivera
 cv-classic_serif	0:8d7a2cca3060	0.14	-0.52	1.23	+442055551000|jordan.rivera@exam
 cv-classic_serif	0:3c69d6bb4892	0.09	20.27	-4.41	professionalprofile
-cv-classic_serif	0:e9b75496bfb4	0.03	13.46	9.17	platformengineerwith10+yearsbuil
-cv-classic_serif	0:4e14279f15fe	0.04	13.08	9.95	developer-facingtemplatesystems.
-cv-classic_serif	0:b1e498da33d5	0.06	14.31	7.48	turningbrittleproduction-opsscri
+cv-classic_serif	0:e9b75496bfb4	0.03	18.41	-0.69	platformengineerwith10+yearsbuil
+cv-classic_serif	0:4e14279f15fe	0.04	18.38	-0.61	developer-facingtemplatesystems.
+cv-classic_serif	0:b1e498da33d5	0.06	18.61	-1.18	turningbrittleproduction-opsscri
 cv-classic_serif	0:32c1cf49a2fe	0.14	0.10	-2.41	skills
 cv-classic_serif	0:873a24d153c8	0.11	0.10	-0.05	languages:java21,kotlin,groovy,p
 cv-classic_serif	0:05e907ef2b18	0.09	0.10	-0.46	document&print:pdfbox,apachepoi(
@@ -1672,9 +1673,9 @@ cv-terracotta_rail	0:2920a7fb42fc	-0.37	-0.16	0.22	2011–2014
 cv-terracotta_rail	0:af625dd0aa20	-0.10	0.11	-1.54	universityofthewestofengland
 cv-timeline_minimal	0:8f1010120ed6	0.00	0.10	-5.29	jordanrivera
 cv-timeline_minimal	0:2d58f0cadc2d	0.00	0.10	0.00	platformengineer
-cv-timeline_minimal	0:fbeea547d99e	-0.19	-1.36	1.01	london,uk
-cv-timeline_minimal	0:89674e6f130e	-0.19	-1.99	1.62	+442055551000
-cv-timeline_minimal	0:e0f850305ded	-0.19	-2.77	2.37	jordan.rivera@example.com
+cv-timeline_minimal	0:fbeea547d99e	-0.19	-0.36	0.11	london,uk
+cv-timeline_minimal	0:89674e6f130e	-0.19	-0.39	0.17	+442055551000
+cv-timeline_minimal	0:e0f850305ded	-0.19	-0.27	0.01	jordan.rivera@example.com
 cv-timeline_minimal	0:84308bea4540	-0.19	-1.06	0.74	linkedin
 cv-timeline_minimal	0:c0b0109d9439	-0.19	-1.00	0.64	github
 cv-timeline_minimal	0:68bf0109c6f8	-0.05	0.10	0.00	education
@@ -1771,26 +1772,26 @@ cv-violet_grid	0:c5d00ee335d1	-0.09	0.10	9.99	icombineresearch,designthinking,
 cv-violet_grid	0:62fd7c29c3c0	-0.11	0.10	10.12	passionateaboutcollaboratingwith
 cv-violet_grid	0:32c1cf49a2fe	-0.36	0.10	-0.70	skills
 cv-violet_grid	0:b96067918254	-0.16	-0.41	0.99	uxresearch
-cv-violet_grid	0:9058674fd905	-0.16	-0.71	1.58	userinterviews,surveys,
-cv-violet_grid	0:0cdd38014d79	-0.17	-0.70	1.54	personas,journeymaps,
-cv-violet_grid	0:61e4ba28d469	-0.17	-0.71	1.51	competitiveanalysis
+cv-violet_grid	0:9058674fd905	-0.16	-0.11	0.43	userinterviews,surveys,
+cv-violet_grid	0:0cdd38014d79	-0.17	-0.15	0.48	personas,journeymaps,
+cv-violet_grid	0:61e4ba28d469	-0.17	-0.11	0.37	competitiveanalysis
 cv-violet_grid	0:3de6be58cb9f	-0.16	0.11	-0.09	informationarchitecture
-cv-violet_grid	0:db5c6756c4b6	-0.16	-0.77	1.66	sitemaps,userflows,card
-cv-violet_grid	0:6c7ad1834a60	-0.17	-0.77	1.67	sorting,contentstrategy
+cv-violet_grid	0:db5c6756c4b6	-0.16	-0.12	0.44	sitemaps,userflows,card
+cv-violet_grid	0:6c7ad1834a60	-0.17	-0.17	0.38	sorting,contentstrategy
 cv-violet_grid	0:187737d59250	-0.16	-0.05	0.07	wireframing
 cv-violet_grid	0:2286e5aa328a	-0.16	-0.52	1.12	lowtohigh-fidelity
 cv-violet_grid	0:5c4b21cb1af8	-0.16	0.02	0.06	prototyping
-cv-violet_grid	0:1abfa9dc1773	-0.16	-0.69	1.55	interactiveprototypes,
-cv-violet_grid	0:1ddc6c379a54	-0.17	-0.54	1.26	microinteractions,
-cv-violet_grid	0:d1d99c54cf40	-0.17	-0.27	0.78	transitions
+cv-violet_grid	0:1abfa9dc1773	-0.16	-0.09	0.39	interactiveprototypes,
+cv-violet_grid	0:1ddc6c379a54	-0.17	-0.04	0.30	microinteractions,
+cv-violet_grid	0:d1d99c54cf40	-0.17	-0.02	0.18	transitions
 cv-violet_grid	0:7a38f8d94009	-0.16	0.13	-0.19	usabilitytesting
-cv-violet_grid	0:63af69ae99e6	-0.16	-0.68	1.44	testplanning,usability
-cv-violet_grid	0:f67c409cc44f	-0.17	-0.87	1.86	tests,heuristicevaluation,
-cv-violet_grid	0:438e1d3264dd	-0.17	-0.61	1.31	insights&iteration
+cv-violet_grid	0:63af69ae99e6	-0.16	-0.08	0.32	testplanning,usability
+cv-violet_grid	0:f67c409cc44f	-0.17	-0.12	0.33	tests,heuristicevaluation,
+cv-violet_grid	0:438e1d3264dd	-0.17	-0.11	0.28	insights&iteration
 cv-violet_grid	0:7e02941d76f5	-0.16	0.07	-0.07	designsystems
-cv-violet_grid	0:a0d27161913a	-0.16	-0.57	1.34	componentlibraries,
-cv-violet_grid	0:82374d275507	-0.17	-0.54	1.20	designtokens,pattern
-cv-violet_grid	0:caf9f906b16a	-0.17	-0.45	1.07	documentation
+cv-violet_grid	0:a0d27161913a	-0.16	-0.12	0.40	componentlibraries,
+cv-violet_grid	0:82374d275507	-0.17	-0.09	0.42	designtokens,pattern
+cv-violet_grid	0:caf9f906b16a	-0.17	-0.10	0.38	documentation
 cv-violet_grid	0:f9d35d43770d	-0.24	0.10	-0.65	tools
 cv-violet_grid	0:5cb2b3b6143c	0.07	0.10	-1.65	figmafigjamadobexdsketchmironoti
 cv-violet_grid	0:53e5e7c5a884	-0.20	0.10	-0.63	experience
@@ -4428,9 +4429,9 @@ letter-sidebar_portrait	0:80a6a628ad52	0.01	0.10	0.38	sincerely,
 letter-timeline_minimal	0:8f1010120ed6	0.00	0.10	-5.29	jordanrivera
 letter-timeline_minimal	0:8f1010120ed6#1	-0.03	0.10	-0.03	jordanrivera
 letter-timeline_minimal	0:2d58f0cadc2d	0.00	0.10	0.00	platformengineer
-letter-timeline_minimal	0:fbeea547d99e	-0.19	-1.36	1.01	london,uk
-letter-timeline_minimal	0:89674e6f130e	-0.19	-1.99	1.62	+442055551000
-letter-timeline_minimal	0:e0f850305ded	-0.19	-2.77	2.37	jordan.rivera@example.com
+letter-timeline_minimal	0:fbeea547d99e	-0.19	-0.36	0.11	london,uk
+letter-timeline_minimal	0:89674e6f130e	-0.19	-0.39	0.17	+442055551000
+letter-timeline_minimal	0:e0f850305ded	-0.19	-0.27	0.01	jordan.rivera@example.com
 letter-timeline_minimal	0:84308bea4540	-0.19	-1.06	0.74	linkedin
 letter-timeline_minimal	0:c0b0109d9439	-0.19	-1.00	0.64	github
 letter-timeline_minimal	0:bef81b541365	-0.03	0.10	-0.09	dearhiringteamatnorthwindsystems
@@ -5025,7 +5026,7 @@ rota-cobalt	0:bd558de5f794	-0.37	0.84	-0.65	oskar
 rota-cobalt	0:4941d6993ee9	-0.42	0.89	-0.77	teodor
 rota-cobalt	0:1d3d3d6a07bd	-0.46	0.83	-0.64	vesna
 rota-cobalt	0:59f2ff7c7c70	0.03	0.08	7.25	timesshownin24-hourformat.shiftc
-rota-cobalt	0:594c41ec0506	0.03	-3.60	3.54	quaysidebar|31aug-6sep2026
+rota-cobalt	0:594c41ec0506	0.03	-0.10	0.09	quaysidebar|31aug-6sep2026
 synthetic-band_fits_at_the_foot	0:36b4b0431bb9	-0.02	0.10	-0.02	fillerline0
 synthetic-band_fits_at_the_foot	0:7978d32d421a	-0.02	0.10	-0.02	fillerline1
 synthetic-band_fits_at_the_foot	0:62078219ac59	-0.02	0.10	-0.02	fillerline2

@@ -134,6 +134,265 @@ class DocxWordSizeMeasureTest {
     }
 
     @Test
+    void aCentredOrRightAlignedParagraphOfSeveralLinesIsSpacedByTheLineFurthestOff() throws Exception {
+        // ClassicSerif's 9.8pt profile, three centred lines set at 10pt, stood 3.7 to 4.9pt left of
+        // the page's in Word. One spacing for the paragraph: the line Word sets furthest off, its
+        // difference over its letters, to the nearest twentieth.
+        for (double size : new double[] {7.8, 7.7}) {
+            List<ParagraphLine> lines = laidOut(ROOM, p -> p.text(LONG).textStyle(DocumentTextStyle.DEFAULT.withSize(size)));
+            int expected = furthestSpacing(lines);
+            assertThat(lines).as("the premise: several lines").hasSizeGreaterThan(1);
+            assertThat(expected).as("the premise: spaced at %spt", size).isNotZero();
+            assertThat(breaksAsThePage(lines, expected, ROOM, size)).as("the premise: Word still breaks where the page does")
+                    .isTrue();
+            for (TextAlign align : new TextAlign[] {TextAlign.CENTER, TextAlign.RIGHT}) {
+                try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page
+                        .addParagraph(p -> p.text(LONG).textStyle(DocumentTextStyle.DEFAULT.withSize(size)).align(align)))) {
+                    XWPFParagraph paragraph = text(document, "Platform engineer");
+                    assertThat(paragraph.getRuns()).as("every run spaced alike, %s at %spt", align, size)
+                            .allSatisfy(run -> assertThat(run.getCharacterSpacing()).isEqualTo(expected));
+                    assertThat(leftIndent(paragraph)).as("its measure stays the page's").isZero();
+                    assertThat(rightIndent(paragraph)).isZero();
+                }
+            }
+        }
+    }
+
+    @Test
+    void theSpacingIsHeldBackWhereWordWouldBreakALineElsewhereThanThePage() throws Exception {
+        // Spaced to the furthest line, a line of other letters, or a line rounded over a hundred of
+        // them, comes out up to a couple of points past its own: narrowed, it could take up the
+        // next line's first word, widened, run past the measure. Over a run of measures some line
+        // ends near enough its measure or its next word for that; the spacing is held back there.
+        for (double size : new double[] {7.8, 7.7}) {
+            int heldBack = 0;
+            int spaced = 0;
+            for (double room = 300; room < 360; room += 0.5) {
+                double measure = room;
+                List<ParagraphLine> lines = laidOut(measure, p -> p.text(LONG).textStyle(DocumentTextStyle.DEFAULT.withSize(size)));
+                int furthest = furthestSpacing(lines);
+                try (XWPFDocument document = DocxExports.withLayout(measure + 40, 400, 20, page -> page
+                        .addParagraph(p -> p.text(LONG).textStyle(DocumentTextStyle.DEFAULT.withSize(size)).align(TextAlign.CENTER)))) {
+                    List<org.apache.poi.xwpf.usermodel.XWPFRun> runs = text(document, "Platform engineer").getRuns();
+                    int spacing = runs.get(0).getCharacterSpacing();
+                    assertThat(runs).allSatisfy(run -> assertThat(run.getCharacterSpacing()).isEqualTo(spacing));
+                    assertThat(Math.abs(spacing)).as("never past the furthest line's, at %s", measure)
+                            .isLessThanOrEqualTo(Math.abs(furthest));
+                    assertThat(spacing * furthest).as("the same way, at %s", measure).isGreaterThanOrEqualTo(0);
+                    // Unspaced, the paragraph is as Word sets it, past the page's or not.
+                    assertThat(spacing == 0 || breaksAsThePage(lines, spacing, measure, size))
+                            .as("Word breaks the lines where the page does, at %s, %spt", measure, size).isTrue();
+                    spaced += spacing != 0 ? 1 : 0;
+                    heldBack += spacing != furthest ? 1 : 0;
+                }
+            }
+            assertThat(spaced).as("the premise: spaced over most measures at %spt", size).isGreaterThan(60);
+            assertThat(heldBack).as("held back over some at %spt", size).isPositive();
+        }
+    }
+
+    @Test
+    void theSpacingIsTheFurthestLinesNotTheWidestsOrTheLasts() throws Exception {
+        // A full line at 7.9pt, set at 8, grows 1.3%; a shorter one at 7.75pt, set at 8, 3.2%, and
+        // further; a last line of narrow letters grows least a letter.
+        // The first line's words are taken from LONG until the page sets the three apart.
+        String[] words = LONG.split(" ");
+        for (int count = 8; count < words.length; count++) {
+            String first = String.join(" ", java.util.Arrays.copyOf(words, count));
+            java.util.function.Consumer<com.demcha.compose.document.dsl.ParagraphBuilder> paragraph = p -> p
+                    .align(TextAlign.CENTER)
+                    .rich(rich -> rich.size(first, 7.9)
+                            .size(" " + String.join(" ", java.util.Collections.nCopies(5, "WMWMWMW")), 7.75)
+                            .size(" Documentationpipelinesandtemplates ii il li", 7.9));
+            List<ParagraphLine> lines = laidOut(ROOM, paragraph);
+            if (lines.size() != 3 || !lines.get(0).text().strip().equals(first)) {
+                continue;
+            }
+            ParagraphLine widest = lines.stream().max(java.util.Comparator.comparingDouble(DocxWordSizeMeasureTest::asked)).orElseThrow();
+            ParagraphLine last = lines.get(2);
+            int expected = furthestSpacing(lines);
+            if (expected == spacingOf(widest) || expected == spacingOf(last) || expected == 0
+                || !breaksAsThePage(lines, expected, ROOM, 8)) {
+                continue;
+            }
+            try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page.addParagraph(paragraph))) {
+                assertThat(text(document, "Platform engineer").getRuns())
+                        .filteredOn(run -> run.text() != null && !run.text().isEmpty())
+                        .isNotEmpty().allSatisfy(run -> assertThat(run.getCharacterSpacing()).isEqualTo(expected));
+            }
+            return;
+        }
+        throw new AssertionError("no first line sets the furthest line apart from the widest and the last");
+    }
+
+    @Test
+    void aParagraphWithALineWordSetsWiderAndOneItSetsNarrowerIsNotSpaced() throws Exception {
+        // 7.8pt is set at 8, wider; 8.2pt at 8, narrower. One spacing would take one further off.
+        String[] words = LONG.split(" ");
+        for (int count = 6; count < words.length - 6; count++) {
+            String first = String.join(" ", java.util.Arrays.copyOf(words, count));
+            String rest = String.join(" ", java.util.Arrays.copyOfRange(words, count, words.length));
+            java.util.function.Consumer<com.demcha.compose.document.dsl.ParagraphBuilder> paragraph = p -> p
+                    .align(TextAlign.CENTER)
+                    .rich(rich -> rich.size(first, 7.8).size(" " + rest, 8.2));
+            List<ParagraphLine> lines = laidOut(ROOM, paragraph);
+            if (lines.size() != 2 || !lines.get(0).text().strip().equals(first)) {
+                continue;
+            }
+            double grown = asked(lines.get(0)) - wordsWidth(lines.get(0));
+            double shrunk = asked(lines.get(1)) - wordsWidth(lines.get(1));
+            if (!(grown <= -1) || !(shrunk >= 1)) {
+                continue;
+            }
+            try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page.addParagraph(paragraph))) {
+                assertThat(text(document, "Platform engineer").getRuns())
+                        .allSatisfy(run -> assertThat(run.getCharacterSpacing()).isZero());
+            }
+            return;
+        }
+        throw new AssertionError("no split sets a line a point wider in Word over one a point narrower");
+    }
+
+    @Test
+    void aParagraphOfALineOfTextAndALineOfAPictureIsWeighedAsOneOfSeveralLines() throws Exception {
+        // Its text line grows past a point, but the line under it opens with a picture, which the
+        // guard has no word of to weigh: the text is not narrowed.
+        java.util.function.Consumer<com.demcha.compose.document.dsl.ParagraphBuilder> paragraph = p -> p
+                .align(TextAlign.CENTER)
+                .rich(rich -> rich.size(SHORT, 7.8)
+                        .image(com.demcha.compose.document.image.DocumentImageData.fromBytes(pngBytes()), 300, 8));
+        List<ParagraphLine> lines = laidOut(ROOM, paragraph);
+        assertThat(lines).as("the premise: a line of text and a line of a picture").hasSize(2);
+        assertThat(lettersOf(lines.get(1))).isZero();
+        assertThat(spacingOf(lines.get(0))).as("the premise: its text alone would be spaced").isNotZero();
+        try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page.addParagraph(paragraph))) {
+            assertThat(text(document, "Platform engineer").getRuns())
+                    .allSatisfy(run -> assertThat(run.getCharacterSpacing()).isZero());
+        }
+    }
+
+    @Test
+    void aParagraphOfSeveralLinesIndentedForItsPrefixIsNotSpaced() throws Exception {
+        // The prefix's indent narrows Word's measure past the room the paragraph is written in.
+        try (XWPFDocument plain = DocxExports.withLayout(400, 400, 20, page -> page
+                     .addParagraph(p -> p.text(LONG).textStyle(DocumentTextStyle.DEFAULT.withSize(7.8)).align(TextAlign.CENTER)));
+             XWPFDocument prefixed = DocxExports.withLayout(400, 400, 20, page -> page
+                     .addParagraph(p -> p.text(LONG).textStyle(DocumentTextStyle.DEFAULT.withSize(7.8)).align(TextAlign.CENTER)
+                             .bulletOffset("  ").indentStrategy(com.demcha.compose.document.style.DocumentTextIndent.ALL_LINES)))) {
+            assertThat(text(plain, "Platform engineer").getRuns()).as("the premise: spaced without it")
+                    .anySatisfy(run -> assertThat(run.getCharacterSpacing()).isNotZero());
+            assertThat(text(prefixed, "Platform engineer").getRuns())
+                    .allSatisfy(run -> assertThat(run.getCharacterSpacing()).isZero());
+        }
+    }
+
+    /** A line's own difference over its letters, to the nearest twentieth of a point. */
+    private static int spacingOf(ParagraphLine line) {
+        return (int) Math.round((asked(line) - wordsWidth(line)) / lettersOf(line) * 20);
+    }
+
+    /** The furthest-off line's difference over its letters, to the nearest twentieth of a point. */
+    private static int furthestSpacing(List<ParagraphLine> lines) {
+        ParagraphLine furthest = lines.stream()
+                .max(java.util.Comparator.comparingDouble(line -> Math.abs(asked(line) - wordsWidth(line)))).orElseThrow();
+        return (int) Math.round((asked(furthest) - wordsWidth(furthest)) / lettersOf(furthest) * 20);
+    }
+
+    /**
+     * Whether Word, at its size and with the letters spaced so, keeps a point clear of breaking
+     * the page's lines elsewhere: widened, every line a point inside the measure; narrowed, no
+     * line but the last within a point of taking up a space and the next line's first word.
+     * Widths are the layout's, the next word's at the size given, set at Word's.
+     */
+    private static boolean breaksAsThePage(List<ParagraphLine> lines, int twentieths, double room, double size) {
+        double grows = Math.round(size * 2) / 2.0 / size;
+        double space = widthAlone("a a", size) - 2 * widthAlone("a", size);
+        for (int index = 0; index < lines.size(); index++) {
+            ParagraphLine line = lines.get(index);
+            double set = wordsWidth(line) + lettersOf(line) * twentieths / 20.0;
+            if (twentieths > 0 && set > room - 1) {
+                return false;
+            }
+            if (twentieths < 0 && index + 1 < lines.size()) {
+                String word = lines.get(index + 1).text().strip().split("\\s+")[0];
+                double next = (space + widthAlone(word, size)) * grows
+                              + (word.codePointCount(0, word.length()) + 1) * twentieths / 20.0;
+                if (!(set + next > room + 1)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    @Test
+    void aParagraphOfSeveralLinesSetFromItsLeftOrNearThePageIsNotSpaced() throws Exception {
+        // From its left, a line's first letter is the page's; at 8.48pt, set at 8.5, the widest line
+        // grows by less than a point.
+        try (XWPFDocument left = DocxExports.withLayout(400, 400, 20, page -> page
+                     .addParagraph(p -> p.text(LONG).textStyle(DocumentTextStyle.DEFAULT.withSize(7.8)).align(TextAlign.LEFT)));
+             XWPFDocument near = DocxExports.withLayout(400, 400, 20, page -> page
+                     .addParagraph(p -> p.text(LONG).textStyle(DocumentTextStyle.DEFAULT.withSize(8.48))
+                             .align(TextAlign.CENTER)))) {
+            assertThat(laidOut(ROOM, p -> p.text(LONG).textStyle(DocumentTextStyle.DEFAULT.withSize(8.48))))
+                    .as("the premise: several lines, the widest growing less than a point")
+                    .hasSizeGreaterThan(1)
+                    .allSatisfy(line -> assertThat(wordsWidth(line) - asked(line)).isLessThan(1));
+            assertThat(text(left, "Platform engineer").getRuns()).allSatisfy(run -> assertThat(run.getCharacterSpacing()).isZero());
+            assertThat(text(near, "Platform engineer").getRuns()).allSatisfy(run -> assertThat(run.getCharacterSpacing()).isZero());
+        }
+    }
+
+    @Test
+    void aLineBesideAPictureHasItsTextAloneSpacedToThePagesWidth() throws Exception {
+        // TimelineMinimal's 7.8pt e-mail, right-aligned beside its icon and set at 8pt, stood 2.7pt
+        // left of the page's in Word. The picture is written at its own size; the text's letters
+        // take the text's difference.
+        java.util.function.Consumer<com.demcha.compose.document.dsl.ParagraphBuilder> line = p -> p
+                .textStyle(DocumentTextStyle.DEFAULT.withSize(7.8))
+                .rich(rich -> rich.size(SHORT + " ", 7.8)
+                        .image(com.demcha.compose.document.image.DocumentImageData.fromBytes(pngBytes()), 24, 8));
+        ParagraphLine laid = laidOut(ROOM, line).get(0);
+        assertThat(laidOut(ROOM, line)).as("the premise: one line").hasSize(1);
+        assertThat(laid.spans()).as("the premise: a picture in the line")
+                .anyMatch(span -> !(span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan)
+                                  && span.width() > 0);
+        int expected = (int) Math.round((asked(laid) - wordsWidth(laid)) / lettersOf(laid) * 20);
+        assertThat(expected).as("the premise: spaced").isNotZero();
+        for (TextAlign align : new TextAlign[] {TextAlign.CENTER, TextAlign.RIGHT}) {
+            try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page
+                    .addParagraph(p -> {
+                        line.accept(p);
+                        p.align(align);
+                    }))) {
+                XWPFParagraph paragraph = text(document, "Platform engineer");
+                assertThat(paragraph.getRuns()).as("the text's runs, %s", align)
+                        .filteredOn(run -> run.text() != null && !run.text().isEmpty()).isNotEmpty()
+                        .allSatisfy(run -> assertThat(run.getCharacterSpacing()).isEqualTo(expected));
+                assertThat(paragraph.getRuns()).as("the picture's, left as it is")
+                        .filteredOn(run -> !run.getEmbeddedPictures().isEmpty()).isNotEmpty()
+                        .allSatisfy(run -> assertThat(run.getCharacterSpacing()).isZero());
+            }
+        }
+    }
+
+    /** How wide the page set a line: its spans', text and pictures alike. */
+    private static double asked(ParagraphLine line) {
+        return line.spans().stream().mapToDouble(span -> Math.max(0, span.width())).sum();
+    }
+
+    /** The letters of a line's text, as the export counts them. */
+    private static int lettersOf(ParagraphLine line) {
+        int letters = 0;
+        for (var span : line.spans()) {
+            if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan text && text.text() != null) {
+                letters += text.text().codePointCount(0, text.text().length());
+            }
+        }
+        return letters;
+    }
+
+    @Test
     void aShortCentredLineIsLeftWhereThePageSetsIt() throws Exception {
         // Its box has room for it as Word sets it, so neither edge moves.
         try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page

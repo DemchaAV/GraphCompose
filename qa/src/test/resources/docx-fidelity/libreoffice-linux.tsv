@@ -1,5 +1,6 @@
 # libreoffice build 420(Build:2) on linux
 # rows of invoice-consulting and invoice-consulting_long: from CI run 42480884766, when a table's rows came to carry what each is written taller than the page by and settle it in their bottom margins, the item rows set level where each had stood a fiftieth of a point lower than the one above
+# rows of cv-classic_serif, cv-timeline_minimal, cv-violet_grid, letter-timeline_minimal and rota-cobalt: from CI run 42843379275, when centred and right-aligned text Word sets at a rounded size came to be spaced over several lines, beside a picture and in a header or footer slot; ClassicSerif's profile lines stand as wide as the page, their centres where they stood, 18pt right with their panel
 # every other row from CI run 41696246504, shot whole when the gate came to hold each line to its width, which the column before the letters records: no line moved more than half a point down or across from the row it replaces, none was lost and none found anew, and every document's row reads as it did
 document	engine_pages	editor_pages	lines	matched	median	p90	over2
 cv-blue_banner	2	2	54	54	0.05	0.22	0

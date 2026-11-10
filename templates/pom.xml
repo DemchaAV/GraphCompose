@@ -84,7 +84,7 @@
              engine pom's. Both pins name a published release STRICTLY OLDER than the
              working version, so an artifact this build produces can never stand in for
              a baseline. -->
-        <japicmp.version>0.26.5</japicmp.version>
+        <japicmp.version>0.27.0</japicmp.version>
         <japicmp.baseline.floor>2.0.0</japicmp.baseline.floor>
         <japicmp.baseline.previous>2.4.1</japicmp.baseline.previous>
         <!-- True while the working major has a published release of its own. False only

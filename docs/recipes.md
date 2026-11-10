@@ -71,7 +71,7 @@ pagination or backend limits behave when they apply.
 | [Preview, stream, or choose an output form](recipes/streaming.md) | `buildPdf()` / `writePdf(...)` / `toImage(...)` | files, streams, bytes, preview images, backend selection |
 | [See layout boxes and node names while developing](getting-started.md#debug-guide-lines) | `guideLines(true)` / `debug(...)` | margin guides, resolved boxes, stable node labels |
 | [Protect a document from regressions](operations/test-your-document.md) | `LayoutSnapshotAssertions` | smoke tests, geometry snapshots, pixel-level PDF diffs, CI flow |
-| [Export semantic DOCX](recipes/docx-export.md) | `export(new DocxSemanticBackend())` | semantic mapping and fixed-layout feature fallbacks |
+| [Export to Word (DOCX)](recipes/docx-export.md) | `export(new DocxSemanticBackend())` | what the Word output measures from the page, and its capability fallbacks |
 | [Add a new node or backend capability](recipes/extending.md) | `NodeDefinition` / render handler | extension path, fluent builder, rendering, snapshot coverage |
 
 ## Full recipe catalogue
@@ -99,7 +99,7 @@ pagination or backend limits behave when they apply.
 | [PDF chrome](recipes/pdf-chrome.md) | Metadata, watermarks, running header/footer with `{page}/{pages}/{date}`, protection, links and outline bookmarks |
 | [In-PDF navigation](recipes/in-pdf-navigation.md) | Named `anchor(...)` destinations + internal `linkTo(...)` links: clickable tables of contents, `#heading`-style jumps, bidirectional footnotes, inline-graphic links — native PDF GoTo actions |
 | [Translucency](recipes/translucency.md) | `DocumentColor.rgba` / `withOpacity`: which primitives honour alpha, byte-identity for opaque colours, layered tints |
-| [DOCX export](recipes/docx-export.md) | Semantic DOCX export: 1:1 node mapping, Word charts, shape-container fallbacks, skipped kinds |
+| [DOCX export](recipes/docx-export.md) | The Word output: nodes written from the laid-out page, Word charts, shape-container fallbacks, the export report |
 | [Snapshot testing](recipes/snapshot-testing.md) | Layout-snapshot regression testing in consumer projects, baseline update flow |
 | [Streaming and output](recipes/streaming.md) | `buildPdf` / `writePdf` / `toPdfBytes`, DOCX export, layout snapshots, header / footer chrome, guide lines |
 | [Extending GraphCompose](recipes/extending.md) | New semantic node, fluent setter, render backend, snapshot-based regression tests |

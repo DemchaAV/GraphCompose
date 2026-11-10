@@ -6745,10 +6745,10 @@ The same notes, grouped for an upgrade, are in
 
 ### Build
 
-- **Dependency updates from the `maven-minor-patch` group (#767, #991, #1034).** Two reach a
-  consumer: `slf4j-api`, a compile dependency of `graph-compose-core`, moves from 2.0.19 to
-  2.0.20, and the Jackson BOM behind `graph-compose-testing`'s `jackson-databind` from 2.22.2 to
-  2.22.4. The rest are build, test and benchmark tooling: Logback 1.6.3 → 1.6.6, Mockito 5.23.0 →
+- **Dependency updates from the `maven-minor-patch` group (#767, #991, #1034).** Three reach a
+  consumer: `slf4j-api`, a compile dependency of `graph-compose-core`, and `jcl-over-slf4j`, one
+  of `graph-compose-render-pdf`, move from 2.0.19 to 2.0.20, and `graph-compose-testing`'s
+  `jackson-databind` from 2.22.2 to 2.22.4. The rest are build, test and benchmark tooling: Logback 1.6.3 → 1.6.6, Mockito 5.23.0 →
   5.24.0, ArchUnit 1.5.0 → 1.5.1, Byte Buddy 1.18.14 → 1.18.17, jqwik 1.10.1 → 1.10.2, JavaFX
   21.0.12 → 21.0.13, iText 9.7.1 → 9.8.0 and JasperReports 7.0.8 → 7.1.1 (benchmarks only),
   JaCoCo 0.8.15 → 0.8.16, japicmp 0.26.2 → 0.27.0, the Central publishing plugin 0.11.0 →

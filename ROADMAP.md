@@ -11,7 +11,7 @@ The live threads are tracked in [issues](https://github.com/DemchaAV/GraphCompos
 **2.5.0** is the current release. From this line **PDF, PowerPoint and Word are three full
 outputs** of one document. It leads with a **DOCX export that writes the page the engine
 laid out**: the line heights, column widths and space round each block the page has, real
-Word lists, drawings anchored where the text that carries them moves them, rules, icons,
+Word lists, drawings anchored so they move with the text above them, rules, icons,
 page zones, headers, footers and backgrounds, bookmarks, links and an outline, and the faces
 the document is set in. Word still paginates the document and reflows it after an edit. A
 chart is a Word chart with its numbers in an embedded workbook, and `DocxExportReport` names

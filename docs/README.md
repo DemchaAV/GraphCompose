@@ -103,7 +103,7 @@ GraphCompose itself.
 
 ### Migrations
 - **[migration/v2.5.0-docx.md](migration/v2.5.0-docx.md)** — the Word export from 2.4 to 2.5: what code keeps working, what changes in the file, and what the export report now tells you.
-- **[migration/v2.0.0-modules.md](migration/v2.0.0-modules.md)** — the current upgrade guide: the 1.x → 2.x module split, the one dependency-level break, and every removed API with its replacement.
+- **[migration/v2.0.0-modules.md](migration/v2.0.0-modules.md)** — the 1.x → 2.x upgrade guide: the module split, the one dependency-level break, and every removed API with its replacement.
 - **[migration/v1.8.0-fonts.md](migration/v1.8.0-fonts.md)** — the fonts artifact split, still relevant to anyone adding `graph-compose-fonts`.
 - **[../ROADMAP.md](../ROADMAP.md)** — direction for the line after 2.1.
 - **[roadmaps/post-2.0-engineering.md](roadmaps/post-2.0-engineering.md)** — internal refactors, scale, and tooling deferred past the 2.0 line.

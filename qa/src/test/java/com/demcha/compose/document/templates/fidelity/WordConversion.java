@@ -21,7 +21,8 @@ import java.util.Map;
  * <p>Word converts outside the build, so its PDFs can be of DOCX another tree exported. A PDF is
  * measured only when the DOCX it was converted from is, to the byte, the one this tree exports.</p>
  *
- * @param version   the Word build, as Word states it
+ * @param version   Word's version and, in brackets, the full build of the WINWORD.EXE that converted,
+ *                  or Word's own three-part build and why the file could not be read
  * @param converted the SHA-256 of each converted DOCX, in lower-case hex, by its file name
  */
 record WordConversion(String version, Map<String, String> converted) {

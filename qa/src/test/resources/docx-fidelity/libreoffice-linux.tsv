@@ -1,6 +1,7 @@
 # libreoffice build 420(Build:2) on linux
 # rows of invoice-consulting and invoice-consulting_long: from CI run 42480884766, when a table's rows came to carry what each is written taller than the page by and settle it in their bottom margins, the item rows set level where each had stood a fiftieth of a point lower than the one above
 # rows of cv-classic_serif, cv-timeline_minimal, cv-violet_grid, letter-timeline_minimal and rota-cobalt: from CI run 42843379275, when centred and right-aligned text Word sets at a rounded size came to be spaced over several lines, beside a picture and in a header or footer slot; ClassicSerif's profile lines stand as wide as the page, their centres where they stood, 18pt right with their panel
+# rows of proposal-editorial and proposal-northline: from CI run 42853616480, on a97390470, where CI's LibreOffice had come to set every line of them up to 0.05pt from the rows they replace, the same on each run read back to 8cc133b7c, on the same pages and with no line lost
 # every other row from CI run 41696246504, shot whole when the gate came to hold each line to its width, which the column before the letters records: no line moved more than half a point down or across from the row it replaces, none was lost and none found anew, and every document's row reads as it did
 document	engine_pages	editor_pages	lines	matched	median	p90	over2
 cv-blue_banner	2	2	54	54	0.05	0.22	0
@@ -61,10 +62,10 @@ letter-nordic_clean	1	1	15	15	0.04	0.12	0
 letter-panel	1	1	13	13	0.08	0.14	0
 letter-sidebar_portrait	1	1	12	12	0.04	0.10	0
 letter-timeline_minimal	1	1	15	15	0.03	0.19	0
-proposal-editorial	2	2	132	132	0.09	0.20	0
+proposal-editorial	2	2	132	132	0.05	0.21	0
 proposal-indigo	1	1	72	70	0.13	0.33	0
 proposal-modern	1	1	44	44	0.03	0.12	0
-proposal-northline	2	2	132	132	0.11	0.17	0
+proposal-northline	2	2	132	132	0.07	0.12	0
 receipt-modern	1	1	57	57	0.04	0.09	0
 rota-cobalt	1	1	154	151	0.20	0.47	0
 synthetic-band_fits_at_the_foot	2	2	14	11	0.02	0.02	1

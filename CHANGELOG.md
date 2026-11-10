@@ -5474,6 +5474,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The Word fidelity baseline records Word's full build, and the Linux LibreOffice baseline
+  takes CI's rows for two proposals.**
+  - `convert-with-word.ps1`, which converts the corpus for `word-fidelity.ps1`, recorded Word's
+    version as Word's own `Build` states it, which stops at `16.0.20527`: an update inside a build,
+    such as `16.0.20527.20150`, left no trace in `word-windows.tsv`. It now reads the four parts
+    from the file Word runs as, as the editing protocol does. Re-shot with Word
+    `16.0.20527.20150`, all 104 documents' rows are unchanged; only the header line moves.
+  - `libreoffice-linux.tsv` takes CI's rows for `proposal-editorial` and `proposal-northline`.
+    On every CI run read since 2026-11-09, LibreOffice 24.2 has set each line of them up to 0.05pt
+    from the committed rows, on the same pages and with no line lost. That is within the gate's
+    half point, so the gate stayed green and the rows were never taken. Their medians go from 0.09
+    to 0.05pt and from 0.11 to 0.07pt, their p90s from 0.20 to 0.21pt and from 0.17 to 0.12pt.
+
 - **A guard holds the DOCX column of the capability matrix to the export's code.**
   `DocxCapabilityMatrixGuardTest` reads the `render-docx` sources for every note a
   `DocxExportReport` is given, and the subject and severity it carries — a string, a constant, a

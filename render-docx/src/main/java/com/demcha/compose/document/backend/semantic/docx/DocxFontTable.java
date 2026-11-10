@@ -441,9 +441,10 @@ final class DocxFontTable {
             return;
         }
         byte[] bytes;
+        // A classpath source reports a missing resource unchecked, not as an IOException.
         try (InputStream in = source.openStream()) {
             bytes = in.readAllBytes();
-        } catch (IOException failure) {
+        } catch (IOException | RuntimeException failure) {
             LOG.warn("DocxSemanticBackend: '{}' face of '{}' could not be read ({}); the "
                      + "document declares the family and ships this face without it",
                     slot.element(), family.wordFamily(), failure.toString());

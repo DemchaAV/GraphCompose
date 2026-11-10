@@ -296,6 +296,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A DOCX export writes its document when a registered family's classpath face cannot be
+  read.**
+  - A family registered with `FontFamilyDefinition.classpath(...)` whose resource is missing
+    failed the whole export: the classpath source reports a missing resource with an
+    `IllegalArgumentException`, and the export caught only the `IOException` a missing file on
+    disk gives.
+  - Both now end the same way. The face is not shipped, the report adds a `DROPPED` note on the
+    embedded font naming the face and why it could not be read, and the document is written. A
+    face that loads ships as before.
+
 - **Centred and right-aligned DOCX text set at a size Word rounds stands where the page sets it,
   over several lines, beside a picture and in a header or footer slot.**
   - Word states a type size in half points, so text the page sets at 9.8pt is set at 10pt and a

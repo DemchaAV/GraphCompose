@@ -207,6 +207,33 @@ class DocxFontTableTest {
         assertThat(fontParts(exported.document())).as("the one face the text is set in, not shipped").isEmpty();
     }
 
+    @Test
+    void aFaceWhoseClasspathResourceIsMissingIsNamedAndNotShipped() throws Exception {
+        // A classpath source reports a missing resource by throwing an unchecked exception, not
+        // an IOException. The export names the face it could not read, as for a missing file,
+        // and still writes the document.
+        String resource = "fonts/absent/Absent-Regular.ttf";
+        assertThat(DocxFontTableTest.class.getResource("/" + resource))
+                .as("the premise: the resource is not on the test classpath")
+                .isNull();
+
+        FontExport exported = exportSetIn(GraphCompose.document().registerFontFamily(
+                        com.demcha.compose.font.FontFamilyDefinition.classpath("Absent", resource).build()),
+                DocumentTextStyle.builder().fontName(FontName.of("Absent")).size(10).build());
+
+        assertThat(exported.layoutFailure()).as("the premise: the page could not lay the face out").isNotEmpty();
+        assertThat(exported.fontNote()).satisfies(note -> {
+            assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.DROPPED);
+            assertThat(note.detail()).startsWith("the embedRegular face of 'Absent' could not be read (")
+                    .contains(resource)
+                    .endsWith("), so a reader without it installed sees a substituted face");
+        });
+        assertThat(fontParts(exported.document())).as("the face that could not be read, not shipped").isEmpty();
+        assertThat(exported.document().getParagraphs())
+                .as("the text is still written")
+                .anySatisfy(paragraph -> assertThat(paragraph.getText()).contains("Set in a face that stays home"));
+    }
+
     /**
      * A paragraph set in one face, exported: the document, the report's one note on the embedded
      * font, and the layout's failure where the page could not lay the face out, or empty.

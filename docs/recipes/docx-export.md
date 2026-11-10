@@ -1246,7 +1246,10 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   container or a canvas. The report names what Word cannot hold: what it writes, one block
   under another, running past its height; a drawing in what it writes, which takes no room in
   Word; and a height not measured, in a table's composed cell or with no layout. A canvas's
-  clip policy paints nothing on the page either.
+  clip policy paints nothing on the page either. So a canvas whose text runs top to bottom in
+  reading order — a name over a title, as `MintEditorial`'s masthead — reads in Word as on the
+  page, and text a canvas places side by side or out of reading order does not: a poster- or
+  slide-like canvas page belongs in PDF or PPTX.
 - **Columns drawn as layers → one table row.** A two-column page can lay its
   columns out as the layers of one stack, each inset to its band, so the name
   is drawn before the sidebar. Word has no layers. When every layer is a plain

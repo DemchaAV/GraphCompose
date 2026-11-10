@@ -6796,6 +6796,13 @@ The same notes, grouped for an upgrade, are in
 
 ### Documentation
 
+- **The Word docs say which canvas pages read right in Word.** A canvas is written as its
+  contents in reading order: its drawings stand where it places them, its text does not. The
+  `render-docx` README, the DOCX recipe and the capability matrix already said so; they now add
+  what that means for a page — text a canvas stacks top to bottom, as `MintEditorial`'s
+  masthead, reads in Word as on the page, and text it places side by side or out of reading order
+  does not, so a poster- or slide-like canvas page belongs in PDF or PPTX. The export report names
+  each place it loses.
 - **The Word module's README says first that core and render-docx are all you add.** Its
   "When to depend on it" section led with a 2.4.x note and a `graph-compose-render-pdf`
   snippet at runtime scope, which read as a step for 2.5. It now opens with the two

@@ -6796,6 +6796,11 @@ The same notes, grouped for an upgrade, are in
 
 ### Documentation
 
+- **The README names all three outputs from its first line and shows a Word export.** The
+  tagline reads "Build production-ready PDF, Word and PowerPoint documents in Java — without
+  manual layout calculations." in place of one that named PDF alone. Beside the outputs list, a
+  compiled example exports to Word through a configured `DocxSemanticBackend`, with the report
+  sink and deterministic bytes, as `WordExportExample` does.
 - **The docs present PDF, PowerPoint and Word as three full outputs.** The README, the docs
   index, getting started, the capability overview, the capability matrix, the `render-pptx` and `render-docx`
   READMEs, `api-stability.md` and the site no longer rank the outputs as "the main production

@@ -83,7 +83,7 @@
              must stay STRICTLY OLDER than the working version, which
              VersionConsistencyGuardTest enforces together with japicmp.version's lockstep
              with the engine pom's. -->
-        <japicmp.version>0.26.5</japicmp.version>
+        <japicmp.version>0.27.0</japicmp.version>
         <japicmp.baseline>2.0.0</japicmp.baseline>
     </properties>
 

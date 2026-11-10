@@ -296,6 +296,34 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A DOCX export draws a shape laid over a painted neighbour in front of the text, as the layer
+  stack paints it, instead of under that neighbour's shading.**
+  - A panel is written as a shaded cell, and both Word and LibreOffice paint a cell's shading over
+    every drawing behind the text — a drawing on a layer *above* the panel included. An icon laid
+    over a card's corner through a layer stack drew none of its 4343 pixels at 300 dpi in Word
+    16.0.20527 or LibreOffice 24.2, and a shape over a painted band drew a quarter of them.
+  - A shape a node paints itself, standing on a layer the page paints after a painted layer of a
+    stack, a shape container or a canvas it stands in, is now drawn in front of the text. The
+    order is the tree's: by z-index, the layers sharing one in the order they were given. Measured
+    on the same documents with nothing else changed, the icon draws 4339 of the engine's 4343
+    pixels in Word where the page puts it, and the band's shape 99.9% of its own. LibreOffice
+    draws the icon whole, 13.9pt to the right: it sets a shape anchored in a table cell that
+    cell's left padding further across than Word and the page do, in front or behind alike.
+  - It stays behind the text, and the report goes on naming it, where its box holds a line of the
+    flow or a picture, which in front it would cover; where a line of text painted after it lies
+    over part of its box; where anything is drawn after it — in any overlay it stands in, or among
+    what it holds, as a container's outline is painted before its layers: a picture, a shape, a
+    table or a chart — since a shape in front would be drawn over what the page draws over it;
+    where a node kind of the caller's own holds it, at any depth, whose definition decides what it
+    lays over what; and where its node stands at more than one place.
+  - Unchanged: a shape *inside* a painted panel under the text it frames, as a progress track
+    under its label, stays behind and hidden in both editors — in front it would cover the label —
+    and the report names it.
+  - One document of the 104-document fidelity corpus changes, by one anchor's `behindDoc`: the
+    synthetic icon over a card's corner. The other 103 export byte for byte as before; no preset
+    lays a drawing over a painted neighbour. The report's note on a shape in front over a painted
+    panel now says which of the two reasons stood it there.
+
 - **A DOCX export writes what a node kind of the caller's own holds, where the layout places it.**
   - A `DocumentNode` with its own `NodeDefinition` that lays its children out as a composite
     (`PreparedNode.composite`) had its children placed by the layout and printed on the PDF page,
@@ -804,8 +832,10 @@ follow semantic versioning; release dates are ISO 8601.
   losing them in silence.**
   - A panel is written as a shaded cell, and a cell's fill belongs to the text layer, which both
     editors paint over everything drawn behind that layer — a drawing on a layer *above* the panel
-    included. A layer stack's z-index therefore does not lift a drawing clear of a painted
-    neighbour, and the drawing is not seen wherever the two boxes meet.
+    included. A layer stack's z-index therefore did not lift a drawing clear of a painted
+    neighbour, and the drawing was not seen wherever the two boxes met. A shape is now drawn in
+    front where nothing keeps it behind (see the entry on drawing a shape laid over a painted
+    neighbour in front of the text); what stays behind is still named.
   - Measured at 300 dpi in Word 16.0.20527 and LibreOffice 24.2 on the one document of the
     71-document fidelity corpus that holds the case, an 18pt icon laid over a card's corner: the
     engine's PDF draws 4308 pixels of the icon's own ink, Word's draws none and LibreOffice's
@@ -829,7 +859,8 @@ follow semantic versioning; release dates are ISO 8601.
     the export already puts such a drawing in front wherever it frames no text of the flow.
     Measured the same way, that case has no instance in the corpus at all — its branch is taken 55
     times over 14 documents and goes in front every one of them.
-  - `DocxNeighbourFillGuardTest` holds the corpus to the one drawing that is known, judging by the
+  - `DocxNeighbourFillGuardTest` holds the corpus to a ledger of drawings left covered — one when
+    this note was added, none since the shape is drawn in front — judging by the
     boxes the layout gave the nodes and not by `behindDoc`, which is set on drawings the reader
     plainly sees as well: the same fixture with its panel unpainted keeps its anchor's
     `behindDoc="1"` while showing all 3237 pixels of its shape in Word.

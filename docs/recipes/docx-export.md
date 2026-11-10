@@ -1444,21 +1444,66 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   whatever their z-index.
   A panel's shading is part of the text layer, so it is painted over every
   drawing behind that layer — including one that belongs to a *neighbour* of
-  the panel rather than to the panel itself. A drawing on a layer above a
-  painted layer beside it, an icon laid over a card's corner among them, is
-  covered by that card wherever the two boxes meet, in Word and in
-  LibreOffice alike, however the page stacks them: measured at 300 dpi, an
-  18pt icon over a card draws 4308 pixels of its ink in the engine's PDF and
-  none at all in either editor's. Until a stack's order is carried into the
-  document, the report names such a drawing and one panel that covers it, so
-  the loss is stated rather than silent, and in a document of several
-  sections it names the section the loss is in. Five it does not name: a
-  drawing under a panel the layout breaks across pages, whose box is the one
-  its first page gave it; one under a panel composed in an authored table
-  cell, which the layout gives no box of its own; one under a table cell's
-  own shading, which belongs to a cell rather than to a node; a cell's paint
-  the table draws itself; and the second panel over a drawing lying over
-  two, one note naming one panel.
+  the panel rather than to the panel itself. A drawing left behind the text
+  on a layer above a painted layer beside it, an icon laid over a card's
+  corner among them, was covered by that card wherever the two boxes met,
+  in Word and in LibreOffice alike, however the page stacked them: measured
+  at 300 dpi, an 18pt icon over a card drew 4343 pixels of its ink in the
+  engine's PDF and none at all in either editor's. So the stack's order is
+  carried into the document, and the same icon now draws 4339 of them in
+  Word, where the page puts it, and all of them in LibreOffice 24.2 — there
+  13.9pt to the right, LibreOffice placing a shape anchored in a table cell
+  that cell's left padding further across than Word and the page do,
+  whether it stands in front or behind. A shape a node paints itself,
+  standing on a layer the page paints after a painted layer of an overlay it stands in — by z-index, the
+  layers sharing one in the order they were given — is drawn in front of
+  the text, where no shading reaches it. The order is the tree's, not the
+  geometry's: such a shape stands in front whether the two boxes meet or
+  not. A neighbour counts as painted where it, or anything it holds,
+  carries a fill in the tree — wider than what the export shades in one
+  direction and narrower in another, both deliberately. Wider, because
+  whether a node that paints becomes a cell with shading is decided as it
+  is written and the tree cannot be asked: a neighbour counted that writes
+  no shading only lifts a shape nothing would have covered. Narrower,
+  because a shape container's own fill is not counted, being usually drawn
+  rather than written as a cell — where one is written as a cell, holding
+  text, a shape above it is still covered, and named. A node bearing
+  borders alone carries no fill and is not counted at all; a fill inside
+  either of those is.
+  Five things leave such a drawing behind the text. A box holding a line of
+  the flow or a picture, which in front it would cover, as inside a painted
+  panel. A line of text painted after it that lies over part of its box.
+  A kind of the caller's own holding it, at any depth: its definition
+  decides what it lays over what, which the export cannot read. Its node
+  standing at more than one place. And anything drawn after it — in any
+  overlay it stands in, or among what it holds, as a container's outline is
+  painted before its layers — since
+  Word draws every shape in front over every shape behind and lifting a
+  shape the page covers with another drawing puts the lower of the two over
+  the higher; a drawing the page paints before the shape is not asked
+  about, the file keeping it below as the page does. That rule asks whether
+  something is drawn over the shape, not whether it would have stayed
+  behind — asking the second question was wrong at a picture drawn where
+  the page puts it, at a badge handed over already in front, and at a shape
+  whose node stands at more than one place. A table drawn after the shape
+  counts whatever it holds, its cells' shading and rules being written in
+  the text layer. Its price is that a shape with anything drawn over it
+  carries no order at all, which
+  `cv-sidebar_portrait` pays: it draws thirty-seven times over its painted
+  sidebar, so nothing of it is lifted. A drawing that is not a shape a node
+  paints itself — a picture drawn where the page puts it, a pass of the
+  layout's own such as a timeline's rail — is never lifted, so over a
+  painted neighbour it stays covered.
+  The report names a drawing left behind wherever a panel it wrote a fill
+  for lies under it, naming the drawing and one such panel, and in a
+  document of several sections the section the loss is
+  in. Five cases it names nothing for: a drawing under a panel the layout
+  breaks across pages, whose box is the one its first page gave it; one
+  under a panel composed in an authored table cell, which the layout gives
+  no box of its own; one under a table cell's own shading, which belongs to
+  a cell rather than to a node; a cell's paint the table draws itself; and
+  the second panel over a drawing lying over two, one note naming one
+  panel.
   The report names the clip — a shape container's, and a layer
   stack's that clips to its bounds — wherever it cuts what the layers paint:
   a square tile's corners in a disc, a label run past its chip, an ornament
@@ -1861,7 +1906,13 @@ saying it is not in the document. A shape inside a filled panel is drawn in fron
 behind it, since a panel is a table cell and both editors paint a cell's shading over what
 lies behind the text — unless it frames a line of text or a picture on the page, as a ring
 round a photo does, which stays behind what it frames and hidden; a filled table cell counts
-as a panel here. A filled or outlined rectangle, rounded rectangle or ellipse whose one
+as a panel here. A progress track with its label laid over it in a painted panel is that
+case: in front, the track would cover the label, so it stays behind, and neither editor
+shows it — measured at 300 dpi, a 200pt track and its fill draw none of their pixels in
+Word 16.0.20527 or LibreOffice 24.2. The report names it, `APPROXIMATED`, as behind the
+text it frames where the panel's shading hides it. A track whose container holds only its
+label, with no fill shape inside, is the single shape holding its text described next, and
+both are seen. A filled or outlined rectangle, rounded rectangle or ellipse whose one
 layer, centred, is a line of at most four characters in one style — initials, a monogram, a
 step number — is one shape holding that text centred in it, drawn in front. Four characters is
 a policy, not a measure: a label that short is a mark, while a fifth character makes it a word in

@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <b>Build production PDF documents in Java without calculating coordinates.</b><br/>
+  <b>Build production-ready PDF, Word and PowerPoint documents in Java — without manual layout calculations.</b><br/>
   Compose content in reading order, let GraphCompose handle layout and pagination,
   then protect important templates with layout snapshots and visual diffs.
 </p>
@@ -63,6 +63,22 @@ Three full outputs from one document. The PPTX Java API, and the DOCX API added 
   [invoice and proposal](./docs/templates/business-templates.md),
   [CV and cover letter](./docs/templates/v2-layered/quickstart.md), or the
   [templates overview](./docs/templates/README.md) for all six families.
+
+The same session exports to Word through a configured backend, with
+`graph-compose-render-docx` on the classpath. Its report names what Word could not
+carry as authored, and `deterministic(true)` gives the same bytes on every run on
+one platform:
+
+<!-- doc-example: id=readme-root-docx-export mode=method imports=com.demcha.compose.GraphCompose,com.demcha.compose.document.api.DocumentSession,com.demcha.compose.document.backend.semantic.docx.DocxSemanticBackend,java.nio.file.Path -->
+```java
+try (DocumentSession document = GraphCompose.document().create()) {
+    document.pageFlow().addParagraph("Quarterly report").build();
+    document.export(DocxSemanticBackend.builder()
+            .deterministic(true)
+            .reportSink(report -> report.notes().forEach(System.out::println))
+            .build(), Path.of("report.docx"));
+}
+```
 
 ### Choose a starting point
 

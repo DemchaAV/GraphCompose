@@ -291,6 +291,8 @@ Experimental (`@Beta`).
 
 `graph-compose-bundle` includes PDF, templates, fonts, and emoji. PPTX and DOCX
 are not included in the bundle; add their render modules separately when needed.
+Each one brings the PDF module it measures text with, so a Word or PowerPoint export
+needs only its own module beside `graph-compose-core`, `graph-compose` or the bundle.
 
 Modules use the same GraphCompose version. [Bundled fonts](./fonts/README.md) and
 [colour emoji](./emoji/README.md) have their own release lines. Consult the

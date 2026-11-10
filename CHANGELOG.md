@@ -6796,6 +6796,14 @@ The same notes, grouped for an upgrade, are in
 
 ### Documentation
 
+- **The Word module's README says first that core and render-docx are all you add.** Its
+  "When to depend on it" section led with a 2.4.x note and a `graph-compose-render-pdf`
+  snippet at runtime scope, which read as a step for 2.5. It now opens with the two
+  dependencies and why the PDF module comes with them — the text measurement a session needs,
+  the shared barcode encoder and baseline seating — and the 2.4.x dependency moved to the
+  [migration note](docs/migration/v2.5.0-docx.md#graph-compose-render-docx-on-24x), where the
+  release cut leaves its version alone. The PowerPoint module's README and the root README's
+  module list say the same for both office outputs.
 - **The README names all three outputs from its first line and shows a Word export.** The
   tagline reads "Build production-ready PDF, Word and PowerPoint documents in Java — without
   manual layout calculations." in place of one that named PDF alone. Beside the outputs list, a

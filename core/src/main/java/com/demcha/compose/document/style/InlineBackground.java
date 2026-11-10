@@ -6,7 +6,9 @@ import java.util.Objects;
  * Background "chip" behind an inline run: a rounded, padded fill drawn beneath
  * the glyphs on the text baseline — e.g. a GitHub-style inline {@code code}
  * highlight. Backend-neutral: the PDF backend paints it as a filled rounded
- * rectangle; a future text backend (DOCX) keeps the text and drops the fill.
+ * rectangle; the DOCX export writes the fill as Word's run shading, which has
+ * neither corners nor padding, and flattens a translucent one against what sits
+ * under it because that shading is opaque.
  *
  * <p>Horizontal padding widens the run's advance (it reserves space and counts
  * toward line wrapping). Vertical padding expands the chip <em>outside</em> the

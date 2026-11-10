@@ -1,11 +1,11 @@
 ---
 skillId: graphcompose-api-surface
 targetLibrary: GraphCompose
-targetVersion: 2.4.x
-verifiedAgainst: 2.4.2-SNAPSHOT
+targetVersion: 2.5.x
+verifiedAgainst: 2.5.0-SNAPSHOT
 status: active
 generator: knowledge/tools/api-surface/extract-api.mjs
-generatedFrom: "io.github.demchaav:graph-compose-core:2.4.2-SNAPSHOT, io.github.demchaav:graph-compose-templates:2.4.2-SNAPSHOT, io.github.demchaav:graph-compose-render-pdf:2.4.2-SNAPSHOT, io.github.demchaav:graph-compose-render-docx:2.4.2-SNAPSHOT, io.github.demchaav:graph-compose-render-pptx:2.4.2-SNAPSHOT, io.github.demchaav:graph-compose-testing:2.4.2-SNAPSHOT"
+generatedFrom: "io.github.demchaav:graph-compose-core:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-templates:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-render-pdf:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-render-docx:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-render-pptx:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-testing:2.5.0-SNAPSHOT"
 note: "Generated from the pinned artifact's class files. Authoritative closed set: a symbol absent here does not exist for this version. Regenerate, do not hand-edit."
 ---
 
@@ -26,9 +26,9 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 > Ask it a question instead of reading it:
 > `node knowledge/tools/api-query/api-query.mjs --search <term>`.
 
-**GraphCompose version:** 2.4.2-SNAPSHOT
+**GraphCompose version:** 2.5.0-SNAPSHOT
 
-Types: 70 · methods: 375 · constants: 18 · compiler-generated members: 192
+Types: 78 · methods: 408 · constants: 21 · compiler-generated members: 210
 
 ## com.demcha.compose.document.backend.fixed
 
@@ -116,6 +116,7 @@ Types: 70 · methods: 375 · constants: 18 · compiler-generated members: 192
 
 ### PdfRenderEnvironment (class)
 - `PdfRenderEnvironment.LetterSpacedFont letterSpacedFont(PDFont font, double fontSize, double letterSpacing, String text)   [beta]`
+- `void writeTextLayer(PDPageContentStream stream, String text, double x, double baselineY, double width, double height)   [beta]`
 - `PDDocument document()`
 - `FontLibrary fonts()`
 - `PDPageContentStream pageSurface(int pageIndex)`
@@ -536,13 +537,24 @@ Types: 70 · methods: 375 · constants: 18 · compiler-generated members: 192
 
 ## com.demcha.compose.document.backend.semantic
 
+### SemanticBackendProvider (interface)   [beta]
+- `String format()   [beta]`
+- `SemanticBackend<byte[]> create()   [beta]`
+
+### SemanticBackendProviders (class)   [beta]
+- `SemanticBackendProvider forFormat(String format)   [beta]`
+
 ### SemanticExportContext (record)
-- `new SemanticExportContext(LayoutCanvas, Collection<FontFamilyDefinition>, Path, DocumentOutputOptions)`
+- `new SemanticExportContext(LayoutCanvas, Collection<FontFamilyDefinition>, Path, DocumentOutputOptions, LayoutGraph, String)   [beta]`
+- `new SemanticExportContext(LayoutCanvas canvas, Collection<FontFamilyDefinition> customFontFamilies, Path outputFile, DocumentOutputOptions outputOptions)`
 - `new SemanticExportContext(LayoutCanvas canvas, Collection<FontFamilyDefinition> customFontFamilies, Path outputFile)`
+- `LayoutGraph requireLayoutGraph()   [beta]`
 - `LayoutCanvas canvas()`
 - `Collection<FontFamilyDefinition> customFontFamilies()`
 - `Path outputFile()`
 - `DocumentOutputOptions outputOptions()`
+- `LayoutGraph layoutGraph()   [beta]`
+- `String layoutFailure()   [beta]`
 
 ### SemanticExportManifest (record)
 - `new SemanticExportManifest(String, Path, int, List<String>)`
@@ -551,13 +563,52 @@ Types: 70 · methods: 375 · constants: 18 · compiler-generated members: 192
 - `int rootCount()`
 - `List<String> nodeKinds()`
 
+### SemanticSection (record)   [beta]
+- `new SemanticSection(DocumentGraph, SemanticExportContext)   [beta]`
+- `DocumentGraph graph()   [beta]`
+- `SemanticExportContext context()   [beta]`
+
 ## com.demcha.compose.document.backend.semantic.docx
+
+### DocxBackendProvider (class)   [beta]
+- `new DocxBackendProvider()   [beta]`
+- `String format()   [beta]`
+- `SemanticBackend<byte[]> create()   [beta]`
+
+### DocxExportReport (record)   [beta]
+- `new DocxExportReport(List<DocxExportReport.Note>)   [beta]`
+- `boolean isEmpty()   [beta]`
+- `long count(DocxExportReport.Severity severity)   [beta]`
+- `Map<String, List<DocxExportReport.Note>> bySubject()   [beta]`
+- `List<DocxExportReport.Note> notes()   [beta]`
+- constants: `EMPTY`
+
+### DocxExportReport.Note (record)   [beta]
+- `new Note(DocxExportReport.Severity, String, String, String)   [beta]`
+- `DocxExportReport.Severity severity()   [beta]`
+- `String subject()   [beta]`
+- `String path()   [beta]`
+- `String detail()   [beta]`
+
+### DocxExportReport.Severity (enum)   [beta]
+- constants: `DROPPED`, `APPROXIMATED`
 
 ### DocxSemanticBackend (class)
 - `new DocxSemanticBackend()`
+- `new DocxSemanticBackend(Consumer<DocxExportReport> reportSink)   [beta]`
+- `DocxSemanticBackend.Builder builder()   [beta]`
 - `String name()`
+- `boolean requiresResolvedLayout()   [beta]`
 - `byte[] export(DocumentGraph graph, SemanticExportContext context)`
+- `byte[] exportSections(List<SemanticSection> sections)   [beta]`
+- `Object exportSections(List)   [beta]`
 - `Object export(DocumentGraph graph, SemanticExportContext context)`
+
+### DocxSemanticBackend.Builder (class)   [beta]
+- `DocxSemanticBackend.Builder reportSink(Consumer<DocxExportReport> reportSink)   [beta]`
+- `DocxSemanticBackend.Builder deterministic(boolean enabled)   [beta]`
+- `DocxSemanticBackend.Builder deterministic(Instant timestamp)   [beta]`
+- `DocxSemanticBackend build()   [beta]`
 
 ## com.demcha.compose.document.backend.semantic.pptx
 

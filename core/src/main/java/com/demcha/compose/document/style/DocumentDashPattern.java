@@ -12,8 +12,9 @@ import java.util.List;
  *
  * <p>Carried by {@link com.demcha.compose.document.node.LineNode} independently
  * of {@link DocumentStroke}, keeping the stroke value a stable two-component
- * record. Honoured by the PDF backend; other backends fall back to a solid
- * stroke.</p>
+ * record. Honoured by the PDF backend, and by the DOCX backend where it draws
+ * the line or path; a DOCX rule takes Word's own border dash, and PPTX a
+ * generic dashed preset.</p>
  *
  * @param segments alternating on/off lengths in points; an empty list means a
  *                 solid stroke

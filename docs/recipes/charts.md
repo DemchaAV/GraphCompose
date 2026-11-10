@@ -376,8 +376,11 @@ The run's minimum maps to the bottom of the box and its maximum to the top;
 
 Any fixed-layout backend (PDF today) renders charts for free — they are
 ordinary primitives by the time rendering starts. The semantic DOCX export
-has no layout pass, so it writes the chart's **data table**
-(categories × series) with a one-time capability warning.
+writes a chart as a **Word chart** at the size the page draws it, its numbers
+in a workbook embedded with it, so a reader edits them in Word through *Edit
+Data*. Word lays the chart out in its box itself, and the export report names
+what Word's chart has no setting for — a monotone curve is written straight,
+for one (see the [DOCX export recipe](docx-export.md)).
 
 Unsupported combinations fail fast with `UnsupportedOperationException`
 rather than rendering silently wrong; in the current release that is only

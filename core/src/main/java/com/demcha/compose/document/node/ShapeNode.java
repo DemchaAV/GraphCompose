@@ -28,6 +28,24 @@ import java.awt.*;
  *                        back to {@link DocumentPaint#primaryColor()}.
  * @param anchor          optional in-document navigation anchor name at the shape's
  *                        top-left, or {@code null} for none
+ * @param divider         whether the box was authored as a divider — a rule across
+ *                        the flow, which the DSL's divider builder
+ *                        ({@link com.demcha.compose.document.dsl.DividerBuilder}),
+ *                        and the templates module's {@code Divider} widget, build —
+ *                        rather than as a box of a colour placed where the
+ *                        page puts it. Nothing is drawn differently for it: on the
+ *                        page both are a filled box, and layout, measurement and
+ *                        pagination do not read it. It is there for a backend that
+ *                        has a rule of its own and must know which box asked to be
+ *                        one — the DOCX export writes a divider in the flow that
+ *                        is only a fill — no stroke or gradient, square corners,
+ *                        no transform — and no taller than Word's thickest border
+ *                        as Word's horizontal rule, a bordered paragraph that flows
+ *                        with the text, and leaves any other box of the same size
+ *                        to its drawing path, which draws it where the page puts it
+ *                        or drops it with a note; no geometry of the box tells the
+ *                        two apart. Defaults to
+ *                        {@code false}. ({@code @since 2.5.0})
  * @author Artem Demchyshyn
  */
 public record ShapeNode(
@@ -43,8 +61,44 @@ public record ShapeNode(
         DocumentInsets margin,
         DocumentTransform transform,
         DocumentPaint fillPaint,
-        String anchor
+        String anchor,
+        boolean divider
 ) implements DocumentNode {
+    /**
+     * Backwards-compatible canonical constructor without the divider signal —
+     * defaults to {@code false}, the box of a colour it has always built.
+     *
+     * @param name            node name used in snapshots and layout graph paths
+     * @param width           resolved shape width
+     * @param height          resolved shape height
+     * @param fillColor       optional fill color
+     * @param stroke          optional stroke descriptor
+     * @param cornerRadius    optional render-only corner radius
+     * @param linkTarget      optional node-level link target
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding         inner padding
+     * @param margin          outer margin
+     * @param transform       render-time affine transform
+     * @param fillPaint       optional paint fill
+     * @param anchor          optional navigation anchor name
+     */
+    public ShapeNode(String name,
+                     double width,
+                     double height,
+                     DocumentColor fillColor,
+                     DocumentStroke stroke,
+                     DocumentCornerRadius cornerRadius,
+                     DocumentLinkTarget linkTarget,
+                     DocumentBookmarkOptions bookmarkOptions,
+                     DocumentInsets padding,
+                     DocumentInsets margin,
+                     DocumentTransform transform,
+                     DocumentPaint fillPaint,
+                     String anchor) {
+        this(name, width, height, fillColor, stroke, cornerRadius, linkTarget, bookmarkOptions,
+                padding, margin, transform, fillPaint, anchor, false);
+    }
+
     /**
      * Backwards-compatible canonical constructor taking external
      * {@link DocumentLinkOptions} (wrapped) with a paint fill and no navigation

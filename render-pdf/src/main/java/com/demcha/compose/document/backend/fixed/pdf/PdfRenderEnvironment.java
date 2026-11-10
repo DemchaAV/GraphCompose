@@ -43,11 +43,12 @@ public final class PdfRenderEnvironment {
     private final Map<String, AnchorDestination> anchorDestinations = new LinkedHashMap<>();
     private final List<DeferredInternalLink> deferredInternalLinks = new ArrayList<>();
     private final PdfTrackedFontResources letterSpacedFonts;
+    private final PdfTextLayer textLayer;
     private boolean reorderedText;
 
     PdfRenderEnvironment(PDDocument document, FontLibrary fonts, PdfRenderSession session,
-                         PdfTrackedFontResources letterSpacedFonts) {
-        this(document, fonts, session, 0, letterSpacedFonts);
+                         PdfTrackedFontResources letterSpacedFonts, PdfTextLayer textLayer) {
+        this(document, fonts, session, 0, letterSpacedFonts, textLayer);
     }
 
     /**
@@ -65,14 +66,16 @@ public final class PdfRenderEnvironment {
      * @param session         page-scoped drawing surface for this section
      * @param pageIndexOffset number of pages already placed before this section
      * @param letterSpacedFonts the document's letter-spaced font resources, shared by all its sections
+     * @param textLayer       the document's text-layer font, shared by all its sections
      */
     PdfRenderEnvironment(PDDocument document, FontLibrary fonts, PdfRenderSession session, int pageIndexOffset,
-                         PdfTrackedFontResources letterSpacedFonts) {
+                         PdfTrackedFontResources letterSpacedFonts, PdfTextLayer textLayer) {
         this.document = document;
         this.fonts = fonts;
         this.session = session;
         this.pageIndexOffset = pageIndexOffset;
         this.letterSpacedFonts = letterSpacedFonts;
+        this.textLayer = textLayer;
     }
 
     /**
@@ -146,6 +149,45 @@ public final class PdfRenderEnvironment {
      */
     PdfTrackedFontResources letterSpacedFonts() {
         return letterSpacedFonts;
+    }
+
+    /**
+     * Puts {@code text} in the page's text layer over a box a handler has drawn, painting nothing.
+     *
+     * <p>A drawing has no characters, so a reader that copies, searches or extracts the page
+     * finds nothing where one sits: a colour emoji drawn from SVG paths pastes as nothing. This
+     * writes the text the drawing stands for as one invisible glyph whose advance spans the box's
+     * width, so extracted text reads it in place and a selection runs across the drawing. The
+     * glyph rises one {@code height} from {@code baselineY}; write it on the surrounding line's
+     * baseline, which keeps it in that line for readers that group text by position. Call it
+     * outside a text object; the graphics state is left as it was, including when writing fails
+     * part-way — the glyph's own text object and saved state are closed before the exception
+     * leaves.</p>
+     *
+     * <p><b>Experimental.</b> The text layer this produces is settled; the shape of the call may
+     * still change in a minor release.</p>
+     *
+     * @param stream    the page's content stream, outside a text object
+     * @param text      the text the drawing stands for; nothing is written when it is
+     *                  {@code null} or empty, or longer than 256 UTF-16 code units
+     * @param x         left edge of the box in page space
+     * @param baselineY baseline to write the text on
+     * @param width     width of the box in points
+     * @param height    height of the box in points
+     * @throws IOException           if the content stream cannot be written
+     * @throws IllegalStateException if there is text to write and {@code stream} is inside a text
+     *                               object; nothing is written to the stream then, and the
+     *                               caller's text object stays open
+     * @since 2.5.0
+     */
+    @Beta
+    public void writeTextLayer(PDPageContentStream stream,
+                               String text,
+                               double x,
+                               double baselineY,
+                               double width,
+                               double height) throws IOException {
+        textLayer.write(stream, text, (float) x, (float) baselineY, (float) width, (float) height);
     }
 
     /**

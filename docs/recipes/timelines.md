@@ -235,11 +235,15 @@ only in the degenerate case of a single marker row taller than a whole page.
 |---|---|---|
 | **PDF** | ✅ drawn, one fragment per page, beneath the markers | ✅ |
 | **PPTX** | ✅ same payload, same per-page fragments | ✅ |
-| **DOCX** | ⚠️ omitted | ✅ entries, titles, meta and bodies all export |
+| **DOCX** | ⚠️ drawn as shapes, anchored beside the entries' text | ✅ entries, titles, meta and bodies all export |
 
-DOCX is a semantic export: it walks the document tree and never consumes the resolved layout
-geometry the rail is made of, so the line is absent by construction rather than by defect. The
-export does not throw and the timeline's content comes through in full. See the
+DOCX is a semantic export: it writes the entries as text from the document tree, and reads the
+rail from the resolved layout, drawing it on each page as a filled bar the rail's width where the
+layout put it, behind the text, with the markers as the shapes they are. Each page's part of the
+rail is anchored in the entry it starts in there, and a marker beside an entry's text in that
+entry's paragraph, so both move with the entry when the text above is edited; one beside no text
+stays where the page puts it. The rail keeps the length the layout gives it on each page: the
+entries after one that grows in Word or LibreOffice run past its end. See the
 [backend capability matrix](../architecture/backend-capability-matrix.md).
 
 ## Text styles

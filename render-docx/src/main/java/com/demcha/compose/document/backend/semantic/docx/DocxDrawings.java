@@ -1,0 +1,671 @@
+package com.demcha.compose.document.backend.semantic.docx;
+
+import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
+import com.demcha.compose.document.layout.payloads.LineFragmentPayload;
+import com.demcha.compose.document.layout.payloads.PathFragmentPayload;
+import com.demcha.compose.document.layout.payloads.PolygonFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
+import com.demcha.compose.document.layout.payloads.SideBorders;
+import com.demcha.compose.document.style.DocumentCornerRadius;
+import com.demcha.compose.document.style.DocumentDashPattern;
+import com.demcha.compose.document.style.DocumentLineCap;
+import com.demcha.compose.document.style.DocumentLineJoin;
+import com.demcha.compose.document.style.DocumentPathSegment;
+import com.demcha.compose.engine.components.content.shape.Stroke;
+import org.apache.poi.util.Units;
+import org.apache.xmlbeans.XmlException;
+import org.apache.xmlbeans.XmlOptions;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing;
+
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+/**
+ * Drawing the page paints and no paragraph carries, as a shape anchored where the page draws it.
+ *
+ * <p>A timeline's rail and the dots on it, a badge's circle, a ring round a portrait: the export
+ * wrote none of them, since none is text, and a CV came out as its words on a bare page. Each is
+ * a floating DrawingML shape at the layout's position, behind the text, in the order
+ * the page paints them — a rectangle, a rectangle with rounded corners, an ellipse or a line,
+ * filled and outlined as on the page, the outline ending and turning its corners as the page's
+ * does.</p>
+ *
+ * <p>A shape standing beside a paragraph's text is anchored in that paragraph and placed down from
+ * its top ({@link #drawingInParagraph}, or {@link #drawingInCell} for one in a table cell): a
+ * reader who edits the text above moves the paragraph, and the shape with it. A shape beside no
+ * paragraph is placed from the page's edges and stays there whatever the text does. Which is
+ * which, {@link DocxDrawingAnchors} decides. A drawing that is all a table cell holds is anchored
+ * in that cell ({@link #drawingInCell}), and moves with its row.</p>
+ *
+ * <p>A picture a badge holds is drawn the same way, over the badge: written in the flow, as a
+ * paragraph of its own, it stood on its own line above the title beside the badge instead of in
+ * the middle of the circle.</p>
+ */
+final class DocxDrawings {
+
+    /**
+     * The page's miter limit, PDF's default of ten times the stroke's width, in the thousandths of
+     * a percent DrawingML counts it in.
+     */
+    private static final int MITER_LIMIT = 1_000_000;
+
+    private DocxDrawings() {
+    }
+
+    /** What a shape is drawn as. */
+    enum Kind {
+        RECT("rect"),
+        ROUND_RECT("roundRect"),
+        ELLIPSE("ellipse"),
+        LINE("line"),
+        /** A path or a polygon, drawn as custom geometry (see {@link DocxCustomGeometry}). */
+        CUSTOM(null),
+        /** A picture the document holds, drawn over its box. */
+        PICTURE(null);
+
+        private final String preset;
+
+        Kind(String preset) {
+            this.preset = preset;
+        }
+    }
+
+    /**
+     * One shape, measured from the page's top-left corner.
+     *
+     * @param kind        its geometry
+     * @param x           from the page's left edge, in points
+     * @param top         from the page's top edge, in points
+     * @param width       in points; 0 for a vertical line
+     * @param height      in points; 0 for a horizontal line
+     * @param fill        its fill, alpha included, or {@code null}
+     * @param stroke      its outline colour, or {@code null}
+     * @param strokeWidth its outline width, in points
+     * @param radius      a rounded rectangle's corner radius, in points
+     * @param flipH       whether a line runs from its right-hand end: from its top-right corner,
+     *                    or with {@code flipV} from its bottom-right
+     * @param page        the page the layout drew it on, from 0
+     * @param path        a custom shape's outline in its box's unit square, empty for a preset
+     * @param front       whether it is drawn in front of the text rather than behind it
+     * @param picture     a picture's relationship in the document part, {@code null} for a shape
+     * @param text        a paragraph the shape holds, as {@code w:p} markup — a badge's initials,
+     *                    or a line of text laid over the flow — or {@code null}
+     * @param textAtTop   whether the paragraph is set from the box's top-left corner, as the page
+     *                    sets a line in its box, rather than centred in the shape
+     * @param textRise    how far a paragraph centred in the shape stands above its middle, in
+     *                    points, below it where negative: the seat the page gives its text
+     * @param textLine    the height of that paragraph's line on the page, in points; 0 where none
+     * @param lineCap     how its outline ends, as the page strokes it; butt where the page has none
+     * @param lineJoin    how its outline turns a corner, as the page strokes it; mitred where the
+     *                    page has none
+     * @param flipV       whether a line runs from its bottom edge: with {@code flipH}, a dashed
+     *                    line runs from the end the page starts it at
+     * @param dash        its outline's dashes and gaps, alternating from a dash, in points; empty
+     *                    for a solid outline. A list of odd length is repeated once, as the page
+     *                    repeats it, so it alternates the other way round the second time
+     */
+    record Shape(Kind kind, double x, double top, double width, double height, Color fill,
+                 Color stroke, double strokeWidth, double radius, boolean flipH, int page,
+                 List<DocumentPathSegment> path, boolean front, String picture, String text, boolean textAtTop,
+                 double textRise, double textLine, DocumentLineCap lineCap, DocumentLineJoin lineJoin,
+                 boolean flipV, List<Double> dash) {
+        Shape {
+            path = path == null ? List.of() : List.copyOf(path);
+            lineCap = lineCap == null ? DocumentLineCap.BUTT : lineCap;
+            lineJoin = lineJoin == null ? DocumentLineJoin.MITER : lineJoin;
+            if (dash == null) {
+                dash = List.of();
+            } else if (dash.size() % 2 == 1) {
+                List<Double> twice = new ArrayList<>(dash);
+                twice.addAll(dash);
+                dash = List.copyOf(twice);
+            } else {
+                dash = List.copyOf(dash);
+            }
+        }
+
+        Shape(Kind kind, double x, double top, double width, double height, Color fill,
+              Color stroke, double strokeWidth, double radius, boolean flipH, int page,
+              List<DocumentPathSegment> path, boolean front, String picture) {
+            this(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front, picture,
+                    null, false, 0, 0, null, null, false, List.of());
+        }
+
+        Shape(Kind kind, double x, double top, double width, double height, Color fill,
+              Color stroke, double strokeWidth, double radius, boolean flipH, int page,
+              List<DocumentPathSegment> path, boolean front) {
+            this(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front, null);
+        }
+
+        Shape(Kind kind, double x, double top, double width, double height, Color fill,
+              Color stroke, double strokeWidth, double radius, boolean flipH, int page,
+              List<DocumentPathSegment> path) {
+            this(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, false);
+        }
+
+        Shape(Kind kind, double x, double top, double width, double height, Color fill,
+              Color stroke, double strokeWidth, double radius, boolean flipH, int page) {
+            this(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, List.of());
+        }
+
+        /** The same shape in front of the text rather than behind it. */
+        Shape inFront() {
+            return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, true,
+                    picture, text, textAtTop, textRise, textLine, lineCap, lineJoin, flipV, dash);
+        }
+
+        /**
+         * The same shape holding a paragraph centred in it.
+         *
+         * @param paragraph the paragraph, as {@code w:p} markup
+         * @param rise      how far the paragraph stands above the shape's middle, in points, below
+         *                  it where negative
+         * @param line      the height of the paragraph's line on the page, in points
+         */
+        Shape holding(String paragraph, double rise, double line) {
+            return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front,
+                    picture, paragraph, false, rise, line, lineCap, lineJoin, flipV, dash);
+        }
+
+        /**
+         * The same shape with its outline ending and turning its corners as the page strokes it.
+         *
+         * @param cap  how the outline ends; {@code null} for butt
+         * @param join how it turns a corner; {@code null} for mitred
+         */
+        Shape strokedWith(DocumentLineCap cap, DocumentLineJoin join) {
+            return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front,
+                    picture, text, textAtTop, textRise, textLine, cap, join, flipV, dash);
+        }
+
+        /**
+         * The same shape with its outline dashed as the page dashes it.
+         *
+         * @param pattern the page's dashes and gaps, alternating from a dash, in points; {@code null}
+         *                or solid for a solid outline
+         */
+        Shape dashedWith(DocumentDashPattern pattern) {
+            return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front,
+                    picture, text, textAtTop, textRise, textLine, lineCap, lineJoin, flipV,
+                    pattern == null ? List.of() : pattern.segments());
+        }
+
+        /**
+         * A box holding a paragraph set from its top-left corner, with nothing drawn round it: a
+         * line of text laid over the flow, where the page sets it. It stands in front of the
+         * text, where no shading and no shape behind the text covers it; drawing nothing, it
+         * covers nothing either.
+         *
+         * @param x         from the page's left edge, in points
+         * @param top       from the page's top edge, in points
+         * @param width     in points
+         * @param height    in points
+         * @param page      the page the layout set it on, from 0
+         * @param paragraph the paragraph, as {@code w:p} markup
+         */
+        static Shape textBox(double x, double top, double width, double height, int page, String paragraph) {
+            return new Shape(Kind.RECT, x, top, width, height, null, null, 0, 0, false, page, List.of(), true,
+                    null, paragraph, true, 0, 0, null, null, false, List.of());
+        }
+
+        /**
+         * A picture the document holds, measured from the page's top-left corner.
+         *
+         * @param relationship the picture's relationship in the document part
+         */
+        static Shape picture(double x, double top, double width, double height, int page, String relationship) {
+            return new Shape(Kind.PICTURE, x, top, width, height, null, null, 0, 0, false, page, List.of(), false,
+                    relationship);
+        }
+    }
+
+    /**
+     * The shapes a fragment paints, empty when it paints nothing a shape can show — neither
+     * fill nor outline, or a payload this does not draw.
+     *
+     * @param fragment   a placed fragment
+     * @param pageHeight the page's height, in points
+     */
+    static List<Shape> of(PlacedFragment fragment, double pageHeight) {
+        double top = pageHeight - fragment.y() - fragment.height();
+        List<Shape> shapes = new ArrayList<>();
+        int page = fragment.pageIndex();
+        if (fragment.payload() instanceof EllipseFragmentPayload ellipse) {
+            add(shapes, visible(new Shape(Kind.ELLIPSE, fragment.x(), top, fragment.width(), fragment.height(),
+                    ellipse.fillColor(), colourOf(ellipse.stroke()), widthOf(ellipse.stroke()), 0, false, page)));
+        } else if (fragment.payload() instanceof ShapeFragmentPayload shape) {
+            double radius = radiusOf(shape.cornerRadius());
+            add(shapes, visible(new Shape(radius > 0 ? Kind.ROUND_RECT : Kind.RECT, fragment.x(), top,
+                    fragment.width(), fragment.height(), shape.fillColor(), colourOf(shape.stroke()),
+                    widthOf(shape.stroke()), radius, false, page)));
+            // A side border is a stroke along that edge, as the page strokes it — a timeline's rail
+            // is a box with only its left side drawn (see edge).
+            SideBorders sides = shape.sideBorders();
+            if (sides != null && sides.hasAny()) {
+                double x = fragment.x();
+                double width = fragment.width();
+                double height = fragment.height();
+                add(shapes, edge(sides.top(), x, top, width, 0, page));
+                add(shapes, edge(sides.right(), x + width, top, 0, height, page));
+                add(shapes, edge(sides.bottom(), x, top + height, width, 0, page));
+                add(shapes, edge(sides.left(), x, top, 0, height, page));
+            }
+        } else if (fragment.payload() instanceof LineFragmentPayload line) {
+            // The line's ends are in the fragment's box, measured up from its bottom-left corner.
+            double x1 = fragment.x() + line.startX();
+            double x2 = fragment.x() + line.endX();
+            double y1 = pageHeight - (fragment.y() + line.startY());
+            double y2 = pageHeight - (fragment.y() + line.endY());
+            // Running from the upper-left to the lower-right is the preset's own direction; the
+            // other diagonal flips it. A dashed line also runs from the end the page starts it at,
+            // where its first dash is: flipped both ways, the preset runs from its lower-right.
+            boolean dashed = !line.dashPattern().isSolid();
+            boolean flipH = dashed ? x1 > x2 : (x2 - x1) * (y2 - y1) < 0;
+            boolean flipV = dashed && y1 > y2;
+            add(shapes, visible(new Shape(Kind.LINE, Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1),
+                    Math.abs(y2 - y1), null, colourOf(line.stroke()), widthOf(line.stroke()), 0, flipH, page,
+                    List.of(), false, null, null, false, 0, 0, line.lineCap(), null, flipV,
+                    line.dashPattern().segments())));
+        } else if (fragment.payload() instanceof PathFragmentPayload path) {
+            // Custom geometry runs as the path's segments do, so each part's first dash is where the
+            // page's is: both editors start a part's dashes again at its first point, as the page does.
+            add(shapes, visible(new Shape(Kind.CUSTOM, fragment.x(), top, fragment.width(), fragment.height(),
+                    path.fillColor(), colourOf(path.stroke()), widthOf(path.stroke()), 0, false, page,
+                    path.segments()).strokedWith(path.lineCap(), path.lineJoin()).dashedWith(path.dashPattern())));
+        } else if (fragment.payload() instanceof PolygonFragmentPayload polygon) {
+            add(shapes, visible(new Shape(Kind.CUSTOM, fragment.x(), top, fragment.width(), fragment.height(),
+                    polygon.fillColor(), colourOf(polygon.stroke()), widthOf(polygon.stroke()), 0, false, page,
+                    DocxCustomGeometry.ofPolygon(polygon.points()))));
+        }
+        return shapes;
+    }
+
+    /**
+     * One side of a box, as the page strokes it: a rectangle the stroke's width across, centred on
+     * that side and as long as it, filled with the stroke's colour — what a stroke with flat ends
+     * covers.
+     *
+     * <p>Not a line. LibreOffice 24.2 draws a line of no width — the preset a side is otherwise —
+     * turned a quarter round its middle at some places on the page and not at others. Measured, a
+     * timeline's rail at 30 and 31.5pt from the page's left edge came out a horizontal stroke and
+     * at 15.8 and 52.7pt upright, and three of the ten rails of the fidelity corpus came out
+     * turned. Drawn as this rectangle, all ten stand where the page puts them in LibreOffice 24.2
+     * and in Word, which drew the line there already.</p>
+     *
+     * @param width  the side's length across, 0 for a left or right side
+     * @param height the side's length down, 0 for a top or bottom side
+     */
+    private static Shape edge(Stroke stroke, double x, double top, double width, double height, int page) {
+        if (stroke == null) {
+            return null;
+        }
+        double across = widthOf(stroke);
+        return width == 0
+                ? visible(new Shape(Kind.RECT, x - across / 2, top, across, height, colourOf(stroke), null, 0,
+                        0, false, page))
+                : visible(new Shape(Kind.RECT, x, top - across / 2, width, across, colourOf(stroke), null, 0,
+                        0, false, page));
+    }
+
+    private static void add(List<Shape> shapes, Shape shape) {
+        if (shape != null) {
+            shapes.add(shape);
+        }
+    }
+
+    /**
+     * Whether a box fragment's box is drawn as a shape — filled or outlined — rather than only
+     * its side borders, or nothing.
+     */
+    static boolean drawsItsBox(PlacedFragment fragment) {
+        return fragment.payload() instanceof ShapeFragmentPayload shape
+               && visible(new Shape(Kind.RECT, fragment.x(), 0, fragment.width(), fragment.height(),
+                       shape.fillColor(), colourOf(shape.stroke()), widthOf(shape.stroke()), 0, false,
+                       fragment.pageIndex())) != null;
+    }
+
+    private static Shape visible(Shape shape) {
+        boolean filled = shape.fill() != null && shape.fill().getAlpha() > 0;
+        boolean outlined = shape.stroke() != null && shape.stroke().getAlpha() > 0 && shape.strokeWidth() > 0;
+        if (!filled && !outlined) {
+            return null;
+        }
+        boolean hasExtent = shape.kind() == Kind.LINE
+                ? shape.width() > 0 || shape.height() > 0
+                : shape.width() > 0 && shape.height() > 0;
+        if (!hasExtent || shape.kind() == Kind.CUSTOM && shape.path().isEmpty()) {
+            return null;
+        }
+        return shape;
+    }
+
+    private static Color colourOf(Stroke stroke) {
+        return stroke == null || stroke.strokeColor() == null ? null : stroke.strokeColor().color();
+    }
+
+    private static double widthOf(Stroke stroke) {
+        return stroke == null ? 0 : stroke.width();
+    }
+
+    private static double radiusOf(DocumentCornerRadius radius) {
+        if (radius == null || radius.isZero()) {
+            return 0;
+        }
+        return Math.max(Math.max(radius.topLeft(), radius.topRight()),
+                Math.max(radius.bottomRight(), radius.bottomLeft()));
+    }
+
+    /**
+     * Whether a box's corners round by radii that still differ once each is held to half the
+     * box's shorter side, as the page holds each of them and Word's rounded rectangle its one:
+     * radii of 10 and 12 on a box 20 tall are both drawn at 10, on the page and in Word alike.
+     *
+     * @param radius the corners' radii, or {@code null} for square corners
+     * @param width  the box's width, in points
+     * @param height the box's height, in points
+     */
+    static boolean roundsUnequally(DocumentCornerRadius radius, double width, double height) {
+        if (radius == null) {
+            return false;
+        }
+        double most = Math.min(width, height) / 2;
+        double topLeft = held(radius.topLeft(), most);
+        return held(radius.topRight(), most) != topLeft || held(radius.bottomRight(), most) != topLeft
+               || held(radius.bottomLeft(), most) != topLeft;
+    }
+
+    /** A corner's radius as the page draws it: none where it is not positive, at most {@code most}. */
+    private static double held(double radius, double most) {
+        return radius > 0 ? Math.min(radius, most) : 0;
+    }
+
+    /**
+     * Where a drawing stands among the ones behind the text: its place counted up from the
+     * height Word gives the first drawing of a document, 1024 apart, as Word numbers them.
+     * LibreOffice stacks a header's shapes and the body's together by these heights, so they
+     * stand above the page backgrounds (see {@link DocxPageBackgrounds}), which a timeline's
+     * rail would otherwise disappear under.
+     *
+     * @param order the drawing's place among the body's: a later one is drawn over an earlier one
+     * @return the value for {@code wp:anchor/@relativeHeight}
+     */
+    static long stackHeight(int order) {
+        // Held to the range LibreOffice reads, a signed 32-bit count, within the attribute's: past
+        // it, drawings share its top.
+        return Math.min(251_658_240L + (order + 1L) * 1024L, Integer.MAX_VALUE);
+    }
+
+    /**
+     * A shape or a picture as a drawing anchored to the page, behind the text or in front of it.
+     *
+     * @param shape the shape
+     * @param id    an identifier for the drawing, unique in the document
+     * @param order its place among the drawings: a later one is drawn over an earlier one
+     * @param drawn how many drawings were drawn before it, which numbers its name
+     * @return the drawing, to be added to a run
+     */
+    static CTDrawing drawing(Shape shape, long id, int order, int drawn) {
+        return drawing(shape, id, order, drawn, null);
+    }
+
+    /**
+     * A shape or a picture as a drawing anchored in a table cell's paragraph, placed from the
+     * cell's text column and that paragraph's top, so it moves with the row wherever Word sets
+     * it.
+     *
+     * @param shape  the shape
+     * @param id     an identifier for the drawing, unique in the document
+     * @param order  its place among the drawings: a later one is drawn over an earlier one
+     * @param drawn  how many drawings were drawn before it, which numbers its name
+     * @param origin where the page puts the cell's text column and the paragraph's top, in
+     *               points from the page's left and top edges
+     * @return the drawing, to be added to a run of that paragraph
+     */
+    static CTDrawing drawingInCell(Shape shape, long id, int order, int drawn, CellOrigin origin) {
+        return drawing(shape, id, order, drawn, origin);
+    }
+
+    /**
+     * A shape or a picture as a drawing anchored in a paragraph of the body, placed across from
+     * the page's left edge and down from that paragraph's top, so it moves with the paragraph
+     * wherever Word sets it.
+     *
+     * @param shape        the shape
+     * @param id           an identifier for the drawing, unique in the document
+     * @param order        its place among the drawings: a later one is drawn over an earlier one
+     * @param drawn        how many drawings were drawn before it, which numbers its name
+     * @param paragraphTop where the page puts the paragraph's top, the space above its first line
+     *                     included, in points from the page's top edge
+     * @return the drawing, to be added to a run of that paragraph
+     */
+    static CTDrawing drawingInParagraph(Shape shape, long id, int order, int drawn, double paragraphTop) {
+        return drawing(shape, id, order, drawn, new CellOrigin(Double.NaN, paragraphTop));
+    }
+
+    /**
+     * Where the page puts a cell's text column and a paragraph's top in it.
+     *
+     * @param x   from the page's left edge, in points; NaN for a paragraph of the body, whose
+     *            shapes are placed across from the page's left edge
+     * @param top from the page's top edge, in points
+     */
+    record CellOrigin(double x, double top) {
+    }
+
+    private static CTDrawing drawing(Shape shape, long id, int order, int drawn, CellOrigin origin) {
+        long cx = Units.toEMU(shape.width());
+        long cy = Units.toEMU(shape.height());
+        boolean picture = shape.kind() == Kind.PICTURE;
+        String graphic = picture ? pictureGraphic(shape, id, cx, cy) : shapeGraphic(shape, cx, cy);
+        boolean inCell = origin != null && !Double.isNaN(origin.x());
+        String xml = "<w:drawing"
+                + " xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\""
+                + " xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\""
+                + " xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\""
+                + (picture
+                   ? " xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\""
+                     + " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"
+                   : " xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\">")
+                + "<wp:anchor distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" simplePos=\"0\""
+                + " relativeHeight=\"" + stackHeight(order) + "\" behindDoc=\"" + (shape.front() ? 0 : 1)
+                + "\" locked=\"0\""
+                + " layoutInCell=\"" + (inCell ? 1 : 0) + "\" allowOverlap=\"1\">"
+                + "<wp:simplePos x=\"0\" y=\"0\"/>"
+                + "<wp:positionH relativeFrom=\"" + (inCell ? "column" : "page") + "\"><wp:posOffset>"
+                + Units.toEMU(inCell ? shape.x() - origin.x() : shape.x())
+                + "</wp:posOffset></wp:positionH>"
+                + "<wp:positionV relativeFrom=\"" + (origin == null ? "page" : "paragraph") + "\"><wp:posOffset>"
+                + Units.toEMU(origin == null ? shape.top() : shape.top() - origin.top())
+                + "</wp:posOffset></wp:positionV>"
+                + "<wp:extent cx=\"" + cx + "\" cy=\"" + cy + "\"/>"
+                + "<wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/>"
+                + "<wp:wrapNone/>"
+                + "<wp:docPr id=\"" + id + "\" name=\"Drawing " + (drawn + 1) + "\"/>"
+                + "<wp:cNvGraphicFramePr/>"
+                + graphic
+                + "</wp:anchor></w:drawing>";
+        // Parsed as the drawing's content rather than a document around it: set onto a run's
+        // new w:drawing, a parsed document would nest a second w:drawing inside the first, and
+        // the editors draw nothing.
+        XmlOptions options = new XmlOptions();
+        options.setLoadReplaceDocumentElement(null);
+        try {
+            return CTDrawing.Factory.parse(xml, options);
+        } catch (XmlException failure) {
+            throw new IllegalStateException("could not build a drawing", failure);
+        }
+    }
+
+    /** A picture filling its box, as Word writes one. */
+    private static String pictureGraphic(Shape shape, long id, long cx, long cy) {
+        return "<a:graphic><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">"
+                + "<pic:pic><pic:nvPicPr><pic:cNvPr id=\"" + id + "\" name=\"Picture " + id + "\"/>"
+                + "<pic:cNvPicPr><a:picLocks noChangeAspect=\"1\"/></pic:cNvPicPr></pic:nvPicPr>"
+                + "<pic:blipFill><a:blip r:embed=\"" + shape.picture() + "\"/>"
+                + "<a:stretch><a:fillRect/></a:stretch></pic:blipFill>"
+                + "<pic:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"" + cx + "\" cy=\"" + cy + "\"/></a:xfrm>"
+                + "<a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr>"
+                + "</pic:pic></a:graphicData></a:graphic>";
+    }
+
+    /** A shape filled and outlined as on the page. */
+    private static String shapeGraphic(Shape shape, long cx, long cy) {
+        boolean filled = shape.fill() != null && shape.fill().getAlpha() > 0;
+        String geometry = shape.kind() == Kind.CUSTOM
+                ? DocxCustomGeometry.xml(shape.path(), filled)
+                : "<a:prstGeom prst=\"" + shape.kind().preset + "\"><a:avLst>"
+                  + (shape.kind() == Kind.ROUND_RECT ? roundness(shape) : "")
+                  + "</a:avLst></a:prstGeom>";
+        String fill = filled
+                ? "<a:solidFill>" + colour(shape.fill()) + "</a:solidFill>"
+                : "<a:noFill/>";
+        return "<a:graphic><a:graphicData uri=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\">"
+                + "<wps:wsp><wps:cNvSpPr/><wps:spPr>"
+                + "<a:xfrm" + (shape.flipH() ? " flipH=\"1\"" : "") + (shape.flipV() ? " flipV=\"1\"" : "")
+                + "><a:off x=\"0\" y=\"0\"/><a:ext cx=\"" + cx
+                + "\" cy=\"" + cy + "\"/></a:xfrm>"
+                + geometry + fill + outline(shape)
+                + "</wps:spPr>" + textOf(shape) + "</wps:wsp>"
+                + "</a:graphicData></a:graphic>";
+    }
+
+    /**
+     * A shape's outline, ending and turning its corners as the page strokes it.
+     *
+     * <p>Written with neither, Word and LibreOffice end an outline flat and round its corners: a
+     * rectangle's 10pt frame came out with rounded corners, and a star's points 4pt short. The
+     * page mitres a corner up to ten times the stroke's width and bevels a sharper one, as the
+     * limit written here says. Neither editor reads the limit: Word's own is the page's, so it
+     * mitres and bevels where the page does, and LibreOffice bevels a corner sharper than 30
+     * degrees.</p>
+     */
+    private static String outline(Shape shape) {
+        if (shape.stroke() == null || shape.stroke().getAlpha() == 0 || !(shape.strokeWidth() > 0)) {
+            return "<a:ln><a:noFill/></a:ln>";
+        }
+        String cap = switch (shape.lineCap()) {
+            case BUTT -> "flat";
+            case ROUND -> "rnd";
+            case SQUARE -> "sq";
+        };
+        String join = switch (shape.lineJoin()) {
+            case MITER -> "<a:miter lim=\"" + MITER_LIMIT + "\"/>";
+            case ROUND -> "<a:round/>";
+            case BEVEL -> "<a:bevel/>";
+        };
+        return "<a:ln w=\"" + Units.toEMU(shape.strokeWidth()) + "\" cap=\"" + cap + "\"><a:solidFill>"
+               + colour(shape.stroke()) + "</a:solidFill>" + dashes(shape) + join + "</a:ln>";
+    }
+
+    /**
+     * A dashed outline's dashes and gaps, as DrawingML counts them: in thousandths of a percent of
+     * the outline's width, so a 2pt dash on a 1pt line is 200000. Empty for a solid outline.
+     *
+     * <p>The page's dash is the stroke's length before its caps, which reach half the outline's
+     * width past each end of it; Word's is the length the dash shows, its caps included. So a dash
+     * whose ends are round or square is written an outline's width longer, and its gap as much
+     * shorter: measured, a 6pt dash with a 6pt gap on a 3pt outline with round caps, written as
+     * 6 and 6, came out in Word a 3pt stroke with a 9pt gap, a dash of 6 and a gap of 6 where the
+     * page shows 9 and 3. A gap the caps close on the page is written as none, which moves the
+     * dashes after it in a pattern whose other gaps stay open; no template has one. LibreOffice
+     * 24.2 reads a round dash as Word does, and a square one as the stroke's length before its
+     * caps: a square dash stands an outline's width longer there, and its gap as much shorter.</p>
+     */
+    private static String dashes(Shape shape) {
+        if (shape.dash().isEmpty()) {
+            return "";
+        }
+        double caps = shape.lineCap() == DocumentLineCap.BUTT ? 0 : shape.strokeWidth();
+        StringBuilder xml = new StringBuilder("<a:custDash>");
+        for (int i = 0; i < shape.dash().size(); i += 2) {
+            xml.append("<a:ds d=\"").append(ofTheWidth(shape.dash().get(i) + caps, shape.strokeWidth(), 1))
+                    .append("\" sp=\"").append(ofTheWidth(shape.dash().get(i + 1) - caps, shape.strokeWidth(), 0))
+                    .append("\"/>");
+        }
+        return xml.append("</a:custDash>").toString();
+    }
+
+    /**
+     * A length as thousandths of a percent of the outline's width, at least {@code least} and at
+     * most the largest the attribute, an {@code int}, holds.
+     */
+    private static long ofTheWidth(double length, double strokeWidth, long least) {
+        return Math.min(Integer.MAX_VALUE, Math.max(least, Math.round(length / strokeWidth * 100_000)));
+    }
+
+    /**
+     * What a shape holds in its text body: a paragraph centred across and down, so a badge's
+     * initials stand in its middle as the page sets them; or nothing.
+     *
+     * <p>The text wraps in the shape's box, which the initials fit. Left unwrapped, Word sized
+     * the shape to its text: {@code ObsidianInvoice}'s 35.5pt disc came out 16.9pt wide round its
+     * "K".</p>
+     *
+     * <p>A preset wraps its text in a rectangle of its own inside the shape — an ellipse the
+     * square inscribed in it, a rounded rectangle its box less part of each corner — where the
+     * page sets the initials across the outline's whole width. Word broke "MWM" in a 36pt disc
+     * after "MW". The insets reach out by as much, so the text wraps at the shape's edges.</p>
+     *
+     * <p>Text the page seats by its cap band ({@link Shape#textRise}) stands off the middle by as
+     * much, the insets set apart by twice that. Centred, {@code NorthlineProposal}'s monogram stood
+     * 0.9pt low and its step numbers 0.3pt high in their badges. LibreOffice takes an inset below
+     * zero for none: where the line, with twice the seat, fits the preset's own text rectangle,
+     * the seat is an inset at the bottom to raise the text or at the top to lower it, the other
+     * none, and both editors set it so. Where it does not, Word set it low by half what it
+     * passed — Spectral at 30pt seated at the top of an 88pt disc stood 3.8pt low — so the insets
+     * reach out at both sides, set apart by the seat. Word sets the text so. LibreOffice moves it
+     * only by half the inset it reads, short of the seat.</p>
+     */
+    private static String textOf(Shape shape) {
+        if (shape.text() == null) {
+            return "<wps:bodyPr/>";
+        }
+        if (shape.textAtTop()) {
+            // Set from the corner, with no inset, as the page sets a line in its box.
+            return "<wps:txbx><w:txbxContent>" + shape.text() + "</w:txbxContent></wps:txbx>"
+                   + "<wps:bodyPr rot=\"0\" vert=\"horz\" wrap=\"square\" lIns=\"0\" tIns=\"0\" rIns=\"0\""
+                   + " bIns=\"0\" anchor=\"t\" anchorCtr=\"0\"><a:noAutofit/></wps:bodyPr>";
+        }
+        double across = 0;
+        double down = 0;
+        if (shape.kind() == Kind.ELLIPSE) {
+            // The inscribed rectangle stands in by (1 - cos 45°) / 2 of each side.
+            across = shape.width() * (1 - Math.sqrt(0.5)) / 2;
+            down = shape.height() * (1 - Math.sqrt(0.5)) / 2;
+        } else if (shape.kind() == Kind.ROUND_RECT) {
+            // By the corner's radius, as the preset caps it, times 1 - cos 45°.
+            double corner = Math.min(shape.radius(), Math.min(shape.width(), shape.height()) / 2);
+            across = corner * (1 - Math.sqrt(0.5));
+            down = across;
+        }
+        double rise = shape.textRise();
+        long top = -Units.toEMU(down + rise);
+        long bottom = -Units.toEMU(down - rise);
+        if (rise != 0 && shape.textLine() + 2 * Math.abs(rise) <= shape.height() - 2 * down) {
+            top = Units.toEMU(Math.max(0, -2 * rise));
+            bottom = Units.toEMU(Math.max(0, 2 * rise));
+        }
+        String sides = " lIns=\"" + -Units.toEMU(across) + "\" tIns=\"" + top
+                       + "\" rIns=\"" + -Units.toEMU(across) + "\" bIns=\"" + bottom + "\"";
+        return "<wps:txbx><w:txbxContent>" + shape.text() + "</w:txbxContent></wps:txbx>"
+               + "<wps:bodyPr rot=\"0\" vert=\"horz\" wrap=\"square\"" + sides
+               + " anchor=\"ctr\" anchorCtr=\"0\"><a:noAutofit/></wps:bodyPr>";
+    }
+
+    /** A rounded rectangle's corner, as the preset states it: a share of its shorter side. */
+    private static String roundness(Shape shape) {
+        double shorter = Math.min(shape.width(), shape.height());
+        long share = shorter > 0 ? Math.min(50_000, Math.round(shape.radius() / shorter * 100_000)) : 0;
+        return "<a:gd name=\"adj\" fmla=\"val " + share + "\"/>";
+    }
+
+    private static String colour(Color color) {
+        String rgb = String.format(Locale.ROOT, "%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
+        String alpha = color.getAlpha() == 255 ? ""
+                : "<a:alpha val=\"" + Math.round(color.getAlpha() * 100000.0 / 255.0) + "\"/>";
+        return "<a:srgbClr val=\"" + rgb + "\">" + alpha + "</a:srgbClr>";
+    }
+}

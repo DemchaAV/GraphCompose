@@ -1,11 +1,11 @@
 ---
 skillId: graphcompose-api-surface
 targetLibrary: GraphCompose
-targetVersion: 2.4.x
-verifiedAgainst: 2.4.2-SNAPSHOT
+targetVersion: 2.5.x
+verifiedAgainst: 2.5.0-SNAPSHOT
 status: active
 generator: knowledge/tools/api-surface/extract-api.mjs
-generatedFrom: "io.github.demchaav:graph-compose-core:2.4.2-SNAPSHOT, io.github.demchaav:graph-compose-templates:2.4.2-SNAPSHOT, io.github.demchaav:graph-compose-render-pdf:2.4.2-SNAPSHOT, io.github.demchaav:graph-compose-render-docx:2.4.2-SNAPSHOT, io.github.demchaav:graph-compose-render-pptx:2.4.2-SNAPSHOT, io.github.demchaav:graph-compose-testing:2.4.2-SNAPSHOT"
+generatedFrom: "io.github.demchaav:graph-compose-core:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-templates:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-render-pdf:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-render-docx:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-render-pptx:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-testing:2.5.0-SNAPSHOT"
 note: "Generated from the pinned artifact's class files. Authoritative closed set: a symbol absent here does not exist for this version. Regenerate, do not hand-edit."
 ---
 
@@ -26,9 +26,9 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 > Ask it a question instead of reading it:
 > `node knowledge/tools/api-query/api-query.mjs --search <term>`.
 
-**GraphCompose version:** 2.4.2-SNAPSHOT
+**GraphCompose version:** 2.5.0-SNAPSHOT
 
-Types: 237 · methods: 2123 · constants: 236 · compiler-generated members: 1129
+Types: 237 · methods: 2135 · constants: 236 · compiler-generated members: 1130
 
 ## com.demcha.compose
 
@@ -120,6 +120,9 @@ Types: 237 · methods: 2123 · constants: 236 · compiler-generated members: 112
 - `void writePdf(OutputStream output)`
 - `void buildPdf()`
 - `void buildPdf(Path outputFile)`
+- `byte[] toDocxBytes()   [beta]`
+- `void writeDocx(OutputStream output)   [beta]`
+- `void buildDocx(Path outputFile)   [beta]`
 - `byte[] toPptxBytes()   [beta]`
 - `void writePptx(OutputStream output)   [beta]`
 - `void buildPptx(Path outputFile)   [beta]`
@@ -137,6 +140,10 @@ Types: 237 · methods: 2123 · constants: 236 · compiler-generated members: 112
 - `void writePdf(FixedLayoutRenderer backend, OutputStream output)`
 - `void buildPdf()`
 - `void buildPdf(Path outputFile)`
+- `<R> R export(SemanticBackend<R> backend)   [beta]`
+- `byte[] toDocxBytes()   [beta]`
+- `void writeDocx(OutputStream output)   [beta]`
+- `void buildDocx(Path outputFile)   [beta]`
 - `List<LayoutSnapshot> sectionSnapshots()`
 - `void close()`
 
@@ -1715,9 +1722,10 @@ Types: 237 · methods: 2123 · constants: 236 · compiler-generated members: 112
 - `DocumentStroke stroke()`
 
 ### ShapeNode (record)
+- `new ShapeNode(String name, double width, double height, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentLinkTarget linkTarget, DocumentBookmarkOptions bookmarkOptions, DocumentInsets padding, DocumentInsets margin, DocumentTransform transform, DocumentPaint fillPaint, String anchor)`
 - `new ShapeNode(String name, double width, double height, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentLinkOptions linkOptions, DocumentBookmarkOptions bookmarkOptions, DocumentInsets padding, DocumentInsets margin, DocumentTransform transform, DocumentPaint fillPaint)`
 - `new ShapeNode(String name, double width, double height, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentLinkOptions linkOptions, DocumentBookmarkOptions bookmarkOptions, DocumentInsets padding, DocumentInsets margin, DocumentTransform transform)`
-- `new ShapeNode(String, double, double, DocumentColor, DocumentStroke, DocumentCornerRadius, DocumentLinkTarget, DocumentBookmarkOptions, DocumentInsets, DocumentInsets, DocumentTransform, DocumentPaint, String)`
+- `new ShapeNode(String, double, double, DocumentColor, DocumentStroke, DocumentCornerRadius, DocumentLinkTarget, DocumentBookmarkOptions, DocumentInsets, DocumentInsets, DocumentTransform, DocumentPaint, String, boolean)`
 - `new ShapeNode(String name, double width, double height, Color fillColor, DocumentStroke stroke, DocumentInsets padding, DocumentInsets margin)`
 - `new ShapeNode(String name, double width, double height, DocumentColor fillColor, DocumentStroke stroke, DocumentLinkOptions linkOptions, DocumentBookmarkOptions bookmarkOptions, DocumentInsets padding, DocumentInsets margin)`
 - `new ShapeNode(String name, double width, double height, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentLinkOptions linkOptions, DocumentBookmarkOptions bookmarkOptions, DocumentInsets padding, DocumentInsets margin)`
@@ -1734,6 +1742,7 @@ Types: 237 · methods: 2123 · constants: 236 · compiler-generated members: 112
 - `DocumentTransform transform()`
 - `DocumentPaint fillPaint()`
 - `String anchor()`
+- `boolean divider()`
 
 ### SpacerNode (record)
 - `new SpacerNode(String, double, double, DocumentInsets, DocumentInsets, double)`
@@ -1988,6 +1997,7 @@ Types: 237 · methods: 2123 · constants: 236 · compiler-generated members: 112
 ### PageContext (class)
 - `PageContext paginated(int number, int total)`
 - `PageContext unpaginated()`
+- `PageContext unpaginated(boolean first, boolean last)   [beta]`
 - `boolean isPaginated()`
 - `int number()`
 - `int total()`
@@ -2403,6 +2413,8 @@ Types: 237 · methods: 2123 · constants: 236 · compiler-generated members: 112
 - `double sourceWidth()`
 - `double sourceHeight()`
 - `double aspectRatio()`
+- `String text()`
+- `SvgIcon withText(String text)`
 - `LayerStackNode node(double width)`
 
 ### SvgIcon.Layer (record)

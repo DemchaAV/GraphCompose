@@ -1,0 +1,673 @@
+package com.demcha.compose.document.backend.semantic.docx;
+
+import com.demcha.compose.document.dsl.ParagraphBuilder;
+import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.LayerAlign;
+import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.ClipPolicy;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextStyle;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.junit.jupiter.api.Test;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * Text an overlay sets along one line — at its left, its right, and between — is one Word line,
+ * split by tabs.
+ *
+ * <p>A CV entry's head band puts its title at the left and its dates at the right, as two
+ * layers of one container. Written one after the other, the dates took a line of their own
+ * under every title.</p>
+ */
+class DocxLinePairTest {
+
+    private static final double PAGE_WIDTH = 400;
+    private static final double MARGIN = 20;
+    private static final double CONTENT = PAGE_WIDTH - 2 * MARGIN;
+
+    @Test
+    void aTitleAtTheLeftAndDatesAtTheRightAreOneLineSplitByARightTab() throws Exception {
+        try (XWPFDocument document = export(band(20, 0))) {
+            List<XWPFParagraph> paragraphs = written(document);
+
+            assertThat(paragraphs).hasSize(1);
+            XWPFParagraph line = paragraphs.get(0);
+            assertThat(line.getText()).isEqualTo("MARKETING MANAGER\tJan 2022 - Present");
+            CTPPr properties = line.getCTP().getPPr();
+            assertThat(properties.getTabs().sizeOfTabArray()).isEqualTo(1);
+            assertThat(properties.getTabs().getTabArray(0).getVal().toString()).isEqualTo("right");
+            assertThat(DocxTwips.of(properties.getTabs().getTabArray(0).getPos()))
+                    .as("at the band's right edge, where the dates end")
+                    .isCloseTo(Math.round(CONTENT * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
+    void aValueSetFromItsStartIsHeldThereByALeftTab() throws Exception {
+        // A bank detail's value starts at a column across the card whatever its length: a right
+        // tab at its end let an editor's narrower setting of a long IBAN start it further right.
+        DocumentNode row = new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("BankRow")
+                .rectangle(CONTENT, 14)
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(paragraph("IBAN", TextAlign.LEFT), 0, 0, LayerAlign.CENTER_LEFT)
+                .position(paragraph("GB36 SRLG 6083 7198 7654 32", TextAlign.LEFT), 120, 0, LayerAlign.CENTER_LEFT)
+                .build();
+        try (XWPFDocument document = export(row)) {
+            XWPFParagraph line = written(document).get(0);
+            CTPPr properties = line.getCTP().getPPr();
+
+            assertThat(line.getText()).isEqualTo("IBAN\tGB36 SRLG 6083 7198 7654 32");
+            assertThat(properties.getTabs().getTabArray(0).getVal().toString()).isEqualTo("left");
+            assertThat(DocxTwips.of(properties.getTabs().getTabArray(0).getPos()))
+                    .as("where the value starts on the page")
+                    .isCloseTo(120L * 20, org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
+    void aValueSetFromItsEndOrRightUpToTheEdgeKeepsItsRightTab() throws Exception {
+        // Placed from the right, the value's end is where the page holds it; placed from the
+        // left but running to the row's end, a left tab would leave an editor's wider setting of
+        // it no room, and its last word would go onto a line of its own.
+        String value = "GB36 SRLG 6083 7198 7654 32";
+        assertThat(tabOf(new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("FromTheRight")
+                .rectangle(CONTENT, 14).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(paragraph("IBAN", TextAlign.LEFT), 0, 0, LayerAlign.CENTER_LEFT)
+                .position(paragraph(value, TextAlign.LEFT), -30, 0, LayerAlign.CENTER_RIGHT)
+                .build())).as("placed from the right, room to spare past it").isEqualTo("right");
+        double valueWidth = widthOf(value);
+        assertThat(tabOf(new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("UpToTheEdge")
+                .rectangle(CONTENT, 14).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(paragraph("IBAN", TextAlign.LEFT), 0, 0, LayerAlign.CENTER_LEFT)
+                .position(paragraph(value, TextAlign.LEFT), CONTENT - valueWidth - 1, 0, LayerAlign.CENTER_LEFT)
+                .build())).as("from the left, a point short of the edge").isEqualTo("right");
+    }
+
+    /** The kind of the tab stop an overlay's pair is written with. */
+    private static String tabOf(DocumentNode row) throws Exception {
+        try (XWPFDocument document = export(row)) {
+            return written(document).get(0).getCTP().getPPr().getTabs().getTabArray(0).getVal().toString();
+        }
+    }
+
+    /** How wide the page sets the text as a 9pt line, from its laid-out line. */
+    private static double widthOf(String text) throws Exception {
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(PAGE_WIDTH, 600).margin(DocumentInsets.of(MARGIN)).create()) {
+            session.pageFlow(flow -> flow.add(paragraph(text, TextAlign.LEFT)));
+            return session.layoutGraph().fragments().stream()
+                    .map(fragment -> fragment.payload())
+                    .filter(payload -> payload
+                            instanceof com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload)
+                    .map(payload -> ((com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload) payload)
+                            .lines().get(0).width())
+                    .findFirst().orElseThrow();
+        }
+    }
+
+    @Test
+    void aPairInALayerStackIsOneLineTooNotABandOfTwo() throws Exception {
+        try (XWPFDocument document = export(new com.demcha.compose.document.dsl.LayerStackBuilder()
+                .name("EntryHead")
+                .back(new com.demcha.compose.document.dsl.ShapeBuilder().name("Band").size(CONTENT, 20).build())
+                .layer(new ParagraphBuilder().name("Title").text("MARKETING MANAGER")
+                        .textStyle(DocumentTextStyle.DEFAULT.withSize(12)).build(), LayerAlign.CENTER_LEFT)
+                .layer(paragraph("Jan 2022 - Present", TextAlign.RIGHT), LayerAlign.CENTER_RIGHT)
+                .build())) {
+            assertThat(written(document)).extracting(XWPFParagraph::getText)
+                    .containsExactly("MARKETING MANAGER\tJan 2022 - Present");
+        }
+    }
+
+    @Test
+    void aTitleStandingAboveItsBandTakesThatSpaceFromTheGapAbove() throws Exception {
+        // The band is shorter than the title's line and the title is pulled up to centre on it:
+        // on the page the title's top stands above the band, into the gap over it.
+        try (XWPFDocument roomy = export(band(20, 0));
+             XWPFDocument pulledUp = export(band(6, -4))) {
+            XWPFParagraph plain = written(roomy).get(0);
+            XWPFParagraph raised = written(pulledUp).get(0);
+
+            assertThat(before(plain)).as("the gap above, and the band's room above its text")
+                    .isGreaterThanOrEqualTo(12L * 20);
+            assertThat(before(raised)).as("the gap above, less what the raised title stands into")
+                    .isLessThan(12L * 20);
+        }
+    }
+
+    @Test
+    void textHangingBelowItsBandTakesThatSpaceFromTheGapBelow() throws Exception {
+        // The next paragraph's margin is measured from the band's bottom, and the text on the
+        // page already reaches past it.
+        try (XWPFDocument document = DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, page -> page
+                .add(band(6, 4))
+                .addParagraph(p -> p.text("After").margin(DocumentInsets.top(10))))) {
+            XWPFParagraph after = document.getParagraphs().stream()
+                    .filter(paragraph -> "After".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(before(after)).as("its 10pt, less what the text hangs below the band")
+                    .isLessThan(10L * 20);
+        }
+    }
+
+    @Test
+    void aTitleRaisedAboveTheTopOfItsCellLiftsTheRow() throws Exception {
+        // An entry laid out as a row: a marker beside the entry's head band, whose title stands
+        // above the band. A Word paragraph cannot reach above its cell, so the row is lifted by
+        // that much out of the gap above it, and the marker's cell starts that much lower.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(12)))
+                .addRow(row -> row
+                        .addParagraph(p -> p.text("*"))
+                        .addSection("Entry", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            XWPFParagraph before = document.getParagraphs().stream()
+                    .filter(paragraph -> "Before".equals(paragraph.getText())).findFirst().orElseThrow();
+            var row = document.getTables().get(0).getRow(0);
+            XWPFParagraph marker = row.getCell(0).getParagraphs().get(0);
+            XWPFParagraph title = row.getCell(1).getParagraphs().get(0);
+            long lifted = 12L * 20 - after(before);
+
+            assertThat(lifted).as("the row stands higher, into the gap above it").isPositive();
+            assertThat(before(marker)).as("the marker keeps its place").isEqualTo(lifted);
+            assertThat(before(title)).as("the title stands out by what the row was lifted").isZero();
+        }
+    }
+
+    @Test
+    void aTitleRaisedInsideAPaddedCardTakesThePaddingAndLeavesTheCardWhereItIs() throws Exception {
+        // On the page the title rises into the card's padding; the fill and its edge stay put.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(12)))
+                .addSection("Card", card -> card
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(230, 230, 230))
+                        .padding(DocumentInsets.of(10))
+                        .add(band(6, -4, CONTENT - 20))))) {
+            XWPFParagraph before = document.getParagraphs().stream()
+                    .filter(paragraph -> "Before".equals(paragraph.getText())).findFirst().orElseThrow();
+            var cell = document.getTables().get(0).getRow(0).getCell(0);
+            long padding = DocxTwips.of(cell.getCTTc().getTcPr().getTcMar().getTop().getW());
+
+            assertThat(after(before)).as("the card is not lifted").isEqualTo(12L * 20);
+            assertThat(padding).as("the title takes its rise out of the padding").isLessThan(10L * 20);
+        }
+    }
+
+    @Test
+    void aCardWhosePaddingCannotTakeTheRiseStaysWhereItIs() throws Exception {
+        // 1pt of padding against a rise of several: the rest stays low, the box does not move.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(12)))
+                .addSection("Card", card -> card
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(230, 230, 230))
+                        .padding(DocumentInsets.of(1))
+                        .add(band(6, -4, CONTENT - 2))))) {
+            XWPFParagraph before = document.getParagraphs().stream()
+                    .filter(paragraph -> "Before".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(after(before)).as("the card is not lifted").isEqualTo(12L * 20);
+        }
+    }
+
+    @Test
+    void aRuleAboveARaisedRowKeepsItsPlace() throws Exception {
+        // An empty paragraph above the row that draws a line is not a separator to lift into.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before"))
+                .addLine(line -> line.horizontal(CONTENT).thickness(1).margin(DocumentInsets.top(8)))
+                .addRow(row -> row.addParagraph(p -> p.text("*"))
+                        .addSection("Entry", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            XWPFParagraph rule = document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetPBdr())
+                    .findFirst().orElseThrow();
+
+            assertThat(before(rule)).as("the space above the line stays").isGreaterThanOrEqualTo(8L * 20 - 2);
+        }
+    }
+
+    @Test
+    void aRowAfterARowIsLiftedOutOfTheSeparatorBetweenThem() throws Exception {
+        // Two entries back to back: the gap between the tables is held above the separator.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addRow(row -> row.addParagraph(p -> p.text("*"))
+                        .addSection("First", entry -> entry.add(band(6, -4, CONTENT))))
+                .addRow(row -> row.margin(DocumentInsets.top(12)).addParagraph(p -> p.text("*"))
+                        .addSection("Second", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            var second = document.getTables().get(1).getRow(0);
+
+            assertThat(before(second.getCell(0).getParagraphs().get(0)))
+                    .as("the second row's marker starts lower, as the row was lifted")
+                    .isPositive();
+        }
+    }
+
+    @Test
+    void aRowAfterARowIsLiftedOutOfTheSpaceTheRowAboveEndsWith() throws Exception {
+        // The gap between two entries is the first entry's own, below its last paragraph —
+        // a timeline's separator rule — so it ends the first table's cell, and the empty
+        // paragraph between the tables carries nothing to lift into.
+        long[] reference = riseOfARaisedTitle();
+        long rise = reference[0];
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addRow(row -> row.addSection(marker())
+                        .addSection("First", entry -> entry.add(band(6, -4, CONTENT))
+                                .addParagraph(p -> p.text("Last line").margin(DocumentInsets.bottom(12)))))
+                .addRow(row -> row.addSection(marker())
+                        .addSection("Second", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            XWPFParagraph last = lastLine(document);
+            var second = document.getTables().get(1).getRow(0);
+
+            assertThat(12L * 20 - after(last)).as("the second row stands as much higher as its title rises")
+                    .isEqualTo(rise);
+            assertThat(before(second.getCell(0).getParagraphs().get(0)))
+                    .as("its marker keeps its place, as a lifted row's does").isEqualTo(reference[1]);
+        }
+    }
+
+    @Test
+    void aRowIsNotLiftedOutOfARowAboveThatMayNotShrink() throws Exception {
+        // Its marker cell holds text with no space under it: that cell may be the row's tallest,
+        // and taking the space from the other would lift the next row without the gap closing.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addRow(row -> row.addParagraph(p -> p.text("*"))
+                        .addSection("First", entry -> entry.add(band(6, -4, CONTENT))
+                                .addParagraph(p -> p.text("Last line").margin(DocumentInsets.bottom(12)))))
+                .addRow(row -> row.addSection(marker())
+                        .addSection("Second", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            assertThat(after(lastLine(document))).as("the space it ends with stays").isEqualTo(12L * 20);
+        }
+    }
+
+    @Test
+    void aRowAboveWithAPictureInItsOtherCellIsNotShortened() throws Exception {
+        // A picture set in a line takes room though it holds no text: that cell may be the
+        // tallest, and the row would not shrink.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addRow(row -> row.addSection(photo -> photo.addImage(image -> image
+                                .source(com.demcha.compose.document.image.DocumentImageData.fromBytes(png()))
+                                .size(30, 60)))
+                        .addSection("First", entry -> entry.add(band(6, -4, CONTENT))
+                                .addParagraph(p -> p.text("Last line").margin(DocumentInsets.bottom(12)))))
+                .addRow(row -> row.addSection(marker())
+                        .addSection("Second", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            assertThat(after(lastLine(document))).as("the space it ends with stays").isEqualTo(12L * 20);
+        }
+    }
+
+    @Test
+    void aRowAboveHeldToAHeightIsNotShortened() throws Exception {
+        // Inside a painted panel a row is held as tall as the page made it, its foot included:
+        // taking the foot would not shorten it, and the next row would drop.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addSection("Card", card -> card
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(230, 230, 230))
+                        .addRow(row -> row.addSection(marker())
+                                .addSection("First", entry -> entry.add(band(6, -4, CONTENT - 20))
+                                        .addParagraph(p -> p.text("Last line").margin(DocumentInsets.bottom(12)))))
+                        .addRow(row -> row.addSection(marker())
+                                .addSection("Second", entry -> entry.add(band(6, -4, CONTENT - 20))))))) {
+            XWPFParagraph last = lastLine(document);
+            var row = ((org.apache.poi.xwpf.usermodel.XWPFTableCell) last.getBody()).getTableRow();
+
+            assertThat(row.getCtRow().isSetTrPr() && row.getCtRow().getTrPr().sizeOfTrHeightArray() > 0)
+                    .as("the row is held to a height").isTrue();
+            assertThat(after(last)).as("the space it ends with stays").isEqualTo(12L * 20);
+        }
+    }
+
+    private static byte[] png() {
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(40, 40,
+                    java.awt.image.BufferedImage.TYPE_INT_RGB), "png", out);
+            return out.toByteArray();
+        } catch (Exception failure) {
+            throw new IllegalStateException(failure);
+        }
+    }
+
+    @Test
+    void aPaintedBoxAboveARaisedRowKeepsItsHeight() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addSection("Card", card -> card
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(230, 230, 230))
+                        .addParagraph(p -> p.text("Last line").margin(DocumentInsets.bottom(12))))
+                .addRow(row -> row.addSection(marker())
+                        .addSection("Second", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            assertThat(after(lastLine(document))).as("the card is not shortened").isEqualTo(12L * 20);
+        }
+    }
+
+    /**
+     * What a raised title lifts its row by, with room enough above it, and the space its marker
+     * then starts lower by inside the row.
+     */
+    private static long[] riseOfARaisedTitle() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(12)))
+                .addRow(row -> row.addSection(marker())
+                        .addSection("Entry", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            XWPFParagraph before = document.getParagraphs().stream()
+                    .filter(paragraph -> "Before".equals(paragraph.getText())).findFirst().orElseThrow();
+            long rise = 12L * 20 - after(before);
+            assertThat(rise).as("the title rises").isPositive();
+            return new long[] {rise, before(document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0))};
+        }
+    }
+
+    /** A timeline's marker: a cell holding nothing written, only a drawn disc. */
+    private static java.util.function.Consumer<com.demcha.compose.document.dsl.SectionBuilder> marker() {
+        return cell -> cell.addEllipse(disc -> disc.circle(6)
+                .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(20, 20, 20)));
+    }
+
+    private static XWPFParagraph lastLine(XWPFDocument document) {
+        XWPFParagraph found = lastLine(document.getTables());
+        if (found == null) {
+            throw new AssertionError("no paragraph reading Last line");
+        }
+        return found;
+    }
+
+    private static XWPFParagraph lastLine(List<org.apache.poi.xwpf.usermodel.XWPFTable> tables) {
+        for (var table : tables) {
+            for (var row : table.getRows()) {
+                for (var cell : row.getTableCells()) {
+                    for (XWPFParagraph paragraph : cell.getParagraphs()) {
+                        if ("Last line".equals(paragraph.getText())) {
+                            return paragraph;
+                        }
+                    }
+                    XWPFParagraph nested = lastLine(cell.getTables());
+                    if (nested != null) {
+                        return nested;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    @Test
+    void theHangReachesTheNextBlockOnlyNotThePageAfterABreak() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, page -> page
+                .add(band(6, 4))
+                .addPageBreak(b -> { })
+                .addParagraph(p -> p.text("After").margin(DocumentInsets.top(10))))) {
+            XWPFParagraph after = document.getParagraphs().stream()
+                    .filter(paragraph -> "After".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(before(after)).as("a new page: its 10pt whole, less its line's raise into it")
+                    .isEqualTo(10L * 20 - DocxExports.DEFAULT_LINE_RAISE);
+        }
+    }
+
+    @Test
+    void theHangStaysInTheCellItHangsIn() throws Exception {
+        // The band ends one column of a row; the column beside it starts its own flow.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addRow(row -> row
+                        .addSection("Left", left -> left.add(band(6, 4, CONTENT)))
+                        .addSection("Right", right -> right
+                                .addParagraph(p -> p.text("Beside").margin(DocumentInsets.top(10))))))) {
+            XWPFParagraph beside = document.getTables().get(0).getRow(0).getCell(1).getParagraphs().stream()
+                    .filter(paragraph -> "Beside".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(before(beside)).as("its 10pt whole, less its line's raise into it")
+                    .isEqualTo(10L * 20 - DocxExports.DEFAULT_LINE_RAISE);
+        }
+    }
+
+    @Test
+    void eachHalfKeepsItsBookmarkAndTheTitleItsHeadingRole() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("See the role").linkTo("role"))
+                .addParagraph(p -> p.text("See the dates").linkTo("dates"))
+                .add(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                        .name("EntryHead")
+                        .rectangle(CONTENT, 20)
+                        .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                        .position(new ParagraphBuilder().name("Title").text("MARKETING MANAGER").anchor("role")
+                                .bookmark(new com.demcha.compose.document.node.DocumentBookmarkOptions("Role", 0))
+                                .textStyle(DocumentTextStyle.DEFAULT.withSize(12)).build(), 0, 0, LayerAlign.CENTER_LEFT)
+                        .position(new ParagraphBuilder().text("Jan 2022 - Present").anchor("dates")
+                                .align(TextAlign.RIGHT).textStyle(DocumentTextStyle.DEFAULT.withSize(9)).build(),
+                                0, 0, LayerAlign.CENTER_RIGHT)
+                        .build()))) {
+            XWPFParagraph line = document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getText().startsWith("MARKETING")).findFirst().orElseThrow();
+
+            assertThat(line.getCTP().getBookmarkStartList())
+                    .extracting(org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBookmark::getName)
+                    .as("a bookmark for each half, so the links reach them")
+                    .hasSize(2);
+            assertThat(line.getStyleID()).as("the title's outline level").isEqualTo("Heading1");
+        }
+    }
+
+    @Test
+    void threeParagraphsInABandAreOneLineWithATabEach() throws Exception {
+        // A title at the left, a place in the middle, dates at the right: one line on the page,
+        // and three lines in Word and four in LibreOffice when written one after the other.
+        try (XWPFDocument document = export(threeCaptions("Middle", TextAlign.CENTER, LayerAlign.CENTER))) {
+            List<XWPFParagraph> paragraphs = written(document);
+
+            assertThat(paragraphs).hasSize(1);
+            assertThat(paragraphs.get(0).getText()).isEqualTo("Left\tMiddle\tRight");
+            CTPPr properties = paragraphs.get(0).getCTP().getPPr();
+            assertThat(properties.getTabs().sizeOfTabArray()).isEqualTo(2);
+            assertThat(properties.getTabs().getTabArray(0).getVal().toString())
+                    .as("the middle caption held by its middle").isEqualTo("center");
+            assertThat(DocxTwips.of(properties.getTabs().getTabArray(0).getPos()))
+                    .as("at the band's middle, where the page centres it")
+                    .isCloseTo(Math.round(CONTENT / 2 * 20), org.assertj.core.data.Offset.offset(2L));
+            assertThat(properties.getTabs().getTabArray(1).getVal().toString())
+                    .as("the last caption held by its end").isEqualTo("right");
+            assertThat(DocxTwips.of(properties.getTabs().getTabArray(1).getPos()))
+                    .isCloseTo(Math.round(CONTENT * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
+    void aCaptionBetweenTheFirstAndTheLastIsHeldAsItIsAligned() throws Exception {
+        // Set from a column across the band, a left-aligned caption holds its start; a
+        // right-aligned one its end, where an editor's narrower setting of it would move its start.
+        double place = widthOf("Left") + 80;
+        try (XWPFDocument fromItsStart = export(threeCaptions("Middle", TextAlign.LEFT, LayerAlign.CENTER_LEFT, place));
+             XWPFDocument fromItsEnd = export(threeCaptions("Middle", TextAlign.RIGHT, LayerAlign.CENTER_RIGHT,
+                     -(CONTENT - place - widthOf("Middle"))))) {
+            CTPPr start = written(fromItsStart).get(0).getCTP().getPPr();
+            CTPPr end = written(fromItsEnd).get(0).getCTP().getPPr();
+
+            assertThat(start.getTabs().getTabArray(0).getVal().toString()).isEqualTo("left");
+            assertThat(DocxTwips.of(start.getTabs().getTabArray(0).getPos()))
+                    .as("where the caption starts on the page")
+                    .isCloseTo(Math.round(place * 20), org.assertj.core.data.Offset.offset(2L));
+            assertThat(end.getTabs().getTabArray(0).getVal().toString()).isEqualTo("right");
+            assertThat(DocxTwips.of(end.getTabs().getTabArray(0).getPos()))
+                    .as("where the caption ends on the page")
+                    .isCloseTo(Math.round((place + widthOf("Middle")) * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
+    void aLeftAlignedCaptionACentredLayerSetsIsHeldByItsMiddle() throws Exception {
+        // The layout shrinks a left-aligned paragraph's box to its text, and the layer centres the
+        // box: the page centres the text, and a left stop at its start would let an editor's wider
+        // setting of it run off to the right only.
+        try (XWPFDocument document = export(threeCaptions("Middle", TextAlign.LEFT, LayerAlign.CENTER))) {
+            CTPPr properties = written(document).get(0).getCTP().getPPr();
+
+            assertThat(properties.getTabs().getTabArray(0).getVal().toString()).isEqualTo("center");
+            assertThat(DocxTwips.of(properties.getTabs().getTabArray(0).getPos()))
+                    .as("at the band's middle, where the layer centres it")
+                    .isCloseTo(Math.round(CONTENT / 2 * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
+    void aLeftAlignedCaptionALayerSetsFromTheRightIsHeldByItsEnd() throws Exception {
+        // Placed from the right, its box shrunk to its text: the layer holds its end.
+        double end = widthOf("Left") + 120;
+        try (XWPFDocument document = export(threeCaptions("Middle", TextAlign.LEFT, LayerAlign.CENTER_RIGHT,
+                -(CONTENT - end)))) {
+            CTPPr properties = written(document).get(0).getCTP().getPPr();
+
+            assertThat(properties.getTabs().getTabArray(0).getVal().toString()).isEqualTo("right");
+            assertThat(DocxTwips.of(properties.getTabs().getTabArray(0).getPos()))
+                    .as("where the layer ends the caption on the page")
+                    .isCloseTo(Math.round(end * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
+    void theLineTakesTheHeadingOfACaptionPastTheFirst() throws Exception {
+        // A Word paragraph has one outline level: the first caption along the line that has one
+        // gives it, the middle one here.
+        DocumentNode band = new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("Band")
+                .rectangle(CONTENT, 20)
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(paragraph("Left", TextAlign.LEFT), 0, 0, LayerAlign.CENTER_LEFT)
+                .position(new ParagraphBuilder().text("Middle").align(TextAlign.CENTER)
+                        .bookmark(new com.demcha.compose.document.node.DocumentBookmarkOptions("Middle", 0))
+                        .textStyle(DocumentTextStyle.DEFAULT.withSize(9)).build(), 0, 0, LayerAlign.CENTER)
+                .position(paragraph("Right", TextAlign.RIGHT), 0, 0, LayerAlign.CENTER_RIGHT)
+                .build();
+        try (XWPFDocument document = export(band)) {
+            XWPFParagraph line = written(document).get(0);
+
+            assertThat(line.getText()).isEqualTo("Left\tMiddle\tRight");
+            assertThat(line.getStyleID()).as("the middle caption's outline level").isEqualTo("Heading1");
+        }
+    }
+
+    @Test
+    void threeCaptionsTwoOfWhichNearlyMeetStayOneAfterTheOther() throws Exception {
+        // Each caption leaves the next the room an editor's wider setting may need, or none is
+        // set on the line: a middle caption 2pt short of the right one's start keeps all three apart.
+        double middle = CONTENT - widthOf("Right") - 2 - widthOf("Middle");
+        try (XWPFDocument document = export(threeCaptions("Middle", TextAlign.LEFT, LayerAlign.CENTER_LEFT, middle))) {
+            assertThat(written(document)).extracting(XWPFParagraph::getText)
+                    .containsExactly("Left", "Middle", "Right");
+        }
+    }
+
+    @Test
+    void aCaptionTheBandSetsOverTwoLinesKeepsItsBandOneAfterTheOther() throws Exception {
+        // One line holds no paragraph the page wraps: a band of three whose middle caption runs
+        // onto a second line is written as before.
+        DocumentNode band = new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("Band")
+                .rectangle(CONTENT, 40)
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(paragraph("Left", TextAlign.LEFT), 0, 0, LayerAlign.TOP_LEFT)
+                .position(new ParagraphBuilder().text("A note in the middle that runs onto a second line")
+                        .align(TextAlign.CENTER).textStyle(DocumentTextStyle.DEFAULT.withSize(9))
+                        .padding(new DocumentInsets(0, 130, 0, 130)).build(), 0, 0, LayerAlign.TOP_CENTER)
+                .position(paragraph("Right", TextAlign.RIGHT), 0, 0, LayerAlign.TOP_RIGHT)
+                .build();
+        try (XWPFDocument document = export(band)) {
+            assertThat(written(document)).first().extracting(XWPFParagraph::getText).isEqualTo("Left");
+            assertThat(written(document)).noneMatch(paragraph -> paragraph.getText().contains("\t"));
+        }
+    }
+
+    /** A band of three 9pt captions, the middle one set by {@code align} in a layer at {@code layer}. */
+    private static DocumentNode threeCaptions(String middle, TextAlign align, LayerAlign layer) {
+        return threeCaptions(middle, align, layer, 0);
+    }
+
+    private static DocumentNode threeCaptions(String middle, TextAlign align, LayerAlign layer, double offset) {
+        return new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("Band")
+                .rectangle(CONTENT, 20)
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(paragraph("Left", TextAlign.LEFT), 0, 0, LayerAlign.CENTER_LEFT)
+                .position(paragraph(middle, align), offset, 0, layer)
+                .position(paragraph("Right", TextAlign.RIGHT), 0, 0, LayerAlign.CENTER_RIGHT)
+                .build();
+    }
+
+    @Test
+    void textsThatNearlyMeetStayOneAfterTheOther() throws Exception {
+        // An editor sets text a little wider than the page: a tab the left text reaches would
+        // put the dates on a line of their own, out of sight under an exact line.
+        double texts = textWidth("MARKETING MANAGER", 12) + textWidth("Jan 2022 - Present", 9);
+        try (XWPFDocument close = export(band(20, 0, texts + 2));
+             XWPFDocument apart = export(band(20, 0, texts + 8))) {
+            assertThat(written(close)).as("2pt between them").hasSize(2);
+            assertThat(written(apart)).as("8pt between them").hasSize(1);
+        }
+    }
+
+    /** How wide the page sets a line of text, as the layout measured it. */
+    private static double textWidth(String text, double size) {
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(PAGE_WIDTH, 600).margin(DocumentInsets.of(MARGIN)).create()) {
+            session.pageFlow(page -> page.addParagraph(p -> p.text(text)
+                    .textStyle(DocumentTextStyle.DEFAULT.withSize(size))));
+            return session.layoutGraph().fragments().stream()
+                    .map(com.demcha.compose.document.layout.PlacedFragment::payload)
+                    .filter(com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload.class::isInstance)
+                    .map(com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload.class::cast)
+                    .mapToDouble(payload -> payload.lines().get(0).width())
+                    .findFirst().orElseThrow();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static XWPFDocument export(DocumentNode band) throws Exception {
+        return DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(12)))
+                .add(band));
+    }
+
+    /** A head band: the title at the left, the dates at the right, both pulled by {@code pull}. */
+    private static DocumentNode band(double height, double pull) {
+        return band(height, pull, CONTENT);
+    }
+
+    private static DocumentNode band(double height, double pull, double width) {
+        return new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("EntryHead")
+                .rectangle(width, height)
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(new ParagraphBuilder().name("Title").text("MARKETING MANAGER")
+                        .textStyle(DocumentTextStyle.DEFAULT.withSize(12)).build(), 0, pull, LayerAlign.CENTER_LEFT)
+                .position(paragraph("Jan 2022 - Present", TextAlign.RIGHT), 0, pull, LayerAlign.CENTER_RIGHT)
+                .build();
+    }
+
+    private static DocumentNode paragraph(String text, TextAlign align) {
+        return new ParagraphBuilder().text(text).align(align)
+                .textStyle(DocumentTextStyle.DEFAULT.withSize(9)).build();
+    }
+
+    private static List<XWPFParagraph> written(XWPFDocument document) {
+        return document.getParagraphs().stream()
+                .filter(paragraph -> !paragraph.getText().isBlank() && !"Before".equals(paragraph.getText()))
+                .toList();
+    }
+
+    private static long after(XWPFParagraph paragraph) {
+        CTPPr properties = paragraph.getCTP().getPPr();
+        if (properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetAfter()) {
+            return 0;
+        }
+        return DocxTwips.of(properties.getSpacing().getAfter());
+    }
+
+    private static long before(XWPFParagraph paragraph) {
+        CTPPr properties = paragraph.getCTP().getPPr();
+        if (properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetBefore()) {
+            return 0;
+        }
+        return DocxTwips.of(properties.getSpacing().getBefore());
+    }
+}

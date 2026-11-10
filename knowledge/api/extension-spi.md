@@ -1,11 +1,11 @@
 ---
 skillId: graphcompose-api-surface
 targetLibrary: GraphCompose
-targetVersion: 2.4.x
-verifiedAgainst: 2.4.2-SNAPSHOT
+targetVersion: 2.5.x
+verifiedAgainst: 2.5.0-SNAPSHOT
 status: active
 generator: knowledge/tools/api-surface/extract-api.mjs
-generatedFrom: "io.github.demchaav:graph-compose-core:2.4.2-SNAPSHOT, io.github.demchaav:graph-compose-templates:2.4.2-SNAPSHOT, io.github.demchaav:graph-compose-render-pdf:2.4.2-SNAPSHOT, io.github.demchaav:graph-compose-render-docx:2.4.2-SNAPSHOT, io.github.demchaav:graph-compose-render-pptx:2.4.2-SNAPSHOT, io.github.demchaav:graph-compose-testing:2.4.2-SNAPSHOT"
+generatedFrom: "io.github.demchaav:graph-compose-core:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-templates:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-render-pdf:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-render-docx:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-render-pptx:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-testing:2.5.0-SNAPSHOT"
 note: "Generated from the pinned artifact's class files. Authoritative closed set: a symbol absent here does not exist for this version. Regenerate, do not hand-edit."
 ---
 
@@ -26,9 +26,9 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 > Ask it a question instead of reading it:
 > `node knowledge/tools/api-query/api-query.mjs --search <term>`.
 
-**GraphCompose version:** 2.4.2-SNAPSHOT
+**GraphCompose version:** 2.5.0-SNAPSHOT
 
-Types: 9 · methods: 26 · constants: 0 · compiler-generated members: 26
+Types: 9 · methods: 28 · constants: 0 · compiler-generated members: 28
 
 ## com.demcha.compose.document.backend.fixed
 
@@ -70,7 +70,9 @@ Types: 9 · methods: 26 · constants: 0 · compiler-generated members: 26
 
 ### SemanticBackend (interface)
 - `String name()`
+- `boolean requiresResolvedLayout()   [beta]`
 - `R export(DocumentGraph, SemanticExportContext)`
+- `R exportSections(List<SemanticSection>)   [beta]`
 
 ## com.demcha.compose.document.layout
 

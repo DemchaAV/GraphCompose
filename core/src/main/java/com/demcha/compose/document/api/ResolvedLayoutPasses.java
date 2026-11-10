@@ -131,7 +131,7 @@ final class ResolvedLayoutPasses {
         combined.addAll(under.getOrDefault(body.size(), List.of()));
         combined.addAll(over);
         // Nodes pass through untouched: a pass contributes drawing, never structure.
-        return new LayoutGraph(base.canvas(), base.totalPages(), base.nodes(), combined);
+        return base.withFragments(combined);
     }
 
     /**

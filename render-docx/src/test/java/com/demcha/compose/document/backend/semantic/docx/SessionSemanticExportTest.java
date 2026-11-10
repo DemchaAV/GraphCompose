@@ -7,8 +7,11 @@ import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SessionSemanticExportTest {
 
     @Test
-    void docxBackendShouldExportZipPackageFromDocumentGraph() throws Exception {
+    void aSessionsParagraphIsWrittenToTheWordPackage() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(200, 200)
                 .margin(DocumentInsets.of(10))
@@ -45,6 +48,11 @@ class SessionSemanticExportTest {
             // of any ZIP container are the local-file-header signature.
             assertThat(docx[0]).isEqualTo((byte) 'P');
             assertThat(docx[1]).isEqualTo((byte) 'K');
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+                assertThat(document.getParagraphs()).extracting(XWPFParagraph::getText)
+                        .as("the session's paragraph, and nothing else")
+                        .containsExactly("Hello world");
+            }
         }
     }
 }

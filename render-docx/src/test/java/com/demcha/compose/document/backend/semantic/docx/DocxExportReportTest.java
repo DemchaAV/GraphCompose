@@ -1,0 +1,346 @@
+package com.demcha.compose.document.backend.semantic.docx;
+
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.chart.ChartData;
+import com.demcha.compose.document.chart.ChartSpec;
+import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentCornerRadius;
+import com.demcha.compose.document.style.DocumentInsets;
+import org.junit.jupiter.api.Test;
+
+import java.io.ByteArrayInputStream;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * What the export could not carry, told to the program rather than to the log.
+ *
+ * <p>The export has always said what it drops — one line per kind, to a logger. A service
+ * generating documents for other people has no log to read: it needs to know whether the
+ * file it is about to send lost a chart, and which one. That is what the report is, and it
+ * is deliberately not an error channel — an export that cannot proceed throws.</p>
+ *
+ * @author Artem Demchyshyn
+ */
+class DocxExportReportTest {
+
+    private static final DocumentColor SURFACE = DocumentColor.rgb(238, 243, 249);
+    // A shape the export draws, filled with a paint it does not carry: nothing of it shows.
+    private static final com.demcha.compose.document.style.DocumentPaint GRADIENT =
+            com.demcha.compose.document.style.DocumentPaint.linear(SURFACE, DocumentColor.rgb(26, 86, 148));
+
+    @Test
+    void aDocumentThatLosesNothingReportsNothing() throws Exception {
+        // Set in a face the document ships, whose own line its line is: written at a least height,
+        // it grows with its text, and there is nothing to say.
+        assertThat(reportOf(page -> page.addParagraph(p -> p.text("Ordinary text").textStyle(
+                        com.demcha.compose.document.style.DocumentTextStyle.builder()
+                                .fontName(com.demcha.compose.font.FontName.LATO).size(10).build())))
+                .isEmpty())
+                .as("an export with nothing to say says nothing")
+                .isTrue();
+    }
+
+    @Test
+    void linesOfTextWrittenAtAnExactHeightAreNamedOnceForTheDocument() throws Exception {
+        // Helvetica is a name, not a file the document ships: its lines are exact, which Word keeps
+        // when the text is made larger. The spacer's empty line holds no text to grow.
+        DocxExportReport report = reportOf(page -> page
+                .addParagraph(p -> p.text("First"))
+                .spacer(1, 12)
+                .addParagraph(p -> p.text("Second")));
+
+        assertThat(report.notes()).singleElement().satisfies(note -> {
+            assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.APPROXIMATED);
+            assertThat(note.subject()).isEqualTo(DocxExports.EXACT_LINES);
+            assertThat(note.path()).as("about the whole document").isNull();
+            assertThat(note.detail()).startsWith("the lines of 2 paragraphs are written at an exact height");
+        });
+    }
+
+    @Test
+    void aDroppedNodeIsNamedWithItsPath() throws Exception {
+        DocxExportReport report = reportOf(page -> page
+                .addParagraph(p -> p.text("Before"))
+                .addPath(path -> path.name("Rail").size(20, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
+                        .closePath().fill(GRADIENT)));
+
+        List<DocxExportReport.Note> notes = DocxExports.besidesTheExactLines(report);
+        assertThat(notes).hasSize(1);
+        assertThat(notes.get(0).severity()).isEqualTo(DocxExportReport.Severity.DROPPED);
+        assertThat(notes.get(0).path())
+                .as("the path the layout graph addresses that node by, so it can be traced back")
+                .contains("Rail");
+        assertThat(notes.get(0).detail()).isNotEmpty();
+    }
+
+    @Test
+    void everyDroppedNodeIsRecordedEvenThoughTheLogSaysItOnce() throws Exception {
+        // The log is the summary and the report is the record: a caller asking what the
+        // document lost wants the three it lost, not the fact that it lost a kind.
+        DocxExportReport report = reportOf(page -> page
+                .addPath(path -> path.name("First").size(20, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
+                        .closePath().fill(GRADIENT))
+                .addPath(path -> path.name("Second").size(20, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
+                        .closePath().fill(GRADIENT))
+                .addPath(path -> path.name("Third").size(20, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
+                        .closePath().fill(GRADIENT)));
+
+        assertThat(report.count(DocxExportReport.Severity.DROPPED)).isEqualTo(3);
+        assertThat(report.notes()).extracting(DocxExportReport.Note::path)
+                .anyMatch(path -> path.contains("First"))
+                .anyMatch(path -> path.contains("Third"));
+    }
+
+    @Test
+    void whatSurvivesInAnotherFormIsApproximatedRatherThanDropped() throws Exception {
+        // A rounded card keeps its fill and loses its corners. That is not the same as
+        // losing the card, and a caller deciding whether to send the file needs the
+        // difference.
+        DocxExportReport report = reportOf(page -> page.addSection("Card", card -> card
+                .fillColor(SURFACE)
+                .cornerRadius(DocumentCornerRadius.of(14))
+                .padding(DocumentInsets.of(10))
+                .addParagraph(p -> p.text("Inside the card"))));
+
+        assertThat(DocxExports.besidesTheExactLines(report)).extracting(DocxExportReport.Note::severity)
+                .containsExactly(DocxExportReport.Severity.APPROXIMATED);
+        assertThat(report.count(DocxExportReport.Severity.DROPPED)).isZero();
+        assertThat(report.bySubject()).containsKey("corner radius");
+        assertThat(DocxExports.besidesTheExactLines(report).get(0).path()).contains("Card");
+    }
+
+    @Test
+    void aRoundedPanelIsSaidToKeepWhatItPaints() throws Exception {
+        // A border alone is no fill: the note says what the square cell keeps.
+        DocxExportReport bordered = reportOf(page -> page.addSection("Card", card -> card
+                .stroke(com.demcha.compose.document.style.DocumentStroke.of(SURFACE, 1))
+                .cornerRadius(DocumentCornerRadius.of(6))
+                .addParagraph(p -> p.text("Inside the card"))));
+        DocxExportReport both = reportOf(page -> page.addSection("Card", card -> card
+                .fillColor(SURFACE).stroke(com.demcha.compose.document.style.DocumentStroke.of(SURFACE, 1))
+                .cornerRadius(DocumentCornerRadius.of(6))
+                .addParagraph(p -> p.text("Inside the card"))));
+
+        assertThat(bordered.bySubject().get("corner radius")).extracting(DocxExportReport.Note::detail)
+                .containsExactly("a Word table cell is rectangular, so the panel keeps its border and loses its "
+                                 + "rounded corners");
+        assertThat(both.bySubject().get("corner radius")).extracting(DocxExportReport.Note::detail)
+                .containsExactly("a Word table cell is rectangular, so the panel keeps its fill and border and "
+                                 + "loses its rounded corners");
+        // Sides of no width paint nothing: there is no border to keep.
+        DocxExportReport unpainted = reportOf(page -> page.addSection("Card", card -> card
+                .fillColor(SURFACE)
+                .borders(com.demcha.compose.document.style.DocumentBorders.all(
+                        com.demcha.compose.document.style.DocumentStroke.of(SURFACE, 0)))
+                .cornerRadius(DocumentCornerRadius.of(6))
+                .addParagraph(p -> p.text("Inside the card"))));
+        assertThat(unpainted.bySubject().get("corner radius")).extracting(DocxExportReport.Note::detail)
+                .containsExactly("a Word table cell is rectangular, so the panel keeps its fill and loses its "
+                                 + "rounded corners");
+    }
+
+    @Test
+    void aChartSaysWhatItBecame() throws Exception {
+        ChartData data = ChartData.builder()
+                .categories("Q1", "Q2")
+                .series("2025", 12.4, 15.1)
+                .build();
+        DocxExportReport report = reportOf(page -> page
+                .chart(ChartSpec.bar().data(data).build()));
+
+        assertThat(report.bySubject()).containsKey("chart");
+        DocxExportReport.Note note = report.bySubject().get("chart").get(0);
+        assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.APPROXIMATED);
+        assertThat(note.detail()).startsWith("written as a Word chart");
+        assertThat(note.path())
+                .as("an unnamed node is addressed by its kind, which still locates it")
+                .isEqualTo("ContainerNode[0]/Chart[0]");
+    }
+
+    @Test
+    void withNoSinkTheExportIsUnchanged() throws Exception {
+        // The report is opt-in, and asking for it must not change the document. With the
+        // package's clocks pinned, the two exports are compared byte for byte; through the
+        // constructors, whose clocks run, every part but the one holding the dates.
+        AtomicReference<DocxExportReport> received = new AtomicReference<>();
+        byte[] withSink;
+        byte[] without;
+        Map<String, byte[]> constructedWithSink;
+        Map<String, byte[]> constructedWithout;
+        try (DocumentSession session = session(page -> page.addParagraph(p -> p.text("Body")))) {
+            withSink = session.export(DocxSemanticBackend.builder().reportSink(received::set)
+                    .deterministic(true).build());
+            without = session.export(DocxSemanticBackend.builder().deterministic(true).build());
+            constructedWithSink = partsBesidesTheDates(session.export(new DocxSemanticBackend(report -> { })));
+            constructedWithout = partsBesidesTheDates(session.export(new DocxSemanticBackend()));
+        }
+        assertThat(received.get().notes()).as("the sink was handed a report with notes in it").isNotEmpty();
+        assertThat(withSink).isEqualTo(without);
+        assertThat(constructedWithSink.keySet()).containsExactlyElementsOf(constructedWithout.keySet());
+        constructedWithout.forEach((part, bytes) ->
+                assertThat(constructedWithSink.get(part)).as(part).isEqualTo(bytes));
+    }
+
+    /** Each part of the package by name, but the core properties, which hold the export's dates. */
+    private static Map<String, byte[]> partsBesidesTheDates(byte[] docx) throws Exception {
+        Map<String, byte[]> parts = new LinkedHashMap<>();
+        try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(docx))) {
+            for (ZipEntry entry; (entry = zip.getNextEntry()) != null; ) {
+                if (!entry.getName().equals("docProps/core.xml")) {
+                    parts.put(entry.getName(), zip.readAllBytes());
+                }
+            }
+        }
+        return parts;
+    }
+
+    @Test
+    void aNoteReadsAsOneLine() {
+        DocxExportReport.Note note = new DocxExportReport.Note(
+                DocxExportReport.Severity.DROPPED, "chart", "Body[0]/Revenue[2]", "no analogue");
+
+        assertThat(note.toString()).isEqualTo("DROPPED chart at Body[0]/Revenue[2]: no analogue");
+    }
+
+    @Test
+    void aNoteIsReplacedOnlyFromWhereItsSectionStartsAndEveryTimeItIsSaid() {
+        // Paths are a section's own: the same path in an earlier section is another node.
+        DocxExportReport.Builder builder = new DocxExportReport.Builder();
+        builder.add(DocxExportReport.Severity.APPROXIMATED, "ShapeNode", "Root[0]/Bar[0]", "drawn");
+        int section = builder.size();
+        builder.add(DocxExportReport.Severity.APPROXIMATED, "ShapeNode", "Root[0]/Bar[0]", "drawn");
+        builder.add(DocxExportReport.Severity.APPROXIMATED, "ShapeNode", "Root[0]/Bar[0]", "drawn again");
+        builder.replace(section, DocxExportReport.Severity.DROPPED, "ShapeNode", "Root[0]/Bar[0]", "gone");
+        builder.replace(section, DocxExportReport.Severity.DROPPED, "ShapeNode", "Root[0]/Rule[1]", "never named");
+
+        assertThat(builder.build().notes()).extracting(DocxExportReport.Note::detail)
+                .containsExactly("drawn", "gone", "gone", "never named");
+    }
+
+    @Test
+    void aFootersLinesAreCountedAmongTheExactOnes() throws Exception {
+        // A band's line is written exact, in a footer part POI does not list for a document it
+        // made: the body's Lato line grows, and the note counts the footer's alone.
+        AtomicReference<DocxExportReport> captured = new AtomicReference<>();
+        try (DocumentSession session = session(page -> page.addParagraph(p -> p.text("Body").textStyle(
+                com.demcha.compose.document.style.DocumentTextStyle.builder()
+                        .fontName(com.demcha.compose.font.FontName.LATO).size(10).build())))) {
+            session.footer(com.demcha.compose.document.output.DocumentHeaderFooter.builder()
+                    .zone(com.demcha.compose.document.output.DocumentHeaderFooterZone.FOOTER)
+                    .height(10).fontSize(9).leftText("Foot").build());
+            session.export(new DocxSemanticBackend(captured::set));
+        }
+
+        assertThat(captured.get().bySubject().get(DocxExports.EXACT_LINES)).singleElement()
+                .satisfies(note -> assertThat(note.detail()).startsWith("the lines of one paragraph are"));
+    }
+
+    @Test
+    void aTextBoxsLinesAreCountedAmongTheExactOnes() throws Exception {
+        // A container the page gives no room is set in text boxes, whose lines are exact: the
+        // lockup's three lines, in Helvetica, are written so; the masthead's Lato line grows.
+        AtomicReference<DocxExportReport> captured = new AtomicReference<>();
+        byte[] docx;
+        try (DocumentSession session = session(page -> page
+                .add(sidebarOverTheFlow())
+                .addParagraph(p -> p.text("Masthead").textStyle(
+                        com.demcha.compose.document.style.DocumentTextStyle.builder()
+                                .fontName(com.demcha.compose.font.FontName.LATO).size(10).build())))) {
+            docx = session.export(new DocxSemanticBackend(captured::set));
+        }
+        String body = new String(partsBesidesTheDates(docx).get("word/document.xml"),
+                java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(body).as("the lockup is set in text boxes").contains("<w:txbxContent>");
+        assertThat(exactLinesIn(textBoxesOf(body))).as("three exact lines in the text boxes").isEqualTo(3);
+        assertThat(exactLinesIn(body)).as("and none elsewhere").isEqualTo(3);
+
+        assertThat(captured.get().bySubject().get(DocxExports.EXACT_LINES)).singleElement()
+                .satisfies(note -> assertThat(note.detail()).startsWith("the lines of 3 paragraphs are"));
+    }
+
+    @Test
+    void aBadgesInitialsInTheirTextBoxAreNotCountedAmongTheExactOnes() throws Exception {
+        // A badge's initials are its shape's text, in a text box of their own, on a line Word sets
+        // single: nothing in the document is exact, so there is no note.
+        AtomicReference<DocxExportReport> captured = new AtomicReference<>();
+        byte[] docx;
+        try (DocumentSession session = session(page -> page.add(
+                new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Monogram").circle(40)
+                        .fillColor(DocumentColor.rgb(160, 80, 50))
+                        .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("AR").build())
+                        .build()))) {
+            docx = session.export(new DocxSemanticBackend(captured::set));
+        }
+        String body = new String(partsBesidesTheDates(docx).get("word/document.xml"),
+                java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(textBoxesOf(body)).as("the initials are the shape's text, spaced but not exact")
+                .contains(">AR<").contains("<w:spacing").doesNotContain("w:lineRule=\"exact\"");
+
+        assertThat(captured.get().bySubject()).doesNotContainKey(DocxExports.EXACT_LINES);
+    }
+
+    /** What the text boxes of a part hold, one after another. */
+    private static String textBoxesOf(String xml) {
+        StringBuilder boxes = new StringBuilder();
+        java.util.regex.Matcher box = java.util.regex.Pattern.compile("<w:txbxContent>.*?</w:txbxContent>",
+                java.util.regex.Pattern.DOTALL).matcher(xml);
+        while (box.find()) {
+            boxes.append(box.group());
+        }
+        return boxes.toString();
+    }
+
+    /** How many paragraphs of some XML are written at an exact height. */
+    private static int exactLinesIn(String xml) {
+        return xml.split("w:lineRule=\"exact\"", -1).length - 1;
+    }
+
+    /**
+     * A brand block with three lines of lockup over it, given no room by its margins: laid over
+     * the flow, its lines in text boxes.
+     */
+    private static com.demcha.compose.document.node.DocumentNode sidebarOverTheFlow() {
+        double tall = 120;
+        return new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Sidebar")
+                .rectangle(100, tall).clipPolicy(com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE)
+                .margin(new DocumentInsets(-20, 0, 20 - tall, -20))
+                .position(new com.demcha.compose.document.dsl.ShapeBuilder().name("BrandBlock").size(100, tall)
+                        .fillColor(DocumentColor.rgb(160, 80, 50)).build(),
+                        0, 0, com.demcha.compose.document.node.LayerAlign.TOP_LEFT, 0)
+                .position(new com.demcha.compose.document.dsl.ParagraphBuilder().name("Top").text("L").build(),
+                        10, 10, com.demcha.compose.document.node.LayerAlign.TOP_LEFT, 1)
+                .position(new com.demcha.compose.document.dsl.ParagraphBuilder().name("Middle").text("&Co.").build(),
+                        10, 40, com.demcha.compose.document.node.LayerAlign.TOP_LEFT, 2)
+                .position(new com.demcha.compose.document.dsl.ParagraphBuilder().name("Bottom").text("Design.").build(),
+                        10, 70, com.demcha.compose.document.node.LayerAlign.TOP_LEFT, 3)
+                .build();
+    }
+
+    private static DocxExportReport reportOf(Consumer<PageFlowBuilder> content) throws Exception {
+        AtomicReference<DocxExportReport> captured = new AtomicReference<>();
+        try (DocumentSession session = session(content)) {
+            session.export(new DocxSemanticBackend(captured::set));
+        }
+        assertThat(captured.get()).as("the sink is called once the bytes exist").isNotNull();
+        return captured.get();
+    }
+
+    private static DocumentSession session(Consumer<PageFlowBuilder> content) {
+        DocumentSession session = GraphCompose.document()
+                .pageSize(400, 600)
+                .margin(DocumentInsets.of(20))
+                .create();
+        session.pageFlow(content::accept);
+        return session;
+    }
+}

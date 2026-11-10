@@ -3,10 +3,6748 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v2.4.2 — Planned
+## v2.5.0 — Planned
+
+### Highlights
+
+- **The DOCX export writes the page the engine laid out, as a document an editor can change.** In
+  2.4 it walked the document without laying it out: Word chose every line height and column width, a
+  list was marker text, a chart was a table of its data, a page zone was one line of runs on every
+  page, and shapes, lines, barcodes, text headers and footers and page backgrounds were left out. In
+  2.5 the export asks for the compiled layout (`SemanticBackend.requiresResolvedLayout`) and writes
+  from it the line heights, column widths and space round each block the page has; real Word lists;
+  drawings — shapes, paths, barcodes — anchored where a paragraph of their own block can carry them,
+  so they move with the text above when it is edited; rules as Word's own, and icons as pictures in
+  their line; page zones as the page lays them out, on the pages their predicate picks where Word
+  has such a header or footer; page backgrounds and text headers and footers; bookmarks, links and
+  an outline; and the faces the document is set in. Word still paginates the document and reflows it
+  after an edit. Each change is its own entry under Public API or Fixed.
+- **A chart is a Word chart.** Bar, line, pie and donut charts are written as Word's own chart,
+  their numbers in an embedded workbook a reader edits through *Edit Data*. A chart sharing a table
+  cell with other drawings, or in a table composed in a cell, is still written as its data table,
+  with the chart drawn over it.
+- **The export says what it could not carry, node by node.** `DocxExportReport` (`@Beta`) lists
+  every node the export dropped (`DROPPED`) or wrote as the nearest thing Word has (`APPROXIMATED`),
+  with the authored node's path; pass a sink to `new DocxSemanticBackend(report -> ...)` or
+  `DocxSemanticBackend.builder().reportSink(...)`. A document the engine cannot lay out still
+  exports, and its report says why.
+- **The same document exports to the same bytes on one platform, when asked to.**
+  `DocxSemanticBackend.builder().deterministic(true)` pins the package's clocks. Across platforms
+  the bytes still differ where Apache POI ends an XML declaration with the platform's line
+  separator.
+- **Word export without naming the backend.** `session.buildDocx(path)`, `writeDocx(stream)` and
+  `toDocxBytes()` (`@Beta`) find the backend on the classpath, and a `MultiSectionDocument` exports
+  to Word as well, a section per section.
+- **The DOCX export is held to a corpus in Word and LibreOffice.** 104 documents — the 64 template
+  presets and 40 built for cases no preset has — are exported, converted by each editor and measured
+  line by line against the engine's own page. A document passes when the editor sets it on as many
+  pages as the engine does, finds 95% of its lines, sets them a median of 1pt or less from the page
+  and no more than 10% of them past 2pt. Measured on 2026-11-09, Word 16 passes 95 of the 104, all 64
+  presets among them, and LibreOffice 24.2 on CI's Linux 60, 40 of them presets. CI holds a change
+  to the engine, a backend, a template or the corpus to a LibreOffice baseline;
+  `scripts/docx-visual/word-fidelity.ps1` holds it to Word's.
+- **A copied line keeps its emoji.** A PDF carries the text an inline SVG icon stands for, so
+  `:rocket:` copies out of the page as 🚀; `SvgIcon.withText(String)` states it for an icon of your
+  own.
+
+### Migrating the DOCX export from 2.4
+
+- **Code that exports today compiles and runs unchanged.** `session.export(new
+  DocxSemanticBackend())` stays the Stable path. What is new is additive — the report, the
+  builder, the provider, `buildDocx` and its siblings and the section export are `@Beta` — and
+  the published constructors of `SemanticExportContext` and `ShapeNode` are kept.
+- **What you get is a different document.** Code that reads an exported DOCX back should expect a
+  list as Word numbering (`w:numPr`) rather than marker text; body text that restates the `Normal`
+  style without its own font, size or colour; a chart as a chart part rather than a table; drawings
+  as anchored DrawingML shapes; tables of a fixed layout with the page's column widths; a band of
+  one-line captions as one paragraph, its parts at tab stops; a spacer as a paragraph a tenth of a
+  point tall with the rest of its height as spacing; a page zone as the band the page lays out, its
+  parts at tab stops and its drawings with it, rather than one line of runs; a zone whose
+  `appliesTo` picks the first, even or odd pages in Word's title-page, even-page or ordinary header
+  or footer rather than on every page; and headers and footers for text headers and footers and page
+  backgrounds, which 2.4 ignored. A watermark, protection options and viewer preferences are still
+  not written, and the report now names them.
+- **The log says less, and the report says all of it.** A chart no longer logs
+  `docx.export.chart-fallback` unless it is written as its data table, lines, shapes and barcodes
+  are drawn rather than dropped with a warning, and `docx.zone.pagePredicate` is logged only for a
+  zone predicate Word has no header or footer for. New warnings name a face not embedded, a
+  container's corner radius a table cell cannot draw, and an inline chip whose shape is lost. The
+  log still names a kind of loss once per export; the report names every node.
+- **Exporting costs a layout pass.** The export compiles the layout — the measurement and pagination
+  a PDF render runs — and reads each image a second time. A document the engine cannot lay out still
+  exports, with less of the page's geometry, and the report's `measured geometry` note gives the
+  reason.
+- **Files carry their fonts.** Each bundled or registered face the document sets text in is
+  embedded, so a file grows by the faces it uses (a family's four faces are about 2.5 MB). The
+  standard PDF faces are never embedded, and a face whose terms forbid embedding, or allow it for
+  reading and printing only, is named in the report and not shipped.
+- **An editable rule comes from `addLine` or `addDivider`.** A horizontal line, or a divider
+  (`addDivider`, `ModuleBuilder.divider`, `DocumentDsl.divider`) of a plain fill, no thicker than
+  Word's thickest border (12pt) and in the flow, is written as Word's rule, a paragraph a reader
+  moves or deletes; any other box, however thin, is a drawing.
+- **Byte comparisons need the deterministic backend.** Pass
+  `DocxSemanticBackend.builder().deterministic(true).build()` to `session.export(...)`: `buildDocx`,
+  `writeDocx` and `toDocxBytes` take a backend without the option and write the current date.
+  Compare bytes produced on one platform.
+- **`graph-compose-render-docx` is enough on its own.** It now brings `graph-compose-render-pdf`,
+  which a session needs to open; with 2.4, core and render-docx alone failed at `create()`.
+- **Two narrow source breaks for code that takes records apart.** `SemanticExportContext` has six
+  components, and `ShapeNode` gained `divider`: a record pattern that destructures either in its 2.4
+  form no longer compiles. A `SemanticExportContext`'s `equals`, `hashCode` and `toString` now walk
+  the layout it carries.
+
+### Public API
+
+- **A DOCX export of a document the engine cannot lay out says why in its report.**
+  _(Experimental — see [API stability](docs/api-stability.md).)_
+  - Such a document still exports, as before. Its report already named what the editor is
+    left to do without a layout, and dropped each drawing for want of a place, but the
+    reason the layout failed went only to the log. A table wider than the page, for one, was
+    written with its last column past the page's edge in Word and LibreOffice, while the
+    report said only that the document "could not be laid out".
+  - `SemanticExportContext` carries a sixth component, `layoutFailure`: the message of the
+    failure that stopped the document being laid out, as the engine words it (its class name
+    when it carries no message), present only when a backend asked for
+    the layout and compiling it failed, and `null` otherwise. A context carrying both a layout
+    and a failure is refused. `requireLayoutGraph()` names the failure when there is one.
+  - The DOCX report's `measured geometry` note ends with it: `…; the layout failed: Table
+    'TableNode' width 1000.0 exceeds available width 360.0.` In a multi-section document only
+    the section that could not be laid out says so. A context built by hand with no layout
+    and no reason gives none, as before.
+  - The published three- and four-argument constructors are unchanged.
+
+- **A DOCX export writes only a divider, of all boxes of a colour, as Word's horizontal rule; any
+  other box goes the way every drawing goes.** (A horizontal `LineNode` is written as that rule
+  too, unchanged, and is still chosen by its geometry — a line is one either way.)
+  - The rule the export chose by was the box's size: a `ShapeNode` of a plain fill, no stroke and
+    no more than 12pt tall — Word's thickest border — became an empty paragraph bordered below.
+    `addDivider` builds exactly such a box, and so does a swatch, a plate and a brand strip's
+    segment, and nothing in the tree tells them apart: the `DividerBuilder`
+    knows what the box is for, the node it hands on did not. A box of a colour therefore became a
+    paragraph a reader moves or deletes as a line of text, and the geometry Word drew it with was
+    the border's, not the box's.
+  - `ShapeNode` now carries that purpose itself, as a `divider` component, which `addDivider` and
+    the templates module's `Divider` widget set and no other builder does; `DocxRules` asks for
+    it, and the canonical constructor states it for a node you build yourself. The
+    component is additive — the constructor that states no signal builds no divider, so every
+    caller written before it keeps the box it built — and nothing is drawn differently for it:
+    layout, measurement, pagination and every other backend see the box they always saw.
+  - Measured against the engine's own page, before and after, in Word 16.0.20527 and LibreOffice
+    24.2, on the one corpus document this moves — `SubscriptionInvoice`'s four-segment brand
+    strip, 3.39pt tall and the full width of the paper. Drawn rather than bordered, it stands
+    within 0.08pt in Word, where the border stood within 0.15pt and left a 0.12pt gap between the
+    first two segments, and within 0.18pt in LibreOffice 24.2, where the border stood within
+    0.43pt — 0.4pt wide of each segment and over its neighbour; the four colours are exact either
+    way. `MeteredInvoice`'s two dividers are byte-identical, and stay the rule they were.
+  - What the strip gives up for that is measured too, and it is the other half of the same
+    change: a rule flows with the text and a drawing is placed from the page. Over the whole
+    corpus, drawings that follow or stand with their text when the text above is edited went from
+    713 of 728 to 714 of 732 — the four segments are four more drawings asked to follow, and one
+    of them does, the other three being anchored in a paragraph 42.71pt above where they stand.
+  - A divider written as a rule is still named in the export report at its own path. A box that is
+    not one is named by its drawing's own note, or, composed in a table cell, by its table's
+    `cell drawing` note, so neither form is silent. A box the export cannot
+    draw at all — no layout behind it, a page zone, painted only with a gradient or with nothing —
+    is dropped and named, as any other drawing is.
+  - **Migration.** Code that relied on a thin `addShape` box becoming Word's editable rule asks
+    `addDivider` (or `ModuleBuilder.divider` / `DocumentDsl.divider`) for it instead. The box keeps
+    its geometry either way, and what else changes is what a rule carries and a drawing does not:
+    such a box with an `anchor` held its bookmark on the rule's paragraph and, drawn, holds none —
+    reported, as a drawing's lost bookmark always is. So that the migration can carry it,
+    `DividerBuilder` now passes an `anchor`, a link and an outline entry (`bookmark(...)`) through
+    to the node it builds, where it used to drop all three silently. A corner radius, a transform
+    and a paint stay dropped: the first two would stop the box being a rule at all, as a gradient
+    would, and a paint is dropped whole, a solid one too, so a divider's colour is set with
+    `color(...)`. The templates module's
+    `Divider` widget already asks for the signal; `AccentStrip` is chrome and deliberately does
+    not, its horizontal `top`/`bottom` included.
+  - One case the signal does not reach, named rather than fixed: a divider sharing a composed
+    table cell with a box of the same thickness that is **not** a divider. The rule is chosen by
+    the signal, while the cell's drawings are still matched to it by their height, so the export
+    cannot tell which of the two drawings belongs to the rule and keeps both, reporting that the
+    rule stands twice in Word. No template in the corpus has such a cell. Carrying the signal into
+    the layout's shape fragments would close it at the root.
+
+- **A DOCX export writes a page zone the page builds otherwise for the first page into the
+  first page's header or footer.** Word paginates, so a zone's content was built once, for a
+  page that was both the first and the last, and written on every page: a footer reading
+  `page.isFirst() ? "Original keep" : "Continuation sheet"` read "Original keep" on all of them.
+  The content is now built for the first page and for the pages after it —
+  `PageContext.unpaginated(boolean, boolean)`, new and `@Beta`, gives a semantic backend a
+  context for a kind of page that still refuses the numbers — and content built otherwise for
+  the first page becomes the section's title-page part and the ordinary one, each measured on a
+  page the layout draws it on where there is one. Word has no header or footer for the last
+  page: content built otherwise for it is written there as it is built for the pages between the
+  first and the last, and named in the report. Content that reads `page.number()` only for the pages after the first, which the
+  export did not build before, is now refused there as it is on the first; content that reads it
+  only on the last page, refused before, is written as it is built for the pages between and
+  named, unless the first page is the last.
+
+- **A multi-section document exports to Word, a section per section.** `MultiSectionDocument`
+  rendered only to PDF: a cover in one page size and a body in another had no DOCX export at all. It
+  gains `toDocxBytes()`, `writeDocx(OutputStream)`, `buildDocx(Path)` and `export(SemanticBackend)`,
+  and the semantic SPI gains what they call —
+  `SemanticBackend.exportSections(List<SemanticSection>)` and the `SemanticSection` record (all
+  `@Beta`). The default refuses more than one section rather than running them together on the first
+  section's page. `DocxSemanticBackend` writes a Word section per section, with its own page size,
+  orientation, margins and page-zone header and footer (the text header / footer slots and the
+  watermark are not written, as for one document; the text slots since written: see "Text headers
+  and footers reach Word"); page numbers restart at 1 and a zone's total is the section's
+  (`SECTIONPAGES`), as the PDF counts them; a section without a zone gets an empty one instead of
+  Word's inherited header or footer; styles, fonts and bookmarks are shared, so a link in one
+  section reaches an anchor in another. A page total now reads the laid-out page count before an
+  editor updates it — measured in LibreOffice, which does not update `SECTIONPAGES`, the old
+  placeholder of 1 read "page 2 of 1". One section exports byte-identically to its session.
+
+- **The same document exports to the same DOCX bytes, when asked to.** Measured on the probe corpus,
+  three things made two exports of one document differ: the package's created / modified dates,
+  every zip entry's timestamp, and each embedded font's obfuscation key, which was a random GUID.
+  `DocxSemanticBackend.builder().deterministic(true)` — or `deterministic(Instant)` — pins the first
+  two, taking the PDF and PPTX backends' contract and their default instant, `2000-01-01T00:00:00Z`;
+  off by default, because a document's creation date is meaningful metadata. The third needs no
+  option: a font's key only has to be a GUID — it is not a secret, and nothing requires it to differ
+  between documents — so it is now derived from the font, and embedded fonts come out the same bytes
+  every time (the same bytes on one platform: across platforms they differ where Apache POI ends an
+  XML declaration with the platform's line separator). The builder also takes the report sink the
+  existing constructor does; both constructors stay.
+
+- **A session can export Word without naming the backend, and can be told what the export
+  could not carry.** _(Experimental — see [API stability](docs/api-stability.md).)_ Reaching
+  the Word export meant constructing `DocxSemanticBackend`, which means importing the render
+  artifact in the code that builds the document and carrying that dependency wherever
+  documents are built. A render backend has not needed that since 2.0, and now neither does
+  this one: `session.buildDocx(path)`, `session.writeDocx(stream)` and `session.toDocxBytes()`
+  find the backend through a new `SemanticBackendProvider` / `SemanticBackendProviders` pair,
+  through which `DocxBackendProvider` registers it — the semantic half of the `ServiceLoader`
+  path, with the fixed-layout locator's rules, since a classpath behaves the same way whichever
+  backend is on it. One rule is deliberately not copied: there is no default-format lookup,
+  because "render this document" has an obvious answer worth defaulting to and "export it
+  semantically" does not. The stream stays the caller's and is not closed; the bytes are produced
+  in full before any are written, since a `.docx` is a ZIP whose directory comes last; a file is
+  written through the same atomic path as `buildPdf`, so a failed export leaves the previous file
+  rather than a damaged one.
+  <br><br>
+  What the export cannot carry, it has always said — to the log, one line per kind, which a
+  service generating documents for other people has no way to read. A backend built with `new
+  DocxSemanticBackend(report -> ...)` now hands over a `DocxExportReport` once the bytes are
+  complete: every dropped node and every approximation, each a `DocxExportReport.Note` with the
+  path of the authored node it came from, and each marked by its `DocxExportReport.Severity`,
+  `DROPPED` (the page draws it, the document does not carry it) or `APPROXIMATED` (it is there
+  as the nearest thing Word owns). Errors do not travel this way — an export that cannot proceed
+  throws. The log keeps saying it once per kind; the report records every one, because a caller
+  asking what the document lost wants the three charts it lost and which three.
+
+- **A semantic export backend can ask for the compiled layout.** _(Experimental — see
+  [API stability](docs/api-stability.md).)_ A semantic backend walks the authored tree and
+  gets no geometry, which is right for most of them and wrong for the ones that need a
+  number the engine already worked out — a resolved column width, a settled page count.
+  `SemanticBackend.requiresResolvedLayout()` defaults to `false`; a backend that returns
+  `true` is handed the same session's layout in `SemanticExportContext.layoutGraph()`,
+  compiled from the graph passed to the same `export` call.
+  <br><br>
+  The default matters as much as the option: compiling a layout runs measurement and
+  pagination over the whole document, work that grows with the document and that an export
+  ignoring geometry has no use for. A backend that does not ask causes none of it. It does
+  not save the render-module dependency — `DocumentSession` resolves a `FontMetricsProvider`
+  in its constructor and only `graph-compose-render-pdf` registers one, so a session cannot
+  be created without it whatever a backend later asks for.
+  <br><br>
+  Binary compatibility is preserved: the four-argument `SemanticExportContext` constructor
+  is written out by hand rather than left to the record, since adding the components moved
+  the canonical constructor to six arguments (`@Beta`, as the components it takes are; the
+  sixth, `layoutFailure`, has its own entry above) and callers compiled against the published
+  descriptor would otherwise stop linking. **Source compatibility is not**, in two narrow
+  ways — a record pattern that destructures the four-component form
+  (`case SemanticExportContext(var canvas, var fonts, var out, var opts)`) no longer
+  compiles, and `getRecordComponents().length` is 6 rather than 4. `requireLayoutGraph()`
+  is there for a backend that asked and wants the absence to say why rather than hand back
+  `null`.
+  <br><br>
+  One consequence worth knowing before putting a context in a collection or a log line:
+  the record's `equals`, `hashCode` and `toString` now traverse the layout, so on a long
+  document they walk every placed node and fragment. The four original components are
+  unchanged.
+
+- **An inline SVG icon can state the text it stands for.** `SvgIcon.withText(String)` returns
+  a copy of the icon carrying that text, read back with `SvgIcon.text()`: what a reader that
+  copies, searches or extracts the page should find where the icon is drawn in a line of text,
+  since a drawing has no characters of its own — `"✓"` for a check-mark icon. The drawing is
+  untouched; `null` or blank clears the text. A block icon (`addSvgIcon`, `SvgIcon.node`)
+  does not carry it.
+  <br><br>
+  Every icon `EmojiLibrary` resolves now carries the emoji it depicts, so `:rocket:` states
+  `🚀` and `:woman_technologist:` its whole ZWJ sequence. The emoji set's file names drop
+  U+FE0F, and a text-default character without it can paste as a plain black symbol — `:heart:`
+  as `❤` rather than `❤️` — so the text is spelled in the fully-qualified form of UTS #51,
+  U+FE0F restored after every character whose default presentation is text. That needs no new
+  emoji-set release: the published `graph-compose-emoji` 1.0.0 resolves to the same text.
+
+- **A PDF carries the text of an inline icon, so a copied line keeps its emoji.** An inline SVG icon
+  is drawn from paths, so the page had no character where it sat: a line with `:rocket:` in it,
+  copied out of a PDF into a messenger, arrived without the rocket.
+  `PdfParagraphFragmentRenderHandler` now writes the text an icon states into the page's text layer,
+  through `PdfRenderEnvironment.writeTextLayer` (`@Beta`): one invisible glyph over the icon, on the
+  line's baseline, whose advance spans the icon. The glyph comes from a Type 3 font of empty glyphs
+  whose `ToUnicode` map states each text, a whole ZWJ sequence included, shown in rendering mode 3
+  so nothing is painted; one such font serves a document, and a new one starts after 255 distinct
+  texts. `ActualText` around the paths was tried first; PDFBox, poppler, pdf.js and MuPDF extract
+  nothing from it, because it replaces the text of the glyphs it covers and a drawing has none. The
+  rendered page is unchanged pixel for pixel. PPTX and DOCX exports do not carry the text yet (a
+  DOCX export since carries it as the picture's description: see "A picture or an icon in a line
+  reaches Word"). The committed `emoji-shortcodes.pdf` preview is re-rendered: its emoji now copy
+  out.
+
+### Fixed
+
+- **Centred and right-aligned DOCX text set at a size Word rounds stands where the page sets it,
+  over several lines, beside a picture and in a header or footer slot.**
+  - Word states a type size in half points, so text the page sets at 9.8pt is set at 10pt and a
+    line of it is 2% wider; a centred or right-aligned line moves its first letter with that.
+    The export already spaced the letters of such a line back to the page's width, but only in
+    a paragraph of one line of text alone. `ClassicSerif`'s 9.8pt profile, three centred lines,
+    stood 3.7 to 4.9pt left of the page's in Word; `TimelineMinimal`'s 7.8pt e-mail, right-aligned
+    beside its icon, 2.7pt left; `CobaltRota`'s 7.28pt footer, at the right tab stop, 3.6pt left.
+  - A centred or right-aligned paragraph of several lines is now spaced once, by the line Word
+    sets furthest off, to the nearest twentieth of a point, then less until no line, widened,
+    runs within a point of the measure, or, narrowed, comes within a point of taking up the next
+    line's first word. A picture or a shape in a line keeps its own size, and only the text's
+    letters are spaced. A text band's centred or right slot is spaced the same way, its width
+    measured in the band's face; a slot holding a page number or a page count is left as it is.
+    A difference under a point is left as before.
+  - Of the 104 documents of the fidelity corpus five change: `cv-classic_serif`,
+    `cv-timeline_minimal`, `letter-timeline_minimal`, `cv-violet_grid` (five of its six centred
+    tile texts, the sixth held back) and `rota-cobalt`'s footer; the report's notes are
+    unchanged. In Word 24 lines move, all nearer the page, and lines more than 2pt off across
+    fall from 87 to 81, the six in templates to none. In LibreOffice on Windows the same lines move nearer. LibreOffice 24.2 on
+    Linux sets `ClassicSerif`'s profile panel 18pt right, its heading too; its lines' centres stay
+    there, and their first letters, no longer pulled left by a line 9pt wider, stand 18pt right
+    where they stood 13 to 14pt.
+
+- **Text typed at the end of a DOCX document starts below a block written over the flow.**
+  - A block the page gives no room — its margins take back its height — is written over the
+    flow, in drawings and text boxes, and may hang below where the flow ends.
+    `LumaStudioInvoice`'s closing banner takes 0.3pt of the flow and draws 62.7pt below it. In its
+    long invoice the paragraph closing the last table stood at the banner's top, and the first
+    eight lines typed at the end of the document ran under the banner, in Word 16 and in
+    LibreOffice 24.2.
+  - Where a section ends with a table and its last page has room for a line below such a block,
+    an empty paragraph of exact height, as tall as the block hangs below the flow's lowest
+    content, now stands before the closing paragraph. Typing begins below the banner. Where no
+    line fits under it, the closing paragraph is a point tall, as before. Space written above the
+    closing paragraph itself was not used: Word gives every line typed after it the same space. A
+    section ending with a paragraph gets no such line: typing continues that paragraph.
+  - Of the 104 documents of the fidelity corpus only `invoice-luma_studio_long` changes: one
+    paragraph is added, and no other paragraph of it, and no report note, changes.
+
+- **The DOCX report's count of paragraphs written at an exact height includes those in text
+  boxes.**
+  - The `line height` note counted the exact paragraphs of the body, headers and footers, and left
+    out those in text boxes: a text box is written in Word 2010's shape namespace, which Apache
+    POI's schemas do not cover, so its paragraphs were read untyped and skipped. A paragraph laid
+    over the flow in a text box is written exact.
+  - The note now counts them. On the 104-document fidelity corpus it changes in two documents, the
+    invoices whose sidebar lockup and closing banner are laid over the flow in text boxes:
+    `LumaStudioInvoice` from 56 paragraphs to 62, and its long form from 129 to 135, as many as
+    each file holds. Every exported file is byte for byte as before.
+
+- **A DOCX export draws a shape laid over a painted neighbour in front of the text, as the layer
+  stack paints it, instead of under that neighbour's shading.**
+  - A panel is written as a shaded cell, and both Word and LibreOffice paint a cell's shading over
+    every drawing behind the text — a drawing on a layer *above* the panel included. An icon laid
+    over a card's corner through a layer stack drew none of its 4343 pixels at 300 dpi in Word
+    16.0.20527 or LibreOffice 24.2, and a shape over a painted band drew a quarter of them.
+  - A shape a node paints itself, standing on a layer the page paints after a painted layer of a
+    stack, a shape container or a canvas it stands in, is now drawn in front of the text. The
+    order is the tree's: by z-index, the layers sharing one in the order they were given. Measured
+    on the same documents with nothing else changed, the icon draws 4339 of the engine's 4343
+    pixels in Word where the page puts it, and the band's shape 99.9% of its own. LibreOffice
+    draws the icon whole, 13.9pt to the right: it sets a shape anchored in a table cell that
+    cell's left padding further across than Word and the page do, in front or behind alike.
+  - It stays behind the text, and the report goes on naming it, where its box holds a line of the
+    flow or a picture, which in front it would cover; where a line of text painted after it lies
+    over part of its box; where anything is drawn after it — in any overlay it stands in, or among
+    what it holds, as a container's outline is painted before its layers: a picture, a shape, a
+    table, a barcode or a chart — since a shape in front would be drawn over what the page draws
+    over it;
+    where a node kind of the caller's own holds it, at any depth, whose definition decides what it
+    lays over what; and where its node stands at more than one place.
+  - Unchanged: a shape *inside* a painted panel under the text it frames, as a progress track
+    under its label, stays behind and hidden in both editors — in front it would cover the label —
+    and the report names it.
+  - One document of the 104-document fidelity corpus changes, by one anchor's `behindDoc`: the
+    synthetic icon over a card's corner. The other 103 export byte for byte as before; no preset
+    lays a drawing over a painted neighbour. The report's note on a shape in front over a painted
+    panel now says which of the two reasons stood it there.
+
+- **A DOCX export writes what a node kind of the caller's own holds, where the layout places it.**
+  - A `DocumentNode` with its own `NodeDefinition` that lays its children out as a composite
+    (`PreparedNode.composite`) had its children placed by the layout and printed on the PDF page,
+    and the Word file left out the node and every paragraph, table and picture in it, naming them
+    `DROPPED` at the node's kind (`APPROXIMATED` where it painted a shape, which was drawn).
+  - Its children are now written in its place, as an unpainted container's are: one after another,
+    inside its margin and padding, with the space the layout sets between the first two that each
+    stand whole on one page (the kind states no spacing of its own the export could read). The
+    shapes it paints itself are drawn where the page puts them, as before. A fixed width it states
+    is not written, and not named. Where the page sets its children side by side or over one
+    another, on one page, the export keeps them on one page of the body in Word, as the layout
+    moves them whole — where, written one after another, they fit a page.
+  - The report names it once, `APPROXIMATED` at its kind: the nodes written in its place, and that
+    they are written one after another where the page sets them side by side or over one another.
+  - Measured on two Lato paragraphs at the root, in a section and in a row's cell: in Word 16 every
+    line within 0.06pt of the engine's page; in Word and LibreOffice 24.2 where a built-in section
+    of the same spacing sets it.
+  - The export knows a node the layout placed only by its place, a layout path: its name or kind
+    and its index. It writes the listed children where the layout placed a node at each of their
+    places and none beside them; a definition that lays out other nodes of the same kinds and
+    names at those places has the listed ones written there.
+  - Unchanged: a kind that lists no children, one whose definition lays out a node at another
+    place than those it lists — one that paints what it holds itself lays out none —, one
+    composed in a table's cell (`DocumentTableCell.node`), where the layout gives what a cell
+    holds no place of its own, and one exported with no layout (no definition registered, the
+    layout failure in the report) are not written, and are named as before. No template or
+    fidelity-corpus document holds a kind of the caller's own, and the corpus exports
+    byte-identically.
+
+- **A PDF header or footer says in the log what it draws otherwise than it states.**
+  - A zone of `DocumentHeaderFooter` draws its text and its separator opaque. A translucent
+    `textColor` or `separatorColor` was drawn at full strength with nothing said; the render now
+    logs `render.pdf.header-footer.opaque` with the part and its alpha.
+  - A `fontName` the session's font library does not hold was drawn in standard-14 Helvetica with
+    nothing said; the render now logs `render.pdf.header-footer.font` naming the family.
+  - Each warning is given once per zone and section (once per render for a document of one
+    section), for a zone drawn on at least one page: text alpha and the family only where the
+    zone has text, the separator's alpha only where it is drawn. Nothing is drawn differently.
+  - No template's header or footer sets either: across the fidelity corpus every zone is opaque and
+    in a family its library holds.
+
+- **A DOCX export's report names where it writes a list item's pictures, a stack's layer, a panel
+  and a cell's padding off the page, and what a section with no layout loses of them.** Nothing is
+  written differently; each was measured in Word 16 and LibreOffice 24.2.
+  - `list picture`: a list item's pictures, its marker's and its own, are all placed by the
+    list's first line, its height raised to the item's own tallest picture. The page places each
+    by the item's line that holds it, and a marker's by the item's first line. An item in another
+    size or face, or a picture on a later line of another height, stands higher or lower: a 20pt
+    item after a 9pt one had its dot 2.8pt lower in Word and 2.9pt in LibreOffice.
+    - Named where the raise, in Word's half points, is not the one that line gives.
+    - Where the item's lines are not known (an item the layout runs onto the next page), that is
+      named.
+    - A list composed in a table cell whose lines are not found (an item of runs) has its pictures
+      on the baseline, named as a paragraph's are there.
+  - `overlapping layer`: the one layer a stack composed in a table cell writes beside what it
+    draws is set as the cell's text: across as its own text is aligned, and as high as the
+    cell's alignment sets it, not where the stack sets it. In a cell the export centres, a
+    top-left label stood 13.9pt lower in Word and 10.3pt in LibreOffice; a centred layer of text
+    set left stood 83pt left.
+  - `panel width`: a panel composed in a table cell narrower than it is held to the cell, where
+    the page draws it past the cell's edge. A 160pt panel in a 100pt cell stood 92pt wide in
+    both editors. Named from a tenth of a point; `CobaltRota`'s legend swatches, 0.046pt past
+    their cells, are not named.
+  - `cell padding`: a cell opening with a table, or spanning rows, keeps its padding in its
+    margins, and Word gives every cell of the row the largest. Beside a cell padded 12pt that
+    opens with a table, a cell padded 2pt had its text 5.3pt lower in Word; beside one spanning
+    two rows, 9.6pt lower. Named from a tenth of a point: the other cells' text lower, the row as
+    much taller where one of them is its tallest, and the row taller by a kept bottom.
+  - With no layout, the section's note names four more things: a row's fixed or weighted column
+    beside an `auto` one is written with no width; a stack's layer its offset moves up or down is
+    written where the stack starts; a paragraph's vertical alignment in its line is not written;
+    and a list item's pictures stand on the baseline, named where the page sets them off it.
+  - In the fidelity corpus, 39 list items in `TealPulse` and `OrangeOps` CVs go through the list
+    picture rule, each in its list's own size, so none is named; `CobaltRota`'s swatches pass their
+    cells by less than the threshold. The corpus exports byte for byte as before, with the same
+    notes.
+
+- **A DOCX export writes the shaded spaces closing a paragraph as no-break spaces, so Word fills
+  them and counts them in the line.**
+  - Word draws nothing for the spaces at the end of a paragraph, their run's shading included. A
+    chip of spaces closing its paragraph lost its fill: `TealPulse` cuts the rule behind each
+    section heading out with one, white, and in Word 16 the cut-out ended 9.8pt short of where
+    the page ends it, the rule running on that much nearer the heading. Word did not count those
+    spaces in a centred or right-aligned line either, which stood half their width or their
+    width right of the page's.
+  - `DocxClosingSpaces` writes the spaces after a paragraph's last character as no-break spaces,
+    in shaded runs only, in the body, its tables and text boxes, and its headers and footers, for
+    each section once it is written and before its tables are cut at its pages.
+    Word fills a no-break space and counts it in the line. Measured in Word 16: the
+    cut-out ends 2.3pt short of where the page ends it, nothing else on that page moving, and a
+    heading closed by a chip of three spaces stands within 0.15pt of the page's centred or
+    right-aligned (4.7pt and 9.4pt off before). A space before more of the line, a tab, a break, a
+    field character or an inline picture stays a space; a drawing anchored in the paragraph takes no room
+    in its line and is passed over. A last line the no-break spaces would fill to its end is not
+    measured.
+  - LibreOffice 24.2 draws neither kind: its fill ends at the letters, and a centred or
+    right-aligned line stands about half the spaces' width or their width right of the page's.
+    The chip's `inline chip` note says so; a page zone's chip is named in each note the export
+    gives it, or once in a note of its own where it has none.
+  - Across the fidelity corpus only `TealPulse`'s two section headings change.
+
+- **A DOCX export measures the space a later layer of a band resumes with to the box of a panel,
+  not through its padding, so a block under a panel in a stack of overlapping layers stands where
+  the page sets it.**
+  - A stack of overlapping layers is written as one band, where each later layer resumes the
+    page's distance below the layers before it. That distance was measured to text, a panel's
+    included, while the panel writes its padding itself, as its cell's margins. Measured in Word
+    16: a caption laid under a panel of 6pt padding stood 6.0pt low, under one of 12pt 12.0pt and
+    under one padded 10pt below its text alone 10.0pt, while under one padded 10pt above its text
+    alone it stood where the page sets it: each low was the panel's bottom padding over again. A
+    panel written as a later layer stood its top padding low, 6.0pt, in a band and in a column's
+    cell of a stack written as columns.
+  - The distance is now measured to the box of the outermost panel the layers before it end in,
+    and of the one the later layer opens with, each while it stands on one page with the block it
+    holds, as the space round the band already is. Each of those stands within 0.1pt of the page
+    in Word, a band opening a new page included. A panel in a row of a later layer keeps its own
+    margin in the row's cell, which the row's table resumes above; left in the distance, it stood
+    8.1pt low, and stands 0.2pt low now. A panel a later layer opens with, which the page starts
+    over the layers before it, is named as written under them, read from its box: with its text
+    below their end, it stood 13.0pt low with no note. A layer
+    the page lays over a panel or over a chart's box is still written under it and named, as
+    before.
+  - The fidelity corpus exports byte for byte as before.
+- **A DOCX export keeps a canvas and an alignment wrapper on the page the layout moves them to,
+  whole.**
+  - The layout moves a canvas and an alignment wrapper to a new page whole, as it does a layer
+    stack or a shape container, which the export already kept together in Word. These two were
+    told nothing, and Word and LibreOffice 24.2 split them over the break. Measured on a page the
+    layout moved each to: a canvas of five lines stood with three of them at the foot of the page
+    above, and the text below it 38.5 to 39pt high; an alignment wrapper round five lines kept three
+    there in Word and two in LibreOffice; a canvas or an alignment wrapper round a table of four
+    rows kept its first row there; and an alignment wrapper round one paragraph of four lines kept
+    two.
+  - Each written in the flow is now kept on its page as a block kept together is (`w:keepLines`
+    on each paragraph, `w:keepNext` on all but the last). Each opens the page the layout moves it
+    to in both editors, its first line within 0.3pt of the page. In a table's or a panel's cell it
+    is left to the row, as a stack is. Inside a panel that runs on to the next page Word still
+    breaks the panel's row where its lines run out, and the report now names a canvas or an
+    alignment wrapper moved there, as it names a stack.
+  - The fidelity corpus exports byte for byte as before.
+- **A DOCX export keeps the space above a shape container, a canvas, a barcode, a page reference
+  and a stack of side-by-side columns on the page the layout moves them to.**
+  - Word drops the space above a paragraph at the top of a page. A paragraph, a picture, a list
+    and a table there already hold theirs in a line kept with them; these did not. Measured in Word
+    16 and LibreOffice 24.2, each with a 14pt margin, moved to a new page in the flow: a canvas, a
+    barcode, a page reference and the columns of a layer stack stood 13.7 to 14pt high, and a page
+    reference opening a band of layers with a 12pt margin 11.7pt. A shape container's text stood
+    27.3pt high — its margin and the room the container centres it in — and its outline was drawn
+    below the text by all the space owed above it, past the foot of the page: the outline is placed
+    down from the top of the paragraph it is anchored in, and that paragraph's space above is what
+    Word drops there.
+  - Each now holds that space in a line kept with it, as a paragraph does: the layer stack's
+    columns as a table does, in the flow and first in a band opening its page, and a shape
+    container its margin and the room above its text, so its outline is placed from where its text
+    stands. A wrapped first paragraph of a shape container or a canvas takes the gap between its
+    lines out of that line, as a paragraph does there, and one the page pulls up into the edge
+    takes its pull out of it. Each stands within 0.3pt of the page in both
+    editors, as a paragraph moved so does; a shape container opening its page with no margin
+    included, and a barcode or the columns first in a band. A shape container that only draws
+    holds no line, as before.
+  - None of the fidelity corpus's 84 DOCX changes, and none of its 1694 notes: no corpus document
+    opens a page with one of these blocks.
+
+- **A DOCX export draws a dashed line or path dashed.**
+  - A line or a path the export draws as a shape was drawn solid, and the report said so:
+    `VioletGridCv`'s five dotted dividers between its skill columns came out as solid rules.
+  - Its outline is now dashed as the page dashes it (`a:custDash`), in a table cell as
+    anywhere, from the end the page starts it at — `vertical(h)` from its foot, each part of a
+    path from its first point — and a pattern of odd length twice over, as the page repeats it. The page's
+    dash is the stroke's length before its caps and Word's the length it shows, so a round or
+    square dash is written an outline's width longer and its gap as much shorter: written as the
+    page's, a 6pt dash and gap with round caps on a 3pt line came out 6 and 6 in Word where the
+    page shows 9 and 3.
+  - Measured in Word and LibreOffice 24.2, `VioletGridCv`'s dividers start at their foot and
+    keep the page's 1.13pt dots and 1.78pt gaps; LibreOffice rounds the line's width to 1.15pt
+    and keeps the dots' proportion. LibreOffice reads a square dash as the stroke's length
+    before its caps, so it draws one an outline's width longer than Word and its gap as much
+    shorter, and it keeps at most two dash lengths and one gap length of a pattern; no template
+    has either. A line written as a rule is still a paragraph border in Word's own dash, as
+    before.
+  - The report no longer names the dash of a drawn line or path, and a table's note on what its
+    cells draw names a transform or a gradient only. In the fidelity corpus only
+    `VioletGridCv` changes: its text stands where it stood.
+
+- **A DOCX export keeps a table's rows from creeping lower than the page's, row after row.**
+  - A row is written in whole twips. A row whose cells' lines or whose written height are rounded
+    up stood taller than the page's by the rounding, and each row under it lower by every row's
+    rounding above it: `ConsultingInvoice`'s item rows, written 607 twips where the page makes
+    them 606.6, their two lines rounded up from 10.64pt to 213 twips, stood a fiftieth of a point
+    lower with every row in Word and LibreOffice, and its long variant's last rows 0.56pt low in
+    Word.
+  - What each row is written taller than the page by is now carried to the rows under it on its
+    page, and a row takes the whole twips it and the rows above it come to off its bottom margin,
+    once they reach half a twip, as far as that margin holds. In the
+    fidelity corpus, Word sets 220 lines of `ConsultingInvoice` and its long variant nearer the
+    page and 3 further, by up to 0.06pt; the long variant's lines past half a point go from 12 to
+    none, its median from 0.27pt to 0.11. LibreOffice 24.2 sets the rows level instead of 0.28pt
+    lower from first to last on the page; the block under the table comes up 0.25pt with them,
+    which brings its payment details nearer and the summary labels LibreOffice already sets high
+    further.
+  - A row written shorter than the page carries nothing: it stands no shorter in Word or
+    LibreOffice. Given a twip back, `ClassicInvoice`'s rows stood a step of Word's 0.12pt grid
+    lower. A row holding a cell whose content the export does not read — one built from a node,
+    or a text cell holding a picture or a line Word sets at its own height — where no text cell
+    beside it sets the row, a row in a vertical merge, and a row written taller by more than its
+    rounded parts can come to, half a twip each, are left as they are, and the carry starts again
+    under them. A header row Word repeats on each page is counted once, on its first page.
+
+- **A DOCX export writes a chart as a Word chart.**
+  - A chart was exported as a table of its data: the export wrote no Word chart. It is now
+    Word's own chart, a chart part drawn inline at the size the page draws the chart, with its
+    numbers in a workbook embedded with it, so a reader edits them in Word through *Edit Data*
+    and the chart redraws. LibreOffice opens and draws it as well.
+  - The part carries what the page's chart is built from: bars vertical or horizontal, grouped
+    or stacked; lines straight or smoothed, with point markers, value labels and an area fill;
+    pies and donuts with the page's start angle, hole and slice labels; the series' colours, the
+    value axis's bounds, step and number format as the page computes them, grid lines, the
+    legend's side and the text styles. Measured in Word 16 and LibreOffice 24.2 on one chart of
+    each kind, the text after a chart stands within 0.1pt of where the page puts it, and a chart
+    the page moves to the next page moves there in both. In the fidelity corpus Word sets one
+    page of the new bar and line document 12pt and then 24pt low, for a paragraph's lone last
+    line it carries over with the line before it: the export writes no widow control, a gap of
+    its own.
+  - The plot is pinned where the page draws it: a pie's disc, and the rectangle a bar or line
+    chart's value grid spans. Left to itself, Word set a 483pt bar chart's plot 16pt shorter than
+    the page's; pinned, its grid lines stand where the page's do, in both editors. Where the page
+    leaves the axes' labels less room than Word wants, Word takes a few points from the plot
+    (4.4pt and 3.9pt measured), and the note says so. A donut's slice labels are laid out by hand
+    where the page sets them, outside the ring, where Word sets them; LibreOffice sets them about
+    11pt nearer the hole. A donut's centre text is a text box of the chart's own over its hole,
+    within 0.4pt of the hole's centre in Word and 0.1pt in LibreOffice. The legend is placed where
+    the page draws it too: left to Word, a legend under a pinned plot stood on the category labels.
+    Word keeps a legend at the top inside the chart's frame, about 9pt lower, and LibreOffice sets
+    a pie's legend at the foot 4 to 16pt higher, the taller the pie the more; both are named. Word
+    lays the rest out itself — the axes' labels, the legend's keys and spacing — and the chart's
+    report note says so.
+  - The note names what Word's chart has no setting for. A monotone curve is written as straight
+    segments: Word's and LibreOffice's smoothing passes beyond the points, measured below a
+    point's value in both, which a monotone curve is chosen not to do. A smoothed line over an
+    area fill keeps Word's smoothing while the fill runs straight between the points, and
+    LibreOffice draws that line straight as well. Stack totals, rounded bar corners, a gradient
+    series paint, bars too many for Word's widest gap, gaps between slices, a counterclockwise
+    pie, Word's legend keys and spacing (a key about half the page's swatch, a line's a stroke
+    through a marker, so a legend row starts where the page's does and ends short of it, its last entry 18 to 23pt
+    left of the page's in a row of two and 41 to 47pt in a row of four), a legend beside a stack of columns (listed from the top of the stack down in both
+    editors), an area's missing value (a gap in Word, as on the
+    page, but filled down to the axis in LibreOffice), and a number format with a divisor, other
+    separators or grouping, or more than digits, grouping and decimals are named too. Excel keeps a
+    whole number's decimal point under a format whose decimals are all optional, so numbers shown
+    both whole and fractional are written with fixed decimals, and that is named as well.
+  - A chart beside other drawings in its table cell, or in a table composed in a cell, is still
+    written as its data table and drawn over it: the export cannot tell its strokes from the
+    others'.
+  - The chart part is written as text rather than through POI's chart classes. The
+    `poi-ooxml-lite` schemas this module ships hold only the chart types POI's own tests use,
+    and writing a bar overlap through those classes failed at run time. No dependency is added.
+    The embedded workbook's own clocks are pinned whether or not the output is deterministic, and
+    its entries are stored rather than deflated, since one zlib deflates the same bytes
+    differently from another, with a plain line feed after each part's declaration, where POI
+    writes the platform's line separator, so it is the same bytes for the same numbers on any
+    machine.
+
+- **A DOCX export keeps Word and LibreOffice from breaking a line at a hyphen where the page
+  does not.**
+  - The page breaks a line only at a space, and at a hyphen only inside a word wider than the
+    whole line. Word 16 and LibreOffice 24.2 also break after a hyphen between two letters or
+    digits. So where the page carried `developer-facing` or `2023-2024` whole to its next line,
+    both editors set the first part at the end of the line above, and every line of the
+    paragraph after it broke at other words. Measured on the fidelity corpus, 34 of the 58 lines
+    Word did not find came from this, in 12 documents. Five CVs and a cover letter fell short of
+    95% of their lines found in Word because of it alone.
+  - A hyphen between two letters or digits in the first word of every line of the page but the
+    paragraph's first is now written as Word's non-breaking hyphen (`w:noBreakHyphen`), read from
+    the lines the page laid the paragraph or the list item out in. Both editors draw it as a hyphen
+    and carry it into their PDF as an ordinary one, and Word's Find matches it when a plain
+    hyphen is typed. No other hyphen is touched, and a paragraph whose runs do not hold its
+    lines' letters is written as before.
+  - Word now sets 77 of the corpus's 82 documents within its acceptance limits, where it set 71:
+    the six that fell short of their lines pass, five of them with every line found and
+    `cv-nordic_clean` with 61 of 63, the other two broken where Word sets a line wider. Across the
+    corpus Word finds 32 lines more, and none stands further from the page.
+  - A text extractor reading the file sees the held hyphens as the non-breaking hyphen: Apache
+    POI reads U+2011, and Word's own text reads character 30. That is the one place a reader of
+    the DOCX's text sees anything but `-`: 42 hyphens in 32 of the corpus's 82 documents, at most
+    six in one.
+
+- **A DOCX export's embedded faces survive a save in LibreOffice.**
+  - The export shipped the document's faces but did not ask for embedded fonts in its settings,
+    and LibreOffice 24.2 and 26.8 save a document's faces back only when asked. Measured with
+    faces installed nowhere on the machine, a save left every face behind. LibreOffice 26.8 reopened the document
+    in Liberation Serif, with Bodoni MT Black for the bold. LibreOffice 24.2 reopened it in DejaVu
+    Sans, and the italic was lost.
+  - A document that ships at least one face now states `w:embedTrueTypeFonts`, and its faces stay
+    through a save in both builds. Word 16 turned the request on by itself when it opened an
+    export without it, and kept the faces through a save. The export does not ask for subset fonts
+    (`w:saveSubsetFonts`): with that request, Word 16 saved only the characters typed so far, and
+    characters typed after a reopen were set in Cambria. A document that ships no face states
+    nothing.
+  - Typing a character the document never had, on a machine without the family, already set it in
+    the shipped face in Word 16 and LibreOffice 26.8, because each face is the whole font. This is
+    unchanged.
+
+- **A DOCX export writes a band of three or more one-line captions as one line, as it did a
+  band of two.**
+  - A container or a layer stack whose paragraphs the page sets level on one line — a title at
+    the left, a place in the middle, dates at the right — was written one paragraph under
+    another unless it held exactly two: measured on such a band, three lines in Word and four in
+    LibreOffice 24.2 where the page sets one.
+  - Two or more one-line, left-to-right paragraphs on one page, each at least 4pt from the next,
+    are now one Word line: the leftmost paragraph's runs, then a tab and the next one's runs for
+    each paragraph further along. The last keeps the stop a band of two gave it: a right stop
+    where it ends, or a left stop where it starts when it is set from its start with room past
+    its end. One between the first and the last is held where the page sets it: a centred one by
+    a centre stop at its middle, a right-aligned one by a right stop at its end, and a left-aligned
+    one, whose box the layout shrinks to its text, by what its layer sets it from — a left stop at
+    its start, a centre stop at its middle, or a right stop at its end.
+  - A band of two is written as before, byte for byte. A band with a paragraph the page sets over
+    two lines or more is written as before — as its layers, a band or a panel — and named as that
+    form is.
+  - The report names a band of three or more as the line its paragraphs share, and a caption
+    between its ends, where it loses anything, as "one part of a line it shares"; the ends keep
+    "one side".
+  - A badge's text is still drawn in its shape only up to four characters, now stated as the
+    policy it is: initials are a mark, a word in a pill is content, and stays a paragraph of the
+    flow.
+
+- **A DOCX export writes a timeline's rail as the border of the cells it runs along, so it
+  stretches with the entries when one is edited.**
+  - The rail was drawn as a bar of the length the layout gives it on each page. An entry that grew
+    in Word or LibreOffice pushed the entries after it past the bar's foot: measured on the ten rails
+    of the fidelity corpus, after one entry's text grows, the rail stopped 10 to 38pt short of the
+    last marker in both editors.
+  - A timeline whose entries are each a row alone — every timeline the templates write — is now one
+    table, an entry a row. Each gap between two entries is a row of the gap's exact height. The
+    column the rail runs down is cut where the rail stands, and the cell right of the cut carries
+    the rail as its left border in every row; a rail beside the markers gets a column of its own in
+    the gutter, the table moved left by it. Where the rail starts or ends at a marker, that entry's
+    row is cut at the marker's centre into a row of that exact height and the rest, the other cells
+    merged down both, and only the part along the rail is bordered. Every entry's row is one the
+    page never breaks inside, as the layout keeps it, but for a timeline of one entry left whole,
+    which stays a table of one row as before.
+  - Measured on the corpus's ten rails, in Word 16 and LibreOffice 24.2: the rail is one unbroken
+    line, standing within 0.35pt of the page at both ends in Word and where LibreOffice sets the
+    text in LibreOffice. After an entry grows, its foot stays at the last entry's marker, within
+    0.12pt. No line of text moves more than 0.05pt (in LibreOffice, on `ModernReceipt`).
+  - A gap is a row of its own and not a margin of the row above: of two cells merged down two rows,
+    Word reads a cell's bottom margin off the lower one and LibreOffice off the upper one, so a
+    margin set the gap below the first entry wrong in one editor or the other.
+  - The two rows of a cut entry keep together. With a timeline pushed down past the foot of its
+    page 3pt at a time, Word otherwise left an entry's marker and text at the foot of one page and
+    the rest of its row on the next, the rail starting above nothing there, and LibreOffice started
+    the rail above the marker.
+  - A timeline keeps its drawn rail, and its note, where it cannot be written so — among others,
+    where any entry has a body laid out below its row (`entry.body(...)`), where its rail stands
+    beside the markers of a timeline set in a cell (a table there stays in its cell whatever its
+    indent, so the gutter column would push the entries right), where the rail is see-through, or
+    where a numbered marker's figure stands in the column the rail cuts. The DOCX recipe lists every
+    case. The corpus has none of them: nine of its 1696 notes go.
+
+- **A DOCX export draws a timeline's rail as a bar LibreOffice draws upright, held by the entry
+  it starts in.**
+  - The rail — and every side of a box the page strokes on its own — was a line of no width.
+    LibreOffice 24.2 turns such a line a quarter round its middle at some places on the page and
+    not others: three of the ten rails of the fidelity corpus (`CharcoalGold`'s, and both of
+    `TerracottaRail`'s) came out as horizontal strokes across the page. A side is now a rectangle
+    the stroke's width, centred on it and filled with its colour. Both editors now draw all ten
+    rails upright: across, where the page does; down, beside the text as each editor sets it. No
+    line of text moves. Word drew the line there already. The corpus draws no side but a rail this
+    way, so the others were not measured.
+  - Each page's part of the rail was anchored in the paragraph nearest its top, which, under a
+    section heading, was the heading (`ModernReceipt`'s payment progress). It is now anchored in a
+    paragraph of the timeline entry it starts in on that page, as a shape a node draws is anchored
+    in its blocks, so it moves with that entry when the text above it is edited. A timeline set
+    right under another one has its rail in its own first entry, not in the last entry of the one
+    above, at whose foot the rail starts.
+  - Where the rail is still drawn (the entry above says where) it keeps the length the layout gives
+    it on each page: the entries after one that grows in Word or LibreOffice run past its end, and
+    an entry moved onto another page stands off the rail there. The report says so in its note on
+    the rail.
+
+- **A DOCX export keeps the gap below a table above a block the layout moves to a new page,
+  where the editor breaks the page elsewhere.**
+  - A block the layout moves to a new page holds its top edge there in an empty line kept with
+    it, the gap between it and the block before left at the foot of the page above, on the
+    paragraph there. Below a table there is no such paragraph, and the gap was not written at
+    all: at the break that is what the page does, but where Word or LibreOffice broke the page
+    elsewhere, or an edit above moved the block up its page, the block stood the gap high — a
+    row after a table with 4pt between them stood 3.7pt high in Word and 4pt in LibreOffice 24.2.
+  - The gap is now the line's space above, less what a border below the table above reaches
+    into it, as in the flow. Both editors drop it where the line opens a page they break to, so a
+    page breaking where the layout breaks it is unchanged, and keep it in the flow: a row of text
+    within 0.3pt of the same document laid out on a page that needs no break. Neither the reach of
+    the moved block's own top border nor text hanging below a panel above comes out of the gap,
+    as it does in the flow, so such a block stands up to that much lower there (not measured). Where a page with margins of its
+    own opens a Word section with the line, the gap is not written: both editors keep a section's
+    first space above, and the section's break fixes the page anyway.
+  - A block with no edge of its own to hold, moved after a table, gets a line a twip tall for the
+    gap. That line also keeps the two tables apart, in place of the paragraph a tenth of a point
+    tall that did, and which the report named for setting the block 0.1pt low. Four templates open
+    their second page so, right after a table, with a block written as a table and nothing of its
+    own above it (`MintEditorial`, `TimelineMinimal`, `EditorialProposal`, `NorthlineProposal`):
+    the four notes are gone; LibreOffice 24.2 sets those pages where it did, and Word a step of its
+    line grid higher: every document's 90th percentile and three of its four medians nearer the
+    page, the fourth unchanged (of 84 lines, 69 nearer, 12 a step further). With their page made half as tall again, LibreOffice 24.2 now sets
+    the gap there, which it had lost: 11.95pt in `TimelineMinimal`, 4.95pt in `NorthlineProposal`.
+  - As before, the line takes no more room in the flow than the space it holds, whatever shape
+    opens the page — a paragraph, a row, a table, a list: seven documents of the fidelity corpus,
+    their page made half as tall again, drew the same to the pixel in Word and LibreOffice 24.2
+    with the line as with the line taken out and its height and space above written as plain
+    space between the two blocks. A test now holds each shape to the space the export writes for
+    it on a page with no break.
+
+- **A DOCX export keeps a page zone's row in its columns: each part of the row stands at a tab
+  stop where the page sets it, so a label and the page number beside it no longer read as one
+  word.**
+  - A zone is written as one line of Word's header or footer, and its row's parts were written one
+    after another, with no space between them, so "Kept blocks" and the number became
+    "Kept blocks1", and "Page", the number, "of" and the total became "Page1of4". Only a spacer
+    was written, as the tab to the right margin. Text after a logo lost the row's gap.
+  - Where the page sets the row on one line, the line now holds a tab stop for each part that
+    starts past where the part before it ends, and a tab before it; any other follows it. A part is held by its
+    alignment in its column — a left stop at its start, a centre stop at its middle, a right stop
+    at its end. A picture and a page field are held by their start: the page sets a field in a
+    box as wide as its number and a point, and grows that box to the right where the number is
+    wider. After a grow spacer a part is held by its end, a right stop. A spacer writes no tab of
+    its own there.
+  - A row is written as before — its parts one after another, a spacer the tab to the right
+    margin — where one of its parts takes more lines than one or the layout does not show one;
+    where a part starts right where one held at a right or centre stop ends, since Word aligns
+    all the text after such a tab, up to the next one, at its stop; and where the row is sized
+    to its content — by its arrangement, a grow spacer or a page field in an `auto()` column —
+    and a page field in it would move another part on a page where the number is wider: a field anywhere but last
+    before the row's one grow spacer or first after it. A stop does not move with the page.
+  - Measured in Word 16.0.20527, LibreOffice 24.2 and LibreOffice 26.8 on the four documents of
+    the fidelity corpus that set a row in a zone: every part of the line, 35 words over 11 pages,
+    stands within 0.1pt across of where the page sets it. Before, each editor found 7 of the 35
+    words as separate words — the first word of three labels, and the header's four words after
+    the logo, though those stood 8pt left — and ran the rest together. On rows over twelve
+    pages, where the number reaches two digits — beside a label and a word in even columns,
+    before a word after a grow spacer, and a right-aligned page field after a centred word —
+    Word and LibreOffice 26.8 set every part within 0.2pt of the page on every page. Where each
+    line stands up and down is unchanged.
+  - The export report no longer counts those parts as standing off. In a row held at stops it
+    counts a part Word cannot set at its stop, the parts before it reaching it, and says where
+    the parts after it stand is not measured.
+
+- **A DOCX export names what a node was written as where that is not the kind of thing the node
+  is, rather than saying it only when the node happened to lose something else as well.**
+  - Which Word object a node becomes is settled as the node is written, in the guards of
+    `DocxSemanticBackend` that choose it. The writers had a name for what they wrote — "written as
+    a paragraph border", "written as a column of its layer stack" — but the report kept it only as
+    the lead-in to a list of what the node went without: a link, an outline entry. A rewrite that
+    lost nothing else said nothing, and where the name sat on the children a node wrote, on its
+    own drawing, or nowhere at all, the node whose form a heuristic had chosen never said so.
+    Nothing in the caller's own tree shows any of it.
+  - Measured over the 71-document fidelity corpus, with a probe at every guard of that cascade.
+    Of 375 drawings written as a paragraph border, 367 are a `LineNode` and 8 a filled
+    `ShapeNode`; all eight were silent — `MeteredInvoice`'s two dividers, in two documents, and
+    `SubscriptionInvoice`'s four brand-strip segments. Of the layer stacks and shape containers,
+    12 are written as the columns of a table (none named), 66 as one line two paragraphs share
+    (62 silent), 91 as their layers one after another (83 of them shape containers, named by
+    their own writer, and 8 stacks silent), 50 as drawing alone (33 silent) and 20 as a badge,
+    which holds its room the same way and had only the note on its drawing; 4 nodes are written
+    over the flow, silent. A painted row written as a one-cell panel has no instance in the
+    corpus at all.
+  - Each of those now carries an `APPROXIMATED` note at the node's own path, said whether or not
+    the node loses anything else: a filled box written as a paragraph border, a stack written as
+    columns or as a band of its layers, a stack or a shape container written as a line two
+    paragraphs share, a box of nothing but drawing written as drawing alone, a container of a few
+    letters written as one drawn shape holding them, and a node written
+    over the flow. That is 168 notes across
+    the corpus, one for each instance named, and nothing else changes — not a byte of any
+    document, since each note states what the files already were. Where a node's drawing is named
+    too, the new note stands beside that one: the drawing's says where it is anchored, and so what
+    editing the text above moves, while the new one says the node has no place in the flow. 114
+    nodes of the corpus carried more than one note before this. The note on a filled box that does
+    lose something now opens with the longer sentence as well, where it read "written as a
+    paragraph border" alone.
+  - Not named for their form, with the reason in the recipe: a node written as the kind of thing
+    it is — 3501 paragraphs, 147 Word tables, 8 inline pictures, and 2482 boxes written as their
+    contents or as a panel (1776 sections, 427 layer stacks, 79 containers and 200 alignment,
+    anchor, canvas and band wrappers), a container having no Word object of its own either way —
+    a `LineNode` written as a paragraph border, which is a line either way; and a `RowNode`
+    written as the one-row table with a hidden grid that is the only thing Word has to set its
+    children side by side. What any of them loses is named as before. Other branches of the same
+    cascade keep the old gate because the node whose form was chosen stands above them and now
+    says so, and what they become follows from it: a layer written as a column of its stack, a box
+    inside a node laid over the flow, each half of a line two layers share, a badge's own paragraph
+    written as its letters. A painted row written as a one-cell panel keeps it too, and the corpus
+    holds no instance of that branch at all. A barcode and a chart have named what they become all
+    along.
+  - `addDivider` builds a `ShapeNode` whose `thickness` is its height, carrying a fill and no
+    stroke, so the DSL's own divider and a colour swatch of that height are one node and the report
+    has nothing to tell them apart by (since a box carries the divider signal, and only a divider is
+    written as the rule: see "A DOCX export writes only a divider, of all boxes of a colour, as
+    Word's horizontal rule; any other box goes the way every drawing goes"). Said in the recipe, and
+    held by a test.
+  - `DocxRewrittenFormReportTest` holds each rewrite and each exclusion, and six of its fixtures
+    read the written XML rather than the sentence — the cells of the table against the layers, the
+    drawing's own anchor, the text box's content, the fill of the shape a badge's letters sit in.
+    Eleven sabotages, one per rule, were each caught by the fixture written for it; nine of the
+    eleven turned exactly that fixture red and nothing else, which is what shows a fixture reaches
+    the branch it is for.
+
+- **A DOCX export names the drawings that a painted panel standing beside them covers, rather than
+  losing them in silence.**
+  - A panel is written as a shaded cell, and a cell's fill belongs to the text layer, which both
+    editors paint over everything drawn behind that layer — a drawing on a layer *above* the panel
+    included. A layer stack's z-index therefore did not lift a drawing clear of a painted
+    neighbour, and the drawing was not seen wherever the two boxes met. A shape is now drawn in
+    front where nothing keeps it behind (see the entry on drawing a shape laid over a painted
+    neighbour in front of the text); what stays behind is still named.
+  - Measured at 300 dpi in Word 16.0.20527 and LibreOffice 24.2 on the one document of the
+    71-document fidelity corpus that holds the case, an 18pt icon laid over a card's corner: the
+    engine's PDF draws 4308 pixels of the icon's own ink, Word's draws none and LibreOffice's
+    draws none, the icon's whole box coming back the card's colour in both. With the card
+    unpainted — the one difference — Word draws every pixel the engine does.
+  - The report now carries an `APPROXIMATED` note naming such a drawing and one panel that covers
+    it. The panels are taken where the export writes their fill rather than read off the node
+    tree: whether a section, a container or a row that paints becomes a cell with shading is
+    decided as it is written, so a panel bearing borders alone is not named and a row written as a
+    panel is. A drawing and a panel are only ever judged against each other within one section,
+    whose pages are counted from its own first and whose page height is its own, and a document
+    of several sections names the section each loss is in.
+  - What it does not name is written out in the recipe and in the guard rather than left to be
+    discovered: a panel the layout breaks across pages, whose box is the one its first page gave
+    it — the guard holds those four by name, so a fifth is seen; a panel composed in an authored
+    table cell, which the layout gives no box of its own; a table cell's own shading, which
+    belongs to a cell rather than to a node; a cell's paint the table draws itself; and the
+    second panel over a drawing that lies over two, one note naming one panel.
+  - No document of the corpus changes: the note states what the bytes already were.
+  - A drawing standing *inside* a painted panel is a different case with a note of its own, and
+    the export already puts such a drawing in front wherever it frames no text of the flow.
+    Measured the same way, that case has no instance in the corpus at all — its branch is taken 55
+    times over 14 documents and goes in front every one of them.
+  - `DocxNeighbourFillGuardTest` holds the corpus to a ledger of drawings left covered — one when
+    this note was added, none since the shape is drawn in front — judging by the
+    boxes the layout gave the nodes and not by `behindDoc`, which is set on drawings the reader
+    plainly sees as well: the same fixture with its panel unpainted keeps its anchor's
+    `behindDoc="1"` while showing all 3237 pixels of its shape in Word.
+
+- **A DOCX export asks the same order of a composed cell's paragraphs as of a block's, so a drawing
+  a table's cell draws is anchored in the paragraph of that cell which places it nearest rather than
+  in the first one the cell writes.**
+  - The cell whose box holds such a drawing stands for the block holding it, and its paragraphs are
+    now divided by the line the drawing stands level with or below and ordered within that by the
+    offset each would place it at — the order a block's own paragraphs are already asked for. Both
+    paths ask it in one place, so neither can drift from the other.
+  - No document of the fidelity corpus changes. Of the 190 drawings a composed cell draws there,
+    none stands further than 50pt from the paragraph it is anchored in and none has a nearer
+    paragraph in its own cell: each of the 165 that a paragraph of their cell carries has exactly
+    one it can be placed from, and all 165 stand within 4.39pt of it. The export's documents are
+    byte for byte the ones it wrote before, so neither editor is asked to draw anything differently.
+    Where a cell does offer two, which the corpus never asks of it, a built case measured in both
+    directions has a tile standing below the lines of both of two rows composed in one cell
+    anchored 220pt up, in the first row's paragraph, before, and 20pt up, in the paragraph of the
+    row it stands in, after.
+  - The export's report states that order for a drawing a composed cell paints and for one a node
+    paints, in place of "the first paragraph able to carry it", which both notes still named.
+
+- **A DOCX export anchors a drawing in the paragraph of its block that places it at the smallest
+  offset, not in the first one the block writes, so an edit that breaks the page between the two no
+  longer leaves the drawing behind.**
+  - A block writing a list writes its heading first, and every drawing of the list hung off that
+    heading: the whole list's height went into the offsets of its last bars. Across the fidelity
+    corpus 142 of 728 carried drawings stood further than 50pt from where they are drawn, out to
+    577pt; 119 do now, and of the 44 whose offset changed, all 44 are nearer and none further —
+    `cv-timeline_minimal`'s last two bars from 491 and 498pt to 42 and 49pt. Eleven of the 71
+    documents change, in 43 paragraphs, and the export's report says the same of all of them.
+  - The paragraphs of the block are divided by the line the drawing stands level with or below,
+    and ordered within that by the offset each would place it at: the line decides which
+    paragraph the drawing moves with, and the offset how far the anchor reaches. The first
+    paragraph is still the one a drawing laid over the block's top stands below, so an icon on a
+    card's corner stays on it when an edit inside the card moves the text under it; one laid over
+    the block's foot now moves with the text above it, as the foot does. Nothing is weighed
+    against a number: a paragraph's line against the drawing's top, then an offset against an
+    offset, with paragraphs offering the same offset keeping the order the block writes them in.
+  - Where the block writes two columns the paragraph may be one of the other column's, which
+    places the drawing out of that column, since a cell takes a drawing into its own column only
+    from the paragraph that opens it. Over the corpus that is what carries a drawing to the text
+    it stands beside: 28 drawings change the cell they are anchored in, and they are a timeline's
+    rail dots leaving an empty paragraph of the rail's own column for the entries that carry them,
+    and an invoice's icons leaving the company name for the address lines beside them.
+  - Neither editor moves anything for it. Word 16.0.20527 sets every document of the fidelity
+    corpus where its baseline holds it, line for line, with no baseline rewritten, and no cell of
+    the corpus changes the alignment its content is set from; LibreOffice draws every rectangle of
+    every changed document — the bars, rules and tiles the drawings are — at exactly the place it
+    drew it before, none of them a different size.
+
+- **A DOCX export measures the space round a stack of overlapping layers to the box of the panel
+  holding its text, not through that panel's padding, so a card under an icon laid over its corner
+  stands where the page sets it.**
+  - Such a stack is written as one band, and the band holds the page's distance from the stack's
+    edges to the first block it writes and to its lowest. Where a panel held that block, the
+    distance ran through the panel's padding — which the panel writes again as its cell's margins,
+    once above its text and once below it.
+  - Measured in Word 16.0.20527 and LibreOffice 24.2: a card of 14pt padding under an icon laid
+    over its top right corner set its text 13.99pt below where the page sets it in Word and
+    13.98pt in LibreOffice, and the paragraph under the card 28.02 and 27.98pt; a card of 20pt
+    padding 19.99 and 40.02pt in Word, one with a 10pt margin of its own 13.95 and 28.06pt, and
+    one holding a further panel of 6pt padding 13.99 and 34.02pt. The same card with no second
+    layer, which is no band, already stood where the page sets it, to 0.06pt — the measurement,
+    not the padding, was what moved the others. All of them now stand within 0.06pt of the page.
+  - The space is measured to the box of the outermost panel holding the block, since every panel
+    between the band and that block writes its own padding inside the cell above it — the 6pt
+    card above held the outer card's padding over again above its text and both paddings over
+    again below it. Which of the two is taken shows wherever the measured block sits inside an
+    inner panel: below it whenever the lowest block does, whether or not the outer panel has text
+    of its own; above it only where the outer panel has none, since a block it holds directly is
+    the first one either way. What stands
+    above that box — the panel's own margin — is in the distance the band owes and is not written
+    by the panel: a table carries no space of its own, and the margin it owes above itself is
+    replaced by the space the band resumes with, so a card with a 10pt margin and 14pt padding
+    keeps the 10pt in the space above its table and the 14pt in its cell. Where no panel holds
+    the block the distance is measured to the block itself, as before, and a stack of one layer,
+    which lays nothing over anything and is no band, is untouched.
+  - What a band owes between two of its own layers — the resume to a later layer — is measured to
+    a panel's box by the same rule, its own entry above.
+
+- **A DOCX export anchors a drawing in a paragraph written by any writer of text — a list's item,
+  the one line two halves of a band share — so a card whose only text is written so moves its
+  drawings with it when the text above is edited.**
+  - A paragraph was offered to the drawings standing beside it only while a paragraph node was
+    being written, so a block whose text another writer writes had no paragraph to offer: a card
+    whose only text is a list's items, and a CV entry's head band written as one Word line. Their
+    drawings went to the text nearest them — in the body, the paragraph above the card, whose top
+    does not move when that paragraph grows a line and the card does.
+  - Measured in Word 16.0.20527 and LibreOffice 24.2, with a paragraph above lengthened by one
+    line: the card's own text moved 9.72pt in Word and 19.40pt in LibreOffice, and the drawing
+    moved 0.00 in both. Carried by the item or by the shared line, it moves with them — 9.70 and
+    19.35pt — and stands on the card's corner where the page draws it, 0.09pt from it in Word
+    against 13.76pt before.
+  - Each item of a list is offered with its own text's box, so a drawing standing beside the third
+    item is anchored in that item — where the export matched the layout's items to the list's one
+    by one, which the items' line gap and their own seating need as well; a list with an item split
+    across a page is laid out as more pieces of text than it has items, and offers none. A band's
+    shared line is offered as the half that starts it, from its text's own start and reaching
+    across to the end of the other's box: both halves are written in that one paragraph, and that
+    half's text begins where the line does. Its text's start is the inked one, not the edge of the
+    box the half is set in, because a drawing anchored in a cell is placed from the cell's text
+    column and that column is read from the place's left edge less the indent written on the
+    paragraph: stated as the box, the column came out the band's width to the left, and a card
+    carried its drawing 292pt across its cell where the page draws it at 150. The line's reach
+    across is the whole line's, so that a drawing beside the dates at its right end, or in the gap
+    between the two texts, stands beside the line. A line the layout starts left of its cell's text
+    column offers no place at all — a band pulled out by a margin below zero, into the cell's
+    padding or past it: Word draws no text past a cell's left edge, so the indent written for such
+    a line is held at nought and its text does not start where the layout puts it.
+  - A table's own cell text offers no place yet, and a drawing whose block's text is written only
+    so keeps the nearest-text rule: a table's cells state no width of their own — their table's
+    grid holds it — and a drawing anchored in a cell is placed from the cell's text column, which
+    cannot be read without that width; a text cell is set to the middle by default besides, and such a
+    cell carries no drawing.
+
+- **A DOCX export anchors what a table's composed cell draws in that cell, so it moves with the
+  cell's row when the text above is edited.**
+  - Such a drawing has no node of its own — a composed cell's content is laid out under its
+    table, its drawings among the table's own fragments — and stood in the paragraph whose text
+    it was nearest, or on the page where it stood beside none. Six invoices' service tiles were
+    placed from the page's edges: edited above, every line row moved and the tiles did not, and
+    LibreOffice 24.2, which sets those rows 1.96pt shorter than the page does, left each tile
+    further out of its row than the last: 0.94, 2.94, 4.89, 6.84 and 8.79pt down the five rows.
+  - The cell whose box the layout placed the drawing in now stands for the block holding it, and the
+    drawing is anchored in the first paragraph of that cell able to carry it, placed from that
+    cell's text column and the paragraph's top (since anchored in the cell's paragraph that places
+    it nearest: see "A DOCX export asks the same order of a composed cell's paragraphs as of a
+    block's, so a drawing a table's cell draws is anchored in the paragraph of that cell which
+    places it nearest rather than in the first one the cell writes"), exactly as a drawing a node
+    paints is. A drawing no cell's box holds — one the table paints across its cells — keeps the
+    nearest-text rule, as does one whose cell writes no paragraph that can carry it.
+  - A cell set to the middle or the bottom takes one only where the page fills its box, since
+    LibreOffice 24.2 sets a cell carrying a drawing — and the cell holding its table — from its
+    top. Measured in Word 16.0.20527 and LibreOffice 24.2: with room to centre in, such a cell had
+    its own text set 4pt and 23.75pt higher and the text of the cell holding its table 43.7pt
+    higher, while a cell the page fills moved no line in either editor, and nor did one holding no
+    text whatever room it was left. The cell the page fills is excused its own alignment whatever
+    it holds — the page leaves it nothing to centre — while a cell *inside* it must hold nothing
+    an editor would set lower: no text, a link's included, no picture, no paragraph border and no
+    table of its own.
+  - The same rule now holds for a drawing the text nearest it carries, which it did not: a
+    neighbouring cell takes one only where it, and each cell holding its table, sets its content
+    from its top. It was held to its own alignment alone, and a cell inside one set to the middle
+    took a drawing LibreOffice would then have moved its row's text for.
+  - The cell that carries the drawing is written to be read from its top, which it holds no text
+    to be read any other way by. Word centres a cell set to the middle along with the drawing its
+    paragraph carries: measured in Word 16.0.20527, a tile carried by such a cell in a row four
+    lines tall stood 7.10pt below where the page puts it, and 0.30pt from it once the cell was
+    read from its top; in a row the cell's own content fills — every one the fidelity corpus has
+    — the two are the same place and nothing in the file moves.
+  - A cell composed of a node that stands in more than one place carries none either: such a node
+    is laid out once, so the lines of the paragraphs written for it in the second cell are the
+    first cell's, and a cell that cannot say where its own content stands cannot place a drawing
+    from it. Nor does a cell of a repeated header row: Word repeats such a row, and what is
+    anchored in it, on every page the table reaches, beside the copy the layout placed there.
+    A drawing any of these refuses keeps the nearest-text rule, as one no cell's box holds does —
+    the paragraph whose text it stands nearest, within reach, and the page where it stands beside
+    none. The report's note names all four.
+  - Of the 190 drawings the fidelity corpus composed in table cells, 165 are now anchored in
+    their cell. The 25 left are `PaymentsInvoice`'s, `WorkspaceInvoice`'s and
+    `MerchantInvoice`'s, whose rows nest a row inside a cell: the cell between the composed cell
+    and the drawing's own is set to the middle, and the layout does not say how much room it is
+    left. Two notes are gone with the change: the shapes `MeteredInvoice`'s longer form anchored
+    in a cell for want of another paragraph on the page, which Word might have printed clipped to
+    it, now stand in the cell that holds them.
+  - Measured in Word 16.0.20527 and LibreOffice 24.2 on `MeteredInvoice`: the tile stood 10.84pt
+    above its line's title on the page, 9.90, 7.90 and 5.95pt above it down the rows in
+    LibreOffice before, and 10.85pt above it in every row after; Word keeps it within 0.03pt, and
+    0.5pt further across, where Word also sets that row's text.
+
+- **A drawing is placed from its paragraph's top only where Word reads that offset back.**
+  - Measured in Word 16.0.20527: an offset of 0.05, 0.13, 0.21, 0.25 or 0.29pt above a paragraph
+    is drawn where it says but reported to a reader as one of Word's position keywords
+    (−999999, −999997, −999994, −999993), while 0.30pt and every larger offset — 0.40, 0.50,
+    0.60, 0.75, 0.97 — is reported as itself. A shape standing less than 0.30pt above its
+    paragraph is placed at its top, where it practically stands; one standing further keeps its
+    own offset. A stroke's width was allowed before, which squared the 0.97pt a service tile
+    needed to nothing and stood it 0.96pt low.
+  - A table cell is given no drawing standing 0.30pt or further above its paragraph, on the
+    nearest-text rule: a 20.5pt rule placed a stroke's width above its paragraph in a cell moved
+    that row's text 1.8pt up in the Linux LibreOffice the build checks with, and such an offset is
+    now written rather than squared to nothing.
+
+- **A DOCX export anchors a drawing in a paragraph of the block it belongs to, so it moves with
+  that block when the text above is edited.**
+  - A shape stood in the paragraph whose text was nearest it, within 48pt, rising above that
+    paragraph's top by 24pt at most — in a table cell by a stroke's width —, and otherwise was
+    placed from the page's edges, where it stayed while the text moved away from it: an icon laid
+    over a card's corner, a sidebar's portrait, a skill's meter beside its label in a row, a
+    timeline's dots in a column of their own.
+  - A drawing a node paints is now anchored in the first paragraph able to carry it that the nearest
+    block holding it writes on its page (since anchored in the block's paragraph that places it at
+    the smallest offset: see "A DOCX export anchors a drawing in the paragraph of its block that
+    places it at the smallest offset, not in the first one the block writes, so an edit that breaks
+    the page between the two no longer leaves the drawing behind") — the node itself, a layer stack,
+    a panel, a row, but not the page's flow —, placed from that paragraph's top however far from its
+    text it stands. In a table cell, the cell of that paragraph's row holding the drawing across
+    takes it, its own where it stands in a column of its own; otherwise the paragraph's own cell
+    keeps it, placed out of its column, unless it holds text — a text box, a badge's letters —,
+    which LibreOffice 26.8 pulls back into the column. A cell set to the middle or the bottom, or
+    sitting in one, carries none: the block's next paragraph able to place it takes the drawing, or
+    else the next block up. A drawing no node paints — a timeline's rail — and one whose blocks
+    write no such paragraph on its page go to the paragraph nearest it there (a rail is since the
+    border of its cells, or held by the entry it starts in: see "A DOCX export writes a timeline's
+    rail as the border of the cells it runs along, so it stretches with the entries when one is
+    edited"). What a table's composed cell draws goes to the cell whose box holds it (above). The
+    report's note on each drawing says how it is anchored.
+  - Measured in Word 16.0.20527 and LibreOffice 24.2: a shape anchored in a table cell's
+    paragraph stands where both say — rising 36pt above its row, hanging below its table, out of
+    its cell, taller than its row, in an exact row or a nested table, in front of the text or
+    behind it, and across the fidelity corpus from 155pt above its paragraph to 620pt below —;
+    neither clips it nor moves a line for it, and both move it with its row when the text above
+    is edited. LibreOffice 24.2 sets a cell carrying a drawing from its top whatever its vertical
+    alignment says, 16pt high in a cell set to the middle and 32pt in one set to the bottom.
+  - Of the 465 drawings the fidelity corpus placed on the page, 270 were drawn by a node, 5 were
+    timelines' rails and 190 were composed in table cells. All but 14 of the first 275 are now
+    anchored in a paragraph: the text boxes of `LumaStudio`'s sidebar and closing note, which no
+    paragraph of their column holds across, and two drawings on pages whose only text is a pair
+    of lines.
+
+- **A DOCX export writes a painted box holding text in the body as a panel, its text inside its
+  outline.**
+  - A shape container shaped as a rectangle or a rounded rectangle, filled or outlined, holding
+    text, placed in the body outside any table cell and laid over nothing, was drawn as a shape at
+    its size with its layers written in the flow. Its text took the flow's width and ran past the
+    outline, the block under it stood where the flow put it, over the outline, and the outline
+    kept its height when text was added to it in an editor. It is now written as a panel, as it
+    already was composed in a table cell: a table of one cell its outline's size, its fill and
+    border on the cell, its padding round it, its row kept on one page, as the layout moves the
+    shape whole.
+  - Its layers stand in the cell at the height its first written layer is set — at the top where
+    the page starts one taller than the outline there — and across where the layout places them in
+    the outline; a block set at the outline's left keeps the room the page laid it out in, the
+    whole room or a width it is given. Word sets a cell's content below its whole top border, where
+    the page sets the layers from the outline's top, under the border: a shape set from its top
+    takes the border out of the space above its first line, and the report names one with nothing
+    there to take it.
+  - Its row is held at least the outline's height, so the panel grows with text an edit adds. A
+    clip that cuts what its layers paint past the outline's foot holds the row at exactly the
+    outline's height instead, less the one border Word and LibreOffice add to an exact height:
+    both cut a cell's content at an exact row's foot, as the page cuts it at the outline. The cut
+    is square, and text an edit adds there is hidden too; the report says so where it said the
+    clip was not in the file. Layers running past the foot with no clip to cut them grow the
+    panel, and the report says how far.
+  - Measured in Word 16 and LibreOffice 24.2:
+    - a note the page wraps over three lines inside a box 220pt wide ran over two, 95pt past the
+      box, with the paragraph under it 12pt high; now its three lines stand inside the box,
+      within 0.03pt of the page's in Word, and the paragraph under it within 0.02pt.
+      LibreOffice 24.2, which counts the borders inside a least height, sets the box 1pt short and
+      the paragraph under it 1pt high;
+    - a box clipped short of its text wrote all of it, 125pt past the outline, with the paragraph
+      under it 20pt high; now both editors show the five lines the page shows, 1pt low under the
+      border, and set the paragraph under it within 0.02pt;
+    - a card stands where the page sets it in Word, as before, within 0.1pt; with three lines
+      added to it in Word it grows by them, and the paragraph under it moves down with it. In
+      LibreOffice 24.2 the paragraph under the card stands 0.6pt high, where it stood within
+      0.02pt: the card's content is shorter than its outline, and that build counts the borders
+      inside the row's least height.
+  - The rounded corners are square, and a turned box stands upright; the report names both. An
+    ellipse, a polygon or a star, a box holding no text — drawing alone, or a picture's frame —,
+    an unpainted one, one set as a band beside a drawing, a badge centring a few letters, a pill
+    holding a title and its dates on one line, one its margins give no room in the flow, and one
+    inside a layer stack, a row's cell or a panel are written as before.
+
+- **A DOCX export bookmarks a block of drawings alone where its first drawing is anchored, so a
+  page reference or a link to its anchor works.**
+  - A section, a container or a layer stack's column holding nothing but drawings writes no
+    paragraph for a bookmark to go round: its drawings are anchored in the paragraphs beside them,
+    or in one written on their page. Its anchor had no bookmark: a link to it named a bookmark the
+    file did not hold, and a page reference to it was written as the number the layout read, which
+    no edit updates, with a report note. The bookmark now goes at the start of the paragraph its
+    first drawing is anchored in — the drawing on the earliest page, highest on it. Word keeps a
+    drawing on its paragraph's page and moves it with that paragraph, so the reference reads the
+    page the block starts on, and goes on reading it once the text above is edited.
+  - Measured in Word 16, fields updated, and LibreOffice 24.2, on such a block on page 2 and on
+    the same file with a page put in ahead of it: before, both editors read 2 in each and carried
+    no link; now both read 2 and then 3, and the link goes to the block's page. So it is for a
+    section and a container of drawings, one opening its page, one alone on its page, one in a
+    panel, a layer stack's column of drawings, and an anchor named with spaces past the 40
+    characters Word keeps; a block at the foot of page 1 whose drawings run onto page 2 reads 1,
+    and then 2.
+  - A block that draws nothing, one whose first drawing stands on a page nothing is written on,
+    and one composed in a table's cell, whose drawings its table draws, still have no bookmark, and
+    the report names the anchor.
+
+- **A DOCX export bookmarks a layer stack's column, so a page reference or a link to its anchor
+  works.**
+  - A stack whose layers stand side by side is written as a one-row table, each layer's content in
+    its column's cell; the layer itself is not written as a block, and its anchor got no bookmark.
+    A link to it named a bookmark the file did not hold, and a page reference to it was written as
+    the number the layout read, which no edit updates. The bookmark now goes round what the layer
+    writes, from the first paragraph it writes to the last, as a section's or a container's does in
+    the flow. A block of the layer that an earlier layer's stand-in holds — a subtitle drawn in a
+    later layer for the reading order, written in the strip above it — is written there first, and
+    the bookmark opens there.
+  - Measured in Word 16, fields updated, and LibreOffice 24.2, on an anchored column on page 2 and
+    on the same file with a page put in ahead of it: before, both editors read 2 in each and
+    carried no link; now both read 2 and then 3, and the link goes to the column's page. So it is
+    for a left and a right column, a container, a later layer of a column, a column opening with a
+    table, a stack in a panel, and a table of contents' entry.
+  - A column that writes no paragraph — drawings alone — is bookmarked where its first drawing is
+    anchored, as a section of drawings alone is (above).
+
+- **A DOCX export keeps a page break the layout makes by itself after a card where the page
+  makes it.**
+  - A block kept together or kept with the next in a table cell — a row's column, a panel's cell —
+    keeps its lines together (`w:keepLines`) and no longer keeps with the next (`w:keepNext`).
+    Word reads keep-with-next on the paragraph a cell opens with as keeping the cell's whole row
+    with what follows its table, and holds no keep across a break inside the row, so in a cell
+    those keeps did nothing else; a row of columns, which may not split, keeps the block whole.
+    The separator between two tables in a cell keeps with the next table as before: measured, Word
+    does not read it as the paragraph the cell opens with. Measured in Word 16 on `ObsidianInvoice`
+    with its line items repeated 12 times: its info cards, kept together in a row's two cells, went
+    to page 5 with the footer divider under them, 17 lines below the page's, where the layout sets
+    them at the foot of page 4.
+  - A rule the layout moves to a new page in the flow holds the space the layout leaves above it
+    there in an empty line kept with it, as a paragraph, a list and a picture do: Word and
+    LibreOffice drop a paragraph's space above at the top of a page they break themselves, and
+    a rule's is its paragraph's. The same invoice's footer divider stood its 13pt margin high on
+    page 5 in both.
+  - A table, a row, a painted row or a panel the layout moves to a new page holds there, with its
+    own top edge, the gap above it the layout carries onto that page where the gap does not fit at
+    the foot of the page above. It left the gap on the page above: `MeteredInvoice` with its line
+    items repeated 9 times opens page 4 with its closing row 12.4pt below the margin, the gap, and
+    Word set the page 13.0pt high and LibreOffice 12.8pt. One the layout runs on past the page it
+    opens has no place of its own there to measure, and holds its own top edge alone, as before.
+  - After: `ObsidianInvoice` ×12 sets every line on its page in Word and LibreOffice 24.2, page 5
+    within 0.1pt; `MeteredInvoice` ×9's page 4 within 0.7pt in both. Of 35 lengths of 7 invoice
+    templates whose layout opens a page with a block of their body, those two move, and none
+    other.
+  - In the corpus, 15 documents lose keep-with-next on paragraphs in table cells, and nothing else;
+    no page in it opens with a rule or a gap the layout carries there. Word and LibreOffice 24.2
+    set every one of their lines where they did.
+
+- **A DOCX export writes the margins of a page that starts at a panel's cut as a Word section
+  there.**
+  - A page that `session.pageMargins(...)` sets against other top and bottom margins than Word
+    would set it with starts a Word section with them, where it starts between blocks of the body
+    or among a body table's rows. Where it started inside a panel, it started none and was named:
+    Word set it with the margins in force. Measured in Word 16 and LibreOffice 24.2 on a card
+    whose table runs over three pages, a top margin 54pt larger from page 2 on stood every line of
+    pages 2 and 3 52.9pt high; margins of 20pt from page 2 on ran the card onto five pages in Word
+    and four in LibreOffice, where the page sets three.
+  - Where the export cuts such a panel at the row of its table the page starts with, the
+    paragraph between the two parts now ends the section: it breaks no page before itself, the
+    section's own break opening the page, and stands under the part above it. In both editors
+    every line of the card now stands on the page the page sets it on, lower by the cut's top
+    border only. `ObsidianInvoice`, whose pages from 2 on have a larger foot, is written so when its
+    line items run over pages: its cut where page 2 starts ends a section, and the pages after it
+    are set with page 2's margins.
+  - Where the page above has room for the cut and not for that paragraph under the part, the
+    panel is cut there as before and the page is named. A page the panel is not cut at is named,
+    as before. A panel in a section whose pages share one set of margins, or whose header or footer
+    counts its own pages, is cut as before.
+  - In a section whose margins change, a panel's cuts are decided once the section is written,
+    before the document's page references are settled and its bookmarks kept: a row holding a page
+    reference leaves the panel uncut at that row's page and every page before it, as any field
+    does, though one whose anchor has no bookmark ends up as its number; so does a header row
+    holding a bookmark the export later takes out. A drawing the export anchors in the table's
+    header row after that stays in the first part, the page it is drawn on, and the part after a
+    cut opens with a copy of the row without it.
+  - With its line items repeated 3 to 11 times `ObsidianInvoice` sets every line on its page in
+    Word and LibreOffice 24.2, as it did. Repeated 12 times, its page 5 starts between its info
+    cards and its footer divider. With page 1's margins in force on pages 2 to 4, page 5 opened a
+    Word section of its own, which fixed that break, and Word held the cards on page 4; page 5's
+    margins are now page 2's, so the editors place that break themselves, as they do the same
+    invoice with one set of margins on every page — where the page places it, since the entry
+    above.
+  - Where a page the panel runs onto is not cut and a later one is, LibreOffice 24.2 sets the part
+    after that cut with the margins of the section before: it reads no section's margins after a
+    table it broke over a page itself. Word reads them.
+  - No document of the corpus has such a panel; its export is unchanged.
+
+- **A DOCX export cuts a panel whose table the layout breaks over pages into a table a page.**
+  - The layout breaks a table in a panel between rows, repeats its header rows at the top of the
+    next page and goes on with the panel there, no padding above it. The export wrote the panel as
+    one table of one cell: Word broke its row where its lines ran out, and repeats no header row of
+    a table nested in a cell. Measured in Word 16 and LibreOffice 24.2 on `ObsidianInvoice` and
+    `SubscriptionInvoice` with their line items set over two and three pages, the second page
+    stood 24 to 30pt high in Word, its header missing, and over three pages a row stood a page
+    early in both editors.
+  - Such a panel — the table one of its own children, and the only one the layout breaks over
+    pages — is now a table a page, cut at the row each page starts with: the part after a cut
+    opens with copies of the table's header rows and has no top padding, a part before one has no
+    bottom padding, as the page sets the rows down to the page's foot, and a hairline paragraph
+    between the parts breaks the page before itself. In both invoices, and in cards padded 6 and
+    12pt over two and three pages, every line now stands on the page the layout sets it on in both
+    editors. A part after a cut stands about its top border's width lower than the page sets it,
+    as Word and LibreOffice draw the border inside the row: 1.1pt under a 1pt border, 2.8pt under
+    `SubscriptionInvoice`'s ruled top.
+  - The page breaks are fixed there, so rows an edit adds above a cut no longer run onto the next
+    page, and the report names the cut. A page is not cut, and is named, where the panel starts it
+    outside its table, where the table cannot be split at that row — its header rows holding an
+    anchored card's bookmark among them — or where the page above sets the rows too near its foot
+    for the borders Word sets inside the part; a panel cut at no page is named as written whole.
+    Anything else the layout moves or breaks over a page inside a panel — a block kept together, a
+    stack, a paragraph — is left to Word, as before.
+  - No document of the corpus has such a panel; its export is unchanged.
+
+- **A DOCX export writes no page break where the page breaks none: in a row's column, a table's
+  composed cell, a layer stack's layer, a shape container's layer or a canvas.**
+  - The page places each of these as a box on one page: a page break in one is a box of no height,
+    the spacing of the container it stands in on either side of it, and what follows stays on that
+    page. The export wrote the break in the body after the row's, the columns' or the table's
+    table, or between the stack's layers. Measured in Word and LibreOffice 24.2, a section of
+    "Part A", a break and "Part B" in a row's column, a stack's column, a band of overlapping
+    layers, a stack of one layer or a table's cell came out on two pages where the page has one;
+    in a cell "Part B" stood 6pt high, its spacing written once.
+  - Such a break is no longer written, and its spacing stands on both sides of it. A panel in a
+    stack's layer is no longer cut into two tables at a break inside it. In the measured shapes
+    the text after the break now stands on the page the page sets it on in Word and LibreOffice
+    24.2, "Part B" within 0.13pt of it; in the band the layer laid over "Part B" stands as low as
+    before, and is named.
+  - A break in an alignment, where the page breaks no page either, is still written. A margin set
+    on a break the page breaks no page at, which the page counts there, is not written.
+  - No document of the corpus has a page break in a row, a stack or a table's cell; its export is
+    unchanged.
+
+- **A DOCX export breaks a page inside a section or a panel of a panel where the page does.**
+  - Word breaks no page inside a table cell (measured in Word and LibreOffice 24.2: a run's page
+    break and a paragraph's break before it, in a table of the body or one nested in a cell, left
+    what follows on the same page). A panel was cut into two tables at a page break among its own
+    children only; one in a section or a panel inside it was written after the panel's table, so
+    the panel's text after the break stood on the page before, in the panel, and the page broke
+    after it.
+  - The panel's table is now cut at a page break among the children of any section or panel its
+    cell writes them in, at any depth, each table holding its part of every one the break runs
+    through: a section's top edge where it starts and its bottom edge where it ends, a panel's top
+    padding in its first table. A cut section's anchor marks where it starts, and its notes are
+    said once.
+  - The page goes on with a panel a break runs through at the top of the next page, with no
+    padding above its text there, its own or that of any panel round it: a table after the first
+    has none now, where it had the panel's top padding, the text 8pt lower in Word for a card
+    padded 8pt. What follows a break stands its container's spacing below that top.
+  - No document of the corpus has a page break inside a panel; its export is unchanged.
+
+- **A DOCX export's lines of runs of several depths grow with their text where every line is as
+  deep as the deepest.**
+  - A paragraph whose runs reach to different depths below the baseline — a bold title beside
+    lighter text, a weekday beside its date — was written at an exact height, which Word keeps
+    whatever its text holds: Word stands each least line's text its own deepest run's descent
+    above its foot, and one height for a paragraph's lines does not say which runs a line holds.
+  - Measured in Word and LibreOffice 24.2: 8pt bold Lato beside 7.5pt Lato, on one line or on two
+    each holding the bold run, stood each line within 0.1pt of its bold run's descent above its
+    foot; a second line of the 7.5pt runs alone stood at their descent.
+  - Such a paragraph is now written at a least height where every line, as the page breaks them,
+    holds a run as deep as the paragraph reaches, its mark no deeper, and that run is the line's
+    tallest, by which the page sets the line; each run is read at the size it is written at, to
+    the half point. One with a line of the shallower runs alone stays exact, and so does one with
+    a break written in a run, which the page may set on the line it ends, or a `bulletOffset`
+    prefix, which the page sets as a run and the export as an indent. A list's items and a
+    table's text cells keep to one depth.
+  - The corpus writes 20 more paragraphs at a least height, in six documents. In Word, two points
+    more on `Normal` leaves 921 of the 1832 paragraphs it grows on lines shorter than 1.1 times
+    their letters, from 923: most of the 20 are set in a size of their own.
+  - Of the six documents' lines, 5 stand nearer the page in Word and 4 further, of 440, and 4
+    nearer and none further in LibreOffice 24.2, of 437. The step from a line to the next differs
+    from the page's by more than 0.2pt for 13 of 234 steps in Word, from 19, and 16 of 227 in
+    LibreOffice, from 22. `ClassicSerif`'s project titles stand one step of Word's 0.12pt line grid
+    lower there.
+
+- **A DOCX export's Word list items grow with their text where their face holds their marker.**
+  - A Word list's item, whose marker Word draws, was written at an exact height, which Word keeps
+    whatever its text holds.
+  - Word draws the marker as a run of the item's first line, in its level's face and size over its
+    paragraph mark's, and LibreOffice does too (measured in Word and LibreOffice 24.2: a bullet, a
+    white bullet and a small square in 8pt Lato, a bullet and an en dash in 9pt Fira Sans Condensed,
+    left exact and least lines as tall, with a space or a tab after it, its face its level's or its
+    mark's; a bullet at twice the size grew a least line by its height). A marker whose face holds no glyph for it is set in another face in each editor: Word
+    set an arrowhead beside 8pt Lato in Segoe UI Symbol, its least line 0.72pt taller.
+  - An item is now read with its marker, by the rule a paragraph's line grows by, where its level
+    writes letters its face holds, not a number or a picture. An item whose marker its face holds
+    no glyph for, or whose level is overridden or defined by a numbering style, stays exact. A
+    least item needs none of the lowering the space above gave an exact one Word set half a point
+    or more high, as `MidnightNavy`'s and `NavySidebar`'s duties were.
+  - The corpus writes 96 more list items at a least height, in eight documents; the 44 Word list
+    items still exact are set tighter than their faces' own line. In Word, two points more on
+    `Normal` leaves 923 of the 1832 paragraphs it grows on lines shorter than 1.1 times their
+    letters, from 1005, and 15 documents pass, from 14.
+  - Of the eight documents' lines, 53 stand nearer the page in Word and 26 further, of 682, and 53
+    nearer and 23 further in LibreOffice 24.2, of 678. The step from a line to the next differs
+    from the page's by more than 0.2pt for 80 of 456 steps in Word, from 95, and 88 of 482 in
+    LibreOffice, from 107.
+  - Some least items stand lower than they stood as exact lines: `OrangeOps`' duties and
+    `SerifHeadline`'s items, 8pt Lato on lines of 9.7 to 10.15pt in a table's cell, about 0.25pt
+    lower in both editors, the lowest 0.42pt in Word. The export reckons their least line within
+    0.06pt of the page, and Word and LibreOffice stand it about a quarter point lower; as exact
+    lines the export reckoned them as much high, and they stood nearer the page,
+    from 0.35pt high to 0.18pt low. The quarter-point check on a least line reads the export's
+    reckoning, so it does not hold these lines; each stands within half a point.
+
+- **A DOCX export's lines holding a picture within their text grow with it.**
+  - A line holding a picture set in it, an icon or a drawn bullet beside its words, was written at
+    an exact height, which Word keeps whatever its text holds.
+  - Word lowers such a picture by its run's position, in a least line too; LibreOffice stands it a
+    tenth of a point above the baseline, whatever the position; and a picture run's own size sets
+    none of the line (measured in Word and LibreOffice 24.2: a 9pt icon lowered 1.5pt beside 8pt
+    Lato left a 9.95pt least line as tall in Word, and grew it to 10.75pt in LibreOffice).
+  - A line whose pictures stay within its text's own line where either editor stands them — no
+    higher than its text, its faces' line gap included, no lower than its text's descent — is now
+    written at a least height where its text alone would be, and stands its text there. A least
+    line is given no position to seat its text, which Word does not move it by. One whose
+    picture rises past its text in either editor, as `CharcoalGold`'s contact icons do in
+    LibreOffice, is written as before, and so are pictures in a paragraph of broken lines or among
+    spaces alone, a rating's dots.
+  - The corpus writes 92 more paragraphs at a least height, in seven documents. In Word, two
+    points more on `Normal` leaves 1005 of the 1832 paragraphs it grows on lines shorter than 1.1
+    times their letters, from 1041, and 14 documents pass, from 13.
+  - Of the seven documents' lines, 16 stand nearer the page in LibreOffice 24.2 and 9 further, of
+    880; in Word 9 nearer and 55 further, of 882. The step from a line to the next differs from the
+    page's by more than 0.2pt for 34 of 489 steps in LibreOffice, from 36, and 29 of 472 in Word,
+    from 31.
+  - `TealPulse`'s duties stand 0.24pt lower in Word than as exact lines, and its skills 0.3pt
+    lower in LibreOffice, within half a point: the export reckons the duties' least line within
+    0.06pt of the page, and Word stands it lower, as it does the Word list items
+    above. `ConsultingInvoice`'s line items, whose
+    description now seats its row's lift differently, stand one step of Word's 0.12pt line grid
+    lower there and where they stood in LibreOffice.
+
+- **A DOCX export's table text cells grow with their text where they are as tall as their faces' own.**
+  - A table's text cell was written at an exact line, which Word keeps whatever its text holds, and
+    its row's margins, its lines' heights or its text's position moved it onto the page's baseline.
+  - A text cell's lines are now written at a least height where each of its paragraphs is at least
+    as tall as its runs' own line, by the rule a paragraph's line grows by, and Word then stands its
+    text within a quarter point of the page's. In the faces the document ships a least line stands
+    its text where the page does, so the row keeps the cells' padding as its margins and no line is
+    traded for the space after it. A cell tighter than its face's own, as Poppins' are, in a face
+    the document does not ship, or set right to left stays exact and is moved as before, except
+    beside a least cell: that cell calls for no more than its rounding, so the row's margins move
+    by as little and the exact cell is left the rest of its call, for its position and its lines'
+    heights. No row of the corpus holds both.
+  - The corpus writes 138 more paragraphs of text at a least height, in five documents. In Word,
+    two points more on `Normal` leaves 1041 of the 1832 paragraphs it grows on lines shorter than
+    1.1 times their letters, from 1138, and 13 documents pass, from 10. Of the five documents'
+    638 lines, 51 stand nearer the page in LibreOffice 24.2 and none further. Of their 334 steps
+    from a line to the next, 27 differ from the page's by more than 0.2pt in Word, from 34.
+
+- **A DOCX export's lines grow with their text where they are as tall as their faces' own.**
+  - Every paragraph's lines were written at an exact height, which Word keeps whatever its text
+    holds: a reader making the body larger in Word — the `Normal` style two points up — got letters
+    taller than their lines, cut off at the top on screen.
+  - A paragraph's or a list item's line that is at least as tall as its runs' own line is now
+    written as a least height (`w:lineRule="atLeast"`). The runs' own line is their faces' line by
+    the faces' own tables: the tallest run's reach above the baseline and the deepest run's below,
+    the paragraph's mark among them. It is so where the runs are set in faces the document ships,
+    all the same depth below the baseline or every line as deep as the deepest (see above), left to
+    right, none raised or a script, no picture in the line past its text, a Word list's marker in a
+    face that holds it (see above), and the paragraph is seated on its baseline.
+  - Word and LibreOffice keep a least line's spare above its text and stand its baseline the
+    runs' descent above its foot (measured on the templates' faces, Word and LibreOffice 24.2, to
+    0.15pt). That is where the page sets it, so such a line needs no position to stand there; it
+    is still moved into the space above it where Word would set it a little off. A line Word
+    would set a quarter point or more off the page's baseline stays exact.
+  - The rest stays exact:
+    - a line the page sets tighter than its faces' own: Poppins' and Gothic A1's, whose own line
+      holds a line gap the page's does not; one rounded to the twip below its own, which a least
+      line would grow back on every line;
+    - a line in a face the document does not ship, the default Helvetica's among them, which the
+      reader's machine substitutes, or in one whose `hhea` extents, which the page measures by,
+      are not the metrics its line is set on;
+    - page zones, text boxes, stacked lines and line pairs.
+  - The report names how many paragraphs of text are still exact, once for the document
+    (`line height`, no path).
+  - The corpus writes 1164 of its 3856 paragraphs of text at a least height. In Word, two points
+    more on `Normal` leaves 1138 of the 1832 paragraphs it grows on lines shorter than 1.1 times
+    their letters, from 1617.
+  - Lines move as their seats change. In Word no line stands half a point further from the page
+    than its baseline holds. The step from a line to the next differs from the page's by 0.120pt
+    on average, from 0.130, and by more than 0.2pt for 238 of 2766 steps, from 335. In
+    LibreOffice 24.2 it differs by 0.173pt on average, from 0.187.
+
+- **A DOCX export's page-margin notes name every page they are about.**
+  - A note about several pages named the first of them only, and the later ones, which Word sets
+    with the margins in force too, went unnamed: `ObsidianInvoice` with its line items run onto
+    three pages named page 2, not page 3. The note on a block several pages start inside, on a run
+    of pages whose side margins differ, and on a section of several whose page count a Word
+    section would split now names each page, as "the top and bottom margins of pages 2 and 3
+    differ from page 1's", three or more in a row as "pages 2 to 4".
+  - A page-margin note about a page names it, `page N` or `section N, page N`, as the report's
+    contract says: the note on a section started where a page does, on a page after one whose
+    content reaches its foot, on a page no block starts and on a page's side margins carried
+    their section's path, which a document of one section has none of.
+  - The file is unchanged.
+
+- **A DOCX export's report names what a table's cell is composed of by its cell.**
+  - The layout lays a composed cell's content out under its table and gives it no path of its
+    own, so every note about a node there carried none: 216 of the corpus's 1384 notes, a rounded
+    panel's corners, an inline icon or shape drawn as a picture, a nested chip's right border.
+    Two cells composed alike could not be told apart, nor which cell a note was about.
+  - `DocxExportReport.Note.path()` now names such a node under its table's path by its cell,
+    `row[r]/cell[c]` — the row's index among the table's rows and the cell's among the cells
+    authored for that row, from 0, not its column in the grid — then by its own segment, as
+    `CobaltRota[0]/Schedule[0]/row[7]/cell[7]/ShiftBlock[0]/row[1]/cell[0]/Chip[0]` for a chip in
+    a table in a cell. A node that stands in the flow as well keeps the flow's path, and what its
+    cells hold is named under it.
+  - A section composed in a cell whose anchor has no bookmark adds that loss to its own note, as
+    one in the flow does: with its outline entry not written either, it gave two notes, and gives
+    one.
+  - The contract names the paths a note may carry that are not a node's: `page N`, and in a
+    document of several sections `section N` or `section N, page N`. A note about the whole
+    document has none; one about a page zone or a node of one has none or, in a document of
+    several sections, names its section.
+  - The file is unchanged: the 62 corpus DOCX are byte for byte the same, and so is the text of
+    their notes. The 17 notes left without a path are about the whole document: the line that
+    closes it and a text footer reaching past the margin.
+
+- **A DOCX export splits a body table at the row where a page with other top and bottom margins
+  starts.**
+  - A Word section starts only between blocks. So a page that the layout started among a table's
+    rows was named, and Word set it with the margins in force. `WorkspaceInvoice` with its line
+    items run onto three pages set 58 words of its third page on its second.
+  - The table is written as two at the row the page starts with, and the hairline between the two
+    parts ends the section. The second part opens with copies of the table's header rows, which
+    the layout repeats at the top of each page.
+  - Measured in Word and LibreOffice on Windows:
+    - On tables with and without header rows, and across three sets of margins, every page held
+      the lines the layout sets on it. With header rows, each line stood within 0.4pt. Without
+      them, a continued table's pages stand 0.4 to 0.8pt lower in both editors, as they do in the
+      same table written whole.
+    - In `WorkspaceInvoice`, every word stood on its page, within 0.5pt. `MerchantInvoice` and
+      `PaymentsInvoice` are split too. Both editors set every word of them on the same page as
+      before, the layout's, and at the same height.
+  - The report names the split on the table (`page margin`). A table is still not split, and its
+    page is still named on it, where:
+    - a cell spans rows across that row;
+    - only its header rows stand above that row;
+    - a header row holds a bookmark or a drawing, which the file can hold only once, or a
+      numbered list item, which its copy would number on;
+    - a header row or a row from that one on holds a page reference, which the export settles in
+      the paragraph it wrote it in once the body is written;
+    - the rows above that row reach the foot of their page, leaving no room for the hairline.
+  - The corpus is unchanged: none of its documents has margins that change from page to page.
+
+- **A DOCX export writes top and bottom margins that change from page to page as Word
+  sections.**
+  - `DocumentSession.pageMargins(...)` reached the layout only. The DOCX wrote the canvas's
+    margins on every page and said nothing: a page with a larger bottom margin ran 7 lines of
+    33 further in Word and LibreOffice, past its foot, and a rule for page 1 alone was lost too.
+  - The internal layout graph carries the margins each page is laid out against
+    (`LayoutGraph.pageGeometry`), and the export writes the first page's top and bottom margins
+    as the section's. A later page whose top and bottom margins differ from those Word sets it
+    with starts a Word section with them, where it starts between blocks of the body. An
+    explicit page break there becomes the section's break, the hairline between two tables
+    carries its end, and the title-page header and footer stay with the first section, as, in a
+    document of several sections, does its page count from 1. Measured in Word and LibreOffice
+    on Windows — on pages of paragraphs, on a page after a page break, after a table, between
+    two tables and under a card's held margin — every page stood
+    where the layout sets it, line for line. The report names each such section (`page
+    margin`): its page break is fixed when the text above it is edited. The room for the line
+    closing a section, and the space above a block the layout opens a page with, are reckoned
+    against that page's margins.
+  - Side margins stay the document's, which the body is written against — a rule's length and a
+    panel's room among them — and from which the page sets its header and footer. A page whose
+    side margins differ is named.
+  - The report names, and the export starts no section at, a page that starts inside a block — the
+    lines of a paragraph, a panel — or after a page whose content reaches its foot under a table,
+    and a page of a document of several sections whose header or footer counts its section's pages,
+    which Word would count apart. `ObsidianInvoice`, which sets another bottom margin from page 2,
+    starts its second page inside the panel holding its line items, so that page is named on the
+    panel and its margins are not written (since written as a Word section starting at the panel's
+    cut: see "A DOCX export writes the margins of a page that starts at a panel's cut as a Word
+    section there").
+  - The corpus is unchanged: none of its documents has margins that change from page to page.
+
+- **A DOCX export names a document's timeline rails once.**
+  - Every rail the layout draws shares one path, so each timeline named its rail again (most rails
+    since written as the border of their cells, with no note: see "A DOCX export writes a timeline's
+    rail as the border of the cells it runs along, so it stretches with the entries when one is
+    edited") under it, word for word, and a rail running onto another page named it again there:
+    `cv-terracotta_rail`, with two timelines, carried the note twice. It is named once a section,
+    and what no paragraph carries is reckoned for all of them together, as before.
+  - The file is unchanged: none of the corpus's 62 DOCX changes, and it carries one note fewer.
+
+- **A DOCX export sets a panel set in from its table cell's text where the page sets its text.**
+  - In a cell, Word and LibreOffice set a nested table's left border with its outer edge at the
+    cell's text, or as far in as its indent sets it, and its text that border's centre and the
+    cell's margin in. A panel's margin was its padding less half that border. A panel set in
+    from its cell's text by half that border or more stood its text that half left of the page's,
+    its border where the page draws it; one set in less stood it as far left as it was set in.
+  - It now keeps its whole left padding as its margin where it is set in half its border or
+    more, and what it is set in by of that half where it is set in less. A panel on its cell's
+    text or bled left is unchanged: its editors move it right by half its border, and a bled one
+    by its bleed too, its text with it, as the report says (`left edge`).
+  - Measured on Windows: `CharcoalGold`'s headings, set in from their column's edge, stood their
+    text 0.72pt left of the page's in Word and 0.71 to 0.81pt in LibreOffice, now 0.12pt and 0.04
+    to 0.14pt right. Their rules stood 0.7pt left with them, now 0.13 to 0.16pt right. A card
+    with a 2pt accent set in 5pt from a filled panel's text stood its text 1 and 0.9pt left, now
+    0.06 and 0.1pt right; set in half a point, 0.48 and 0.4pt left, now 0 and 0.1pt right. No
+    line breaks differently or moves down in either editor.
+  - 1 of the corpus's 62 documents changes, `cv-charcoal_gold`. The notes are unchanged.
+
+- **A DOCX export holds a row's auto column's editor point in the gap after it.**
+  - A row column sized to its content (`DocumentRowColumn.auto()`) is given a point for an
+    editor's face. It came out of the row's weight columns and moved what stood right of the auto
+    column a point right: `ReceiptModern`'s leaders and `EditorialProposal`'s signature lines
+    started 0.88 to 1.04pt right of the page's in Word.
+  - The column already holds the next child's left margin, and a paragraph's own right side gives
+    what the paragraph does not write as an indent. A paragraph set left takes what that does not
+    give from the gap after its column, which stands where the page sets it.
+  - What neither holds still comes out of the weight columns, and the row is named (`right end`)
+    unless they hold only spacers or it is under a tenth of a point. Twenty rows of the corpus
+    are named, among them
+    `ReceiptModern`'s amounts at the row's end, 0.84 to 1.1pt left in Word and 0.86 to 1.02pt in
+    LibreOffice, and
+    `VioletGrid`'s section heading rules, a point right. Nothing named them before.
+  - A rule in a row's column counts its left margin once: the column starts past it. Counted
+    again, `CharcoalGold`'s heading rules started 9.25pt right of the page's in Word, their 9pt
+    margin again, and `VioletGrid`'s credential rules 12.3pt, their 11.3pt margin again and the
+    point.
+  - Measured on Windows, in Word: the leaders within 0.06pt of the page's, the signature lines
+    within 0.18pt and `VioletGrid`'s credential rules within 0.07pt. `CharcoalGold`'s heading
+    rules stand with their words, which stand 0.7pt left in both editors. LibreOffice sets each
+    end of a rule 1.4 and 1.5pt in, as before. No line breaks differently or moves down in either
+    editor, and no word moves across by more than 0.4pt.
+  - 4 of the corpus's 62 documents change. The notes go from 1365 to 1385.
+
+- **A DOCX export ends a panel hung out of its table cell where the page ends it.**
+  - A panel whose left border the page centres on its cell's text edge is written with a negative
+    indent, its table half that border wider than the panel. LibreOffice and Word start a nested
+    table half that border in from its cell's text, so the table stood the whole border right of
+    where it is written: its left border half that border right of the page's, and its right end
+    the whole border. The table gave up width only where it then ran past its cell.
+  - It now always gives up what its left side had given its text: the half border it is wider by,
+    and what its left margin gave back of the other half. Its right end stands where the page's
+    does. What holding its right border in from the cell's edge has already taken counts towards
+    it, so a card held in beside a gap stays where it was.
+  - What of it the cell does not take goes back to a line set past its text further than its
+    margin holds. Engineering Resume's role card would lose the stop ending a line in both editors
+    otherwise. The panel is then named wider (`right end`), as far as it reaches.
+  - Measured on Windows:
+    - A rail with a 3pt accent in a row's column ended its fill 3.07pt right of the page's in Word
+      and 2.99pt in LibreOffice, and now 0.07 and −0.01pt. The same rail in a filled panel's cell
+      ended 1.1 and 1.02pt right, now 0.14 and 0.02pt.
+    - Compact Mono's rail ended 0.9pt right in Word and 0.86pt in LibreOffice, now 0.06 and −0.04pt.
+      Compact Mono's and Engineering Resume's bordered cards and Nordic Clean's rail ended 0.43 to
+      0.64pt right in Word and 0.35 to 0.54pt in LibreOffice, now 0.24 to 0.35pt and 0.09 to
+      0.22pt, as a bordered panel's right border stands in a cell.
+    - No word moves in either editor.
+  - 11 of the corpus's 62 documents change. Engineering Resume's report names three panels wider
+    (`right end`), one of them now at the 3pt its fill stands right of the page's.
+
+- **A DOCX export ends a rule where the page ends it in Word.**
+  - A horizontal line, a divider or a thin bar is written as an empty paragraph's bottom border, its
+    ends the paragraph's indents (a box is since written so only where it is a divider, and the
+    strip below is drawn: see "A DOCX export writes only a divider, of all boxes of a colour, as
+    Word's horizontal rule; any other box goes the way every drawing goes"). Word draws a
+    paragraph's border past both indents, so every rule stood about 1.4pt longer at its left and
+    1.5pt at its right. Subscription Invoice's four-coloured strip had its segments run that far
+    into each other.
+  - Each indent is now taken in by Word's reach: 1.42pt at the left, 1.51pt at the right. A rule
+    running past the width it is written in is held at that width's edge as before, and only what
+    Word draws further than the page ends it is taken in. A rule shorter than both keeps a tenth of
+    a point of its paragraph: rules of 1, 2 and 3pt stood 3.0, 2.88 and 3.12pt long in Word, each
+    centred where the page centres it.
+  - LibreOffice draws the border between the indents, so it now sets each end of a rule that much
+    further in.
+  - Measured on Windows:
+    - Nine rules in the body, half a point to 4pt thick: Word drew them 1.36 to 1.49pt past the left
+      indent and 1.44 to 1.59pt past the right. Neither a side border written as none nor the size
+      of the paragraph's mark changed that. Rules of 1 and 3pt in a row's column and in a table
+      cell fell in the same range, and a dashed and a dotted one reached as far as a solid one.
+    - On the corpus, in Word, 280 strokes stand nearer the page's and 13 further. The 13 are rules
+      whose column the export already starts right of the page's, which Word's reach used to cover
+      in part: Receipt Modern's leaders and Violet Grid's separators, after a row's auto column
+      given an editor's point, now start 1pt right instead of 0.45pt left.
+    - In LibreOffice, 281 rules move in: 249 by 1.4pt at the left and 1.5pt at the right, 21 at the
+      left only, being held at their width's edge, the rest by less at the right.
+    - No word moves in either editor.
+  - A header's or footer's separator is its text's own border and keeps its indents: Word still
+    draws it past the margins.
+  - 43 of the corpus's 62 documents change. No note changes.
+
+- **A DOCX export stands a table's rules where the page draws them beside a column sized to its
+  content.**
+  - An auto column's text is given a point of slack past the page's width, so an editor setting it
+    in its own face keeps the page's line breaks. The slack widened the column, so every rule and
+    fill right of it, and the table's right end, stood a point right of the page's.
+  - It now comes out of the column's text cells' margins, on the side their text does not lean on:
+    the right where it is set left, the left where it is set right, half from each where it is
+    centred. The column keeps the page's width, its text the same room. A cell spanning more than
+    one such column shares its margin among them.
+  - A composed cell keeps its margins: a paragraph in it may run past its text into them, which
+    Word cuts off at the cell's edge. What a column's cells do not hold widens it, and the report
+    names it (`right end`): beside a composed cell, or where a cell's padding on the side it gives
+    from is thinner than the point (each side thinner than half of it, centred). A side gives only
+    what it has past the inner half of the cell's rule, so a line an editor's face sets wider does
+    not run onto it.
+  - Measured on Windows:
+    - Word stood Classic and Modern Invoice's and Modern Proposal's rules right of the auto column
+      0.94 to 1.06pt right of the page's, and now within 0.12pt. LibreOffice stood them 0.66 to
+      1.06pt right, and now with the tables' other rules.
+    - Every line breaks where it did in both editors. The text right of the column moves the
+      point back to where the page sets it.
+    - Orange Ops's aside headings, composed in a table with no padding, keep their accent rules
+      1pt longer in Word, named.
+  - 5 of the corpus's 62 documents change. 4 tables gain the `right end` note.
+
+- **A DOCX export names a panel's left edge its table cell holds in.**
+  - The page sets a panel in a table cell with its left border centred on the cell's text edge,
+    half of it outside, or further out by a margin below zero. LibreOffice and Word start a nested
+    table at its cell's text, so the panel stands up to that much right of the page's: its left
+    border and fill, and with a margin below zero its text too. The report said nothing.
+  - The panel's note (`left edge`) names how far left of the cell's text the page sets it, up to
+    which the editors move it.
+  - Measured on Windows, 3pt accents:
+    - LibreOffice set them 1.5pt right of the page's, and a box's in a ruled table cell 1pt.
+    - Word set them 1.55 to 1.73pt right in every cell measured: a row's or a table's, filled or
+      not, a filled panel's, and a row's inside a filled or a ruled panel.
+    - Engineering Resume's 2pt and 3pt card accents stood 1.05 and 1.71pt right in Word.
+  - A panel bled 4pt left by a margin below zero stood 4pt right of the page's in both editors, its
+    text with it.
+  - A panel a placed row holds as a column had its left margin, which the row's cell already
+    starts past, counted again in its table's indent. It is counted once.
+  - 75 panels of the corpus's 62 documents gain the note. None of the DOCX changes.
+
+- **A DOCX export ends a panel where the page ends it.**
+  - A panel's text is given a point of slack past the page's width, so an editor setting it in its
+    own face keeps the page's line breaks. The slack widened the panel's table, so its fill and
+    right border ended a point right of the page's. It now comes out of the panel's right margin,
+    and its text keeps its width.
+  - Where the margin cannot hold it, the panel keeps that much of the slack, and the report names
+    it (`right end`): a heading underlined by its bottom border with no padding, or a panel whose
+    line Word sets wider than the page, at its size to the half point, runs further into the
+    margin than the rest of it holds. Word cuts off what passes the panel's edge: the stop ending
+    a line of Engineering Resume's role card, set at 7.5pt where the page sets 7.25, would go.
+  - A bordered panel in a table cell is held in from the cell's edge rather than its text: the
+    cell's own right margin, a row's gap beside it, holds what passes the text, where the cell
+    draws no right rule of its own that may cover it.
+  - Measured in Word and LibreOffice on Windows:
+    - The right borders of Compact Mono's and Engineering Resume's cards and Nordic Clean's rail
+      stood 1.4 to 1.7pt right of the page's, and now 0.4 to 0.6pt. The fills of invoice and
+      proposal heroes and Violet Grid's quote band ended 0.8 to 1.4pt right, now within 0.5pt.
+    - The cards beside a gap in Panel, Obsidian, Metered and Workspace stood their border 0.6 to
+      0.9pt left of the page's, and now 0.3 to 0.6pt right of it.
+    - No word moves in either editor.
+  - 14 of the corpus's 62 documents change. 12 panels gain the `right end` note, 7 lose the
+    `right border` note.
+
+- **A DOCX export stands a badge and its initials where the page draws them.**
+  - A badge's initials seated by their cap band (`verticalAlign`) were centred in their shape as
+    the editors centre a line, the page's seat not written. The shape's insets are now set apart
+    by twice the seat:
+    - Where the line and twice the seat fit the preset's text rectangle, the seat is one inset,
+      at the bottom to raise the initials or at the top to lower them, and both editors set them
+      where the page does.
+    - Where they do not, Word set the line low by half the excess, so the insets reach out at
+      both sides instead. Word sets the initials where the page does. LibreOffice, which takes an
+      inset below zero for none, moves them only by half the inset it reads, short of the seat.
+  - Word and LibreOffice place a shape anchored in a paragraph from the paragraph's top, the
+    space above its first line included. Space added above that line once the shape was placed
+    left the shape above its line: a lifted row's cell started lower, or a table cell's padding
+    past its row's was written above its paragraph. The shape now moves down with the line.
+  - Measured in Word and LibreOffice on Windows:
+    - Northline's monogram stood 0.9pt low, and its step numbers 0.3pt high in badges standing
+      1.35pt above their row. All now stand within 0.25pt in Word and 0.1pt in LibreOffice.
+    - Editorial's goal ticks stood up to 3.1pt high, now within 0.13pt.
+    - Four badges of other shapes and sizes, each in all four seats, stand within 0.12pt in Word.
+      Three were measured in LibreOffice: where the line and the seat fit, within 0.03pt.
+  - The field ledger's gap for a paragraph's seat narrows to one whose lines are not read.
+  - 2 of the corpus's 62 DOCX change, Northline and Editorial. The report does not.
+
+- **A DOCX export names what of a paragraph's pull up nothing above it gives back.** Word has no
+  space above a paragraph below zero. A paragraph's, a page reference's or a rule's top edge
+  below zero comes out of the space owed above it, and a paragraph's also off the foot of the one
+  line above it and the top of its own line, as far as each gives. What none gives was dropped
+  without a note.
+  - The note (`space above`) names the block's own pull, not a border below the block above,
+    which is named apart. In the flow, the block and what follows it stand that much lower. In
+    a table cell, the block stands up to that much lower, and where the cell sets its row's
+    height the row is that much taller.
+  - Not reckoned yet, and not named:
+    - the first block of a band's layer or of a row of columns' later layer, which resumes at the
+      page's distance from what is above it;
+    - a block opening a page in the flow: a section's first, one the layout moves to a new page,
+      or one after a page break;
+    - a side of an overlay's line pair, which takes its pull out of the space above alone.
+  - Measured in Word on Windows: `TealPulse`'s contact pairs are pulled 4.32pt up in a centred
+    row, a 2.16pt lift on the page, past what a line holding an icon gives. They stood 1.2pt
+    lower. Written as space below them, which shifts a centred paragraph as much, they rose
+    0.8pt, but their row grew past the page's and the page under it stood 2.2 to 2.8pt lower, so
+    the pull is named, not written.
+  - 5 paragraphs of the corpus's 62 documents gain the note: the 4 pairs and Obsidian's wordmark,
+    0.1pt. None of the DOCX changes.
+
+- **A DOCX export names a panel's right border its table cell's edge would cut off.** Word draws
+  a nested table's right border outside the table and, on screen, cuts off what passes its cell's
+  edge. A bordered panel reaching that edge has its table written narrower, out of its right
+  margin, so the border ends half a point short of the edge. Where the margin is too narrow, as
+  a shape container's always is, the border still passes it. The report said neither.
+  - The panel's note (`right border`) names how much narrower than the page draws the panel its
+    table is written, the editor's slack a panel sized round its content is given not counted,
+    and about how far its border still passes the cell's edge. A painted row is named the same
+    way, and so is a shape container written as a panel in a table cell.
+  - Measured in Word on Windows: Obsidian's cards' right borders stood 0.8 and 0.9pt left of the
+    page's for tables written 1.7pt narrower, and Editorial Proposal's glance card 0.7pt for
+    1.9pt.
+  - 28 panels of the corpus's 62 documents gain the note: 19 drawn in, and 9 passing the edge,
+    rota-cobalt's outlined chips and two payment panels. None of the DOCX changes.
+
+- **A DOCX export names what a picture among a paragraph's words loses of its place, its width
+  or its paint.** Word stands an inline picture on the baseline, and the export moves it by
+  `w:position` to where the page sets it, from the layout's measure of the paragraph's first
+  line.
+  - The paragraph's note names a picture beside text where the paragraph's lines are not read,
+    which nothing moves off the baseline; a picture on a later line of another height, set by
+    the first line's measure; and the lines of a paragraph seated by its cap band
+    (`verticalAlign`) in another size or face than its first, since one Word paragraph takes
+    one seat.
+  - A shape's note names how far its picture, wider than its box, moves what stands in its line
+    where no text beside it gives that back — a shape opening its paragraph or following a
+    picture or a line break, one before pictures alone, one in a list item or a right-to-left
+    line — reckoned from the side the line's alignment sets it from.
+  - A chip's note names a padding below zero on any side, which Word's shading does not follow;
+    an icon's names a gradient, which the raster draws flat, in its first colour.
+  - Each is named from half a point, but a picture the page sets by its alignment in lines that
+    are not read, where no line says how far.
+  - None of the corpus's 62 DOCX changes, and none of its 1246 notes.
+
+- **A DOCX export writes a list marker Word would read as a level's number as text.** A marker
+  holding a percent sign before a digit — `%1 `, `Step %2: ` — was written as a Word list level,
+  and Word reads `%1` to `%9` in a level's text as that level's number: measured, neither marker
+  showed in Word. Such a list is now written as paragraphs with its markers as text, as a list
+  whose siblings carry different markers is. None of the corpus's 62 DOCX changes.
+
+- **A DOCX export names a block that writes no paragraph for its anchor's bookmark.** A bookmark
+  goes round the paragraphs a block writes, and a section or a container of drawings alone writes
+  none (since bookmarked where its first drawing is anchored: see "A DOCX export bookmarks a block
+  of drawings alone where its first drawing is anchored, so a page reference or a link to its anchor
+  works"): its drawings stand in the paragraph beside them. A link to its anchor is written all the
+  same, to a bookmark the file lacks.
+  - Measured in Word and LibreOffice on Windows: the page's link went to the section's place on
+    page 1, and in both editors' PDFs the text carried no link at all, with nothing in the report.
+  - The report now names such a block and its anchor: a link to it points at none, and a page
+    reference to it is a fixed number. A block with a note of its own has it added there. Where
+    another node's bookmark carries the same anchor, a link goes there, and the block is not named.
+  - The file is unchanged: none of the corpus's 62 DOCX changes, and none of its 1246 notes.
+
+- **A DOCX export keeps the space above a list, a line pair, and a table, a row or a panel
+  opening a band, on the page the layout moves them to.** Word drops the space above a paragraph
+  at the top of a page. A paragraph, a picture and a spacer there already hold theirs in a line
+  kept with them; these did not.
+  - Measured in Word and LibreOffice on Windows, each moved to a new page:
+    - a list with a 14pt margin stood 14pt high, and so did one opening a stack of one layer or a
+      band with a 14pt margin; a list padded 10pt, or opening a section padded 10pt, stood 10pt
+      high;
+    - a title and its dates set as one line in a stack with a 14pt margin stood 14pt high, in the
+      flow and opening a band;
+    - a row, a table or a panel opening a band with a 14pt margin stood 14pt high: the band's
+      margin was left at the foot of the page above.
+  - Each now holds that space in a line kept with it, as a paragraph does. A list and a line pair
+    stand within 0.1pt of a paragraph moved so; a row, a table and a panel within 0.1pt of the same
+    block moved to a new page in the flow. A list's wrapped first item takes the gap between its
+    lines out of that line, as a paragraph does there, and stands where such a paragraph does. A
+    row, a table or a panel opening a band holds the band's margin above it with its own, and the
+    gap before the band stays at the foot of the page above, as one in the flow leaves it. A line
+    pair whose text the page sets above its overlay's top is left as it was.
+  - None of the corpus's 62 DOCX changes, and none of its 1246 notes.
+
+- **A DOCX export sets a later layer where the page does when its first block's edge reaches
+  above the layers before it.** A layer written after another starts at the page's gap below
+  them, less what its first block writes above its content itself. Where the block held more
+  than that gap, the rest was dropped and the block wrote all of it.
+  - Measured in Word and LibreOffice on Windows:
+    - a caption with a 20pt margin starting 7pt under the line above stood 12.7pt low, with
+      nothing named, and so did one centred by an alignment wrapper;
+    - a table with a 20pt margin stood 12.6pt low, with nothing named;
+    - a caption with a 20pt padding stood 12.7pt low, and a picture contained in a box level with
+      that line 12.9pt. The report said each was written under the line, though the page sets it
+      below.
+  - The block's own edge now gives that back, in a band and in a column's cell, where the block is
+    a paragraph, a picture, a list or a table in its layer's own flow (under plain sections and
+    containers, alignment and anchor wrappers alone), its edge above at zero or more. Each measured
+    one stands within 0.4pt of the page's distance from the line above, and the
+    padded caption and the picture are no longer named. A block in a row, a panel or a nested stack
+    writes its edge inside them, and keeps the old gap and the overlap measured from its box, as
+    does a block with an edge below zero.
+  - A list a layer opens now keeps its own margin and padding after the layer's gap, as a table
+    does. The gap took their place: a list with a 20pt margin opening a band stood 20pt high, one
+    with 10pt 10pt high, and one in a later layer 7pt high. Each now stands within 0.4pt.
+  - A layer whose content the page starts above the layers before it is still written under them
+    and named. A caption over a photo's foot with a 6pt margin stood that much lower again; it now
+    gives the margin back.
+  - None of the corpus's 62 DOCX changes, and none of its 1246 notes.
+
+- **A DOCX export keeps a band of layers and a shape container on the page the layout puts them
+  on.** The layout moves a layer stack or a shape container to a new page whole. A stack of more
+  than one layer is written as a band, its layers one after the other, and Word was told nothing
+  for it or for a shape container.
+  - Measured in Word and LibreOffice on Windows, with nothing named:
+    - a band of two layers the page moved to the next page stood with its first layer at the foot
+      of the page above, a band with a picture as its second layer too;
+    - a shape container of three lines stood with two of them there.
+  - Each is now kept on its page as a stack of one layer is: each paragraph keeps its lines, and
+    all but the last keep with the next. Each measured one the layout moves to a new page now
+    stands whole there, in both editors.
+  - The first paragraph, picture or spacer of a band the layout moves to a new page now holds the
+    space above it there, as one in the flow does: in a line kept with it, or in a spacer's own
+    line. That holds where a backdrop is drawn before it too. Set on that page whole, a band with a
+    14pt margin stood 14pt high, as did one with a backdrop laid first and one nested in a stack of
+    one layer with that margin; one in a section with a 10pt margin stood 10pt high. Held, each
+    stands where the page sets it, within 1.2pt, and the backdrop where the page draws it.
+  - A band whose first block is a list, a row, a table, a panel or a line pair holds that space
+    too, as the entry above on the space above a list, a line pair, a table, a row or a panel
+    says.
+  - A later layer whose own margin, or a picture's room in its box, reaches above where the layers
+    before it end stands lower than the page sets it by as much as it reaches above them, 13pt in
+    the measured case. Such a band near the foot of a page, which the page keeps there, now moves
+    to the next page whole in Word rather than split.
+  - 10 of the corpus's 62 DOCX change, in these keeps alone (`w:keepLines`, `w:keepNext`). Each
+    renders word for word as before in Word and LibreOffice. Its 1246 notes are unchanged.
+
+- **A DOCX export names a block Word may break inside a panel the layout moves it down in.** The
+  layout moves a block kept together, a layer stack or a shape container whole, or a block kept
+  with the next with it, to the next page as the page requires. Inside a panel the layout runs on
+  there, Word and LibreOffice break the panel's row where its lines run out and hold no keeps
+  across that break.
+  - Measured in both on Windows, inside a filled section, with nothing named:
+    - a stack of three lines, or a section kept together, moved whole to the next page, stood
+      with two of its lines at the foot of the page above;
+    - a heading kept with the line under it stood there too, the line on the next page.
+  - The report now names such a block (`APPROXIMATED`), including one opening a panel inside the
+    panel, as the outer row breaks before it. It is named once, not again for what it holds.
+  - A block moved whole that Word cannot split is not named: one line, one picture, a drawing, or
+    a row that may not split. A painted section kept together and a row holding a card were
+    measured moving whole, as the page sets them. One kept with the next is named all the same.
+  - None of the corpus's 62 DOCX changes, and none of its 1246 notes.
+
+- **A DOCX export keeps a stack of one layer on the page the layout puts it on.** The layout moves
+  a layer stack to a new page whole, but Word was told nothing and broke between its paragraphs.
+  Measured in Word and LibreOffice on Windows, a stack of three lines that the page moved to the
+  next page stood with two of them at the foot of the page above, in both. So did one opening
+  with a spacer or with a margin. Nothing was named.
+  - A stack of one layer in the flow is now kept on its page as a block kept together is: each
+    paragraph keeps its lines, and all but the last keep with the next. Each measured stack now
+    stands whole on the page the layout sets it on, in both editors.
+  - A stack in a table's or a panel's cell is not kept here.
+  - No document of the 62 in the corpus has a stack of one layer in the flow, and none changes.
+
+- **A DOCX export keeps the space above a spacer opening a stack of one layer on a new page.** A
+  stack of one layer that opens with a spacer, moved to a new page, lost the space above its text:
+  its own edges and the spacer's height. The spacer was written at the foot of the page above,
+  and the text under it at the new page's top.
+  Measured in Word and LibreOffice on Windows: a stack with a 14pt margin and an 8pt spacer before
+  its text stood 22.9pt high in both. Nothing was named.
+  - The spacer's line now holds the stack's edges, as a spacer in the flow holds a carried gap,
+    and the spacer is kept with what follows it in the stack. The text now stands 1.2pt higher
+    than the page sets it, in both, and stays on the page it was on.
+  - A layer's offset in its stack is named as before, and not held.
+
+- **A DOCX export keeps the space above the first paragraph or picture of a stack of one layer the
+  layout moves to a new page.** A stack of one layer is written in the flow, and Word drops its
+  first paragraph's space above at the top of a page as any other's. That space was held only for
+  a paragraph or a picture in the flow outside any stack. Measured in Word and LibreOffice on
+  Windows, opening such a stack on a new page, in both:
+  - a paragraph with a 20pt margin stood 20pt high;
+  - a picture with a 20pt margin stood 20pt high;
+  - a paragraph in a stack with a 14pt margin stood 14pt high.
+
+  Nothing was named.
+  - The space is now held in a line kept with the first block, as in the flow, the stack's own
+    edges with it. Each stands where the page sets it, and the page breaks where it did.
+  - A layer's offset in its stack, up or down, is named as before, and not held.
+  - A pull out of the block on the page above stays on that page, as it does in the flow. The
+    report no longer says it stands the stack's first paragraph lower, which on the new page it
+    does not.
+
+- **A picture, a shape or a barcode composed in a table cell keeps its own size.** The layout gave
+  a node composed in a table cell (`DocumentTableCell.node`) the cell's inner width, and the
+  height it measured. In a 120pt column padded 4pt, the page drew:
+  - a picture fitted to 100pt in a box 112pt wide, so 112×56 for 100×50;
+  - a 60pt picture stretched to 112×60;
+  - a 20pt circle as an ellipse 112pt wide.
+
+  The DOCX export wrote the pictures at their own size, and drew the circle as the page did.
+  - A node of a size of its own is now laid out at the width it measured, as the flow and a row
+    slot lay one out: a picture, a shape, a circle, a barcode, a line, a path or a polygon. It is
+    held to the cell's inner width where it measures wider, and starts at the cell's content edge
+    as before. A link on it covers it rather than the cell's width.
+  - Each of the three now stands where Word and LibreOffice draw it.
+  - Text aligns in the cell's inner width as before: a paragraph, a list, a page number or a page
+    reference. A composite is laid out in the cell's inner box as before.
+  - The DOCX export draws a circle or a shape there at its own size, as the page now does, and
+    measures a shape's corners against its own width.
+
+- **A DOCX export keeps the space above a picture the layout moves to a new page.** Word drops a
+  paragraph's space above at the top of a page, a picture's paragraph's too. Measured in Word and
+  LibreOffice on Windows, a 100pt picture opening its page stood at the page's top in both: 20pt
+  high with a 20pt margin, 15pt with a 15pt padding, 25pt when contained in a box with 25pt of
+  room above it, and 10pt in a section padded 10pt. Nothing was named.
+  - In the flow, the space is now held in an empty line that tall before it, kept with it, as a
+    body paragraph's is. Each stands where the page draws it, in both editors, and the page breaks
+    where it did.
+  - A pull out of the block on the page above stays on that page, as it does for a paragraph. The
+    report no longer says it stands such a picture lower, which on the new page it does not.
+
+- **A DOCX export keeps the room a contained picture leaves in its box.** The page draws a picture
+  contained in its box (`fitToBounds`, `CONTAIN`) in the box's middle. The export embedded it at
+  its fitted size and nothing else. Measured in Word and LibreOffice on Windows, a 200×100 picture
+  fitted to a 100pt square stood at the square's top, and the paragraph under it 51pt high, in
+  both. Nothing was named.
+  - Half the room it leaves above and below is now the space round its paragraph, and half at its
+    side its indent. In a band, which owes the space below it from the box, the room below is the
+    paragraph's own. The wide picture, a 100×200 one held in at its side, one centred by an
+    alignment and one in a row's cell all stand where the page draws them, in both editors.
+
+- **A DOCX export keeps a panel's padding round its outline.** The page sets a shape container's
+  padding round its outline, and its layers in the outline itself. Written as a panel in a table
+  cell, the padding was the cell's margins, inside the outline. Measured in Word and LibreOffice
+  on Windows, a 10pt padding stood the fill 10pt left of the page's and a label at its top-left
+  9pt low. A 20pt left padding stood a label at its bottom-right 20pt left. Neither was named.
+  - The padding is now written round the panel's table, as a margin is: its indent and the space
+    above and below it. Fill and text stand where the page sets them, in both editors, where the
+    cell sets what it holds at its top or its middle.
+  - Both editors set a cell's content at its middle or its foot without the space below a table
+    that ends it. Where the shape's table ends its cell, in a row held at the page's height, a
+    centred cell takes that space off the space above, which sets the shape where the page centres
+    it. What it cannot take (more space below than above), and the space below in a cell set at
+    its foot, is named on the shape: it stands that much lower.
+
+- **A DOCX export sets a panel's layer where its alignment sets it.** A filled or outlined
+  rectangle or rounded rectangle with text, composed in a table cell, is written as a panel, a
+  table of one cell, and its cell was always written centred. Measured in Word and LibreOffice on
+  Windows, in a 100×60 panel, a label set at the top-left corner stood at the middle, 22.5pt low.
+  One set at the bottom-right corner stood at the middle and at the left, 46pt left of the
+  page's. Neither was named.
+  - The cell now sets what it writes at the top, the middle or the foot, as its first written
+    layer is set. A paragraph is held in across to its box where its own alignment does not lean
+    the way its layer's does, or where an offset moves it across. Its width is read off the lines
+    its table laid out for it. Both labels stand where the page sets them, in both editors.
+  - What the cell cannot set is named (`layer offset`):
+    - a written layer after the first, which the cell writes under the layers before it;
+    - an offset down or up;
+    - a box set past the shape's right edge, or left of it;
+    - a layer set across by a box the layout does not give: a layer other than a paragraph, or a
+      paragraph whose lines are not found.
+
+- **A DOCX export sets a layer across where its offset moves it.** Measured in Word and
+  LibreOffice on Windows, a stack's one layer moved 40pt in stood at the stack's left edge in
+  both. A band's layer the page sets 20pt left of the stack stood at the stack's edge, the page
+  margin, in both. Neither was named.
+  - A layer is now held to its box on both sides, past the stack's edge where the page sets it
+    there, by an indent below zero. Both editors set the two layers where the page does, and a
+    stack's one layer of three lines moved 40pt in breaks at the page's words in both.
+  - A table cell's text starts no further left than the cell's own. There a layer stands left only
+    as far as the indents round it give, and the rest is named (`layer offset`). A stack's one
+    layer moved across in a table cell is written where the stack starts, and named. So is one
+    composed in a table's cell, where the stack has no place of its own in the layout.
+  - An offset down or up moves a stack's one layer without making room for it, which Word's flow
+    cannot do. It is written where the stack starts, as before, and now named (`layer offset`),
+    except where a band sets it at the page's distance below what is above it.
+
+- **A DOCX export stacks its drawings as the page paints them.** Word stacks drawings by the
+  place each is given (`wp:anchor/@relativeHeight`), a later one over an earlier one. The export
+  gave them their places in the order it drew them. In the flow it draws a stack's or a shape
+  container's layers in the order given, and columns' marks after the columns' own content. So
+  a layer the page stacks under another by its `zIndex` but given after it stood over it.
+  - Measured in Word and LibreOffice on Windows, a white dot (`zIndex` 0) given after a disc
+    (`zIndex` 1) stood over the disc in both. The page hides the dot. This held in a stack that
+    only draws, in a shape container, in a band of layers with text, and in a stack nested in
+    such a band.
+  - A shape container whose layers the page stacks in another order was named for it. Every
+    other case went unsaid.
+  - Each drawing now takes its place from where the page paints the fragment it is drawn from.
+    Both editors draw the dot under the disc in all four cases. The text keeps the order it is
+    written in.
+  - The places order the drawings behind the text among themselves, and those in front of it.
+    Word draws every one behind under every one in front: on a painted panel a layer framing
+    text stays behind while one that does not stands in front, whatever their `zIndex`.
+  - The shape container is no longer named for its order.
+  - In the fidelity corpus, 34 of the 62 files change only in those places. 26 of them stack as
+    before. The other 8 change the order of some drawings, and their pages render pixel for
+    pixel as before at 96 dpi in Word and in LibreOffice.
+
+- **A DOCX export names what a text header or footer shows otherwise in Word.** Measured in
+  Word and LibreOffice on Windows, four things went unsaid:
+  - **A band too shallow for its line.** Its line is written from the page's edge.
+    - 9pt text in a header 11pt tall stood 2.14pt lower in Word than on the page (2.10 in
+      LibreOffice), and in a footer 10pt tall 1.04pt higher (1.21).
+    - That footer's separator, ruled over the line, stood 0.92pt higher (1.06).
+  - **Page numbers in letters past 26.** Word letters them by repeating one letter: page 28
+    read `bb` and the total of 56 pages `ddd`, where the page and LibreOffice read `ab` and `bd`.
+  - **Slots that overlap where the page sets them.** The page draws them over one another, and
+    both editors set a slot that would overlap the text before it after that text instead:
+    - a left slot reaching past the middle had the centre and right slots set after it in both,
+      the right one past the right margin;
+    - a centre slot reaching the right one had it set after it, past the margin, in Word, and
+      on a line below in LibreOffice.
+  - **A slot wider than the line.** The page runs it past the margins; both editors wrap it
+    onto a line below.
+
+  The report now names each one:
+  - a shallow band with about how far its text, and its separator, move;
+  - a lettered band where the layout runs to 28 pages or more, or where it would with no layout
+    behind the export;
+  - overlapping or overwide slots with on how many of the band's pages.
+
+  The DOCX is written as before.
+
+- **A DOCX export names the blank page Word adds before a section.** Every section of a
+  multi-section document numbers its pages from 1. Once the document states different even and
+  odd pages, as it does for a page zone on some of them, Word starts every section on an odd
+  page. It adds a blank page before a section whose section before it runs to an odd number of
+  pages, with nothing said. Measured in Word and LibreOffice on Windows, sections of one, one and
+  one page came out five pages in Word and three in LibreOffice. Sections of two, one and one
+  page came out five in Word, and of one, three and two pages eight; LibreOffice adds none. In
+  both editors a footer on even pages stood on each section's second page, where the page draws
+  it: they file a section's even and odd pages by its own numbers. The report now names each
+  section Word adds a page before (`page zone`), and with no layout behind the section before it,
+  says where it would.
+
+- **A DOCX export writes a page zone whose predicate reads the page total on the pages the page
+  draws it on.** Word paginates for itself, so a zone's `appliesTo` predicate is asked over
+  sample pages, the document's own and more up to the sixth, and sorted into Word's first, even
+  and other pages. Every sample page was asked as one of at least six, the document's own
+  included. So on a one-page document a footer for one-page documents only
+  (`page -> page.total() == 1`) was not written, with nothing said, and one for longer documents
+  only (`page.total() > 1`) was written on the one page, which the page draws none of. Measured
+  in Word and LibreOffice on Windows, both showed the second footer and not the first. A
+  layout of fewer than six pages is now asked as well, each of its pages as the page asks it,
+  one of as many as the layout ran to. Those answers decide the kinds of page it has, and the
+  six-page sample's the rest; a predicate that answers otherwise for two pages of a kind in
+  either is written on every page and reported, as before. Both
+  editors show the first footer on the one page, 19.92 and 19.96pt from its foot where the page
+  sets it 19.95, and the second on none. On a two-page document a footer for two-page documents
+  only is on both pages with no note, and one for documents of more than two pages on neither.
+  A document of six pages or more is asked as before.
+
+- **A DOCX export names a table its rules stand taller in Word.** Word makes room for a table's
+  horizontal rules in their rows, and the page draws them over the cells' edges; the export takes
+  that room off a cell's padding, and where the padding is thinner than its share of the rules,
+  the row stood taller in Word with nothing said: measured in Word and LibreOffice on Windows,
+  four rows of text with no padding and 3pt rules set the paragraph under the table 15pt lower
+  than under the same table unruled. The report now names such a table (`cell rule`) with about
+  how much taller — counting each text cell on its own and a row at its tallest cell, as both
+  editors do, so a short cell beside a taller one that sets its row adds nothing, and a header
+  row repeated on every page once a page — or with the most it can be where the layout does not
+  tell a row's height or measure its text. Cells built from a node, cells spanning rows, and
+  empty cells where the row is held at the page's height are not counted: in the corpus's
+  invoices and rota whose rows are built from nodes or hold empty cells, the rows stood within
+  half a point of the page's in Word.
+
+- **A DOCX export writes a chart in a table cell as its data table, and draws nothing of it over
+  that table.** Composed in a cell, a chart was written as its data table and drawn as well: its
+  bars and grid lines stood over the table in Word and LibreOffice on Windows and hid its numbers —
+  "Sales" read "Sa" — without its axis labels, while the report said only that it was exported as
+  its data table. Where the chart is all its cell draws — alone, or with text, lists and wrappers
+  that paint nothing beside it — nothing of its drawing is drawn now. One beside other drawings in
+  its cell, which the export cannot tell its own from, or in a table composed in a cell, is still
+  drawn, and its note now says so. The export's log line, the chart's Javadoc, the charts recipe and
+  the Word export example no longer say the export has no layout pass or draws no vector geometry:
+  it writes no Word chart (a chart alone in its cell is since a Word chart: see "A DOCX export
+  writes a chart as a Word chart"). The example's committed DOCX and PDF are re-rendered for its
+  caption.
+
+- **A DOCX export names a table whose columns it leaves to the editor.** A table with an auto
+  column whose widths the layout does not show — one composed in another table's cell, which the
+  layout lays out among that table's own rows, or one with a column edge no row of it shows —
+  was written with its columns left to Word, and nothing said. Measured in Word and LibreOffice on
+  Windows,
+  a two-column table in a cell came out half the cell a column in both, its first column 121pt
+  where the page sets it 45, and a fixed column of 120pt beside an auto one 146pt, its width not
+  written either. The report now names such a table (`TableNode`), and with no layout behind the
+  export the section's note says that a fixed column beside an auto one is written with no width.
+  A chart's data table, which the page does not draw, is not named.
+
+- **A DOCX export names a border Word draws at another width than the page, and writes a text
+  header's or footer's separator of no width.** A Word border is no thinner than a quarter of a
+  point and no wider than twelve, and the export held a border to that without a word: a panel's
+  20pt border, a table cell's or a row's, was written 12pt wide, a 0.1pt hairline a quarter of a
+  point, a rule as thin and a separator as thin or as wide. Each is now named (`border width`),
+  once for a panel, a table and a rule, and once for a separator however many headers it is
+  written into. A separator of no width, which the page strokes as the thinnest line a screen or
+  a printer shows, was not written; it is drawn at Word's thinnest and named, and counts as Word
+  draws it where the export decides whether a band reaches past the page margin. One set below
+  zero, or not a number, is named as not written. A width that rounds to an eighth Word draws —
+  0.2pt to a quarter of a point — is drawn at it, unnamed.
+
+- **A DOCX export says why a drawing is not in it and what a section with no layout leaves to
+  the editor, names the application that made it, gives every table a grid, and names an anchor
+  in a repeated table header.** Without the layout — a document the engine refused, or a bare
+  `export(graph, context)` — a drawing was dropped as having "no semantic Word analogue"; it is
+  now said to have no place, the layout being what places it, and a drawing that paints nothing
+  is said to paint nothing, with a layout too. The section's note named line heights, the space
+  between lines and auto columns, and not the rest only a layout places or keeps: it now names,
+  where the section holds them, a row its arrangement or a growing spacer divides, what an
+  alignment or a stack's layer is set at across the width, written from the left, and the keeps
+  the page makes and Word is not told — a block kept together or with the next, a table's row in
+  one piece, a row of columns. Where the session states metadata, its creator is the file's
+  `Application`, which read "Apache POI"; a Word file has no producer, and a producer of the
+  caller's own other than it is named. A table whose columns are left to Word was
+  written with no `w:tblGrid`, which a Word table may not be without; it has an empty one, laid
+  out as before in Word and LibreOffice. An anchor declared in two cells of one table was
+  counted as one node, and the bookmark the file took out of the first unsaid; nodes are now
+  counted off the document, and one of the caller's own kind, which only the layout tells of,
+  still counts. An anchor in a table's header row the page repeats goes, on the
+  page, to the last repeat, and in Word to the one row the file holds; the report names it.
+
+- **A DOCX export keeps each anchor's bookmark its own, writes no control character the page
+  draws nothing for, sets a margin below zero out past its side, and says what a rounded panel
+  keeps.** A bookmark name a suffix made for one anchor — "Section-1" after "Section 1" took
+  `Section_1_2` — was given again to the anchor that cleans to it, "Section 1 2", so two links
+  went to one place; a name is now taken only once it is free. An anchor two nodes declare was a
+  bookmark on each, one name twice, where Word goes to the first and the page to the last: the
+  file now keeps the last it writes, and the report names the anchor — where the page's last is
+  a node the file writes no bookmark for too. A character the page leaves out — a control (a
+  bell, a null, a tab), a soft hyphen, a zero-width space, one of private use — was written, the
+  controls mostly as a question mark ("Total? due"), in runs, headers and footers, a badge's
+  initials, a list's marker and a picture's or a barcode's description; it is now left out too,
+  the line breaks and the direction marks and joiners kept. A margin below zero on a paragraph or
+  a list, and on the right of a block round them, was written as none, the text at the margin
+  where the page set it out past it; it is now an indent below zero in the flow. In a table
+  cell, a panel's included, the text stands as far out as the cell's text and no further, what
+  is held back named; a row's first child the page sets out past the row's left edge starts at
+  it, named. The corner-radius note on a rounded panel said it kept its fill where it had only a
+  border; it now says which it keeps.
+
+- **A DOCX export sets a row and an alignment composed in a table cell where the page sets
+  them.** Content composed in a cell (`DocumentTableCell.node(...)`) has no place of its own in
+  the layout. A row the page divides by what its children measure — `SPACE_BETWEEN` and the
+  other arrangements, a growing spacer, an auto column — had its columns left to Word, which
+  sized them to their text: an amount the page sets at its cell's right edge stood at the cell's
+  middle in Word. A block in `addAligned(...)` was written from the cell's left: a total aligned
+  right and a picture centred both stood at the left. The row's columns now start where its
+  paragraphs' lines start, which the table lays out, and an aligned paragraph or picture is held
+  in to where the page puts it. A row holding a child those lines do not place — a picture, a
+  shape, or a spacer in a row of stated columns — and an aligned block of any other kind are
+  written as before and named in the report, as is a row or an alignment inside a panel or
+  another table in its cell; an aligned drawing is drawn by its table where the page draws it,
+  as before.
+
+- **A DOCX export reads a table's cells, its headers and footers, its page references and its
+  lists' runs for the faces and headings it writes, and checks each page reference against the
+  bookmarks the file holds.** The faces a document ships, the heading styles it defines and the
+  anchors a page reference was written as a field for were read from the document's tree before
+  any of it was written, and a table's cell built from a node (`DocumentTableCell.node(...)`) was
+  not read: its content is the cell's, not the table's children. A face set only in such a cell —
+  or in a page zone, a header or footer band of text, a page reference, a page number, a list's
+  item or marker made of runs — was named on its runs and not shipped, so a reader without it
+  installed saw a substitute; a heading in such a cell named a `HeadingN` style the document did
+  not define, and Word set it as body text out of the Navigation Pane; and a page reference to an
+  anchor in such a cell was written as a number an edit does not update, its note saying the
+  bookmark was missing while the cell wrote it. The faces now travel and the style is defined. A
+  page reference is a `PAGEREF` field wherever the body writes its anchor's bookmark, and the
+  number it reads, with a note, wherever it does not — a section holding only shapes the export
+  draws writes no paragraph to put one round, and a field on a bookmark the file lacks reads
+  "Error! Bookmark not defined." once Word updates it.
+
+- **A DOCX export writes a rule in a table's cell once, draws a line thicker than a border,
+  and anchors a shape alone before a page break.** A rule composed in a table cell
+  (`DocumentTableCell.node(...)`) was written as its paragraph's border and drawn again by its
+  table, which draws what its composed cells paint: every line in such a cell came out twice,
+  and one centred in its cell — in `addAligned(...)` — was drawn centred and written again at
+  the cell's left. The rule now takes its drawing, written where the page draws it. Where it is
+  written in a panel or a row inside its cell, or another drawing of its kind and size in the
+  cell keeps the two from being told apart, both stay, and the report says it stands twice. A
+  horizontal line stroked thicker than 12pt, Word's thickest border, was written as a 12pt
+  border, and what followed stood over it; it is drawn as a shape at its thickness, holding its
+  room in the flow and among the text of a stack of one layer — composed in a table cell it
+  holds none, and the report says so. A shape alone on a page before a page break was dropped,
+  its note saying it was drawn: the break's paragraph, on that page, now carries it. A drawing
+  on a page no paragraph is written on at all is still dropped, and its note now says so, on the
+  node, where it had said the drawing was there.
+
+- **A DOCX export's report names a layer written under the layers the page lays it over.** Word
+  writes one block under another, so a layer stack's layers are written one after the other —
+  as one band, or one after another in a column's cell — each resuming the page's distance below
+  the layers before it. A layer the page starts above where those end — a caption over the foot
+  of its photo, a label in a card's corner, text over text, a title whose place an earlier layer
+  holds — has no distance below them to resume: what it writes in the flow was written under
+  them, and the report said nothing. It is now noted `overlapping layer`, with how far above their
+  end the page starts its highest block; a panel among them ends at its box's foot, past the
+  padding below its text. A layer within half a point of their end is taken for touching them. A
+  stack composed in a table cell, or exported with no layout, has no place of its own and is no
+  band: its layers are written one after another, and one writing more than one of them is noted
+  with whether one lies over another not measured. None of the corpus's 62 DOCX changes, nor its
+  1246 report notes: no layer of its stacks starts above where the written content before it
+  ends, and no stack composed in a cell writes more than one layer.
+
+- **A DOCX export's report says a shape container's layers are written inline only where they are.**
+  Every shape container not written as a panel was noted "its layers are written inline, one after
+  another in source order", whatever it held. One whose layers are all drawing — a tile, an icon, a
+  badge holding its glyph — writes nothing in the flow: each layer is drawn where the page draws it,
+  in source order. The note is now written only where a layer is written in the flow, as text, a
+  picture or a band beside the drawing, or where the page stacks the layers in another order than
+  they are given, by their z-index (since stacked as the page paints them: see "A DOCX export stacks
+  its drawings as the page paints them"). None of the corpus's 62 DOCX changes; their reports go
+  from 1332 notes to 1246, the 86 gone being 49 drawing-only containers, 22 badges and plates whose
+  icon is drawn over them, and 15 containers composed in table cells their tables draw.
+
+- **A DOCX export's report no longer names a cell's tile dropped while its table draws it, nor
+  corners drawn alike as unequal.** A table whose composed cells hold a box framing text — a
+  panel — leaves that box to the panel and draws its other cells' boxes; asked of the whole
+  table, a tile, a shape or a rounded box in another cell was reported `DROPPED`, "not in the
+  document", while it stood drawn. The table now asks the cell: a box node is reported only in a
+  cell a box left to its panel reaches into, past its edges included, since the layout does not
+  tell that box apart from the node. A box whose corners round by radii that differ only past
+  half its shorter side — 10 and 12 on a box 20 tall — is drawn at 10 on the page and in Word
+  alike, and its note no longer says its corners are drawn at the largest. A shape composed in a
+  table cell is held to half its own shorter side, though its cell, which the report does not
+  know, may lay it out narrower: one in a cell narrower than it can still be named. None of the
+  corpus's 62 DOCX changes, and none of its 1332 notes: no corpus document holds either case.
+
+- **A DOCX export ends and turns a drawing's outline as the page strokes it.** An outline was
+  written with no cap and no join, which Word 16 and LibreOffice draw with flat ends and round
+  corners where the page ends a stroke butt and mitres it: a rectangle's 10pt frame came out with
+  rounded corners, a star's points 4pt short, a triangle's apex 13pt short, and a path's or a
+  line's round or square caps ended flat, 5pt short at each end of a 10pt stroke. Each outline now
+  states the page's cap — flat, round or square — and join — mitred up to ten times the stroke's
+  width, as the page mitres, round or bevelled — on shapes, lines, polygons, paths, shape-container
+  outlines and the drawings a table's cells hold. Measured on one-drawing pages against the page's
+  ink, Word draws every cap and join where the page does, and LibreOffice too but for a mitred
+  corner sharper than 30 degrees, which it bevels; neither reads the miter limit, Word's own being
+  the page's. A drawn path's and a drawn line's report notes no longer name caps and joins; a line
+  written as a paragraph border still names the caps it cannot end in. 29 of the corpus's 62 DOCX change, each in its outlines alone
+  (146 flat, 60 round and 2 square caps; 148 mitred and 60 round joins); their reports go from 1340
+  notes to 1332, the 8 on paths in table cells that named only their caps gone, and 39 other path
+  notes no longer naming them.
+
+- **A DOCX export's report names what it draws as a picture, or draws without, where it said nothing
+  or more than was lost.** An inline shape — a dot, an arrow, a checkbox — and an SVG icon that
+  states no text were drawn into pictures with no note, though Word could hold a shape in the line;
+  each is now reported `APPROXIMATED` as a picture. A box drawn as a shape whose corners round by
+  radii that differ — a shape container's outline, or a section's or a container's paint laid over
+  the flow — was drawn at the largest of them unnamed; its note now says so, and so does a shape
+  container composed in a table cell that its table draws. A path composed in a table cell lost its
+  caps and joins in silence, and a drawn path's note named a gradient paint, a dash pattern, caps
+  and joins whatever it lost. A path's outline is written with no cap and no join (since written
+  with the page's cap and join: see "A DOCX export ends and turns a drawing's outline as the page
+  strokes it"), which Word and LibreOffice draw with flat ends and round joins (measured: a 10pt
+  stroke's ends stood where the page ends them, and its mitred point 2.76pt short), so the note now
+  names a gradient, a dash (since drawn: see "A DOCX export draws a dashed line or path dashed"),
+  a cap that is not flat where the path has an open end, and a join that
+  is not round where two of its segments meet — the page's default mitre among them. A path painted
+  only with a gradient was dropped as geometry Word has no analogue for; it is dropped for its
+  gradient. Page numbers that do not count from 1 on page 1 were reported as numbered from 1 by
+  Word's fields, which a section's `w:pgNumType` could offset; the note now says the export writes
+  them without that offset. A page zone's icons and shapes are named once, though its line is
+  written into each kind of header Word is given. None of the corpus's 62 DOCX changes. Their
+  reports go from 969 notes to 1340: 278 inline shapes and 85 icons named pictures, 8 paths in table
+  cells naming their caps, and the 50 path notes that named all four now naming caps (37), joins
+  (1), caps and joins (1) or none (11) — none of those paths has a gradient or a dash.
+
+- **A DOCX export gives a paragraph opening a row's column the gap above its first line out of the
+  space above the row.** Word sets a paragraph's lines one height apart, the gap between them inside
+  the line, so a paragraph of more than one line holds a gap too many, which comes off the space
+  above it, or off its cell's padding. Opening a column of a row of columns or of a stack's columns
+  with neither, its gaps were shared out over its lines, which stood closer than on the page:
+  `EditorialProposal`'s goal cells, three lines each, stood 1.46 and 0.45pt low and 0.56pt high in
+  Word; `OrangeOps`' degree, two lines beside its badge, 0.45pt low and 0.45pt high. The row is now
+  lifted out of the space above it by what the paragraph needs, its other cells start as much lower
+  inside — one opening with a table, as a column painted as a panel does, below a hairline paragraph
+  holding the lift — and a row held to a height is held as much taller. Only where the lift raises
+  the first line half a point or more above where sharing the gaps out sets it: a smaller rise left
+  `EditorialProposal`'s phases 0.3pt high, a cell's last paragraph having nothing under it to lower
+  it into, and their gaps stay shared out. Not on a page's first row, nor in an overlay. Five of the
+  corpus's 62 DOCX change. Lines moved by more than 0.05pt: Word 40 nearer the page and 5 further,
+  LibreOffice on Windows 44 and none further. `EditorialProposal`'s goal cells stand within 0.16pt
+  in Word and 0.25pt in LibreOffice, `OrangeOps`' degree within 0.27pt; `EditorialProposal`'s 90th
+  percentile goes from 0.41 to 0.22pt in Word and from 0.65 to 0.35pt in LibreOffice on Windows. The
+  report's notes are unchanged.
+
+- **A DOCX export settles a list item's exact lines with the page, and what a cell's lines carry at
+  its end.** Word sets a list's item at its written line height, to the twip, and the export compared
+  only a paragraph's lines with the page's: `Panel`'s skills and projects, items of two lines and
+  more, each line written a fiftieth of a point taller than the page's, ran 0.21 and 0.35pt taller in
+  Word, and every card under them stood that much lower. An item's lines are now owed below it, hung
+  below it or carried on with the paragraphs' around it, and what it owed is taken back where its
+  pictures grow its lines, as a paragraph's is. A list's items are written at its tallest line, so an
+  item the page sets shorter now hangs what it passes the page by out of the space below it, named
+  where that space cannot hold it. What a cell's lines still carried at its end,
+  a tenth of a point or less, went with the cell; the cell's end now settles it: owed below its last
+  block where the lines fall short of the page, hung below the cell where they pass it, as a line
+  hanging there is. 48 of the corpus's 62 DOCX change. Lines moved by more than 0.05pt:
+  Word 602 nearer the page and 282 further, LibreOffice on Windows 576 and 253. Medians, Word and
+  LibreOffice on Windows: `Panel` 0.37 → 0.21pt and 0.34 → 0.21pt, `TerracottaRail` 0.30 → 0.17pt and
+  0.25 → 0.17pt, `ConsultingInvoice` 0.25 → 0.17pt and 0.14 → 0.08pt; `ClassicSerif` 0.16 → 0.07pt in
+  Word. A tenth of a point settled moves a line a step of Word's 0.12pt grid or none: where other
+  errors already stood lines high, they now stand a step higher — `ObsidianInvoice`'s parties and items
+  0.12pt (median 0.21 → 0.33pt in Word), `VioletGrid` 0.21 → 0.27pt, `MidnightNavy` 0.16 → 0.22pt.
+
+- **A DOCX export carries what a paragraph's exact lines are off the page by, too little to settle
+  below it, on to the next paragraph's.** Word sets an exact line at its written height, to the
+  twip, where the page sets each line at its own: what a paragraph's lines fall short of the page by
+  is owed below it, and what they pass it by is taken out of the space below, but a tenth of a point
+  or less was left, as Word sets lines on a grid 0.12pt apart, and paragraph after paragraph it
+  added up: `Panel`'s card lines, each written a fiftieth of a point taller than the page's, came to
+  up to 0.13pt a card and were never taken out. What a paragraph leaves is now carried to the next
+  and settled with it once the two come to more. What is carried stays on its page, and starts again
+  where the space owed is set anew — a band's or a column's layer, below a band — and in each cell,
+  whose end settles its own (see above); a paragraph that owed for its lines and whose pictures
+  then grow them takes that back and carries on what the lines above it carried. 27 of the corpus's
+  62 DOCX change. In Word
+  323 lines stand nearer the page by more than 0.05pt and 106 further, in LibreOffice on Windows 283
+  and 101: `Panel`'s lines a median 0.35pt low in Word where they stood 0.46pt, and 0.34pt in
+  LibreOffice where 0.39pt; `SerifHeadline`'s 0.33pt where 0.38pt, its 90th percentile 0.93pt in
+  Word where 1.05pt. A line that already stood off the page the way the carry moves it, by an error
+  of another kind the drift had partly offset, stands further: `BlueBanner`'s last project line and
+  `SidebarPortrait`'s last two, 0.8 and 0.5pt higher than the lines above them, stand 0.23 to 0.36pt
+  high in Word where they stood within 0.12pt. The report's notes are unchanged.
+
+- **A DOCX export raises a line pair's shared line into the space above it where neither half is
+  moved by its position.** A label and its value set to one line are one Word paragraph, each half
+  seated by its own position; under half a point the position moves nothing, and the line stood
+  where Word set it: `ConsultingInvoice`'s bank details, half a point below the page's line, stood
+  0.7 to 0.8pt low in Word and both LibreOffice builds with the drift everything under its line-item
+  table shares. The shared line now moves up into the space written above it for both halves, by the
+  lesser of what they call for, and owes as much below it, as a line of its own does; not where a
+  half is cut to its own measure, nor where the layout opens a page with the pair. Four of the
+  corpus's 62 DOCX change. `ConsultingInvoice`'s ten bank lines stand 0.2 to 0.33pt low, ten lines
+  nearer in each of its documents and editors and none further; the short invoice's 90th percentile
+  goes 0.78 to 0.39pt in Word and 0.81 to 0.34pt in LibreOffice, the long one's 0.53 to 0.51pt and
+  0.43 to 0.34pt. `LumaStudioInvoice`'s pairs, in Carlito, rise 0.12 to 0.25pt, as its other lines
+  already do where both editors set Carlito higher than the export reckons: its totals 0.07 to
+  0.28pt low where they stood 0.32 to 0.52pt low in the long invoice, its bank details in the short
+  one 0.27pt high in Word and 0.34pt in LibreOffice, where they stood 0.03 and 0.14pt high. The
+  report's notes are unchanged.
+
+- **A DOCX export raises a line Word sets low in a band into the space above it, as in the flow, and
+  the band pays what it owes below.** A line Word sets lower than the page in the flow is moved up
+  into the space written above it, and owes as much below it, so what follows stays put. A band — a
+  stack laying one layer over another, a shape container — measures the space down to each later
+  layer, and below itself, from the page, and dropped what its lines owed: so no line in a band was
+  raised that way, and Word and LibreOffice set `ConsultingInvoice`'s contact lines half a point low
+  and its address 0.3pt low. A band now takes back what the line it raised last still owes before
+  its next layer and below itself, as a column's later layer does, room held for a drawing after
+  that line paying none of it, and its lines are raised as the flow's are; its first paragraph or
+  list item, where a band in the flow opens its page, is not, as Word drops the space above it
+  there. Six of the corpus's 62 DOCX change. `ConsultingInvoice`'s contact and address lines stand
+  within 0.03pt of the page in Word and both LibreOffice builds, its payment terms 0.25 to 0.4pt low
+  where they stood 0.65 to 0.88pt, six lines nearer in each and none further. `LumaStudioInvoice`'s
+  band lines, in Carlito, rise 0.12 to 0.24pt, as its flow's lines already do: both editors set
+  Carlito's lines higher than the export reckons, and its contact lines now stand 0.08 to 0.17pt
+  high, its notes and payment headings 0.27pt high in LibreOffice, where they stood 0.07pt high.
+  `MonogramSidebar`'s initials are raised by the space above them rather than their position, and
+  stand where they did. The report's notes are unchanged.
+
+- **A DOCX export keeps a one-row body table kept with what follows with it in LibreOffice too.** A
+  block kept with what follows is told so on every paragraph it writes (`w:keepNext`), and a row the
+  layout placed may not break across pages (`w:cantSplit`). LibreOffice reads a table of one row
+  that may not break as a table that may not split, and keeps such a table with nothing:
+  `EditorialProposal`'s page-two masthead, a row of columns kept with the heading under it, stood at
+  the foot of page one in LibreOffice, and every line of page two 45 to 47pt higher than the page
+  sets it. A table of one row in the body kept with what follows, its cells holding paragraphs
+  alone, is now written with a row that may break: the masthead opens page two in LibreOffice, and
+  Word, which set it there either way, sets it as before. Four of the corpus's 62 DOCX change, 12
+  tables, and only `EditorialProposal` moves: in LibreOffice 24.2 and on Windows 72 of its lines
+  stand nearer the page and none further, 45.15 to 0.20pt from the page by median and 45.70 to
+  0.65pt at its 90th percentile, and all 132 of its lines are found, where 129 were. Word measures
+  the same on all 62 documents. The report's notes are unchanged.
+
+- **A DOCX export takes what a column of a layer stack hangs past the stack's foot out of the gap
+  under the stack, as it takes a row's cell's.** A stack whose layers stand side by side is written
+  as the cells of one row, and the row read nothing of what a column's last line hangs below it — a
+  line held to its icon, an item lowered into the space under it: Word and LibreOffice made the row
+  that much taller than the page's. `OrangeOps`' achievement cards, each a badge column beside a
+  text column, ran 0.1 to 0.15pt past theirs, every card stood that much lower than the one above
+  it, and the education block under them 0.42pt low in Word and 0.32pt in LibreOffice 24.2. The room
+  the row leaves under a column on the page takes its hang first, as under a row's cell, and the gap
+  under the stack the rest; a list's item lowered into a column's hang stays lowered where either
+  takes it, and is taken back at the end of the document, as one ending a row's cell is. One of the
+  corpus's 62 DOCX changes: each of `OrangeOps`' cards under the first stands higher by the hangs
+  above it, and its aside under them about half a point higher in both, 0.49 to 0.27pt from the page
+  at its 90th percentile in Word and 0.41 to 0.28pt in LibreOffice 24.2, 0.15 to 0.11pt by median in
+  Word; the drift had hidden how high the lines of its later cards' bodies are set, now about as
+  high as the first card's, up to 0.32pt, and how near each other both editors set its education
+  degree's two lines, 0.8 to 0.9pt nearer than the page, its second line now 0.33pt high in Word and
+  0.45pt in LibreOffice 24.2. LibreOffice on Windows sets it on two pages, as before. The report's
+  notes are unchanged.
+
+- **A DOCX export raises a line Word sets low in a layer stack of one layer, and lifts a row there,
+  as in the flow.** A stack of one layer lays nothing over anything, and its contents are written in
+  the flow — a template wraps a row in one to set it in a row's cell — but a line Word set low there
+  was left to its position, which moves nothing under half a point, and a row's first lines were not
+  lifted out of the space above its table: `SlateOrange`'s employers' lines and their items, its
+  experience timeline set in one, stood 0.23 to 0.54pt low in Word and 0.14 to 0.42pt in
+  LibreOffice, and `SubscriptionInvoice`'s contact rows 0.32 to 0.43pt and 0.24 to 0.29pt. Both are
+  now made there as in the flow, the space a line takes owed below it as there; in a stack laying
+  one layer over another, whose writer measures what follows from the page, a line keeps the space
+  above it and a row is not lifted, as before (a line there since raised: see "A DOCX export raises
+  a line Word sets low in a band into the space above it, as in the flow, and the band pays what it
+  owes below"). The layout moves a stack of one layer to a new page whole, and a line opening that
+  page in it is neither moved up into the space above it nor lowered by growing it, as one opening
+  its page in the flow is not. Two of the corpus's 62 DOCX change: `SlateOrange` stands 0.40 to
+  0.29pt from the page by median in Word and 0.30 to 0.22pt in LibreOffice on Windows and 24.2, 20
+  of its lines nearer in Word and 19 in LibreOffice, and `SubscriptionInvoice` 0.16 to 0.14pt in
+  Word, three lines nearer in each; no line stands further. The report's notes are unchanged.
+
+- **A DOCX export lowers a paragraph's line Word sets high by a tenth to half a point, by the space
+  between it and what follows.** Word and LibreOffice stand an exact line's baseline four fifths of
+  the way down it, the page its face's ascent below the line's top, and a line the export's measure
+  of that seat found high was moved only by its position, which counts in half points: under half a
+  point it was left where Word set it, and of the 4170 lines of the corpus measured in both editors,
+  772 stood 0.15 to 0.6pt above the page's in both. Such a line is now lowered by
+  growing the space written above it, by what is left of the space between it and the block under
+  it once that block has taken its own of it — the gap between its lines, its own raise, the room
+  its pictures reach into, a row lifted out of the space above its table: what is left above that
+  block, or of the space written below the line where a table or a cell's end follows. The block
+  under it stands where it did. What nothing gives — a block on a later page, whose space above
+  Word drops at the page's top, a block in an overlay, a page break, a block the layout moves to
+  the next page, a column's later layer, which takes its place from the page — the line is not
+  lowered by, and where the section's end leaves the space below a cell's last line out, the
+  lowering it gave is taken back with it. Not lowered: a list's item, which its own list lowers, a
+  line opening its page or a panel, cut to fit, not on one page, or in an overlay other than a
+  stack of one layer.
+
+- **A DOCX export hangs what a rule's paragraph stands past the rule's box below it, for the space
+  under it to take.** A rule is an empty paragraph whose bottom border is the stroke: Word makes it
+  a tenth of a point of line where the stroke has no room above it, and the border as wide as it
+  draws it, in eighths of a point — a 1.2pt rule 1.25pt. What that stands past the box came off the
+  space owed below the rule where there was any, and was lost where there was none, standing the
+  block under it, and all that follows, that much lower: under `MeteredInvoice`'s title rule the row
+  below stood 0.13pt low in Word and 0.11pt in LibreOffice (measured by its cells' shading). It now
+  hangs below the rule as a line hanging below a block does, the space above what follows taking
+  it and the report naming what it cannot (`space above`), as for any such line — except where
+  that hang is let go, below a table's composed cell, or a row cell or a layer stack's column whose
+  room the layout does not report. `MeteredInvoice`'s row then stands within 0.01pt. A rule not
+  drawn hangs nothing past its line.
+
+  The two are measured together, as each unmasks the other's error: 44 of the corpus's 62 DOCX
+  change, and by median 33 documents stand nearer the page in Word and 6 further, 36 and 6 in
+  LibreOffice on Windows, 35 and 7 in LibreOffice 24.2 — `TimelineMinimal` 0.36 to 0.05pt in Word
+  and 0.45 to 0.05pt in LibreOffice, `ProposalEditorial` 0.50 to 0.14pt in Word,
+  `ProfessionalSidebar` 0.30 to 0.13pt; by line, counting a line whose distance from the page
+  changed by more than 0.05pt, 1030 nearer and 441 further in Word, 879 and 428 in LibreOffice on
+  Windows. Three stand further by more than a few hundredths, each by a drift of its own the lines'
+  seat or the rules' hang had covered: `Panel`, whose cards' lines stand lower with each entry, 0.31
+  to 0.46pt in Word, `MeteredInvoice` 0.09 to 0.22pt, and `CenteredHeadline`, a tilt down its page,
+  0.11 to 0.18pt. The report's notes are unchanged.
+
+- **A DOCX export lowers a Word list's item that Word sets high by the space above it, its marker
+  with its text.** Word draws a Word list's marker from the paragraph's mark, and LibreOffice does
+  not move it by the mark's position, so an item the export's measure of Word's seat found high by
+  half a point or more was left there rather than given a position: `MidnightNavy`'s two-line
+  duties, 0.9pt high by that measure, stood 0.70 to 1.06pt high in Word and 0.82 to 1.04pt in
+  LibreOffice, `NavySidebar`'s, 0.51pt by it, 0.30 to 0.47pt. Such an item is now lowered by growing
+  the space written above it, which moves its marker and its text together in both editors. The
+  items under it take as much back out of the space above them, one standing as high taking it back
+  by its own lowering; one that cannot, and stands less high itself, has the lowering above it taken
+  back as far, and stands where it would have. What the list's last items still owe hangs below the
+  list as a line hanging below a block does: the space above what follows takes it, the report
+  naming what that space and that block's own top edge cannot give, and at the end of a cell the
+  space the cell owes under the list, the room under it in its row or under its layer stack's
+  column, or a card's padding, each list's on its own. Wherever the hang is let go instead — among
+  them below a table's composed cell, under a column's later layer, which takes its place from the
+  page, at a block the layout sets on a later page, which takes nothing of the hang left on the page
+  above, at a section's end, where the space a cell of its last row owes under its own last
+  paragraph is left out, and with it what that space gave back — the lowering is taken back, those
+  items standing as high as before and what follows where it stood; not yet where the room under a
+  cell in that row is the space below a cell beside it, left out there as well. Not lowered: an item
+  the layout opens a page with, one of a list it sets over two pages in a cell, an item opening a
+  card, whose top border the space above it takes, and one in an overlay whose writer measures what
+  follows from the page — a stack laying one layer over another, a band, a shape container; a stack
+  of one layer, in which a template wraps an entry, is written in the flow, and its items are
+  lowered as there. The duties now stand 0.10pt high to 0.20pt low in Word and 0.14pt high to 0.08pt
+  low in LibreOffice on Windows and 24.2, `NavySidebar`'s 0.03 to 0.19pt and 0.03 to 0.05pt low,
+  everything after them where it stood; no other document of the corpus changed.
+
+- **A DOCX export writes a list composed in a table cell on the lines its table laid out for it, as
+  it does a paragraph there.** A composed cell's content is laid out under its table's path, so a
+  list there has no lines at a path of its own, and its items were matched to none: written at no
+  height at all, each stood at its face's own line in Word and LibreOffice, taller than the page's —
+  `SlateOrange`'s certifications, a list beside the education column, stood 0.26, 0.48, 0.84 and
+  1.18pt low in Word and 0.15 to 1.05pt in LibreOffice. A list composed in a cell now takes the run
+  of its table's lines that holds its items in turn, opening at a line no paragraph or list before it
+  took: each a line of the item's text as the page lays it out, the marker and indent the page sets
+  in that text before it, and, in a `hangingIndent` list, the line of the item's visible marker set
+  level before it in a column of its own; a paragraph before it that the page reads as markdown is
+  matched first. Its items then take from those lines what a list's in the flow take:
+  the height the page sets them at, the list's lineSpacing between a wrapped item's lines, a
+  `hangingIndent` list's marker column, and each item's seat on the page's baseline, an item in a
+  row Word keeps whole on its page rising into the gap above it, as a paragraph composed there does.
+  Having no place of its own, a Word list whose marker the page sets in its text keeps its stated
+  column. A list holding an item of runs, whose text is not read here, one with an item the page
+  reads as markdown, its marks dropped, or one it runs onto the next page, or a `hangingIndent` list
+  with a blank item the page draws as a marker alone, is written as before, and the report names its
+  lineSpacing as not written, whether an item wraps not measured. The certifications now stand
+  0.26, 0.00, 0.12 and 0.10pt low in Word, and 0.10pt low to 0.10pt high in LibreOffice on Windows
+  and 24.2; no other document of the corpus changed.
+
+- **A DOCX export stands a list's items where the page sets them in their exact lines, as it does a
+  paragraph's.** Word and LibreOffice stand an exact line's baseline four fifths of the way down it,
+  the page its face's ascent below the line's top, and a paragraph's line is moved there; a list
+  item's was not moved at all. By the export's own measure of Word's seat, 68 items of the corpus
+  stood low by under half a point, a median 0.22pt, and 16 high by half a point and more; measured,
+  they stood about where it put them: `BoxedSections`' skills, 0.18pt low by it, 0.23 to 0.28pt low
+  in Word and LibreOffice, `MidnightNavy`'s two-line duties, 0.9pt high by it, 0.76 to 1.06pt high.
+  An item is now seated as a paragraph is: a line set low rises into the gap above it as far as the
+  gap goes and owes as much below, which the item under it rises into in turn; under half a point, one
+  opening a cell takes what the gap cannot give from the cell's padding, or from the space above its
+  row of columns; and what is left where the whole difference is half a point or more, and a line set
+  that much high, is its text's position. Not raised into the gap, though still moved by its position
+  where it takes one: an item the layout opens a page with — the first of a list it starts on a new
+  page in the flow, or one it sets on a later page than the item before it — whose space above Word
+  drops there, nor one of a list the layout sets over two pages in a cell, where what an item owed
+  would be the space above the next page's first, inside the cell. An item whose marker Word draws,
+  a Word list's, is not moved by its position: Word sets that marker from the paragraph's mark,
+  which LibreOffice does not move by the mark's position — lowered a point by both, `MidnightNavy`'s
+  duties stood 1.15pt under their bullets there — so a line of it Word sets low keeps what the space
+  above does not take of it. An item the layout's lines are not matched to is not seated.
+
+  `ClassicInvoice`'s notes moved up 0.24 to 0.36pt in Word and 0.3pt in LibreOffice, to within
+  0.05pt of the page, `BoxedSections`' and `ModernProfessional`'s skills and projects 0.12 to 0.24pt
+  and 0.2pt, and `Executive`'s project descriptions, items of a list Word does not number, down
+  0.48pt and 0.55pt, to within 0.06pt. By median, 5 documents moved nearer the page in Word, 3 in
+  LibreOffice on Windows and 3 in LibreOffice 24.2, none further.
+
+- **A DOCX export stands the first line of a panel, a table's composed cell and a row's column where
+  the page sets it, where nothing was written above the line to raise it into.** Word and LibreOffice
+  stand an exact line's baseline four fifths of the way down it, and a line the page sets higher is
+  moved up into the space written above it; under half a point, a line with no such space was left
+  as low as Word set it. A line opening a cell has none of its own: a panel's padding and a table
+  cell's are the cell's margin, and a row's columns have their space above written above the row's
+  table. By the export's own measure of Word's seat, 250 lines of the corpus stood so, a median
+  0.22pt low; measured, `ClassicInvoice`'s "TOTAL DUE" stood 0.18pt low in its panel in Word and
+  0.2pt in LibreOffice. Under half a point, a line opening a cell now takes what its space above
+  cannot give from the top padding of the cell it opens — a panel's, less what its top border takes,
+  the panel's row held as much taller, as Word adds the margin left to the height a row is held at;
+  a table's composed cell's, in a row whose margins even, the cells beside it taking the margin back
+  above their first lines — and a row of columns' first row is lifted out of the space above its
+  table by the most its cells' first lines call for, each line rising by its own and the space under
+  it taking that back, so what follows stays. Not a row the layout moves to a new page, whose space
+  above stays on the page above, a row held to a height, or one whose column opens with a panel or a
+  table, which would rise whole. A paragraph in a table's composed cell, in a row the layout placed,
+  is raised into the space above it as anywhere else: the cell has no placement of its own, but its
+  row is kept on one page; one in a table nested in that cell is not yet.
+  Half a point and more is the position's, as before: taken from the padding, `CobaltRota`'s
+  masthead, whose position LibreOffice moves further than it says, came out 0.5 to 0.7pt lower there.
+  LibreOffice 24.2 counts a row's margins inside the height it is held at, so a panel or a table
+  row held taller than its text — a drawing set where the page puts it — comes out taller there by
+  the raise.
+
+  `ClassicInvoice`'s header, "BILL TO", "FROM" and "TOTAL DUE" moved up 0.24 to 0.36pt in Word and
+  0.2 to 0.4pt in LibreOffice, `ConsultingInvoice`'s line items 0.24 to 0.36pt and 0.35pt,
+  `ModernProfessional`'s entries 0.24pt and 0.2pt, everything under them where it was. By median,
+  12 documents moved nearer the page in Word and none further, 10 in LibreOffice on Windows and 9 in
+  LibreOffice 24.2, one further in each: `LumaStudioInvoice`, from 0.12pt to 0.14pt, whose line-items
+  table stands 0.13 to 0.16pt high in LibreOffice at its header's fill and its rules, which its
+  first lines, set low, made up for. In Word, a text cell beside a composed one that rose can stand a
+  step of Word's 0.12pt grid off, either way, its share of the row's margin written as space above
+  it. `ClassicInvoice`'s notes and payment terms still stand 0.2 to 0.26pt low in their rows: their
+  columns are ruled down their left side, panels in their cells, with no padding above their lines.
+
+- **A DOCX export stands a table text cell's text where the page sets it by the height of its
+  lines, where its row's margins leave less than half a point of what it calls for.** Word and
+  LibreOffice stand an exact line's baseline four fifths of the way down it, and the page sets a
+  cell's line its face's ascent below its top; a row of text cells is moved by its margins by the
+  least its cells call for. A row holding a composed cell is not — its margins would move the
+  composed content too — nor one whose cells call for opposite ways or in a vertical merge, and
+  what the margins left was moved by the text's position from half a point up, and under that
+  not at all. `CobaltRota`'s staff names, beside the day cells its chips are composed in, stood
+  0.25pt low in their rows in Word, 0.2pt in LibreOffice on Windows and 0.19pt in LibreOffice
+  24.2, and its covers label as much. Under half a point, from a tenth, each of the cell's lines
+  is now written shorter and the space after it taller by as much, or the other way as far as
+  that space holds: the cell's content keeps its height and each line its top, and the text
+  moves four fifths of the difference in both editors. Only where every paragraph of the cell is
+  one line, in a face whose letters the export reads — not a standard face it does not embed — and
+  no nearer the letters' tops and feet than three quarters of a point, where Word cuts an exact
+  line's letters on screen. A line alone written shorter keeps a row its height in Word and on
+  Windows, but LibreOffice 24.2 holds a row to its cells' content: written so on a probe, the
+  covers values' lines among them, the covers row, whose tallest content those lines were, came
+  out 0.8pt shorter there (measured).
+  From half a point up the position moves it as before: written by the line instead,
+  `ConsultingInvoice`'s amounts stood nearer the page in their rows in LibreOffice, where the
+  position moves text further than it says, and the rows themselves stand 0.3pt low there, which
+  that overshoot made up for.
+
+  In their rows, `CobaltRota`'s staff names and covers label now stand within 0.08pt of the
+  page's in Word, LibreOffice on Windows and LibreOffice 24.2, every row its height. `CobaltRota`'s
+  median moves from 0.17pt to 0.15pt in Word, its p90 from 0.38pt to 0.31pt, and from 0.08pt to
+  0.06pt in LibreOffice on Windows, its p90 from 0.30pt to 0.22pt; `LumaStudioInvoice`'s from
+  0.14pt to 0.11pt in Word, its long version's from 0.21pt to 0.17pt in Word and from 0.20pt to
+  0.12pt in LibreOffice on Windows. No document's median moves further in Word or in LibreOffice
+  on Windows. Line by line, 21 amounts of `LumaStudioInvoice` and its long version, 0.07pt to
+  0.09pt low in LibreOffice on Windows, stand 0.11pt to 0.13pt high there, and 6, 0.04pt low in
+  Word, 0.08pt high, a step of its grid. LibreOffice 24.2 sets each of `CobaltRota`'s staff rows a twip shorter
+  than the page, holding them to their content, so the rows above the names stand higher there,
+  and the names, seated in their rows, a few hundredths of a point further from the page.
+
+- **A DOCX export holds a shape's row less its borders as wide as Word draws them, and a table's
+  row between two others less the rules it holds.**
+  - **A shape's borders come off as wide as Word draws them.** A border is written in eighths of a
+    point, and a row counts it two and a half twips an eighth, rounded down; a shape container
+    held whole had the lighter of its borders taken off its row's height, and both off the room
+    it leaves its label, at the width the page strokes them. A 20.3pt chip outlined at 0.7pt,
+    which Word draws 0.75pt wide, stood a twip taller in Word and LibreOffice on Windows, and six
+    of them in a table's rows six twips lower below them; one outlined at 0.9pt, drawn 0.875pt
+    wide, was held a twip short, the row round it holding it (measured). A panel's border is now
+    written from two to ninety-six eighths of a point, as a table cell's rule is, where a hairline
+    thinner than 0.19pt was written at one eighth and a border past 12pt above the range.
+  - **A row between two others is held less the rules it holds:** the rest of its own rule above
+    it and half the rule of the cell under it, which is one rule where the two are ruled alike, as
+    it was held. A row is held less the most any one of its cells takes above and below its
+    content, its margins and those rules together. Ruled unlike the next, a row ruled at 0.5pt over one ruled at 1.5pt stood half a point
+    taller in Word and all under it half a point lower; held so, the rows of five, ruled either
+    way round in the middle, stand where the page sets them in Word (measured). LibreOffice makes
+    room at the edge between two rows for the heavier of their rules, where Word makes it for the
+    lower row's: under a row ruled heavier than it, a row and all under it stand the difference
+    lower there, 1pt for these, on Windows and in LibreOffice 24.2.
+
+  No document of the fidelity corpus moves: its DOCX are byte-identical.
+
+- **A DOCX export seats the label of a chip composed in a table cell where the page sets it.**
+  - **A label taller than its chip is seated from the chip's top.** The page starts a line taller
+    than a shape's outline at the outline's top and draws it past it below; the export seated it
+    from the middle the cell centres the line on, half of what the line is taller above where the
+    page draws it: `CobaltRota`'s stacked chips' labels stood 0.43pt high in their chips in Word.
+    The line is cut to the chip as before, its foot only as far as the letters, set that much
+    lower, allow. That holds where Word sets the line on the chip's middle: the line fits the
+    height the chip's row holds, or the cell round the chip gives back all Word grows it by.
+    Beside another cell, where that cell's margins cannot give it all back, or where the letters
+    could not stand that low in the line, it is read from the middle as before.
+  - **A label its chip holds whole is written at the height that seats its text.** Word and
+    LibreOffice stand an exact line's baseline four fifths of the way down it, and the cell centres
+    the line in the chip, so the text stands three tenths of the line below the chip's middle; the
+    page sets it its face's descent above the foot of a line it centres there. `CobaltRota`'s
+    single-shift chips' labels, 10.4pt Carlito on a 12.7pt line, stood 0.29pt low in Word and
+    0.23pt in LibreOffice 24.2, its legend's 0.33pt. The line is written that much shorter —
+    11.85pt — or, for a face the page sets lower, taller, as far as the letters and the chip's
+    room allow; the chip and its row keep their height. A position counts in half points and is
+    not written under one, and the cell's margins are not the way: LibreOffice 24.2 counts them
+    inside the height a row holds, and moving them shortens the row there. Not moved by less than
+    a tenth of a point, nor in a standard face the export does not embed, whose letters are read
+    through a stand-in.
+
+  In their chips, `CobaltRota`'s single, legend and filled pair's labels now stand within a tenth
+  of a point of the page's in Word, LibreOffice on Windows and LibreOffice 24.2. The outlined
+  pair's, lowered by a position of a whole point where they call for 0.82pt, moved from 0.43pt
+  high to 0.3pt low in Word, and from 0.42pt high to 0.52pt low in LibreOffice on Windows, which
+  moves text further than its position says. `CobaltRota`'s median moves from 0.38pt to 0.17pt
+  in Word and from 0.31pt to 0.08pt in LibreOffice on Windows, its p90 from 0.46pt to 0.38pt and
+  from 0.39pt to 0.30pt: 87 of its lines nearer in Word and 5 further, by up to 0.14pt, 97 nearer
+  in LibreOffice on Windows and 7 further, by up to 0.15pt — the outlined pair's. In LibreOffice
+  24.2 its p90 moves from 0.90pt to 0.52pt and its median from 0.17pt to 0.22pt, 40 of its lines
+  nearer and 53 further, by up to 0.3pt: the single-shift labels, now seated in their chips,
+  stand about 0.4pt high with them there, as the rows above the chips come out 0.25pt shorter in
+  all in LibreOffice 24.2 than on the page, and 0.15pt taller in Word; in its own row each chip
+  stands within a tenth of a point of the page's in all three. No other document of the fidelity
+  corpus moves.
+
+- **A DOCX export counts a table's rules as Word and LibreOffice do, and holds a cell's margins and
+  a chip composed in it to the twip the page gives them.**
+  - **A rule takes two and a half twips an eighth of a point, rounded down.** Measured on ten-row
+    tables ruled at three, five, six, seven and nine eighths, both editors stepped each row by its
+    margins, its line and 7, 12, 15, 17 and 22 twips: a rule of 12.5 twips takes 12, one of 17.5
+    takes 17. Counted to the nearest, a row held by its height under a rule of an odd number of
+    eighths stood a twip short of the page's. A rule between two rows is shared in whole twips,
+    the row above it taking half rounded down and the row under it the rest: halved and each half
+    rounded with its margin, a rule of 15 twips came off as 7 and 7, and every row of
+    `NorthlineProposal`'s and `EditorialProposal`'s investment tables stood a twip taller. Tables
+    of one, two, three and six rows ruled at five, six, seven and nine eighths then took the page's
+    height to within a step of Word's grid and to the twip in LibreOffice (measured).
+  - **A cell's top and bottom margins are rounded to the twip together**, the top to the nearest
+    and the bottom to what the two come to less it: rounded apart, two of 32.69 twips came to 66,
+    and with its rules counted so, every row of `CobaltRota`'s staff grid whose day cell held one
+    shift stood a twip taller than the page's.
+  - **A shape composed in a table cell is held, and its label cut, in whole twips rounded down.**
+    The row the cell is in holds the page's height, rounded once; anything in it rounded up grew
+    it: two of `CobaltRota`'s 183.69-twip chips stacked in a day, each held and its label cut at
+    184, stood the row a twip taller. Where a chip's letters keep its label taller than its
+    borders leave room for, Word grows the chip by the rest, and the cell round it now gives that
+    much of its margins back, half above and half below, as far as they hold, where the chip is
+    all the cell holds and the cell all its row holds — as each of `CobaltRota`'s shifts is, in a
+    slot of its own: every staff row with a split shift in an outlined chip stood 3 twips taller.
+
+  `CobaltRota`'s grid now stands where the page sets it, every rule under its top within a quarter
+  point of the page's in Word, where they ran from 0.4pt high to 0.8pt low: its p90 from 0.99pt to
+  0.46pt in Word and from 0.84pt to 0.39pt in LibreOffice on Windows. Its median moves from 0.32pt
+  to 0.38pt (0.23pt to 0.31pt): the single shifts' labels stood about 0.3pt low in their chips,
+  which the grid standing up to 0.4pt high had hidden (the entry above seats them).
+  In the DOCX fidelity corpus 10 documents stand nearer the page in Word — `proposal-northline`'s
+  p90 from 0.71pt to 0.43pt, `cv-panel`'s median from 0.43pt to 0.31pt, `invoice-subscription`'s
+  from 0.43pt to 0.33pt — and 10 in LibreOffice on Windows. Seven are further in each, by a twip
+  or a step of Word's grid, where their tables and panels now take the page's height and the
+  lines in and after them show what they had hidden: `invoice-classic`'s notes stand 0.2pt low
+  under its totals table, which had stood 0.13pt high, where the editors leave more space after a
+  table than the page does; `invoice-platform`'s line items, already 0.3pt high in their cells, a
+  twip higher with the rows round them where the page draws them; `letter-panel`'s body, already
+  0.25pt high, a twip higher under its panel; the line items of `invoice-consulting` and its long
+  version, already low, a step of Word's grid lower and a hundredth of a point in LibreOffice;
+  `invoice-metered`'s and `invoice-payments`' a step of the grid, or two to three twips in
+  LibreOffice. `proposal-editorial` in LibreOffice is the document it sets on a new page. The
+  report names nothing more.
+
+- **A DOCX export stands a table's text cells on the page's baselines, and what follows a
+  paragraph or a ruled table where the page sets it.**
+  - **A row of text cells is moved by its margins.** The page sets a cell's line its face's ascent
+    below the line's top; Word stands an exact line's baseline four fifths of the way down it,
+    whatever the face. A cell's text stood as far off as the two are apart, at the top, the middle
+    or the bottom of the cell: a line of 8pt Poppins 0.58pt low in Word and 0.55pt in LibreOffice,
+    of Helvetica 0.24 and 0.16pt, of Lato 0.24 and 0.25pt high (measured). Both editors give every
+    cell of a row its largest top and bottom margins, so the row's top margin is made smaller and
+    its bottom one as much larger — or the other way — by the least any of its cells calls for, no
+    further than the margin holds: every cell's text moves with its room, and the row keeps its
+    height. Measured, the lines then stood within 0.04pt of the page's in Word and 0.09pt in
+    LibreOffice. A row is not moved where its cells call for opposite ways or its least call is
+    under a tenth of a point. Not a row holding a composed cell, whose paragraphs their own writers
+    seat where they can, nor a row the layout did not measure, nor one in a vertical merge. What the
+    margins leave of a cell's call, half a point and more, is moved by its text's position, as a
+    paragraph's is: a cell of 8pt Poppins beside one of Lato, the two called opposite ways, stood
+    0.58pt low.
+  - **A paragraph written at its tallest line owes what its rounding takes.** Its lines are
+    written to the twip, and what that took from the page's height over several lines stood what
+    follows higher: `ModernInvoice`'s address blocks, six lines of 11.475pt written at 11.45,
+    stood the table under them 0.15pt high in both editors. It is owed below the paragraph, as a
+    paragraph written at another height owes what it falls short.
+  - **A table's rules come off its padding as wide as Word draws them**, in eighths of a point: a
+    0.7pt hairline is drawn 0.75pt wide, and taken off at 0.7 it stood `EditorialProposal`'s tables
+    and all under them a step of Word's grid lower. A cell's rule is written from two to
+    ninety-six eighths, the range of a line border's width, as a paragraph's rule is.
+
+  In the DOCX fidelity corpus 12 documents stand nearer the page in Word, the sum of the medians
+  1.45pt nearer — `invoice-consulting_long`'s median line from 0.74pt to 0.35pt,
+  `invoice-classic_long`'s from 0.26pt to 0.06pt, `invoice-subscription`'s from 0.56pt to 0.43pt —
+  and 12 in LibreOffice on Windows, 1.38pt, `invoice-consulting_long`'s from 0.69pt to 0.22pt.
+  `invoice-modern`'s moves from 0.08pt to 0.12pt in Word and from 0.07pt to 0.13pt in LibreOffice:
+  its table's text, set low in its cells, had stood where the page sets it only because its rows
+  stood as much high, and the notes under the table stand 0.1pt lower, where Word leaves more space
+  after a table than the page does. `cv-editorial_blue`'s skills table now stands with the column
+  round it, which LibreOffice sets 0.1 to 0.3pt high: its median there from 0.09pt to 0.14pt. The
+  report names nothing more.
+
+- **A DOCX export raises a line Word sets low into the space above it, where both editors keep
+  it.** Both editors stand an exact line's baseline four fifths of the way down it whatever the
+  face — measured on the fifteen faces the templates use and JetBrains Mono, 8 to 36pt — and the
+  page sets it the face's ascent below the line's top. The text was moved to the page's baseline by
+  its position, which counts in half points and was left alone under half a point: by its position
+  alone Helvetica's lines, which the page seats 0.78 of the way down, stood 0.12 to 0.38pt low in
+  Word. And LibreOffice moves raised text further than it is raised, by the face's height over its
+  em — Spectral's 1.53 times, Poppins' 1.49, Volkhov's 1.31 (measured) — so Spectral's 24pt line,
+  raised 4pt, stood 2.4pt high there (measured).
+  - A line Word sets low by a tenth of a point or more is moved up into the space written above
+    it, written to the twip, and that space is owed below it, so what follows stays where it was.
+    Both editors keep a paragraph's space above as written. What the space cannot give is left to
+    the position where the whole difference calls for one, as is a line Word sets high by half a
+    point or more.
+  - A column's later layer, which measures the space to itself from the page, takes back the raise
+    of the line above it.
+  - Not a line pair's shared line, which moved would move its other half (since raised: see "A DOCX
+    export raises a line pair's shared line into the space above it where neither half is moved by
+    its position"); not a line in an overlay — a band, a stack laying one layer over another, a
+    shape container, a canvas, a text box — whose writers measure what follows them from the page, a
+    stack of one layer being the flow; not a line cut to fit, a container's stacked lines or one
+    held to its pictures; not a paragraph the layout moves to a new page, whose space above Word
+    drops there, or breaks over one, whose lines on the next page the space above does not move; and
+    not into the space above a panel's first line that its top border takes.
+
+  In the DOCX fidelity corpus 27 documents stand nearer the page in Word, the sum of the medians
+  1.65pt nearer — `letter-blue_banner`'s median line from 0.39pt to 0.18pt, `cv-modern_professional`'s
+  from 0.32pt to 0.18pt — and 21 in LibreOffice on Windows, `cv-modern_professional`'s from 0.28pt
+  to 0.04pt. Two move a step of Word's grid further: `invoice-luma_studio`'s company lines, raised
+  where the page sets them, now show their block standing 0.2 to 0.3pt high (median 0.13pt to
+  0.14pt),
+  and `letter-panel`'s median from 0.14pt to 0.16pt; in LibreOffice two medians move 0.01pt. The
+  report names nothing more.
+
+- **A DOCX export no longer stands what follows a width anchor, or a paragraph Word sets taller,
+  lower than the page.** Both reached past the block in Word, and neither was taken out of the
+  space below or named. Each now hangs below its block, as a line held to its icon does: the
+  space below takes it, and what it cannot take is named (`space above`).
+  - **A spacer shorter than its line** — a width anchor of no height, as `Panel`'s and
+    `PanelLetter`'s cards open with — is written as a paragraph a tenth of a point tall, as a
+    spacer in the flow is; the rest of that tenth stood every card that much taller in Word.
+  - **A paragraph whose lines Word sets taller than the page.** Word sets every line of a
+    paragraph at one height, which for a paragraph of lines in more than one size the export
+    writes as its tallest line's; the page sets each at its own, so a wrapped line after a large
+    first one stands closer on the page. Lines rounded up to the twip, over enough of them, pass
+    the page too and hang the same way: `OrangeOps`' achievement lines, a 0.08pt gap between
+    them written as a tenth (measured). A tenth of a point or less is left either way: Word sets
+    lines on a grid 0.12pt apart.
+  - A paragraph the layout opens a page with, with no top edge of its own to hold there, leaves
+    what the block above leaves below itself on the page above, as one with an edge does.
+
+  In the DOCX fidelity corpus 9 of the 62 documents change, and the report names nothing more.
+  In Word all nine stand nearer the page in median — `cv-panel`'s median line from 0.83pt to
+  0.46pt, `cv-compact_mono`'s ninetieth percentile from 0.91pt to 0.36pt, the foot of its sidebar a
+  point higher, where the page sets it — and in LibreOffice on Windows seven do. `letter-panel`'s
+  text now starts where the page sets its card, and stands as far off its baseline as both
+  editors seat it in an exact line: its ninetieth percentile from 0.21pt to 0.29pt in Word, its
+  median 0.06pt further in LibreOffice.
+
+- **A DOCX export sets what follows a panel where the page sets it, and names what Word sets
+  lower.** Word sets a panel's content below its whole top border and its margin inside the
+  table's row, and ends the row its margin and its whole bottom border past the content; the
+  page strokes each border on the panel's edge. The export took each border whole out of the
+  space round the panel: a padded card with a gap below it stood what followed half a border
+  high, and a card with neither stood it the border lower, named for a row's panel only.
+  - **Half a border reaches past the panel**, and as much of its inner half as the padding
+    falls short of it. The space round the panel takes that first, the border then standing
+    where the page strokes it; then the panel's padding, the border then drawn that much inside
+    the panel's edge and its content where the page sets it; above, then, the room over its
+    first line. What none of them takes is named: on the panel for its top border, as a row's
+    was, and on the block that stands lower for its bottom one (`space above`).
+  - **The height held is the content's.** Word and LibreOffice on Windows read a panel's written
+    row height as its content's, with its margins and both borders round it: held a point above
+    its content's height, an outlined card padded 4pt stood a point taller. A panel holds the
+    page's height less its padding, and less what the room over its first line gave its top
+    border, which came off it a second time. A shape container, its layers centred in it, holds
+    its outline's height less both borders and its margins, which keep inside it, and nothing of
+    them is named; a padded outlined one was held one border less only.
+  - **What a panel's content leaves below itself** — a last line held to an icon, the border of a
+    card ending the panel, which that card's padding takes first — comes out of the panel's
+    padding below, then out of the space under it; what neither takes is named (`space above`).
+    In a row's cell the line and the card's border reach past the row together, by what the
+    row's room under the cell does not hold. Ending a table's composed cell or a column of
+    side-by-side layers, whose content the layout does not measure against its row, the border
+    is named on the cell's content, its row up to that much taller, and the space below takes
+    none of it.
+  - **A pull** — a negative bottom margin, a panel's as a paragraph's — comes out of the space
+    below it and the next block's own top edge; what they cannot give stands that block lower
+    and is named (`space above`), where it was dropped unnamed.
+  - **The paragraph Word keeps between any two tables** — a tenth of a point, without which Word
+    merges them — is named on the second where the space between them does not take it, with
+    whatever else stands it lower; a container's top edge above a table counts as that space.
+  - **A panel the layout moves to a new page** keeps the space above it there, on a line of its
+    own, as a table does, and what the block above leaves below itself stays on the page above.
+
+  Measured in Word 16 and LibreOffice on Windows — cards with 2pt borders above, below and all
+  round, with no padding and with 1 and 4pt of it, with and without space round them; cards
+  outlined at 0.5 and 2pt stacked, and at 0.5pt in a row's columns — every line stood where the page
+  sets it, or as much lower as the report names: within 0.15pt in Word and 0.05pt in
+  LibreOffice.
+  In the DOCX fidelity corpus 25 of the 62 documents change, and the report names 15 more
+  notes: the tenth of a point between two tables, 14 times, and `ObsidianInvoice`'s totals row,
+  0.72pt lower for a 0.62pt border and that tenth of a point. Twelve documents stand nearer the
+  page in Word — the engineering cover letter's median line from 1.27pt to 0.13pt — and eight
+  further, `cv-panel`, `invoice-subscription`, `cv-modern_professional` and `cv-classic_serif`
+  most: where traced, the whole border taken out of the space had made up for other errors — a
+  heading's baseline left up to half a point from where Word seats it in an exact line, a spacer
+  of no height written as a tenth of a point, rounding to the twip inside a card, a step between
+  a table's header and its first row. The fidelity baselines record both.
+
+- **A DOCX page zone writes its picture — a logo — in its line, where the page draws it.** A
+  page zone is written as one line of a Word header or footer. An `ImageNode` in it was not
+  written, and was named `DROPPED`, `page zone content`.
+  - **The picture is an inline picture in the line**, at the size the page draws it: fitted
+    inside its box where it is contained, the box's size and cropped where it covers it. Its link
+    is its run's.
+  - **Word stands it on the line's baseline.** Where it is the line's tallest part, the line is
+    placed by its foot, which then stands where the page draws it, and is tall enough to hold it:
+    a 24pt logo makes a 30pt exact line, its baseline four fifths down.
+  - **A one-line part the page sets on a baseline of its own is raised or lowered to it**
+    (`w:position`, in half points), in a zone of one line, and the exact line grows to hold
+    what is raised. The text beside a logo, set from the logo's top or its middle, would
+    otherwise stand on the logo's foot, 9 to 18pt low. A smaller text beside a larger one is
+    raised too, where it stood on the larger one's baseline. A part is lowered only as far as
+    the line holds below Word's baseline — a fifth of it, or as far as its tallest part reaches;
+    one set lower stands on Word's baseline, and the note counts it. A picture that is not the
+    line's tallest part is raised as a text is. A line that stops at the page's edge raises its
+    tallest part back onto the page's baseline too: an 80pt title against the top edge stood
+    1.8pt low before, and was named. Text the page sets past the edge itself is left off its
+    baseline, and named.
+  - **What a picture loses on the line is named** in the `page zone` note: its transform, its
+    outline entry and its anchor's bookmark. A picture the zone lays out on the first page it
+    is drawn on in another box — another size, fit or insets — or, where its own proportions
+    set what is drawn (a side left unstated, or a picture contained in its box), another
+    picture, is written, and where it stands is named not measured.
+  - **Measured** in Word 16 and LibreOffice on a 48 by 24pt logo in a header and in a footer:
+    alone, beside 8pt text set from its top and from its middle, after 18pt text, and beside a
+    page number. Each logo stood where the page draws it, to a tenth of a point, in both editors.
+    In Word each text's baseline stood within half a point of the page's: a run is raised by
+    whole half points, and to the next one towards the line's baseline where the nearest would
+    pass the line's edge. LibreOffice raises a run about a seventh further than `w:position`
+    says, does not raise a page field, which stands on the logo's foot there, and stands every
+    picture on the line's baseline, a raised one included.
+  - Anything else in a page zone — a shape, a barcode, a container — is still `DROPPED`, `page
+    zone content`.
+  - No document of the DOCX fidelity corpus has a page zone; its bytes are unchanged. In
+    `DocxNodeFieldLedgerTest` the `zones` entry writes each part's own baseline and the zone's
+    pictures, and names a part set lower than the line holds or past the page's edge.
+
+- **A DOCX export writes a row's fill, outline and side borders, as a panel holding its
+  columns.** A row paints its box as a container does — `RowBuilder.fillColor`, `stroke`,
+  `borders` — and the export wrote its columns as a table with no shading or borders, naming the
+  paint as lost (`row paint`).
+  - **A row that paints is written as a panel**, as a painted container is: a table of one cell
+    carrying the fill as its shading and the outline and side borders as its borders, its
+    margins the row's padding, as a panel's are. The columns are a table nested in the cell,
+    laid out as the row's own less the padding the cell's margins hold; the panel holds the
+    row's height. The panel is kept whole across a page break, as the row is, and a row the
+    layout moves to a new page keeps the space above it there.
+  - **A corner radius squares**, and is named (`corner radius`), as a panel's is. A translucent
+    fill or border is flattened against what the page paints under it, and named.
+  - **What stands on the row is set on its fill.** A chip, a rule or a translucent panel in one
+    of its columns is flattened against the panel's shading as written, where it was flattened
+    against the page under the row.
+  - **Borders above and below reach past its box**, as a panel's do: what of them neither the
+    space round the row nor its padding takes stands its columns, or what follows, that much
+    lower, and is named (see the entry above on what follows a panel). Measured, five rows with
+    a 1pt bottom border and no padding, one under the other, set what follows 5.4pt low in Word
+    and LibreOffice: their borders' 5pt, and a tenth of a point for each hairline paragraph Word
+    needs between two tables.
+  - **Still named as `row paint`**, its columns written alone:
+    - composed in a table cell, whose table draws its box as a shape where it frames no text;
+    - in a page zone's line;
+    - in a band of overlapping layers, or where a stack's column measures the space above or
+      below it to the text inside it, which the panel's margins would hold again;
+    - with a padding below zero, or a first or last column whose margin hangs into it;
+    - with a margin below zero above or below it, which its columns' table nets against its
+      padding and a panel does not, or at a side in a cell, where Word starts a table no further
+      left than the cell's text. In the body a row bleeding past the margin is its panel.
+
+  Measured in Word 16 and LibreOffice on a page of painted rows, a filled row's shading covers
+  the box the page fills, to a tenth of a point, and its text stands where the page sets it. No
+  row in the DOCX fidelity corpus paints its box, and the 62 documents are byte-identical. In
+  `DocxNodeFieldLedgerTest` a row's `fillColor`, `stroke` and `borders` stay `REPORTED`, for
+  the cases above.
+
+- **A DOCX export writes an auto-sized paragraph's text at the size the page fits it to.** The
+  page fits a paragraph with `autoSize(...)` to the largest size its line holds, smaller or
+  larger than its style's. The export wrote the text at its style's size: Word broke a shrunk
+  headline onto more lines than the page's and set everything under it lower, and showed a grown
+  one at its style's size. The report named both sizes.
+  - **The text that takes the paragraph's style is written at the fitted size**, read off the
+    layout's lines. A run with a style of its own keeps it, as on the page. The paragraph's mark,
+    which Word continues from, takes the fitted size where the text ending it takes the
+    paragraph's style or a chip ends it, and a prefix the page sets before the lines is measured
+    at it.
+  - **Markdown pieces are read at it.** A heading is written at its multiple of the fitted size, as
+    the page sets it, and named where it stands taller than its line, as any heading is. A
+    heading's note now names its size as Word holds it, to the half point — any paragraph's
+    heading, and a list item's.
+  - **Every path that writes a paragraph does it:** the body, a table cell, text over the flow, a
+    side of an overlay's left-and-right pair, a badge's initials and a page zone's line. A zone's
+    line is the page's, where it was its style's.
+  - **Still written at its style's size, and named**, where the layout's lines do not tell the
+    fitted size. The note says the fitted size is not measured.
+    - None are read: with no layout, for a paragraph composed in a table cell that no line of
+      its table carries, and for a part of a page zone the layout shows none of, or sets
+      otherwise on the first page it draws the zone — other text, face, size or pictures. A part
+      the page sets as written there keeps its lines, and its markdown is read from them.
+    - Their sizes do not say which is the paragraph's: a paragraph fitted to 12pt beside runs of
+      12pt and 10pt of their own, or Arabic the page reads as markdown, which it shapes before
+      it reads the marks.
+    - They are one place's: one paragraph added at more than one place, which the page fits at
+      each apart.
+
+  Measured in Word 16 and LibreOffice on a page of auto-sized paragraphs, each word now stands
+  within half a point of the page's baseline, at the page's size. A shrunk headline is one line,
+  where Word broke it onto two and set everything below 17pt lower. LibreOffice breaks a badge's
+  initials wider than the square inscribed in its disc, at any size, and hides what wraps; an
+  auto-sized badge, which fills its disc, meets this too. Across the DOCX fidelity corpus no
+  paragraph is fitted to another size than its style's, and the 62 documents are byte-identical.
+  In `DocxNodeFieldLedgerTest` a paragraph's `autoSize` stays `REPORTED`, for the case the
+  layout does not tell.
+
+- **A DOCX export writes a list item the page reads as markdown as the page sets it.** The page
+  reads a list item of plain text holding a mark of emphasis or code as it reads a paragraph (the
+  entry below). The export wrote the item as authored, `**Java**` with its asterisks, and named it
+  on the list's note.
+  - **Each item is read as the page lays it out**, matched to the lines the page laid it out in,
+    and written in the pieces the page sets it in where those lines hold them, as a paragraph is:
+    - a flat list's item, after the marker the page sets before its first line;
+    - an item whose marker stands in a column of its own (`hangingIndent`);
+    - an item, at any level, of a list built as a tree of items
+      (`addItem(String, Consumer<ListBuilder>)`) with no `hangingIndent`, which the page lays out
+      after its indent and its marker and reads with them: the item's own text is written after
+      them.
+  - **The marker stays where it was.** Word draws a Word list's. The page's parser sets the marker
+    it reads with a tree's item regular, a bold list's too, and Word draws such a list's bullets
+    regular (measured in Word 16). A list written as a paragraph per item writes its marker and
+    nesting indent as characters before the pieces, in the face the page sets them in.
+  - **A heading written taller than its item's line is named**, as a paragraph's is.
+  - **The font table ships the faces the page sets an item's pieces in**, read off the text the
+    page reads: a tree's marker with its item, a marker typed before an item taken off.
+  - **Still written as authored**, and named where the page drops a mark from the item:
+    - the items of a list not matched one by one to the layout's: with no layout, composed in a
+      table cell, an item run onto the next page, or a `hangingIndent` list with a blank item the
+      page draws as a marker alone;
+    - an item of a tree whose marker the parser reads as markdown with it, as `*a*`;
+    - one the page sets in other letters than its text, as Arabic;
+    - an item the parser reads into nothing, as `***`: the page sets none of its text, and the
+      note now says so, where it named the item's marks.
+
+  An item written as authored whose marks the page keeps all of is not named where the page
+  changes only its face — `node_js` in a bold list composed in a table cell, set regular — or
+  letters no mark is made of, as an ordered item's number, `1.`; neither is a paragraph's. Across
+  the DOCX fidelity corpus no list item is written otherwise than before, and the 62 documents are
+  byte-identical. `DocxMarkdown` reads each item as the page lays it out, and `DocxMarkdown.split`
+  takes a tree's indent and marker off an item's pieces, with unit tests.
+
+- **A DOCX export writes a paragraph the page reads as markdown as the page sets it.** A session
+  reads markdown unless it is told not to (`markdown(false)`). The page then sets a paragraph of
+  plain text holding a mark of emphasis or code: the text its marks style bold or italic, a
+  heading line bold — the first three levels larger — and the marks its parser reads dropped. The
+  export wrote the text as authored, so Word showed `**bold**` with its asterisks and none of the
+  bold, and the report named it.
+  - **The text is read as the page reads it** — line by line, through the page's own parser, a
+    list marker opening a line kept — and written as one run a piece, in the face, family, colour,
+    tracking and size the page sets it in: `**Java**` is a bold run reading `Java`, a heading line
+    bold at its larger size, a line break where the page starts a line. A linked paragraph's
+    pieces stay in one link, and Word's outline lists a heading by the text written. An
+    auto-sized paragraph's pieces were written at its style's size, a heading's at its multiple of
+    it, as its text was (since written at the size the page fits it to: see "A DOCX export
+    writes an auto-sized paragraph's text at the size the page fits it to").
+  - **The page's own lines decide it.** The pieces are written only where the lines the page laid
+    the paragraph out in hold the pieces' letters in their faces, families, colours and tracking,
+    at their sizes to a hundredth of a point — or, where the page fits the text to a size of its
+    own, at sizes in the same proportion (since read at the fitted size and compared exactly, a
+    table cell's lines matched in proportion: see "A DOCX export writes an auto-sized
+    paragraph's text at the size the page fits it to"). A session that reads no markdown lays
+    the marks out, and
+    the text is written as it stands, as before; so is text the parser changes nothing of, an
+    underscore inside a word.
+  - **The faces are the page's.** Where the session reads markdown, its parser sets every piece in
+    a face of its own and leaves the paragraph's aside: a bold paragraph's `Senior_Engineer`
+    stands regular on the page, and is written so.
+  - **Every path that writes a paragraph does it:** the body, a table cell, text over the flow,
+    the line an overlay's two sides share, a badge's initials and a page zone's line.
+    - A paragraph composed in a table cell is matched to its lines by its text as the page reads
+      it, where no line carries it as authored, and only to lines that set its pieces so.
+    - A badge's initials are counted as the page sets them: `**JR**` is now a badge's two bold
+      letters. Initials in two faces, `*J*R`, or a heading, are written in the flow, as initials
+      in two runs' faces are.
+  - **A heading written taller than its line is named.** The page sets a markdown heading in a
+    line as tall as the paragraph's own and draws its letters past it; written in that exact line,
+    Word cuts their tops on screen. An auto-sized paragraph's heading, written at a multiple of its
+    style's size, may fit the line the page fits the text to, and is named only where it does not
+    (since written at its multiple of the fitted size, as the page sets it: see "A DOCX export
+    writes an auto-sized paragraph's text at the size the page fits it to").
+  - **The font table ships the faces the pieces of a paragraph outside table cells and page zones
+    are set in** — the paragraphs it reads. It is written before any paragraph, so it reads them
+    off the text: a session that reads no markdown ships a face it does not use.
+  - **Still written as authored, and named:**
+    - a paragraph whose lines are not read — with no layout, composed in a table cell whose text
+      no line of its table carries so, or a page zone's the layout shows none of — where the note
+      says whether the page reads its marks is not measured;
+    - one the page sets in other letters than its text, as Arabic, which the page shapes before it
+      reads the marks;
+    - text the parser reads into nothing, which the page sets as nothing and which went unnamed:
+      a lone `*`, an empty list item; `***`, a rule; a line set four spaces in, a block of code.
+  - **With no layout**, a paragraph is read line by line for the note too: a list marker opening
+    a line, `* a_b`, is no longer counted as a mark the page drops.
+
+  Across the DOCX fidelity corpus one document's bytes change: `TimelineMinimal`'s open-source
+  project line is written in regular Lato, where Word drew it bold, with `(Open source)` in italic
+  and without the asterisks, as the page sets it; the file ships Lato Italic for it, and the line's
+  note goes: 954 notes, from 955. The other 61 documents are byte-identical. `DocxMarkdown` reads
+  the pieces and compares them with the page's lines, with a unit test.
+
+- **A DOCX page zone's text stands on the page's baseline.** A page zone is written as one line
+  of a Word header or footer. The line was Word's single line for its face. Its top sat at the
+  zone content's top in a header, and its foot at the content's foot in a footer. So the line's
+  height, and the room a lone part's padding holds above and below its text, were Word's, and
+  nothing named them. In LibreOffice a header's text stood up to a point higher than on the
+  page. Two zones of one kind — a cover's header on the first page, the running header on the
+  rest — shared one distance from the edge, the last zone's, and the cover's header stood 16pt
+  high in both editors. A zone paragraph's anchor had no bookmark, without a note.
+  - **The zone's line is an exact line**, as tall as its tallest part's line on the page. It
+    stands as far from its page edge as puts that part's baseline where the page has it, since
+    both editors stand an exact line's baseline four fifths of the way down it (measured on
+    exact lines). A lone part's padding and margin above and below are in that distance.
+  - **The line is taller where it needs to be:**
+    - for a picture in a zone paragraph, which Word stands on the baseline, so the exact line
+      does not cut its top;
+    - for a part the page fits smaller, which Word writes at its style's size (since written at
+      the fitted size where its lines tell it: see "A DOCX export writes an auto-sized
+      paragraph's text at the size the page fits it to").
+  - **A tallest part the page sets in more lines than one** is written as as many exact lines.
+    Word grows a footer up from its distance, so a footer of two lines stands a line further from
+    the edge, its first line on the page's first baseline.
+  - **A zone the layout measures that shares its kind with another page zone** stands in a frame
+    (`w:framePr`) at its own height, as a text band does. The frame is at least its lines tall,
+    so a part Word sets in more lines goes on below them.
+  - **Measured** in Word 16.0.20430 and LibreOffice 26.8 on 8pt and 18pt Lato headers and 8pt
+    Lato footers. A lone part's text, and a line's tallest part's, stood within 0.1pt of the
+    page's baseline in each editor, the cover's header included. A smaller part beside a taller
+    one stays on Word's one baseline, and the note counts it (since raised to its own: see "A
+    DOCX page zone writes its picture — a logo — in its line, where the page draws it").
+  - **Text the page sets right against the edge** stands off the page's baseline, as the line
+    stops at the edge: lower in a header, by what its ascent falls short of four fifths of its
+    line, and higher in a footer, by what its descent falls short of a fifth. In the default face
+    only a header's is, about 0.4pt at 18pt. Past a point and a half, the note names it (since
+    raised back onto it: see "A DOCX page zone writes its picture — a logo — in its line, where
+    the page draws it").
+  - **The `page zone` note:**
+    - counts a part off the baseline Word sets the line on, and says where the parts after a
+      part of more lines than one stand is not measured, since Word sets them on a later line;
+    - names a zone paragraph's anchor, which has no bookmark, since a zone is written into a part
+      each kind of page repeats;
+    - names a picture the page sets anywhere but on the baseline;
+    - names a zone's lines that reach past the page margin by more than half a point. The margin
+      is then written negative, as for a text band, so Word holds the body at it; LibreOffice
+      moves the body clear. Within half a point — text under about 22pt set against the margin in
+      the default face — Word moves the body by as much, unnamed;
+    - says where the zone's text stands is not measured where the zone's content is built
+      otherwise for the first page it is drawn on than as written — other text, another face or
+      size, other pictures. The line is Word's there;
+    - names a zone whose content is none for no page in particular: it is not written.
+  - No document of the DOCX fidelity corpus has a page zone; its bytes are unchanged.
+  - Ledger: the `zones` option moves from a gap to `REPORTED`, and a lone or tallest page field's
+    padding and margin above and below are written. No entry is a gap any more, and `GAP` is no
+    longer a fate an entry can take.
+
+- **A DOCX canvas holds its height.** The page gives a canvas its height whatever it holds. The
+  export writes what it holds one block after another, and dropped the room under it, so what
+  followed stood that much higher. The report named the loss only where something followed the
+  canvas in the flow. Elsewhere the room was lost without a note:
+  - a canvas that wrote something and was its row's tallest cell;
+  - a canvas that ended a layer stack's column, or a timeline entry's body;
+  - a canvas in a shape container's layer, followed there or ending it;
+  - a canvas that only drew, between the blocks of a band's layer.
+
+  What changes:
+  - **The room under what it writes** is written as the space below it. The next block takes
+    it: as its space above, or as the space below the paragraph before a table. A cell the
+    canvas ends holds it on its last paragraph. So a row is as tall as its tallest canvas, and a
+    column as long as the canvas ending it. At the end of the body, or before a page break,
+    nothing follows to move, and nothing is written.
+  - **A canvas that only draws** holds its whole box, its edges included, in a flow, a row's
+    cell, a column or a band's layer, as a stack of drawings does in the flow. Inside a shape
+    container's layer it holds it too. Where something round it measures that room already, it
+    holds none of its own, its edges included, so the room is not counted twice:
+    - before the first block a band's layer writes, which the band sets the page's distance
+      down to, past the drawing;
+    - drawings held whole round it: a stack's, a shape container's or a canvas's;
+    - a stack of several layers, a shape container or a canvas it is a layer of;
+    - a block that a canvas round it writes nothing of, and so counts as taking no room.
+
+    A timeline's marker, alone in its row's cell, holds its room in the cell.
+  - **The report names what Word cannot hold:**
+    - what a canvas writes, one block under another, running past its height, which Word makes
+      room for and the page does not;
+    - a drawing in what it writes, which takes no room in Word, so what stands below the
+      drawing stands higher by its room;
+    - a height nothing measures: in a table's composed cell, or with no layout.
+  - Across the DOCX fidelity corpus eight documents' bytes change, each in its timeline's marker
+    cells, which now hold their markers' room: `CharcoalGold`, `MidnightNavy`, `NavySidebar`,
+    `ProfessionalSidebar`, `SerifHeadline`, `TerracottaRail`, `VioletGrid` and `ModernReceipt`.
+    Word and LibreOffice render all eight as they did, every word and drawing where it stood.
+  - Ledger: `CanvasLayerNode.height` moves from a gap to `REPORTED`; no node-field gap remains.
+
+- **A DOCX export keeps a colour's translucency where Word can hold it, and names where it
+  cannot.** A translucent colour (`DocumentColor.rgba(...)`, `withOpacity(...)`) was written at full
+  strength, without a note, on text, a table cell's shading, a panel's fill and borders, and a
+  table's rules. A rule was flattened against the panel around it or white, and a header's
+  separator against white, also without a note.
+  - **Text keeps its transparency**, as Word's text fill (`w14:textFill`), with `w:color` holding
+    the colour as authored: Word takes the colour from the fill and LibreOffice from `w:color`,
+    each with the fill's transparency, so both draw the page's tint.
+    - A translucent body colour is the Normal style's. A run, or a list's marker, of an opaque
+      colour writes an opaque fill of its own, so it does not take the style's.
+    - The fill is the last of a run's properties, and each part holding one — the body, the
+      styles, the numbering, a header or footer — marks its namespace `mc:Ignorable`.
+    - Word saves such text into a PDF as drawing, without a text layer.
+  - **Where Word holds an opaque colour only** — a cell's shading, a border, a rule — the colour
+    is flattened against what Word paints under it. Inside a panel or cell the export shaded, that
+    is the shading as written; on the page, it is read from the layout: the fills drawn before the
+    block at its centre, a page background included, a row's own fill (which is not written; since
+    written in the flow, as a panel: see "A DOCX export writes a row's fill, outline and side
+    borders, as a panel holding its columns") left
+    out. Each is named in the report as `translucency`:
+    - a panel's fill and borders, once per panel;
+    - a table cell's fill and rules, once per table;
+    - a rule drawn as a paragraph border;
+    - a text header's or footer's separator, once per band, flattened against white, since it
+      runs across the page.
+  - A panel's borders and a cell's rules are flattened against the block's own fill, which the
+    page draws them over.
+  - A wholly transparent fill writes no shading; a wholly transparent border is drawn in the
+    colour under it, so it keeps its room in the row.
+  - A chip's shading is flattened the same way where its paragraph has no shading of its own,
+    and named on its `inline chip` note.
+  - On the page, where a picture, a barcode, a gradient or a fill under a transform is under the
+    block, or it is composed in a table cell, white stands in.
+  - Drawings, page backgrounds and pictures already kept their alpha.
+
+  Across the DOCX fidelity corpus one document's bytes change: `NavySidebar`'s four sidebar
+  rules, white at 115/255 over the sidebar's navy (32, 44, 59), are written `858B93` instead of
+  white. Word renders the rule at (133, 138, 146), where the PDF draws (131, 138, 146) and Word
+  drew (255, 255, 255) before. The report names the four rules: 955 notes, from 951. The other 61
+  documents are byte-identical.
+
+- **A DOCX export's report names a paragraph or a list item the page reads as markdown.** A
+  session reads markdown unless it is told not to (`markdown(false)`). It reads a paragraph, or a
+  list item, of plain text holding a mark of emphasis or code:
+  - text its emphasis marks style is set bold or italic;
+  - a heading is set bold, the first three levels larger;
+  - the marks its parser reads as syntax are dropped, a code span's backticks and a link's
+    address among them.
+
+  The DOCX export wrote the text as authored, so Word showed `**bold**` with its asterisks and
+  none of the bold, without a note. The note now says the markdown marks are written as letters,
+  where they still are — a paragraph or a list item is written as the page sets it wherever the
+  page's lines show how (the entries above):
+  - the paragraph's note (`ParagraphNode`);
+  - a zone paragraph's, on its `page zone` note;
+  - a list's, for its items (`ListNode`).
+
+  It is read from the laid-out lines, which hold fewer marks than the text where the page read
+  it. The text is read as the page lays it out: less a paragraph's prefix's own marks, and a list
+  item with a marker typed before it taken off, as the page and the file both take it off. So
+  text the page sets as authored is not named:
+  - markdown off;
+  - no mark;
+  - an underscore inside a word, which markdown keeps;
+  - a marker typed before a list item;
+  - runs, which the page never reads.
+
+  Where the lines are not read — with no layout, or composed in a table cell whose paragraph no
+  line its table laid out carries, and a list there at all — the note says whether the page reads
+  the marks is not measured, where the page's own parser drops a mark from the text.
+  Across the DOCX fidelity corpus the report named one paragraph, `TimelineMinimal`'s open-source
+  project line, whose `*(Open source)*` the page sets in italic and Word showed with its
+  asterisks — now written as the page sets it. None of this changed what is written: the 62
+  documents of the corpus export to the same bytes. In `DocxNodeFieldLedgerTest` a paragraph's `text` and a list's `nestedItems` move
+  from `WRITTEN` to `REPORTED`, and a list's `items` name it too.
+
+- **A DOCX export's report names where a page zone's parts stand, and what its paragraphs lose.** A
+  page zone is written as one Word line. Word sets its parts one after another from the page's left
+  margin, and those after the first spacer against its right margin (since each set at a tab stop
+  where the page sets it: see "A DOCX export keeps a page zone's row in its columns: each part of
+  the row stands at a tab stop where the page sets it, so a label and the page number beside it no
+  longer read as one word"), on one baseline, its tallest part's. The page sets each part by the
+  zone's padding, a row's columns and gap and a paragraph's alignment, and each part's sides, on a
+  baseline of its own. So these moved in Word without a note:
+  - a centred line, a padded zone, a row's column or gap;
+  - a page field's sides;
+  - a smaller part beside a larger one, which Word sets on the larger one's baseline.
+
+  A zone paragraph's right-to-left direction, prefix letters, fitted size and outline entry
+  went unnamed too. A `page zone` note now:
+  - counts the parts that stand off where the page sets them. Each part is read from the
+    layout's zone fragments on the first page the zone is drawn on. A part stands where the
+    page sets it when it meets all of these:
+    - its line starts within a point and a half of Word's, or, against the right margin, ends
+      there;
+    - it sits on Word's baseline: its tallest part's, with the line standing at the zone's edge
+      (since placed by that part's baseline: see "A DOCX page zone's text stands on the page's
+      baseline"; and each part since raised to its own: see "A DOCX page zone writes its picture
+      — a logo — in its line, where the page draws it");
+    - it is one line;
+    - no prefix stands before it, on the line's left side.
+
+    Past a part Word sets at another width, in a zone whose nodes the page names or nests
+    otherwise than the file, and with no layout, the note says where the parts stand is not
+    measured;
+  - names a zone paragraph's right-to-left text written left to right, its prefix's letters,
+    the size its text is fitted to (since written at it where its lines tell it: see "A DOCX
+    export writes an auto-sized paragraph's text at the size the page fits it to"), and its
+    outline entry.
+
+  None of this changes what is written, and no document of the DOCX fidelity corpus has a page
+  zone. In `DocxNodeFieldLedgerTest` a page field's `padding` and `margin` move from a gap to
+  `REPORTED`, and its `align` to `INERT`: the page sets a field in a box a point wider than its
+  number. The `zones` option keeps a gap for the line's height and the room its parts hold above
+  and below, and a zone paragraph's anchor (since closed: see "A DOCX page zone's text stands on
+  the page's baseline"). 1 node-field gap remains, `CanvasLayerNode.height` (since closed: see
+  "A DOCX canvas holds its height").
+
+- **A DOCX export's report names what a paragraph's own fields lose.** Several of a paragraph's
+  own fields were lost without a note:
+  - an auto-sized paragraph's text was written at its style's size, not the one the page fits it
+    to;
+  - a `bulletOffset` prefix's letters were never written, and a paragraph written over the flow,
+    as a side of an overlay's left-and-right pair or as a badge's initials lost a blank prefix too;
+  - Word's outline listed a heading by the text of its Word paragraph, not by its
+    `DocumentBookmarkOptions` title, and at no level past the ninth;
+  - a line an overlay's left-and-right pair shares is one Word paragraph: Word listed both sides'
+    text under one level, the left one's where it has one, and where both have one the right
+    one's entry was lost.
+
+  The paragraph's note (`ParagraphNode`) now names:
+  - the size its text is written at and the size the page fits it to, where Word, which holds a
+    size to the half point, sets them apart. The fitted size is read from the layout's lines; a
+    prefix the page sets in the paragraph's style counts as its text. Where the lines are not
+    read or do not tell the size, the note says the fitted size is not measured (since written at
+    the fitted size, and named only where it is not measured: see "A DOCX export writes an
+    auto-sized paragraph's text at the size the page fits it to");
+  - its prefix's letters before its first line. On a path that writes no prefix, it also names
+    the room the prefix sets lines in by, where that moves a line: a side of a pair Word holds
+    by its start, and a text box or a badge, but not one line set from the end away from its
+    prefix;
+  - an outline title that is not the text Word lists, a level past Word's ninth that shares it
+    with another, which the page nests apart, and the right side's outline entry where the left
+    side holds the line's level.
+
+  A paragraph set in a text box over the flow carries these on the note it already had. A page
+  zone's paragraphs are named on the zone's own note (`page zone`). Across
+  the DOCX fidelity corpus the report names no paragraph: `EngineeringResume`'s auto-sized name
+  fits at its own size. None of this changes what is written: the 62 documents of the corpus
+  export to the same bytes. In `DocxNodeFieldLedgerTest` a paragraph's `autoSize`,
+  `bulletOffset` and `bookmarkOptions` move from a gap to `REPORTED`; 4 node-field gaps remain.
+
+- **A DOCX export's report names what a list's items lose.** A centred or right-aligned list was
+  written flush left, a list's lineSpacing went unwritten wherever the layout's items were not
+  its own, its continuationIndent was never written before a wrapped line, and an item at the
+  stated column — a list that nests with `hangingIndent`, a gap its marker does not clear, a tree
+  of items — stood off the page's column, and a blank item a `hangingIndent` list draws as its
+  marker alone was not written; the report named none of them. The list's note (`ListNode`) now
+  names:
+  - its alignment: its items are written flush left;
+  - its lineSpacing, where the layout's items are not the list's own and one wraps — an item run
+    onto the next page wraps, even split a line apiece — and in a list composed in a table cell,
+    which has no lines of its own to read, saying whether an item wraps is not measured (since
+    written on its table's lines where they match: see "A DOCX export writes a list composed in a
+    table cell on the lines its table laid out for it, as it does a paragraph there");
+  - its continuationIndent, in a list the page sets it in — a markerless list, or a tree of
+    items, without `hangingIndent` — where an item wraps or, its lines unread, saying so;
+  - how many of its items stand at a stated column, 9pt in and 6pt more a level, or a space past
+    their marker or two spaces a level in, not where the page sets them;
+  - the rows the page draws as a marker alone, for blank items.
+
+  With no layout behind the export, the section's `measured geometry` note says the space
+  between lines is the editor's too. Across the DOCX fidelity corpus the report names one list:
+  `SlateOrange`'s certifications, composed in a table cell, at the stated column. None of this
+  changes what is written: the 62 documents of the corpus export to the same bytes. In
+  `DocxNodeFieldLedgerTest` a list's `align`, `lineSpacing`, `continuationIndent`,
+  `hangingIndent` and `markerGap` move from a gap to `REPORTED`, and its `items` from `WRITTEN`
+  to `REPORTED` for a blank item drawn as a marker alone; 7 node-field gaps remain.
+
+- **A DOCX export's report names a clip where it cuts something, and a turned container's
+  transform where no outline names it.** A Word file has no clip a container can set round its
+  layers: a sidebar's ornament set past its side, a square tile's corners in a disc, a label
+  run past its chip are written whole. The report named a shape container's clip on one path
+  only, and there of every one, `OVERFLOW_VISIBLE` included; a table's `cell drawing` note said
+  of every drawing its cells hold that a clip on it is not carried. It named no layer stack's
+  `clipToBounds`, and no clip of a container written as a badge, a title and its dates, over
+  the flow or as drawing alone. Now:
+  - on every path, a `clipped shape container` or `clipped layer stack` note names a clip that
+    cuts what the node's layers paint, and a `clipped cell content` note on a table names one
+    composed in its cells;
+  - what is painted is measured from the layout's fragments as the page paints it, upright as
+    the file writes it (`DocxClipInk`):
+    - a fill to its outline, a gradient alone being none the file draws;
+    - a stroke as `java.awt.BasicStroke` makes it, with its cap, its join and the PDF's miter
+      limit, and a box's side borders each a line of its own;
+    - a picture where it is drawn, fitted in its box where it is contained, and cropped to the
+      ellipse it fills where the file crops it;
+    - a line of text from its letters' tops to their feet, read from their glyphs' outlines, or
+      over its whole line where those are not known — always for a standard face the PDF does
+      not embed, whose outlines are read through a stand-in font in its own units;
+  - what a clip inside another cuts away is named on that clip, not on the one round it;
+  - a clip that cuts nothing is not named, and the `cell drawing` note no longer speaks of
+    clips; with no layout behind the export, every node that clips is named, its cut not
+    measured;
+  - the note every shape container's layers were written with is now `shape container`: "its layers
+    are written inline, one after another in source order" (since written only where a layer is
+    written in the flow: see "A DOCX export's report says a shape container's layers are written
+    inline only where they are"), with no claim of a clip;
+  - a shape container turned by a transform whose outline draws nothing — unpainted, or an
+    outline no shape shows — names it: what it holds stands upright at its size.
+
+  Measured across the DOCX fidelity corpus, the report names one clip: `LumaStudioInvoice`'s
+  sidebar ornament. None of this changes what is written: the 62 documents of the corpus export
+  to the same bytes. In `DocxNodeFieldLedgerTest` a layer stack's `clipToBounds` and a shape
+  container's `clipPolicy` and `transform` move from a gap to `REPORTED`; 12 node-field gaps
+  remain.
+
+- **A DOCX export's report names what a container written as its contents leaves of its own
+  layout.** A canvas's caption set at its middle came out at its top with everything under it
+  risen to meet it, a band bled to the page's edges stopped at its box, a column fixed
+  narrower than its band ran its text the band's width, and a line kept with the next block
+  could end a page without it — and the report listed no loss. The container's note now
+  names:
+  - on a canvas, whose drawings stand where it places them:
+    - that what it writes is written from its corner, one block after another, not where it
+      places it — unless it stacks it that way;
+    - that its height is not held, where it stands in a flow and something follows it there
+      — no longer named, as the room is written: see "A DOCX canvas holds its height";
+    - its width, where its text wraps narrower than the column;
+  - on a painted section in the flow the page lays out page by page — the body and the panels
+    in it, not a row's or a table's cell, a layer or a layer stack's column, where the page
+    bleeds nothing: its bleed, which stops its fill and borders at its box;
+  - on a section or container written as a layer stack's column: a fixed width narrower than
+    its band;
+  - on a line drawn in that same flow and kept with the next block, a page break aside: that
+    the keep is not carried — its drawing is anchored in a paragraph near it, and a page can
+    end between the two.
+
+  A canvas's `clipPolicy` is recorded as having nothing to carry: the page clips no canvas.
+  None changes what is written: the 62 documents of the DOCX fidelity corpus export to the
+  same bytes. In `DocxNodeFieldLedgerTest` 6 node fields move from a gap to `REPORTED` and one
+  to `INERT`; 15 node-field gaps remain, each named — among them a canvas's height as its
+  row's tallest cell.
+
+- **A DOCX table with padding on its sides keeps the layout's grid, row heights and unbroken
+  rows.** The page draws a table's rows inside its padding, narrower than the table's
+  placement by that much, and the export matched a table's rows to the layout by the
+  placement's width: a table with side padding matched none, and was written without the
+  layout's grid, with no row heights and rows Word could break, its drawings anchored outside
+  its rows, and its rows standing its padding left of the page's. Its rows are now measured
+  inside the padding, and the padding holds the table in as its margin does — its left side in
+  the indent, both in the room its columns are given — so a table with side padding is written
+  as one with those margins. In `DocxNodeFieldLedgerTest` a table's padding moves from a gap to
+  `WRITTEN`; 22 node-field gaps remain.
+
+- **A DOCX export's report names the geometry a block is written without.** A logo given a
+  left margin stood at the column's edge, a spacer with a margin held only its height and
+  everything under it rose, and a section fixed to half the column ran its text the column's
+  width — and the report listed no loss. Each block's note now names:
+  - on a picture or a barcode: its left margin and padding, which are not written (its
+    paragraph sets it from the left, where its right side moves nothing); a picture drawn
+    beside its text or over its badge names its padding, since it is fitted to a box that
+    holds it;
+  - on a page reference: the margin and padding on the side or sides its alignment sets it
+    from, and, where the export writes no bookmark for its anchor, that its number is written
+    as text — the shape the anchor is on says so too, and a table of contents' entry now does;
+  - on a spacer: its margin and padding above and below; on a chart, those and the ones on its left,
+    which are not written round its data table (a chart is since a Word chart: see "A DOCX export
+    writes a chart as a Word chart"). Below the lowest block of a band, or of a layer another
+    resumes after in its column, the space is measured from the page, the block's own margin and
+    padding included, so that side is written and not named;
+  - on an unpainted section or container holding text, and on a panel composed in a table
+    cell: a `fixedWidth` narrower than its column, which its paragraphs and lists run the
+    width of.
+
+  None changes what is written. In `DocxNodeFieldLedgerTest` 11 node fields move from a gap to
+  `REPORTED`; 23 node-field gaps remain, each named — among them the fixed width of a layer
+  stack's column.
+
+- **A DOCX export's report names what each written or drawn node goes without.** The export
+  wrote these nodes and said nothing of what it left behind: a linked logo became an unlinked
+  picture, a rotated photo stood upright, a dashed line was drawn solid (since drawn dashed: see
+  "A DOCX export draws a dashed line or path dashed"), and a link to an anchor
+  on a drawn shape pointed at no bookmark. Each node's report note now names:
+  - on a shape, ellipse or line drawn as a shape: its link, its outline entry, its anchor (a drawing
+    holds no bookmark, so a link to it points at none and a page reference to it is a fixed number),
+    a shape's gradient fill and unequal corners (drawn at the largest radius), a line's dash pattern
+    (drawn solid; since drawn dashed: see "A DOCX export draws a dashed line or path dashed") and
+    caps (not written, so the editor ends the line its own way) (caps since written: see "A DOCX export ends and turns a drawing's outline as the page strokes it") — added
+    to the note the drawing already had;
+  - on a line or thin bar written as a rule: a bar's link (a line's was already `rule link`),
+    either's outline entry, and a line's caps (a border ends flat), in a note `written as a
+    paragraph border`; a rule keeps its anchor as a bookmark;
+  - on a picture in the flow, a table, a section or a container: its link, its outline entry and
+    a picture's transform, in a note on the node — the page flow itself, a panel, a column of a
+    layer stack and a section inside a node laid over the flow included; a picture laid beside
+    its text and a barcode add them to the note they had;
+  - on a section or a container written as a column of a layer stack: its anchor, which no bookmark
+    marks there (since bookmarked: see "A DOCX export bookmarks a layer stack's column, so a page
+    reference or a link to its anchor works"), though a link or a page reference to it names one;
+  - on a drawing composed in a table cell, whose drawing is its table's: its link, outline entry,
+    anchor, unequal corners and caps; its gradient and dash stay the table's note's to name (its
+    dash since drawn: see "A DOCX export draws a dashed line or path dashed").
+
+  A shape painted only with a gradient is dropped for that reason rather than for its geometry,
+  and in a table cell it is no longer taken for drawn by its table and left unreported. None
+  changes what is written: the 62 documents of the DOCX fidelity corpus export to the same bytes.
+  In `DocxNodeFieldLedgerTest` 21 node fields move from a gap to `REPORTED`, and so do two
+  written ones, a section's and a container's anchor, which as a layer stack's column get no
+  bookmark; 34 node-field gaps remain, each named.
+
+- **The DOCX export report names what it used to leave out in silence, or misnamed.** Three
+  kinds of loss reached the Word file with no more than a log line, or nothing, so a caller
+  reading the report was told the document lost nothing, and a fourth was reported for the wrong
+  reason:
+  - a row's fill, outline and side borders (`RowBuilder.fillColor`, `stroke`, `borders`): the
+    row is written as a table with no shading or borders, and a page zone's row as one line.
+    Now `DROPPED`, `row paint`, naming which of them, and `rounded` where a corner radius
+    rounds them; a row of no columns is named where the layout gives it height, as the page
+    paints only then (since written in the flow, as a panel: see "A DOCX export writes a row's
+    fill, outline and side borders, as a panel holding its columns"). A row composed in a table cell is `DROPPED` where the cell drew none of
+    its paint — round text it never draws any — and `APPROXIMATED` where the table drew
+    shapes, since a cell's paint is drawn where it frames no text and the layout does not say
+    which box is the row's;
+  - anything in a page zone but paragraphs, page fields and spacers, such as a logo: now
+    `DROPPED`, `page zone content`, once for each, though a zone is written into each kind of
+    header or footer it is given — two logos of no name are two notes, and in a file of several
+    sections each names its section (a picture since written: see "A DOCX page zone writes its
+    picture — a logo — in its line, where the page draws it");
+  - a watermark, a protection and viewer preferences: now `DROPPED`, `watermark` (once per
+    section that sets one), `protection` and `viewer preferences` (once for the file) — a file
+    asked to be protected opens and edits without a password, and the report says so;
+  - a node kind of the caller's own (a `DocumentNode` with its own `NodeDefinition`) was
+    reported as dropped geometry "with no semantic Word analogue". It is now named as a kind
+    the export does not know, losing its text, its pictures and what it holds — counted where
+    the node lists its children; the shapes it paints itself are still drawn, and say the
+    same. A page field in the body, not a page zone, is dropped for that reason rather than
+    for its geometry.
+
+  Which kinds are the export's own is decided by the node's package, exactly: a caller's node
+  in a package under the same root is not taken for a built-in one. A new test,
+  `DocxNodeFieldLedgerTest`, records for every field of every node class in the node and layout
+  packages — nested and non-public ones included — and every output option, whether the export
+  writes it in the body, reports it, has nothing to carry, or leaves a gap that names what is
+  lost: 29 fields have nothing to carry, 55 node fields are gaps, and so are page zones, where
+  a paragraph's alignment, spacing and direction and a row's columns are not written. A node
+  class that is not a record, or a kind or field added to the engine, fails it until someone
+  decides. (The gaps have since closed, and a gap is no longer a fate: see "A DOCX page zone's
+  text stands on the page's baseline".)
+
+- **A DOCX timeline's dots, and drawings centred on a line, move with their text too.** A drawing in
+  a table cell went into that cell only when the cell held it across, and a dot set in a column of
+  its own beside its entry's text — `CharcoalGold`'s timeline, a row of date, gap, dot, gap and text
+  — had no paragraph to go to, so it stayed on the page. It now goes into the first paragraph of the
+  cell of the same row that holds it, placed from the row's top: measured in Word 16.0.20430 and
+  LibreOffice, both start each cell's first paragraph there where the cells set their content from
+  the top, every cell of a row taking the row's largest top margin. A drawing in the body may now
+  also rise above its paragraph's top by its own height, 24pt at most, as a dot centred on the
+  paragraph's first line does; both editors place it there and draw it whole. In a table cell it
+  still rises by a stroke's width at most (since placed by its paragraph's top only where Word reads
+  it back: see "A drawing is placed from its paragraph's top only where Word reads that offset
+  back"): a rule placed 1pt above its paragraph in a contact row's cell moved that row's text 1.8pt
+  in LibreOffice on Linux. Word's editing protocol finds 132 of the 231 shapes beside text that
+  moved moving with it, against 104 of 228, and 20 of the 35 documents with drawings passing,
+  against 19. Unedited, no shape stands more than 1.5pt from where it stood in Word, and no line of
+  text moves in Word or in LibreOffice on Windows or Linux.
+
+- **A DOCX's drawings move with the text they stand beside.** Most shapes the page paints — a
+  timeline's dot, an icon by a heading, a skill's bar, a badge — were placed from the page's edges,
+  so when a reader edited the text above one, the text moved and the shape stayed. A shape standing
+  beside a paragraph's text is now anchored in that paragraph and placed down from its top: the
+  paragraph whose text is nearest, within 48pt, when the shape rises above its top by a stroke's
+  width at most (the entry above widens this) and, in a table cell, when the cell holds it across,
+  its line is set from the left and its row is not a repeated header. When the nearest paragraph
+  cannot hold the shape, it stays on the page rather than going to one further off. The paragraph's
+  top is where Word places from, the space above its first line included and its line where Word
+  stands it, measured in Word 16.0.20430 and LibreOffice to a tenth of a point. Only the first
+  paragraph holding text that a paragraph node is written as offers its place yet; beside a table's
+  own cell text or a list's items, in the gap between two columns or far from any text, a shape
+  stays on the page (since anchored in a paragraph of its own block: see "A DOCX export anchors a
+  drawing in a paragraph of the block it belongs to, so it moves with that block when the text above
+  is edited"). Word's editing protocol, with a new `drawings-follow-text` scenario that lengthens a
+  paragraph, finds 104 of the 228 shapes beside text that moved moving with it, against 12, and 19
+  of the 35 documents with drawings passing, against 15. Unedited, no shape stands more than 1.5pt
+  from where it stood in Word. In LibreOffice the same holds but for `OrangeOps`'s header separator,
+  which follows its line of text where LibreOffice already sets that line 78pt low.
+
+- **Restyling Normal reaches a DOCX's body text when the body is in runs or tables.** Normal is
+  elected from the style the most characters are set in, and the count left two kinds of text
+  out. A paragraph made of runs counted in its paragraph's style, which its runs set aside, and
+  table cells did not count at all. Where most of the text sits in runs or cells — invoices,
+  proposals, a rota — Normal came from the few paragraphs left, and the body carried a direct
+  size that restyling Normal did not reach: Normal 14pt over 10pt text in `ProposalEditorial`,
+  12pt over 10.5pt in `CobaltRota`. Each piece of text now counts in the style it is written
+  in, a table cell's in the style its cascade resolves to; an empty cell counts for nothing.
+  The face and size with the most text are chosen before the colour, so body text set in two
+  colours is not outvoted: `ProposalNorthline`'s 9pt text, in its body colour and a muted one,
+  lost to its 10pt. A header's or footer's paragraph mark is now in its text's style too. Word's
+  editing protocol finds the body following Normal in all 62 corpus documents, against 54.
+  LibreOffice sets `VioletGrid` on one page, as the PDF, instead of two, its 37 lines past 2pt
+  down to none; 65 lines move in all, 50 nearer, and the 15 further are `CobaltRota`'s by
+  0.05–0.4pt across. In Word one line moves: the right-hand slot of `CobaltRota`'s footer,
+  "quayside bar | 31 aug – 6 sep 2026", 0.36pt further across.
+
+- **A reader can type below a DOCX's closing table.** A document that ends with a table ends
+  with the paragraph Word requires after it. That paragraph was always a point tall with its
+  mark hidden, so that it could not open a blank page, and no one could type below the table.
+  Measured in Word on `CompactMono`:
+  - typed at the caret Word gives the document's end, 70 lines ran into the table's last
+    cell, a narrow column, over five more pages;
+  - inserted at the very end, they went into the hidden paragraph and none of them showed.
+
+  Where the last page has room for two lines of the document's text below the table, the
+  paragraph is now an ordinary one. That is 17 of the 62 corpus documents, and in all 17 the
+  same 70 lines now run onto a new page under the table, visible, with the footer. The other
+  16 that end in a table fill their last page to the foot and keep the hairline; the export
+  report says so (`closing paragraph`, `APPROXIMATED`). Neither Word nor LibreOffice moves a
+  line or adds a page anywhere in the corpus.
+
+- **A DOCX chip takes the room its padding takes on the page.** A chip's fill is written as
+  run shading, which covers the letters and nothing more, so its horizontal padding was not
+  in the file. `ModernReceipt`'s status chip, right-aligned with 9pt of padding on each side,
+  stood 9.16pt right of the page's in Word; it stands 0.16pt right now. The padding is
+  written as character spacing (`w:spacing`) in two places. After the chip's last letter it
+  is shaded with the chip; after the letter before the chip it is not, unless that letter
+  ends another chip, whose fill it then takes. Each of those letters, with its accents, goes
+  in a run of its own where its run holds anything else, inside the same link where it is in
+  one. A centred or right-aligned line spaced to the page's width adds its
+  spacing to the padding's and reckons the padding at its own width, not grown to Word's type
+  size. It is the only chip in the corpus with padding beside its letters, and no other line
+  moves, in Word or in LibreOffice. LibreOffice sets no spacing after a line's last letter, so
+  there the status chip stays where it was (9.21 → 9.26pt); mid-line it sets it as Word does.
+  Not written, and so reported:
+  - the left padding of a chip that opens its line or follows a picture;
+  - any space after right-to-left letters: in a right-to-left paragraph, and for Hebrew or
+    Arabic in a left-to-right one;
+  - any space after a symbol or an emoji, which Java 17 does not keep whole.
+
+  The export report says, chip by chip, how each side was written, in place of the old "its
+  padding is not in the file".
+
+- **Enter in a DOCX continues the text it follows.** Word gives a new paragraph its mark's
+  formatting, and the export left the mark of most paragraphs — every one written at an exact
+  line height — in the document's own size and face. Pressing Enter at the end of a paragraph
+  and typing set the new letters in another size: 9pt after 10.5pt in `NavySidebar`, 14pt after
+  11pt in `ClassicInvoice`. Typing at the end of a document set them on the last paragraph's
+  exact lines at the document's size, 14pt letters on lines set for 10pt text. Each paragraph's
+  mark now carries what its text ends in — face, size, colour, weight, slant, decoration and
+  tracking, as its last run has them, a rich list item's included; a paragraph ending in a
+  chip keeps its own style there, since the chip's letters are styled for a fill the mark does
+  not carry. Measured with the Word
+  editing protocol over the 62 corpus documents:
+  - Enter and typing continues in the text's size and face in all 62, against 37;
+  - text typed at a document's end stands as the page sets its last paragraph in 6 more.
+
+  The remaining "type at the end" failures are documents ending in a table, where the typing
+  goes into its last cell. A numbering marker that its level states no style for now takes the
+  item's — the style the page draws it in — rather than the document's. Word's corpus lines are
+  unchanged; LibreOffice sets 20 lines up to 0.2pt lower, none across.
+
+- **A DOCX panel in the body starts its text the whole padding in.** A panel's table took half its
+  left border off its cell's left margin and its indent, for an editor that keeps the border inside
+  the cell; for a panel in the body, Word 16 and LibreOffice on Windows centre the border on the
+  table's edge, as the page does, and start the text at the indent. Every line in `ModernInvoice`'s,
+  `ModernProposal`'s and `ClassicInvoice`'s header panels, behind a 4pt accent, stood 2pt left of
+  the page's in Word, `NordicClean`'s and `ModernReceipt`'s 1.5pt, and `EditorialProposal`'s and
+  `NorthlineProposal`'s up to 0.55pt; they stand within 0.2pt now. The left margin is now the whole
+  padding, the table no wider on that side, and the indent the text's place. Lines more than 2pt off
+  across fall from 12 to 4 in Word; nothing moves down. `ObsidianInvoice`'s items, set in a table
+  inside a panel with a thin border all round and already a little right of the page's, move by half
+  that border, up to 0.36pt further, and `ModernReceipt`'s status chip, whose padding is not in the
+  file, 1.56pt (its padding since written: see "A DOCX chip takes the room its padding takes on the
+  page"). The LibreOffice build on the Linux CI reads a body table's indent as its edge, its text a
+  margin further in: these panels' lines stood 8.6 to 14.6pt right of the page's there already, and
+  stand the border's width further, up to 4pt — 78 lines further, none nearer, past 2pt across still
+  301.
+
+- **A centred or right-aligned DOCX line of its own stands as wide as the page sets it.**
+  Word states a type size in half points, and a line set at a size the page gives to the tenth
+  is that much wider or narrower, a centred or right-aligned one moving its first letter with
+  it: `CenteredHeadline`'s 8.3pt contact line, set at 8.5, stood 10pt wider in Word and its
+  first letter 4pt left of the page's, and `ClassicSerif`'s 8.7pt one 4pt right. Where a
+  left-to-right line of text alone differs by a point or more, its letters are now spaced by
+  it (`w:spacing`), the size left as Word sets it, so the line's ends stand within a fraction
+  of a point of the page's, and its room is reckoned from the page's width; a line that is
+  tracked or carries a picture or a shape, and a difference under a point, are left as they
+  are, room included. Lines more than 2pt off across fall from 23 to 12 in Word (74 lines
+  nearer the page, one 0.02pt further) and from 29 to 18 in LibreOffice on Windows (70 nearer,
+  five at most 0.11pt further) and 310 to 301 on Linux; nothing moves down.
+
+- **A nested list item with no marker stands where the page sets its text in DOCX.** In a
+  list of paragraphs — rich items — a nested item was written two spaces a level in, with no
+  indent: the project descriptions `Panel`, `Executive`, `ModernProfessional`,
+  `MinimalUnderlined` and `BoxedSections` set under each project's name started up to 3.4pt
+  short of the page's and wrapped back 6 to 7.9pt short, in Word; they stand within 0.07pt
+  now. A nested rich item with no marker now stands, every line of it, as far past the list's
+  edge as the layout set its text, where the layout's items are matched to the list's, and its
+  measure is weighed at Word's half-point sizes as a paragraph's is, so it breaks at the page's
+  words. A list that nests only such items sets its top level at the page's column too, its
+  marker a tab ahead of its text: kept at a space, the project's name started the gap less a
+  space left of its description. A nested item with a marker, one of plain text, one the
+  layout sets no further in than the list's edge, and every item of a list the layout did not
+  place or whose items it does not report one by one — an item split across pages — keep the
+  spaces, and so does the top level of a list that nests any of them. Lines more than 2pt off
+  across fall from 49 to 23 in Word, and in LibreOffice from 54 to 29 on Windows and 335 to
+  310 on Linux; in LibreOffice the foot of `MinimalUnderlined`'s first page, 14pt high, comes
+  within 1.4pt of the page's, and lines more than 2pt off down fall from 127 to 118 on Windows
+  and 245 to 236 on Linux.
+
+- **A DOCX list without `hangingIndent` wraps where the page does.** The page sets an item's
+  first line as the marker, a space and the text, and every wrapped line after the spaces that
+  cover the marker and that space; the Word list's levels were a stated 9pt column, a tab
+  after the marker: `ModernInvoice`'s and `ClassicInvoice`'s notes wrapped 2.6pt left of the
+  page's, `MidnightNavy`'s and `SlateOrange`'s bullets 3.7 and 2.6pt right. The top level of a
+  list the layout placed that does not nest now takes the width of those spaces in the list's
+  style as its indent and hanging, its marker followed by a space (`w:suff`) in the list's face
+  and size. Where Word sets that size to the half point, an item that wraps is measured in the
+  same proportion, less a point and never short of its widest line as Word sets it, so it
+  breaks at the page's words: in the page's column alone,
+  `TerracottaRail`'s 8.6pt items, set at 8.5, took a word onto a line the page breaks it from,
+  and the column under them rose 11.5pt. The item's own `w:ind` is its right side alone, so it
+  keeps its level's column. Lines more than 2pt off across fall from 72 to 49 in Word, and in
+  LibreOffice from 77 to 54 on Windows and 358 to 335 on Linux; nothing moves down, and four
+  lines more are found in `MidnightNavy` in both editors and in `OrangeOps` in Word and on
+  Linux, their items now breaking as the page breaks them.
+
+- **A panel with a left border in a DOCX cell no longer widens the cell in Word.** A panel's table
+  hangs half its left border left of the text it is written in, so both editors put its text where
+  the page does. In a cell, Word starts the table half that border in from the cell's text instead,
+  and a nested table running past its cell widens the cell, fixed layout or not: `CompactMono`'s
+  rail, its 3pt accent at its column's edge, pushed the main column 2.3pt right, every line of it
+  with it. Such a panel now gives up what runs past the cell's edge as Word starts it, no more than
+  its left side had given its text — the half border the table is wider by, and what its left margin
+  gave back of the other half — so its text keeps the page's width, and both editors end the rail at
+  195.9pt, 0.9pt of slack past the page's 195.0 (since ended where the page ends it: see "A DOCX
+  export ends a panel where the page ends it"). A panel bled left by a negative margin keeps the
+  rest of its width. `CompactMono`'s 28 main-column lines stand within 0.1pt across in Word, and
+  `SubscriptionInvoice`'s and `CobaltRota`'s panels' lines move nearer the page in both editors.
+  Lines more than 2pt off across fall from 101 to 72 in Word; nothing moves down in either editor.
+
+- **A paragraph or a list in DOCX keeps its own sides on a layer, and its edge in a cell.**
+  A paragraph under a layer stack or a shape container took none of its own margin or
+  padding: `SubscriptionInvoice`'s metadata labels, padded 9.6pt past their bars in a layered
+  row, stood at the bars, 9.5pt left of the page's, and `MidnightNavy`'s certifications
+  12.4pt. They take them now, as a paragraph anywhere else does, and so does a list. In a
+  cell, the couple of points an editor is given to set a line wider came off both sides: a
+  left-aligned line padded 2pt or more started 2pt left of the page's, and a right-aligned
+  one ended 2pt right of it — `ObsidianInvoice`'s and `PaymentsInvoice`'s amounts,
+  `OrangeOps`' certifications, `NavySidebar`'s lists. Those points now come off the side a
+  left-to-right line does not lean on, and off a list's right; a centred line, and a
+  right-to-left one, still gives them up on both sides. Lines more than 2pt off across fall
+  from 130 to 101 in Word, and in LibreOffice from 96 to 77 on Windows and 382 to 364 on
+  Linux; nothing moves down. A right-aligned line ends where the page ends it, so one Word
+  sets wider — at its size to the half point — starts further left: `WorkspaceInvoice`'s
+  footer link, 8.5pt for the page's 8.27, ends within 0.05pt and starts 1.5pt left of the
+  page's.
+
+- **A `hangingIndent(true)` list's top level takes the page's marker column in DOCX, text
+  markers too.** The export gave a Word list's levels a stated 9pt column and a list of
+  paragraphs a space after its marker, and wrapped every item's lines back under its marker:
+  `Panel`'s skills stood 7.8pt left of the page's on their second lines. The top level of a
+  list the layout set in a marker column now takes that column, the marker's width and
+  `markerGap`, as its indent and hanging — a Word list's level, or a tab and a hanging indent
+  on each item of a list of paragraphs, plain items included — so its text and wrapped lines
+  stand where the page sets them, a picture marker's included. A marker of text counts as
+  wide as the page sets it grown to Word's half-point size, and the column is used only where
+  the gap leaves half a point past that: Word sets it in the page's face where the export
+  embeds it, or in a standard face set in the same widths; a face the export may not embed is
+  the reader's editor's to substitute, and may set wider. Such a level names the list's face
+  and size, which Word draws its marker in: an item at an exact line left it the document's,
+  and a list set smaller than the body would have had a bullet wider than its column. A list
+  that nests items, a marker made of runs, a marker the gap does not clear, and a list without
+  the flag keep the stated columns and the space. `Panel`'s and `SerifHeadline`'s six such
+  lines now stand within 0.2pt across in both editors; lines more than 2pt off across fall
+  from 136 to 130 in Word, and in LibreOffice from 102 to 96 on Windows and 388 to 382 on
+  Linux.
+
+- **A list item whose marker is a picture starts its text where the page does in DOCX.** The
+  picture — a dot, an icon — was followed by a space, a little over two points where the page
+  leaves the `markerGap` asked for: `TealPulse`'s skills, highlights and certifications, a
+  3.2pt dot and a 9.2pt gap, stood 6.3 to 6.7pt left of the page's in both editors, and
+  `OrangeOps`' 6pt in Word. A top-level item of a `hangingIndent(true)` list whose marker is
+  the list's and a picture alone is now followed by a tab to a stop the layout's measure past
+  the item's start — the picture's width and the gap — where the picture, its edges included,
+  clears that stop, as Word draws a picture at the size it is written, and its lines hang
+  there (the entry above, which also takes a list that nests items out). Those lines now
+  stand within 0.1pt across.
+  Lines more than 2pt off across fall from 175 to 136 in Word, from 130 to 102 in LibreOffice
+  on Windows and from 427 to 388 on Linux. `ListBuilder.hangingIndent` and `markerGap` say what
+  DOCX now keeps.
+
+- **A centred or right-aligned line that fills its box keeps to one line in Word.** Word sets
+  a size in half points, so a 6.8pt line is set at 7pt, 2.9% wider, and no longer fits a box it
+  fills. A flush-left paragraph was already given that much more measure; a centred or
+  right-aligned one of one line now is too, at both edges or at its left, so the line stays
+  where the page sets it. In a table cell the left edge gives no more than its indent, since
+  Word draws no text past a cell's left edge, and a line short of that moves by the rest.
+  `VioletGrid`'s "INFORMATION ARCHITECTURE" broke onto two lines in its skill tile, and the
+  tile's text stood 7.5pt low under it. Lines more than 2pt off in Word fall from 2 to none
+  across the corpus. In LibreOffice, which still sets `VioletGrid` on two pages, its median
+  falls from 5.2pt to 0.4pt.
+
+- **A table or a row keeps its own margins in DOCX.** Its left margin is now written into its
+  indent (`w:tblInd`), as a paragraph's is: it was dropped everywhere, and `PaymentsInvoice`'s
+  bank details stood 36.7pt left of the page's in Word. A table indented in a cell takes that
+  margin out of the width it is given there, rather than running past the cell. A table that
+  opens a layer of a stack written as a band starts where the band resumes and keeps its top
+  margin below that, held by a hairline line at the top of a cell. `VioletGrid`'s education lines, a table beside a badge
+  held 51.3pt clear of it and 2.3pt down, started under the badge and stood 2.4pt high; they
+  are at most 0.07pt off now. Lines more than 2pt off in Word fall from 5 to 2 for `VioletGrid`.
+
+- **Text hanging past a block takes its place out of the space above a stack that follows in
+  DOCX.** A stack written as a band opens at the space the page measures above its first block,
+  and that block forgot what the text above it already hung into that space: a band's or a
+  shape container's last line run past its foot, a row's icon line. `ConsultingInvoice`'s
+  address runs 2.3pt past its band, and the contact bands under it stood 2.9pt low in Word, 0.5pt
+  now. Lines more
+  than 2pt off fall from 3 to none for `ConsultingInvoice` and its long version in both editors,
+  and from 11 to 5 across the corpus in Word.
+
+- **A ruled table's first and last rows keep the page's height in DOCX.** A row the page holds
+  at a height is written that height less what its cells take around their content, since
+  Word, as LibreOffice, reads a row's written height as its content. Word gives a rule between
+  two rows half to each row, and the rule above the table and the one below it whole, so the
+  first row and the last carry a rule and a half; written less one rule, each stood half a rule
+  taller. `EditorialProposal`'s timeline and investment tables each stood that much taller, and
+  its second page ran 2.5pt low by its acceptance block, 1.2pt of it these tables. Lines more
+  than 2pt off fall from 11 to none for `EditorialProposal` in Word, and from 22 to 11 across
+  the corpus; the corpus's mean |drift| in Word falls from 0.43 to 0.34pt.
+
+- **A row's cell whose last line hangs below the row takes it out of the gap under the row in
+  DOCX.** A line held to an icon reaches as far below the page's line as the icon's ink, and
+  gives that room back out of the space above what follows. The last line of a cell had
+  nothing following it there: Word made the row that much taller than the page's.
+  `TimelineMinimal`'s last contact line, its icon lowered beside the text, ended 1.8pt below
+  the header row, and moved the whole page under the header down that much. That reach now comes out of the
+  cell's own space under it first, and what passes the row comes out of the gap under the row.
+  `TimelineMinimal`'s median drift falls from 1.44 to 0.36pt in Word and from 1.40 to 0.45pt in
+  LibreOffice, its cover letter's from 1.30 to 0.29pt and 1.32 to 0.33pt. A spacer the layout
+  moves to the next page leaves such a reach — and a pull or a card's border below the block
+  before it — on the page above, and holds the whole gap carried with it, as a paragraph moved
+  there does.
+
+- **A spacer is as tall in DOCX as on the page.** A spacer is written as an empty paragraph a
+  tenth of a point tall, which Word keeps (measured: ten such lines between eleven lines of
+  text added 0.96pt), and its whole height was then owed below it as well. Every spacer stood a
+  tenth of a point taller than the page's; `EditorialBlue`'s first page ran 1.2pt low by its
+  foot, its last entry's heading found no room there in Word, and its second page stood 10pt
+  low. The spacer's height now counts its own line. `EditorialBlue`'s lines more than 2pt off
+  fall from 9 to none in Word and in LibreOffice on Windows, and the corpus's mean drift in
+  Word from 0.49 to 0.45pt.
+
+- **A body paragraph or spacer the layout moves to a new page keeps the space above it there
+  in DOCX.** The page starts a paragraph a page break moves down at its own top edge, with the
+  containers opening there, and keeps the gap before it too where the gap did not fit at the
+  foot of the page above. Word drops a paragraph's space above at the top of a page:
+  `ModernProfessional`'s second page opens with a heading its section pads 8pt down, and in
+  Word it stood 7.7pt high with everything under it; `Executive`'s opens with the spacer
+  between two entries 3pt down, and stood 3.2pt high. That space is now a line's height, which
+  Word keeps, the gap that stays at the foot of the page above left as the space above that
+  line, so Word breaks the page where it did. Lines more than 2pt off fall from 15 to none for
+  `Executive` and from 5 to none for `ModernProfessional`, in both editors.
+
+- **What follows a line holding only a drawn shape stands where the page sets it in DOCX.**
+  A shape is written as a picture a transparent frame larger than its ink on every side, and
+  Word makes a line of pictures and no text, grown to them, as tall as the pictures, frame
+  included.
+  `MonogramSidebar`'s contact icons stood in lines half a point taller than the page's, and
+  each contact under them half a point lower than the one above. The frame is now taken from
+  the space above the line and above what follows. `MonogramSidebar`'s lines more than 2pt off
+  fall from 17 to none in Word, its median from 0.79 to 0.29pt.
+
+- **A panel bled to the paper's edge stands where the page puts it in Word.** A panel's
+  table indent places its text, and an indent of 0 was not written. A panel whose negative
+  margin takes its fill to the paper's edge and whose padding takes its text back to the
+  margin has exactly that indent, and with none Word puts the table's edge on the margin:
+  `IndigoProposal`'s about band, fill and text, stood 27.6pt right of the page's. The indent is
+  now written in the body even when it is 0. LibreOffice already set the band where the page
+  does.
+
+- **A drawing over text in a row nested through a one-layer stack takes its room in DOCX.**
+  A row cannot sit in a row cell, so templates wrap one in a layer stack of one layer; the
+  row is written in the flow, and a drawing in it is drawn where the page puts it. Its room
+  was kept only outside every overlay, so `IndigoProposal`'s meta and feature tiles, a disc
+  or a rounded tile over each label, set every label 24pt to 28pt higher than the page. A
+  drawing with a block after it in its section now takes its room there; one alone in its
+  section is left to its row. `IndigoProposal`'s lines more than 2pt off fall from 16 to none in both editors.
+
+- **A table or row the layout moves to a new page keeps its top edge there in DOCX.**
+  The page starts a block a page break moves down at its own top edge, and leaves the gap
+  before it at the foot of the page above where it fits there. Word has no space above a table, so the edge was
+  written below the paragraph before it, on the page above, and the long `LumaStudioInvoice`'s
+  closing pair stood 12pt high at the top of its third page. The edge is now a line of that
+  height kept with the table: Word drops a paragraph's space above at the top of a page, and
+  keeps a line's height. `LumaStudioInvoice`'s lines more than 2pt off fall from 20 to none
+  in Word, and from 22 to 2 in LibreOffice.
+
+- **A paragraph opening a table cell keeps its lines the page's distance apart in DOCX.**
+  Word holds a paragraph's line gap inside its lines, and a paragraph of `n` lines then has a
+  gap too many, which comes off the space above it. A paragraph opening a cell has none, so
+  its gaps were shared out over its lines: `EditorialProposal`'s timeline sets each phase's
+  description on two lines 13.85pt apart, and Word set them 12.35pt apart, the first 1.85pt
+  low and the second 0.36pt. The gap now comes off the cell's top padding instead, no more than
+  steps the lines the page's distance apart, and the cell keeps its height. A row beside a
+  merged cell, or a cell opening with a table, keeps a margin Word sets the whole row at, and
+  its cells keep their padding, as does a panel. In Word, `EditorialProposal`'s lines more than
+  2pt off fall from 17 to 11, and its p90 from 2.07 to 1.81pt; `CobaltRota`'s wrapped cells,
+  up to 1.4pt low, come to about 0.2. A cell's
+  lines now stand level with each other and keep the cell's own offset, so a few medians rise
+  by hundredths: the long `ConsultingInvoice`'s from 0.89 to 0.99pt.
+
+- **A `bulletOffset` paragraph's wrapped lines keep the page's distance in DOCX.**
+  Word sets every line of a paragraph one height apart, and the export wrote the tallest. In
+  `EditorialProposal`'s bullets the wrapped line carries a prefix of spaces in the paragraph's
+  taller style, so the page sets it 13.05pt under the first and Word set it 13.8pt under, and
+  each item stood half a point to a point lower than the one above it. The prefix, written as
+  an indent, no longer counts towards the line; where the page's mean distance between the
+  lines is still more than the tallest, it is written instead, and what the paragraph then
+  falls short of the page is owed below it. In Word, `EditorialProposal`'s lines more than
+  2pt off fall from 21 to 17, and `NorthlineProposal`'s from 6 to none.
+
+- **A paragraph's `bulletOffset` indents its lines in DOCX as it does on the page.**
+  The prefix was not written, so `EditorialProposal`'s bullets, whose wrapped lines the page
+  sets after three spaces, started those lines under the dot in Word, 11.6pt left of the
+  page's. A prefix of spaces is now the paragraph's indent — left and hanging for
+  `FROM_SECOND_LINE`, first line for `FIRST_LINE`, left for `ALL_LINES` — measured in the
+  paragraph's style. A prefix with letters in it is still not written, but its wrapped lines
+  start after the spaces the page covers it with. In Word the wrapped lines start within 0.1pt of the page's, and
+  `EditorialProposal` finds 130 of its 132 lines where it found 128.
+
+- **A row's fixed columns keep their widths in DOCX when they add up to less than the row.**
+  The last column ran to the row's edge: `EditorialProposal`'s deliverables, a 194pt column in a
+  535pt band, came out 272pt wide, and Word set "Responsive design for desktop, tablet & mobile"
+  on one line where the page wraps it, and every item under it a line higher. The scope of work's
+  descriptions and `PaymentsInvoice`'s item text, both the last of a row's fixed columns, wrapped
+  later than the page the same way. The last column now keeps its stated width, and the table is
+  no wider than its columns. In Word,
+  `EditorialProposal` finds 128 of its 132 lines where it found 120, and those more than 2pt off
+  fall from 22 to 19; `PaymentsInvoice` finds 104 of 104, none past 2pt, where it found 100.
+
+- **`MidnightNavy`'s sidebar stands where the page sets it in Word.** Three causes, each its own:
+  - Its monogram centres two initials in a 76pt ring, two layers of one shape container. Only a
+    container of one layer was set in from its outline, so the initials were written from the
+    ring's top: they stood 9.6pt high, and the name and the whole column under the ring 19.3pt.
+    A container's paragraph layers standing one under another are now set in as one, from the
+    top of the first and the foot of the last.
+  - Each skill is a row: its label, and a meter drawn where the page draws it, so nothing is
+    written in the meter's cell. The paragraph a cell must end with was a line of the document's
+    font, and each row stood 2.1pt taller than the page's. A cell left with nothing in it now
+    holds a hairline.
+  - Each language's five dots are inline shapes, written as pictures wider than their boxes on
+    either side — a quarter point, and a ring's half stroke more — so each pushed the next 0.5pt
+    or more further along: the fifth broke onto a second line, each language row 9.7pt taller.
+    The text beside a shape now gives that room back, its letters set closer in whole tenths of
+    a point, and each dot's picture stands where the page puts its box. The page draws half the
+    last ring's stroke past its cell, where Word cuts a cell's content; a row's last cell is
+    widened by as far as the line ending in a shape reaches past it.
+
+  In Word, lines more than 2pt off fall from 30 to 0, and the p90 drift from 19.86pt to 0.58.
+  `CharcoalGold` finds 83 of its 85 lines in Word where it found 77. In LibreOffice the p90 falls
+  from 17.11pt to 3.24; two skills, which the rows' growth had carried onto the page's line,
+  now stand at the 2.7pt every line of the sheet stands at there.
+
+- **`SlateOrange`'s sidebar stands where the page sets it in Word.** Each skill is a row with a
+  12.4pt icon on a line of its own, no text in it, and Word sizes that line itself. The
+  paragraph's mark, set in the icon cell's style at 10.5pt, reached below the icon, so each row
+  came out 0.2pt taller and the tenth 2.5pt low, with the sidebar under them. Where its
+  pictures fill the page's line, a line of pictures alone now has its mark and its pictures'
+  runs set at a point; a smaller picture, in a line the page sets at its font's height, keeps
+  the mark as it was, and so does a line holding a letter, a break, a tab, a field or a link's
+  text. In Word, lines more than 2pt off fall from 36 to 9, and the p90 drift from 4.99pt to
+  3.46. LibreOffice is unchanged.
+
+- **`CobaltRota` stands where the page sets it in Word and LibreOffice.** Its header opens and
+  closes with a row that is only a rule, its thickness an empty cell's line. The page draws the
+  rule's borders across that line; Word and LibreOffice keep them outside it and grew each row
+  by the border's 0.9pt, so the sheet under them stood 1.8pt low. A table cell holding nothing
+  but an empty line now has that line cut to the room its row leaves it; a line with letters
+  keeps its height. Word's median drift falls
+  from 2.48pt to 0.74, LibreOffice's from 2.39 to 0.60, and no line is now more than 2pt off
+  in either, where 119 and 124 were.
+
+- **`OrangeOps` stands on one page in Word.** It ran to two, and 6 of its 108 lines were
+  found in Word's rendering; now 99 are, at a median drift of 0.42pt.
+  - Its headings are Oswald SemiBold, a face whose file does not say it is bold. Word set
+    "ACHIEVEMENTS" about 1% wider than the page, past its box, and broke it onto a second line, and
+    three such headings added 51pt. A paragraph of one line now has room for a line three
+    hundredths wider than its own: it breaks no word, and broken in Word it is a line more.
+  - Its role bar stands 3.8pt up inside its name's line, by the name's negative bottom margin.
+    A negative bottom edge — a paragraph's, an image's, a barcode's or a rule's — was dropped;
+    it now comes out of the space above the next paragraph, its own top edge included, or of the
+    space owed below where a table or a page break follows. LibreOffice's `NorthlineProposal` gains from it too: lines past
+    2pt fall from 34 to 6.
+  - Line by line, no document moves further from the page in Word or LibreOffice.
+
+- **A paragraph breaks its lines where the page does, though Word sets its size to the half
+  point.** Word states a type size in half points, so `EngineeringResume`'s 7.8pt profile was set
+  at 8pt and took a line more, and its 6.9pt skills, set at 7pt, broke "SQL" onto a line of its
+  own: each column stood 8 to 9pt low. A paragraph set flush left is now given a measure as much
+  wider or narrower as Word sets its text, through its right indent; the glyphs are left as
+  Word sets them. The measure grows by the share of the line that grows most, so a 7.35pt
+  title, set at 7.5, still fits over 7.1pt prose set at 7, and every line keeps a point to
+  spare; a paragraph of several lines is held a point short of the full share where its lines
+  allow, so a word the page broke off by a fraction of a point stays broken off; a paragraph of
+  one line is never narrowed.
+  In Word, `EngineeringResume`'s median drift falls from 7.9pt to 0.6, and the corpus's lines
+  more than 2pt off fall from 324 to 249; line by line no line moves further from the page in
+  Word or LibreOffice.
+
+- **`NavySidebar` stands where the page sets it in Word.** Its median drift in Word falls from
+  5.2pt to 0.1pt, every line within 2pt of the page.
+  - Its portrait is a 127pt ring round a 123.8pt photo, in a column 123.8pt wide. The photo was
+    sized from the width left inside the ring, 120.6pt, and written flush with the ring's top,
+    losing the 1.6pt the ring holds round it above and below. A picture the layout placed is now
+    written the size it was placed, less its padding, and a shape container's one layer set in
+    from its content's top and bottom keeps that space above and below it. `SerifHeadline`,
+    whose section headings stand at the top of taller outlines, falls from 1.0pt to 0.5.
+  - The empty header carrying a page's backgrounds is a point tall against the page's top, and
+    on a page with no top margin Word moved the whole body down under it, the photo a point
+    below its ring. A margin narrower than an empty header or footer against its edge is now
+    written negative, which holds the body at it: seven sidebar CVs move up that point in Word.
+  - A list's own left and right edges now indent its items outside a shape container, as a
+    paragraph's indent its text.
+    `NavySidebar`'s closing lists, indented to clear the badge beside their heading, stood 30pt
+    left under the badge, a line short, and the `CERTIFICATIONS` heading a line above its badge.
+
+- **A cell ending in a nested table is no taller in LibreOffice than on the page.** Word ends a
+  cell on a paragraph, so a hairline one closes a table nested in a cell. Word lays it out at no
+  height that shows; LibreOffice gives it its tenth of a point, so every row of `CobaltRota`, a
+  chip in a table in a table in each of its cells, stood up to 0.3pt taller there, and its last
+  row 5.2pt low. Such a paragraph, left at the cell's end holding nothing and no space, now has
+  its mark hidden, as the paragraph closing a document that ends in a table already had. Word's
+  output is unchanged. In LibreOffice `CobaltRota`'s last row stands 3.5pt low and its p90 drift
+  falls from 3.9pt to 2.9; across the 33 templates it changes no page count changes, and
+  no median drift moves by more than 0.2pt.
+
+- **`CobaltRota`'s outlined chips are as tall in Word as on the page.** A shape composed in a
+  table cell is written as a one-cell table holding its row at least the outline's height, less
+  the heavier border, which LibreOffice was taken to add to it once. Both editors draw the cell's
+  top and bottom borders outside that height: a 9.2pt chip outlined with a 1.125pt border stood
+  10.3pt tall in Word and 10.2pt in LibreOffice, and each staff row holding one stood 1.1pt
+  taller than the page's; the rota's last row stood 6.5pt low in Word, now 2.4. The row now
+  holds the outline's height less both borders and its margins, which keep inside it (see the
+  entry on what follows a panel). `CobaltRota`'s p90 drift falls from 6.4pt to 2.9 in Word and
+  from 7.3pt to 3.9 in LibreOffice.
+
+- **`MerchantInvoice` fits its page in Word again.** Two things pushed its footer row onto a
+  second page.
+  - Its payment panel opens a table cell, so no space above could take the panel's 0.875pt
+    top border, which Word draws above a cell's content. Every line inside stood that much
+    low, and the row that much taller. What of the border reaches past the panel's box and
+    neither that space nor its padding takes now comes out of the space above its first line,
+    where that line has some, and the content's height the panel holds is that much less (see
+    the entry on what follows a panel).
+  - Its footer reaches 9.8pt from the page's edge, past the page's 3.4pt margin, and Word
+    moved the body clear of it. A band alone of its kind reaching past the margin, by any
+    more than a twentieth of a point, now writes that margin
+    negative (a margin of none as a twentieth of a point), which Word reads as holding the body
+    at the margin, as the page does. LibreOffice reads it as positive and still moves the body
+    clear.
+  `ObsidianInvoice`'s p90 drift in Word falls from 1.6pt to 0.6, `PlatformInvoice`'s from
+  0.65pt to 0.4, and `MerchantInvoice`'s from 1.6pt to 0.8.
+
+- **An icon alone in a table cell moves with its row in Word.** A drawing the page places in a cell
+  of its own — a band's icon beside its label — was drawn from the page's edges, and so off its row
+  wherever Word set the rows above it a little taller or shorter than the page: `CobaltRota`'s band
+  icons stood 4pt, 9pt and 14pt above their labels, the last out of its strip. Such a drawing is now
+  anchored in that cell's paragraph, held at the drawing's height and placed from its top and the
+  cell's text column, which is taken to start where the drawing does. In a row of the flow that is a
+  layer stack or a shape container that only draws — shapes, a drawn picture, a badge's initials —
+  with no margins, on one page, all of it inside its box. In a table's composed cell, whose drawing
+  belongs to the table, it is a layer stack of shapes only, with no margin or padding and the only
+  drawing the cell holds: its drawing is the table's shapes waiting inside that cell, where the
+  layout first placed it, when those are its shapes, of their kinds and sizes and on one page. Word
+  repeats a repeated header row, the drawing anchored in it with it, so the layout's copies of that
+  drawing on later pages are not drawn again. A drawing holding a line, a lone shape, a composed
+  tile and a drawing sharing its table cell with another are drawn on the page as before (a composed
+  cell's drawings since anchored in their cell: see "A DOCX export anchors what a table's composed
+  cell draws in that cell, so it moves with the cell's row when the text above is edited"). Every
+  shape is now painted in the order it was drawn, rather than the order it found a paragraph to
+  anchor it, so one waiting for its page's first paragraph is not painted over a shape anchored in a
+  cell after it. `CobaltRota`'s icons stand beside their labels in Word and in LibreOffice; its p90
+  drift in Word falls from 11.7pt to 6.4.
+
+- **A line pulled up into the line above it, with no space above to take the pull from, is no
+  longer dropped in Word.** A paragraph's negative top edge comes out of the space owed above
+  it, and where there is none — the two lines of a lockup in a table cell — it was dropped:
+  `CobaltRota`'s subtitle, 6.5pt up under its 21pt wordmark, stood that much low, and its
+  masthead row and the rota under it with it. The pull now comes off the foot of the line of
+  text written just before, on the same page — one exact line alone in its paragraph, with no
+  space below it and no run shaded or underlined — as far as its letters leave room where Word
+  draws them, three quarters of a point clear: the line written shorter, its text lowered by
+  the four fifths of that Word's baseline would rise. The rest comes off the top of the pulled
+  line itself, as far as its letters allow; what neither can give is not written. `CobaltRota`'s median drift falls from 8.9pt to 2.4 in Word and in LibreOffice; its
+  lines more than 2pt off fall from 65 to 45 in Word and from 62 to 47 in LibreOffice.
+
+- **A chip's label taller than the chip no longer makes it taller in Word.** A shape composed in
+  a table cell centres its one line of text in it, and the page lets the line pass the outline
+  where it is taller: `CobaltRota`'s stacked shift chips, 9.2pt outlines round 8.2pt text on a
+  10pt line. Word grew each chip to the line, and an outlined one by its borders again, as Word
+  keeps a cell's borders outside its content: every staff row with two shifts in a day stood
+  3.8pt taller than the page's, and one with two plain lines 1.6pt. A label the shape centres top
+  to bottom is now written as tall as the room Word leaves the cell's content — the outline less
+  the margins written and the borders — seated where the page sets it, both sides cut alike as
+  the cell centres the line, and no closer to its letters than three quarters of a point; where
+  the letters leave less room than that, it is cut as far as they allow. In Word `CobaltRota` fits
+  one page again; rows with two plain lines stand where the page puts them, rows with an outlined
+  chip 1.1pt taller, and the 90th-percentile drift falls from 26pt to 18.
+
+- **A table row's cells keep their own vertical padding in Word, not the row's largest.** Word and
+  LibreOffice give every cell of a row the largest top and bottom margin of any cell in it:
+  measured, a row whose day cells were padded 5.5pt above and 10.25pt below beside a label
+  padded 0.75pt stood 60.3pt tall in both, where its tallest cell came to 46. `CobaltRota`'s
+  masthead row stood 20.8pt taller than the page's, each staff row 2.4pt taller, and the rota ran
+  onto a second page. A row's cells are now written with its smallest vertical margins, and the
+  rest of each cell's padding as space above its first paragraph and below its last; a cell
+  opening with a table, or in a vertical merge, keeps its margins, and the row's comes down no
+  lower than the largest of them. A shape
+  composed in a table cell and written as a panel — a rota's shift chip — is held to its
+  outline's height, where it had closed round its line of text: most of the 17.5pt chips to 12.7pt. In both
+  editors `CobaltRota`'s median drift falls from 23.1pt to 8.9, and it fits one page again in
+  LibreOffice.
+
+- **A line holding an icon keeps the page's height in Word.** A paragraph whose picture passes its
+  text was written "at least" the picture's height, and Word, growing the line to its own measure,
+  made it taller than the page: `TimelineMinimal`'s contact lines, a 10.5pt icon beside smaller
+  text, came out 0.9pt taller each, and the page under them 4.4pt low. A paragraph of one line of
+  text is now written at the page's exact height of its line, which the page makes tall enough for
+  its pictures (since written as a least height where its pictures stay within its text's line: see
+  "A DOCX export's lines holding a picture within their text grow with it"); Word sets the text on
+  the page's baseline and the pictures with it, and what their ink reaches past the line is taken
+  from the gaps around it, with half a point more for the half points Word rounds a position to, so
+  the lines keep the page's pitch. A line whose space above is shorter than its pictures' reach
+  above it — as the first of a page or a cell can be — a paragraph of several lines, a line holding
+  only a picture, a list item, a table's text cell and a line set beside another are grown "at
+  least" as before. In LibreOffice a picture the page lowers now stands higher than its text and
+  loses what passes the line's top, where its text had drifted as far as 11pt low. Across the 62
+  templates, lines more than 2pt off fall from 572 to 406 in Word and from 933 to 737 in
+  LibreOffice. In Word, `TimelineMinimal`'s median drift falls from 4.1pt to 1.4 and its lines off
+  from 67 to none, `MerchantInvoice`'s from 1.7pt to 0.3, and `CharcoalGold`, `SidebarPortrait` and
+  `MintEditorial` have no line 2pt off.
+
+- **A block pulled up by a negative top edge, and a row padded down its column, stand where the
+  page puts them in Word.** Word has no negative space above a paragraph, so a paragraph's, a
+  page reference's or a rule's negative top `margin` or `padding` was dropped:
+  `PaymentsInvoice`'s header rule is pulled 16.4pt up out of the space its header stack leaves
+  below its content. The pull now comes out of the space owed above the block, with any pull of
+  the containers around it. Word has no space above a table either, and a row opening a row's
+  column lost the padding above it: `PaymentsInvoice`'s metadata grid, padded 6.2pt down its
+  column, stood 6.3pt above the issuer beside it, as `MerchantInvoice`'s stood 6pt, and
+  `PaymentsInvoice`'s rule and the page under it stood 10pt low, the pull less that lost
+  padding. A paragraph a tenth of a point tall now carries that space, the containers' edges
+  included, in any cell but a table's — as it already carried the space a row owed above itself
+  at the top of a panel; a row opening a table's cell is left to the row height the table
+  holds. In Word `PaymentsInvoice`'s median drift falls from 10.3pt to 0.5, and across the 62
+  templates lines more than 2pt off fall from 705 to 572; in LibreOffice from 1066 to 933.
+
+- **A row a drawing makes tall, and a title pulled above its row, keep the page's height in
+  Word.** A row whose tallest child is drawn where the page puts it — a badge beside a heading,
+  its cell holding nothing in Word — was only as tall as its text there: `WorkspaceInvoice`'s
+  bill-to heading stood beside a 20pt badge, and the address under it stood 10pt high. Such a row
+  is now held at least as tall as the page makes it, as a row inside a painted panel already was;
+  a drawing no taller than its neighbours' text, a timeline's rail beside its entry, leaves the
+  row to Word. A section in a cell (a row's, a table's or a panel's) that pulls its first line up
+  with a negative top edge — `WorkspaceInvoice`'s masthead title, set 4pt above its row — had that
+  line start at the cell's top in Word, and the page under it 4pt low; a one-line first paragraph
+  is now written as much shorter, its text seated where the page sets it — no more than the room
+  above its letters, as Word draws an exact line's text only inside the line. The paragraph's own
+  top edge is not counted in the rise. In Word `WorkspaceInvoice`'s median drift
+  falls from 4.8pt to 0.4 and `SubscriptionInvoice`'s from 8.8 to 0.5; across the 62 templates,
+  lines more than 2pt off fall from 858 to 705. `PaymentsInvoice`'s parties now stand level with
+  each other and its median rises from 3.7 to 10.3: the collapsed heading row had been hiding a
+  gap above it that runs about 16pt long in Word.
+
+- **A bordered panel in a table cell shows its right border in Word.** Word draws a table's right
+  border outside its right edge — measured in its PDF, a table ending at 566.0pt had its right
+  border from 566.2 to 566.9 — and on screen cuts off what passes its cell's edge and draws the
+  cell's gridline there. `EditorialProposal`'s glance card, as wide as its column, lost its right
+  border on screen. A bordered panel reaching its cell's text edge now ends its whole right border
+  plus half a point short of that edge, the points taken from its right margin and no more than
+  that margin holds: its text stands where it did and wraps as it did, and its right border is
+  drawn on screen and on paper wherever its margin is wide enough.
+
+- **A ruled table's rows are as tall in Word as on the page, and a table that states no rule is
+  ruled as the page rules it.** Word makes room in a table for its horizontal rules — a rule
+  between two rows half in each, the rule above the table and the one below it whole in their
+  row — where the page draws a cell's rules on its edges and steps its rows by padding and content
+  alone. Measured, a row of 12.35pt text and 7pt padding stepped 26.35pt unruled, 27.1 with 0.75pt
+  rules and 27.85 with 1.5pt ones, and a one-row table with 1.5pt rules stood 3pt taller. Every
+  ruled table grew row by row: `EditorialProposal`'s timeline and investment tables pushed its
+  investment block onto a third page, and `NorthlineProposal`'s acceptance heading stood 12pt
+  below its badge. Each rule now comes off a cell's padding above or below, where Word puts it —
+  between two rows ruled differently, the lower row's rule, which Word was measured making room
+  for — so a table ruled alike throughout, with padding enough, steps as the page does; padding
+  thinner than its share gives what it has.
+  A table that states no rule was left on Word's own grid, thinner than the engine's default 1pt
+  black rule the page draws and giving its rows other heights; it is now written with that rule.
+  In Word `EditorialProposal` is two pages again; across the 62 templates the median drift falls
+  from 0.94pt to 0.56 and lines more than 2pt off from 1341 to 858, and in LibreOffice the median
+  from 1.59pt to 0.55.
+
+- **Text stands on the page's baseline in Word's exact lines, and stacked title lines take the
+  container's height.** Word stands the baseline of an exact line four fifths of the way down it
+  whatever the face — measured for Spectral, Lato and Arial, in lines 12 to 100pt tall, and
+  LibreOffice does the same — where the page sets it the face's ascent below the line's top. For a
+  face with a deep descent the two part: `NorthlineProposal`'s 46pt Spectral title stood 7pt low.
+  Its three lines, laid 48pt apart in a 140pt container, were also written 70, 48 and 48pt tall.
+  They ran 26pt past the container; the gap under it took 18pt of that, and the rest pushed the
+  cover 8pt below the section icons drawn where the page puts them. A paragraph's runs are now moved
+  to the page's baseline (`w:position`) wherever the two stand half a point or more apart, from the
+  line Word was given — a line pair's from the higher text's top, lines that took their gaps from
+  the space above from that higher top, several lines at the middle one; a list item's is not moved
+  yet (since seated as a paragraph's: see "A DOCX export stands a list's items where the page sets
+  them in their exact lines, as it does a paragraph's"), and a table text cell's is moved by its
+  row's margins where its row allows (see above). Lines a container stacks tighter than their face
+  are each written to end halfway between their own letters and the next line's, read from the
+  glyphs' outlines: Word draws an exact line's text on screen only inside the line, and lines a
+  pitch tall cut the title's descenders and capitals there. Where the last layer of a shape
+  container runs past its foot, it ends at the foot, or below its letters where they hang past it.
+  Where the page sets two lines' letters into each other the edge still falls halfway, so the page
+  does not move; a stack whose letters cannot be read, or that holds a picture, keeps each line's
+  own height, and a line with space above or below it stays out of a stack. In Word
+  `NorthlineProposal`'s median drift falls from 8.0pt to 0.8, its cover within 1.5pt of the page
+  throughout, and `EditorialProposal`'s from 5.9 to 0.4; across the 62 templates, lines more than
+  2pt off fall from 1464 to 1341.
+
+- **A value set from its start keeps its start in Word.** Two texts one layer holds on one line —
+  a label and its value, a title and its dates — are written as one Word line split by a tab
+  stop, and the stop was always a right tab at the right text's end. A value aligned left in a
+  layer placed from the left starts at its column whatever its length; after a right tab it
+  started wherever the editor's slightly narrower setting of it ended up: `LumaStudioInvoice`'s
+  IBAN stood 2.6pt right of the bank details over it. Such a value is now held by a left tab at
+  its start; a value set against its end, as a date at the right of a band is, keeps its right
+  tab. In Word the values of `LumaStudioInvoice`'s and `ConsultingInvoice`'s detail rows start
+  within 0.1pt of the page's.
+
+- **Text seated off its baseline sits there in Word, and text hanging below its band takes its
+  overhang from the gap under it.** A paragraph set with `TextVerticalAlign.TOP`, `CENTER` or
+  `BOTTOM` was written on its baseline: `LumaStudioInvoice`'s "INVOICE" is set against the top
+  of a line far taller than its capitals, and stood 20pt low in Word with its rule through the
+  letters, and the lockup's "L" stood on the "&Co." set under it. Its own runs, a link's
+  included, are now raised or lowered in the line (`w:position`, added to a picture's own raise)
+  by the PDF backend's seating correction, from the fonts the layout measured with — one shift
+  for the paragraph, where the page seats each line by its own. A band whose lowest written block
+  runs past its foot — that title line is 13pt deeper than its title block — gave the overhang no
+  room at all, and the invoice's details and everything under them stood that much lower, its
+  notes on a second page; the overhang now comes out of the gap under the band, as a
+  title-and-dates line's already did, and once only when the band holds another. In Word
+  `LumaStudioInvoice` fits on one page, its median drift falling from 14.5pt to 1.2 and its p90
+  from 15.4 to 2.1; its long variant's from 8.5 to 1.9 and from 15.3 to 5.8.
+
+- **Text laid over the flow stands where the page sets it in Word.** A layer stack or a shape
+  container the page gives no room — its margins take back its whole height — was drawn where the
+  page puts it, but its text was written in the flow. `LumaStudioInvoice`'s sidebar is pulled up
+  over the page's top margin and hands its height back below; its lockup's five lines pushed the
+  masthead beside them 120pt down in Word, the line items onto a second page and the sign-off,
+  white, into that page's empty paper. Each paragraph of such a node is now set in a text box
+  where the page sets it, in front of the text — its content box, a quarter wider for a single
+  line away from the side it is aligned to (both ways when centred), so the editor's wider
+  setting does not break it, and a line taller — and nothing of it is written in the flow; its
+  drawings are drawn in their layers' order. A paragraph with a link, an anchor or a picture in
+  it, a block with an anchor, a transform, or a node in a table cell or a painted panel keeps it
+  in the flow as before. In Word the median drift falls from 213pt to 14.5 on
+  `LumaStudioInvoice` and from 164.7 to 8.5 on its long variant.
+
+- **A row after a row rises into the gap above it in Word.** A table row whose text stands above
+  its cell on the page — a timeline entry's title raised over its marker band — is lifted by that
+  much out of the gap above it, and that gap was looked for only in the paragraph before the
+  table. After another table that paragraph is the empty one keeping the two apart, and the gap
+  is the first table's own, under the last line of its cells — `SerifHeadline`'s separator rule
+  between two entries — so nothing was lifted: each entry stood a further 3pt lower in Word, and
+  `PROJECTS` 5pt below its rule. The row is now lifted out of the space the row above ends with,
+  the same amount from each of its cells — not when a cell that takes room (text, a picture set
+  in its line, a nested table) ends with none, nor from a row held to a height, painted or
+  framed. In Word `SerifHeadline`'s median drift falls from 2.4pt to 1.6 and
+  its p90 from 5.5 to 3.0.
+
+- **A container hanging left by a negative margin hangs left in Word.** The DOCX export wrote no
+  indent below zero, so what such a container holds stood at the edge it hangs from:
+  `SerifHeadline` hangs each section heading — a dash, the title and a rule, set as a row — left
+  by its dash, and in Word every title stood 17pt right of the page's in the main column and 5pt
+  in the sidebar; `LumaStudioInvoice`'s wordmark stood 120pt right. In the body, a table, a
+  paragraph, a list and a rule are now indented below zero where the page hangs them. A row
+  nested in a cell stays in the cell in Word whatever its indent, and Word draws no text past a
+  cell's left edge: its first column gives up the hang when it only holds drawing — the
+  heading's dash, not a rule written across it — and its cells' text takes what is left out of
+  its own indent, never past the cell's edge.
+
+- **A paragraph's own margin and padding hold its text in in Word, and a word the page sets whole
+  stays whole.** The DOCX export wrote a paragraph at its container's width, leaving out its own
+  sides: `SerifHeadline`'s summary stops at the column divider through its right margin and ran the
+  page's width in Word, a line short, so everything under it stood a line high. A paragraph's margin
+  and padding are now part of its indents — in a table cell less 2pt a side (since taken only off
+  the side the line does not lean on: see "A paragraph or a list in DOCX keeps its own sides on a
+  layer, and its edge in a cell"), which the cell's text keeps as Word's, and less the left margin a
+  row's cell already starts past — except under an overlay, where each layer's box is placed
+  already. A word the page sets whole past its column — `SerifHeadline`'s
+  "linkedin.com/in/alexmorgan", 1.2pt past the contact column — was broken between two letters in
+  Word and took a line more; its paragraph now gets a negative right indent reaching as far as the
+  word does. Only a paragraph each line of which is one unbroken word, set flush left, gets it: the
+  indent is the whole paragraph's, and would give a line of several words room to take more of them,
+  or move a centred or right-aligned line off where the page sets it. In Word the median drift falls
+  from 4.5pt to 0.1 and the p90 from 12.7 to 1.2 on `TealPulse`, and the p90 from 38.3 to 27.9 on
+  `IndigoProposal`.
+
+- **A shape container's margin and padding are space in Word.** A shape container written layer
+  by layer wrote what it holds and not its own edges: `SerifHeadline`'s section headings — a
+  rule and a title in a row, in a container set its gap below the block above — stood that gap
+  high in Word, the skills heading on the line above it and the sidebar under it 21pt high. The
+  container's top margin and padding are now space above what it holds, its bottom ones space
+  below; one that writes nothing — only drawing, in an overlay — is no space, as a section
+  that writes nothing is not. In Word `SerifHeadline`'s p90 drift falls from 22.1pt to 5.2.
+
+- **A table with no paragraph before it keeps the space above it in Word.** Word has no space
+  above a table: the paragraph before it carries it, and a table with none before it in the
+  body — opening the document or a section, or following a page break — lost it.
+  `ClassicInvoice` opens with a row under its page padding and stood against the paper's top
+  edge in Word. A hairline paragraph now carries the space above such a table, as it already
+  did above a panel. Not in a table cell, where it was measured to set content lower than the
+  page does. In Word the median drift falls from
+  20.4pt to 4.4 on `ClassicInvoice`, from 14.1 to 4.5 on `TealPulse` and from 6.8 to 3.9 on
+  `PaymentsInvoice`, whose drawings no longer touch its text.
+
+- **A line break in a paragraph's text is a line break in Word.** The DOCX export wrote a
+  paragraph's `\n` inside its text, and Word reads it as a space: an invoice's addressee —
+  name, street, city, email and phone in one paragraph the page breaks at each `\n` — came out
+  as one wrapped line, and everything under it stood as much higher as the lines it lost. Each
+  `\n` in a paragraph's text, a run of it or a list item is now a `w:br`. In Word the median
+  drift falls from 28.3pt to 4.0 on `ModernInvoice`, from 16.6 to 2.8 on `ConsultingInvoice`,
+  from 17.4 to 3.0 on `ModernProposal` and from 51.3 to 20.4 on `ClassicInvoice`.
+
+- **A grid of cards is one row of columns in Word.** A layer stack whose layers are
+  side-by-side columns is written as a one-row table, but only when every layer formed a
+  column. A card grid also lays each card's mark over the edge of its text and a rule between
+  two cards, and those layers stood across the columns: `SerifHeadline`'s projects,
+  certifications and achievements were written one card under the other, each a column lower
+  and further right. When such layers keep a stack from being columns, a layer holding only
+  drawing, or a picture alone, in a container that paints nothing is left out of them: it is
+  drawn where the page puts it, and a stack on one page keeps its height as the row's least
+  height, since a rule as tall as the band may be what made it that tall. A stack that forms
+  columns with every layer is written as before. In Word, `SerifHeadline` fits on one page as
+  the page does, its median drift falling from 37.9pt to 4.3.
+
+- **Stacked title lines and icons beside their labels keep the page's height in Word.** A
+  container written layer by layer took more room in Word than on the page for two kinds of
+  layer. Lines of text laid over one another — `NorthlineProposal`'s title, three 46pt lines
+  48pt apart — took each line's own height, 70pt; now each single line of text laid over by
+  the next across ends halfway between its letters and the next line's (`DocxStackedLines`),
+  and a shape container's last line running past the container's foot takes its overhang from
+  the gap below. A stack that holds a picture keeps its lines' own heights.
+  An icon picture beside a layer of text in a shape container neither painted,
+  clipped to its outline nor transformed, or in a layer stack — `NorthlineProposal`'s glance
+  card facts, the contact lines of `ConsultingInvoice` — was written as a line of its own
+  above the label, an icon's height a fact; clear of the text across and at most twice its
+  height, it is now drawn where the page puts it, in front inside a painted panel. A badge's
+  glyph in a painted panel is drawn over its badge, both in front of the panel's shading:
+  kept in the flow, the glyph was written white on the panel and its disc hid under the
+  shading, and `NorthlineProposal`'s acceptance heading lost its badge. In Word,
+  `NorthlineProposal` fits on two pages as the page does, its median drift falling from
+  134pt to 4.7; `EditorialProposal`'s falls from 42.5pt to 3.3 and `SerifHeadline`'s from
+  37.9 to 20.4.
+
+- **A badge holds its initials, and bordered cards keep the page's spacing in Word.** A filled
+  or stroked rectangle, rounded rectangle or ellipse whose one layer, centred, is a line of at
+  most four characters in one style, left to right, with no link, on one page — a party's
+  initials on `ObsidianInvoice`, `MerchantInvoice`'s monogram tile, `ProfessionalSidebar`'s
+  ring, a proposal's step numbers — is written as one DrawingML shape holding the text centred
+  in it (`wps:txbx`), in front of the text. The text wraps in the shape's own box, reaching
+  out past the preset's inner text rectangle to its edges: unwrapped, Word shrank the shape to
+  the width of its letters, and inside an ellipse's inscribed square it broke "MWM" after
+  "MW". Written apart, the letters stood in the flow and the badge where the page puts it:
+  `ObsidianInvoice`'s footer "K" sat below its disc's corner, its party discs were hidden
+  behind their letters under the panel's shading, and the monogram tile's letter left it for
+  the next page. What of a panel's borders above and below Word draws past its box now comes
+  out of the space round it (see the entry on what follows a panel): every outlined card had
+  stood that much lower, and `ObsidianInvoice`'s line items sat 1.6pt low. In Word,
+  `ObsidianInvoice`'s line items land
+  within 0.2pt of the page, `ProfessionalSidebar`'s p90 drift falls from 78.8pt to 1.3, and
+  `NorthlineProposal`'s cover header, which stood 12pt high, lands on the page's.
+
+- **Icons inside painted panels show in Word, beside the text they belong to.** A shape drawn in a
+  filled panel stayed behind the text whenever it sat in a layer beside a heading, and a panel is a
+  shaded table cell, whose shading both editors paint over what lies behind the text: the heading
+  icons of every payment panel on the invoice presets — a bank, a card, an info mark,
+  `ObsidianInvoice`'s notes and payment glyphs — were missing. Inside a panel a shape — there, and
+  in a filled table cell — now stands in front unless it frames a line of text or a picture, as a
+  ring round a photo does. Such a shape is placed from the page's edges (since placed from its
+  block's paragraph: see "A DOCX export anchors a drawing in a paragraph of the block it belongs to,
+  so it moves with that block when the text above is edited"): Word lays a shape anchored in a table
+  cell out inside the cell, and measures one in a nested cell from the outer cell's top, so a shape
+  placed from a paragraph in a panel moves wherever the nesting puts it. A row in a painted panel
+  that stands on one page is held at the page's height, as a panel is. A row at the top of a panel
+  also keeps its top padding, which no paragraph above it held: `MerchantInvoice`'s due-date text
+  stood against the card's top edge.
+
+- **Page numbers keep their colour, panels their height, and a document ending in a table no page of
+  its own.** A page field was written as a simple field, whose result both editors repaint without
+  the run's style: `MeteredInvoice`'s white page number on its navy footer band came out in the
+  document's ink, so the band read "Page of". It is now a complex field, every run of it styled, and
+  so is a page reference's `PAGEREF`. A painted panel that stands on one page is written with the
+  page's height as its minimum, less its margins and border, as a table row is: what makes a panel
+  taller than its text — an inner row's padding, an icon drawn where the page puts it — is not in
+  the cell, and `MerchantInvoice`'s due-date card closed from 59.4pt to its text's 26 with its
+  calendar hanging below it. The empty paragraph Word needs after a closing table has its mark
+  hidden (it is since an ordinary paragraph where the last page has room for two lines below the
+  table: see "A reader can type below a DOCX's closing table"), so a table ending a point from the
+  page's foot — `ModernReceipt`'s QR code — no longer opens a blank page. In LibreOffice,
+  `TealPulse` fits on one page as the page does, `SerifHeadline` on two rather than three, and
+  `ModernReceipt`'s drift falls from 16.9pt to 2.
+
+- **Table rows and the text in composed cells keep the page's height.** A paragraph composed in a
+  table cell has no path of its own — its lines are laid out among its table's fragments — so the
+  DOCX export wrote it at the face's own line height: a 9pt Gothic A1 line the page sets at 9.1pt
+  came out 13.4pt. Such a paragraph is now paired with its table's fragment, by text and in layout
+  order, and takes its measured line. A row is also written with a minimum height (`w:trHeight`,
+  `atLeast`): the page's, less what its cells hold above and below their content, which LibreOffice
+  adds to the written height and Word counts within it. The row then matches the page in
+  LibreOffice, and in Word wherever its cells carry no margins of their own: a row whose content is
+  a composed row with padding of its own — `MerchantInvoice`'s 37.7pt line items — had closed to
+  31.3pt, and the icons the table draws where the page puts them fell a row further out of line each
+  row. A paragraph's mark is sized as the text that ends its last line rather than as the
+  paragraph's own style when runs carry their own: a contact line's mark was 14pt Helvetica beside
+  8.5pt text, and grew every such line. In LibreOffice, `MerchantInvoice`'s drift falls from 28.5pt
+  to 8.5pt, `ObsidianInvoice`'s from 81.9 to 24.3, `PaymentsInvoice`'s from 35.7 to 16.4, and
+  `IndigoProposal` fits on one page as the page does. `CobaltRota`'s lockup stands higher than
+  before: its subtitle is pulled up by a negative margin, which Word cannot express (since written:
+  see "A line pulled up into the line above it, with no space above to take the pull from, is no
+  longer dropped in Word").
+
+- **Icons and shapes inside table cells reach Word.** What a table cell composes
+  (`DocumentTableCell.node(...)`) has no place of its own in the layout: its drawing is laid out as
+  the table's own. The DOCX export drew a node's fragments only, so every icon, tile and disc a
+  table's cells held was dropped — sixteen on `MeteredInvoice`, thirteen on `PaymentsInvoice`, eight
+  on `WorkspaceInvoice`, five on `PlatformInvoice`, four on `MerchantInvoice`, three on
+  `CobaltRota`. The table now draws them, anchored to the page where the layout puts them (since
+  anchored in their cell: see "A DOCX export anchors what a table's composed cell draws in that
+  cell, so it moves with the cell's row when the text above is edited"): one framing text — a disc
+  under a number — behind it, any other in front, since both editors paint a cell's shading over a
+  drawing behind the text and a cell is shaded wherever its style names a fill, white included; a
+  box framing text is left to the panel it is written as, and a box lost that way is still reported.
+  None of those templates drops a drawing any more, and no page count or text line moves.
+  `ObsidianInvoice`'s row rules now stand where the page draws them, between rows whose descriptions
+  LibreOffice already sets lower than the page.
+
+- **A filled pill inside a table cell keeps its colour in Word.** A shape container composed in a
+  table cell (`DocumentTableCell.node(...)`) has no place in the layout, so the DOCX export had
+  no position to draw its outline at and dropped it: `CobaltRota`'s 108 shift chips came out as
+  their hours in white on nothing. A filled or outlined rectangle or rounded rectangle there is
+  now written as a panel — a table of one cell in its fill and outline, its outline's width
+  within the cell, with its layers inside — its corners squared and reported. A container
+  holding only drawing — an icon's tile — is not a panel: its table draws it (see above). In
+  LibreOffice the chips show in their colours, the
+  rota's lines stand 1–2pt lower than before under the chips' cells, and no text line of another
+  template moves.
+
+- **Text headers and footers reach Word.** The DOCX export left out a `DocumentHeaderFooter` —
+  `session.header(...)` / `session.footer(...)`, the three text slots and their page tokens — and
+  the export report did not say so: nine invoice presets, `ModernReceipt`, `CobaltRota`,
+  `NorthlineProposal` and `EditorialProposal` lost their footer, its page count, note and signature
+  with it. The band is now one line of a Word header or footer: the left slot, the centre slot at a
+  centre tab and the right slot at a right tab against the margins; `{page}` and `{pages}` as `PAGE`
+  and `NUMPAGES` fields (`SECTIONPAGES` per section), in the band's roman or alphabetic style;
+  `{date}` as the date of the export, as the page prints its render date; the separator as the
+  paragraph's border; the line as far from the page edge as the page sets it — in LibreOffice the
+  baseline within 0.1pt of the PDF's and the separator within 0.6pt. A band that shares its kind
+  with another band or a page zone — `MeteredInvoice`'s two legal lines and its page number — stands
+  in a frame at its own height on the page. A band kept off the first page leaves the first page's
+  part empty; a band starting after page 2, page numbers that do not count from 1 on page 1, and a
+  band alone of its kind that reaches past the page margin are reported (a band past the margin is
+  since written with that margin negative, which Word holds the body at: see "`MerchantInvoice` fits
+  its page in Word again"). A band and a page zone of the same kind share Word's one header or
+  footer. Across the sixty-two template renders, the thirteen with a band now lose no word of it,
+  and no page count or text line elsewhere changes.
+
+- **A badge's glyph stands in the middle of its circle in Word.** The DOCX export wrote a picture
+  inside a painted shape container that clips it — `NavySidebar`'s section badges — as a paragraph
+  of its own, which put the glyph on a line above the section title beside it, off the circle's
+  middle by that line's height: up to 8.5pt in LibreOffice and more in Word. A picture smaller than
+  a container that clips it to its outline and holds nothing else but drawing is now drawn as a
+  picture anchored to the page where the layout puts it, over the outline (since anchored in its
+  block's paragraph: see "A DOCX export anchors a drawing in a paragraph of the block it belongs to,
+  so it moves with that block when the text above is edited"); inside a filled panel, badge and
+  glyph are drawn in front of the panel's shading (see the entry on stacked title lines above). A
+  container with written content in one layer only, beside drawing, is written as a layer stack's
+  band is, so the title keeps the page's space above and below it. In LibreOffice the glyphs of
+  `NavySidebar` and `SerifHeadline` stand within 0.6pt of the page; `NavySidebar`'s main column
+  stands 2.5pt below the page instead of 5.6pt, a `TealPulse` section title stands 33pt above its
+  first line (the page's 34pt) instead of 19pt, `NorthlineProposal`'s body moves 5–16pt closer to
+  the page and `EditorialProposal`'s facts keep the page's spacing between them. No shape of any
+  template moves in front of the text.
+
+- **Shapes print whole in Word, and show in filled panels.** A drawn shape was anchored in the first
+  paragraph written on its page, and on a page laid out in a table — a two-column CV is one row of
+  two cells — that is a cell's. Word prints a shape anchored in a cell clipped to the cell:
+  `CharcoalGold`'s timeline rings, anchored in the sidebar, and `MonogramSidebar`'s ring came out
+  cut. A shape is now anchored in a body paragraph; a page with none gets one — a hairline paragraph
+  before the table on the section's first page, the paragraph closing the section on its last — and
+  only another page falls back to a cell's, which the export report names (since used only for a
+  shape no paragraph of its own block places: see "A DOCX export anchors a drawing in a paragraph of
+  the block it belongs to, so it moves with that block when the text above is edited"). A shape
+  inside a filled panel, which both editors hid under the cell's shading, is drawn in front of the
+  text when nothing it is drawn with is text or a picture; a disc under its initials or a ring round
+  a photo stays behind what it frames. In Word the rings print whole and a dot in a panel shows; no
+  line of the twenty CV presets, seven invoices or three proposals moves in LibreOffice.
+
+- **A line among the text of a layer stack of one layer is a rule.** A line in any layer stack
+  was drawn as a shape anchored to the page, which takes no room in the text; a stack of one
+  layer lays nothing over anything, and a line among its text is a rule in the flow now. Its
+  other shapes stay drawing — a template nests a row in such a stack, and an accent bar in
+  the row is not a divider — and so does a line in a stack that holds nothing but drawing.
+  `CharcoalGold` wraps its certifications and achievements in one: each entry after the first
+  stood its rule's height and the space under it too high, the last 11.8pt, and they stand as
+  the rest of the page does now. Measured in LibreOffice on the twenty CV presets, seven
+  invoice presets and three proposal presets; no other line moves.
+
+- **A strip drawn in two layers is written as one strip.** A template that wants its name
+  read before its sidebar draws its hero strip in two layers of a column stack: the fill and
+  the name with a stand-in where the subtitle goes, then a stand-in for the name and the
+  subtitle. Written one layer after the other, the stand-in was dropped and the subtitle came
+  under the strip rather than in it, with the second layer's bottom padding and spacing under
+  it again, 20pt the page does not have. Content a later layer lays inside a stand-in in a
+  filled or bordered panel is now written in that place, its enclosing block with it — a chip
+  moves with its text — held in across to where its own layer put it and down from the
+  stand-in's top as the page has it, and the gap to what follows is measured
+  from the panel's foot, since the panel writes its padding itself. Measured in LibreOffice:
+  `SidebarPortrait`'s subtitle stands in its strip and its main column stands 2.6pt from the
+  page's where it stood 22.6pt; no other CV preset moves.
+
+- **Paths and polygons reach Word as custom geometry.** A path, a polygon, a star or chevron
+  outline, the layers of an SVG icon set as a block were dropped from the DOCX export and reported.
+  Each is now a DrawingML shape of custom geometry through the same points and curves, anchored to
+  the page as the other shapes are, in its fill and stroke colours; an unfilled path is left open.
+  The dash pattern, caps and joins (caps and joins since carried: see "A DOCX export ends and turns
+  a drawing's outline as the page strokes it"; the dash pattern since carried: see "A DOCX export
+  draws a dashed line or path dashed"), the clip round an SVG icon and a gradient paint are
+  not carried — a shape filled only with a gradient is still dropped and reported. Measured in
+  LibreOffice: `SidebarPortrait`'s portrait, drawn as 37 paths, and `CharcoalGold`'s certification
+  icons are drawn as on the page.
+
+- **A line the editor may grow sets its paragraph mark in the text's size and face.** The mark
+  closing a paragraph is a character on its last line and counts towards that line's height.
+  Left unstyled it took the document's size and face, so a paragraph the layout did not
+  measure — one in a composed table cell, or any in an export with no layout — was never
+  shorter than a line of body text, and a line written "at least" a picture's height grew to
+  it too: `SlateOrange`'s heading rules under its credentials, half-point text in a filled
+  cell, came out as 8pt bars. The mark now carries the text's size and face where they differ
+  from the document's, in paragraphs, list items and text cells; a line written at an exact
+  height does not grow for the mark and is left alone. Measured in LibreOffice on the twenty
+  CV presets: the rules are hairlines, the degree under them stands 3.7pt from the page's
+  where it stood 13.9pt and the last certification 4.6pt where it stood 21.6pt; no other line
+  moves.
+
+- **Drawing reaches Word as shapes where the page draws them.** Ellipses, rectangles, rounded bars,
+  vertical and slanted lines, a timeline's rail and the ring of a monogram or a portrait were
+  missing from the DOCX export. Each is now a DrawingML shape anchored to the page (since anchored
+  in its block's paragraph where one places it, and a timeline's rail since written as the border of
+  its cells: see "A DOCX export anchors a drawing in a paragraph of the block it belongs to, so it
+  moves with that block when the text above is edited" and "A DOCX export writes a timeline's rail
+  as the border of the cells it runs along, so it stretches with the entries when one is edited"),
+  behind the text, at the place, size, fill and outline the layout gives it, in a paragraph written
+  on its page — a table's row counts, on the page the layout put the row on; on a last page no
+  paragraph is written on, the paragraph closing the section carries it. It stays where it is when
+  the text around it is edited, and the export report lists it as approximated. A transform is not
+  carried, and the report says so. A picture that fills a shape container clipped to an ellipse
+  takes the ellipse's shape, so a portrait is round inside its ring. Page backgrounds are stacked
+  below the body's shapes: LibreOffice stacks a header's shapes and the body's together, and a
+  column's fill hid what the body drew over it. Measured in LibreOffice: `SlateOrange`'s monogram
+  block and column rules, `CharcoalGold`'s timeline rail, markers and portrait ring, `NavySidebar`'s
+  round portrait and `MonogramSidebar`'s ring are drawn as on the page.
+
+- **A block set in an alignment stands where the alignment puts it.** `addAligned(...)` was
+  written as if it were not there, so its block started at the left edge of the width it is
+  set in: `CharcoalGold`'s portrait, centred in the sidebar, stood 15.5pt left of the ring
+  drawn round it. The block is now held in to the box the layout places it in, as a layer in
+  a stack is. Measured in LibreOffice: the portrait stands in its ring; no other preset moves.
+
+- **Layers laid over each other stand across where the page puts them.** The layers of an
+  overlay — a layer stack written as one band, the layers of a shape container — were written
+  one after the other, each from the stack's left edge to its right. Initials the page centres
+  in a monogram's ring stood at the left of the sidebar, and a section title set beside its
+  badge started under the badge. Each layer is now held in to its box in the stack, as the
+  layout places it, and its own alignment sets its text in that box. A few points are left
+  on the side the text does not lean on, so a word the editor sets a little wider than the
+  page does not break. Measured in LibreOffice: `MonogramSidebar`'s initials stand centred in
+  the badge and `NavySidebar`'s section titles start after their badge, as on the page; no
+  preset's median line moves.
+
+- **A line holding an icon asks Word for the icon's height where Word puts it.** A line whose
+  inline picture passes its text is written "at least" a height, so the editor grows it
+  rather than clip the picture. That height was the higher of Word's placement and
+  LibreOffice's, which ignores `w:position` and stands a picture on the baseline, so every
+  such line asked Word for LibreOffice's height: `TimelineMinimal`'s contact lines asked for
+  12.4pt where the page sets 9.35pt of text. The line now asks for Word's reach, and is still
+  "at least" whenever the picture passes the text in either editor, so LibreOffice grows it
+  to its own placement as before. Unchanged in LibreOffice, measured on twenty CV presets.
+
+- **A container's `spacing` reaches Word, and a spacer is its height alone.** The layout puts
+  a section's or a container's `spacing` between each two of its children, and the DOCX
+  export wrote none of it, so a CV sidebar laid out with 9pt between its blocks came out
+  with them touching. It is now the space below one child and above the next. Before a page
+  break none is written, as the page ends there. After one the next page starts that far
+  down, which is where the layout starts it. A spacer was an empty paragraph at Word's own
+  line height, a line of text tall on top of the spacer's height: between two CV entries
+  held apart by a 4.5pt spacer, the page shows 16pt and LibreOffice drew 23. It is now held
+  to a tenth of a point.
+  - Measured in LibreOffice against the PDF over the sixteen CV presets and four sidebar
+    CVs, the mean vertical distance of a line from its place on the page falls from 105pt
+    to 2.9pt on `BoxedSections`, from 100 to 3.4 on `ClassicSerif`, from 118 to 7.3 on
+    `TimelineMinimal`, and from 130 to 47 on `SidebarPortrait`. Every preset but three now
+    has the PDF's page count.
+  - `MonogramSidebar` still ran two lines onto a second page, its monogram's letters about
+    60pt lower than on the page; `CharcoalGold` stayed at two pages, its sidebar's skill rows
+    standing taller than on the page, and `NavySidebar` too, its entries putting the date on
+    a line of its own. The entries below on overlapping layers, a paragraph's line height
+    and a title with its dates on one line bring each to one page.
+
+- **Word no longer adds 8pt under every paragraph.** Word fills what a document leaves
+  unsaid from its own new-document template: 8pt after a paragraph and lines 1.08 tall. The
+  DOCX export writes the space around a block only where the page has some, so every
+  paragraph written without a `w:after` — the last paragraph of each table cell among them,
+  and the paragraphs of headers and footers — got 8pt in Word, and none in LibreOffice. A
+  section heading in a shaded box stood 8pt taller in Word with its title at the top,
+  `SlateOrange` ran to four pages, `TimelineMinimal` to three and `Panel` to two. The
+  styles part now states the defaults: no space after a paragraph, single lines, and it is
+  written even when the document has no text to take a default face from. Measured in
+  Word 16 on twenty CV presets: every preset has as many pages as in LibreOffice, and the
+  median line stands within 0.1pt of where LibreOffice puts it in thirteen of them, within
+  2.2pt in the other seven. Seventeen presets have as many pages as the PDF, fourteen
+  before; `CharcoalGold`, `NavySidebar` and `MonogramSidebar` run to a second page in both
+  editors.
+
+- **A paragraph's line in Word is as tall as the text on it.** The DOCX export set each
+  paragraph's exact line height from the paragraph's own style, while the page sets a line
+  by the runs on it. The two differ when the runs carry a style of their own. A skill
+  rating of dots, with a 7.8pt space between each, in a paragraph left at the default size,
+  is a 9.4pt line on the page and was a 13pt line in Word, so every skill row of
+  `CharcoalGold`'s sidebar stood 3.6pt taller. The line is now the tallest text line the
+  layout measured, on any page the paragraph reaches, so runs larger than the paragraph's
+  style also get a taller line where the style's height clipped them. Inline pictures
+  still make their own room. Measured in Word 16 and in LibreOffice on twenty CV presets:
+  `CharcoalGold` is one page, as in the PDF, two before, and the mean distance of a text
+  line from its place on the page falls from 21.5pt to 7.7pt in Word, from 21.2pt to 7.6pt
+  in LibreOffice. `MonogramSidebar`'s median line moves from 14.5pt to 11.4pt in Word.
+  Every other preset stays within a point of where it was.
+
+- **The gap between a paragraph's wrapped lines reaches Word.** A paragraph's or a list's
+  `lineSpacing`, which the page puts between two wrapped lines, was not written at all. Every
+  wrapped line of a CV's body text stood a point or so higher than on the page, and a CV's
+  entries crept up the page one after another. Word has one line height for a paragraph and
+  no gap between its lines, so a paragraph that wraps now has the gap in its lines. Of the
+  one gap too many that gives it, what the space above the paragraph can spare comes off
+  that space; the rest is shared out over the lines, so the paragraph is as tall as on the
+  page even where nothing stands above it, as in a cell it opens. Each item of a list is
+  a paragraph of its own and holds the gap only when it wraps; a list whose markers stand
+  in their own column no longer counts a marker as a second line. Measured in Word 16 and
+  in LibreOffice on twenty CV presets, the median line comes to within 0.5pt of the page in
+  `BlueBanner`, `CenteredHeadline`, `ClassicSerif`, `Executive`, `MintEditorial` and
+  `NordicClean` (3–9pt before), and `Panel` from 13.5pt to 3.1pt in Word. In four presets
+  the median moves away, because the missing gaps had been hiding other differences:
+  `NavySidebar`'s entries each stand 4.5pt lower where a title and its dates share a line,
+  `EngineeringResume`'s profile wraps onto a line more in the editors than on the page,
+  `TimelineMinimal`'s columns stand 10.5pt low from top to bottom below contact lines that
+  are 2.2pt taller each, and `EditorialBlue` ends its first page one entry sooner.
+
+- **No space is written below the last line of a section in Word.** The DOCX export wrote the space
+  the last block holds below itself as `w:after` on its last paragraph, and the space at the foot of
+  each cell as `w:after` on the cell's last paragraph. At the end of a section the page ends, so
+  that space holds nothing up; written, it can only push the last line onto a page of its own. At a
+  section's end that space is now left out, and so is the space below the last line of each cell of
+  a table the section ends with, and of the tables such a cell ends with in turn. A cell that is
+  painted or has its bottom edge drawn keeps it: there it is part of the box the reader sees. A
+  section that ends with a spacer keeps the spacer, which is space the page has. Word also puts a
+  paragraph of its own after a table that ends a document, a line of body text tall, which opens a
+  blank page under a table that reaches the page's foot; the export now writes that paragraph a
+  point tall (it is since an ordinary paragraph where the last page has room for two lines below the
+  table: see "A reader can type below a DOCX's closing table"). Measured in Word 16 and LibreOffice
+  on twenty CV presets, no page count changes: `NavySidebar` and `MonogramSidebar` still run onto a
+  second page, by more than the space left out.
+
+- **A title at the left and dates at the right of one band stay on one line in Word.** A CV entry's
+  head band holds its title and its dates as two layers of one container, and the DOCX export wrote
+  layers one after the other, so the dates took a line of their own under every title. A container
+  or layer stack holding exactly two single-line paragraphs (since extended to two or more: see "A
+  DOCX export writes a band of three or more one-line captions as one line, as it did a band of
+  two"), level and apart across the page, is now one Word paragraph: the left one's runs, a tab, the
+  right one's, with a right-aligned tab stop where the right text ends. The line runs from the top
+  of the higher text to the bottom of the lower. Text standing out of its band — a title pulled up
+  to centre on a marker smaller than its line — takes that much from the gap on that side, as it
+  does on the page, and only on the next block of its own flow. Each paragraph keeps its bookmark
+  around its own text and its outline level, and one that keeps with the next still does. Two texts
+  closer than 4pt stay one after the other, since an editor setting them a little wider would push
+  the right one onto a line of its own. `NavySidebar`'s entries and its language rows are written
+  this way. Measured in Word 16 and LibreOffice on twenty CV presets, `NavySidebar` is one page, as
+  in the PDF, two before, and its median line stands 3.5pt from the page in Word (20.4pt before) and
+  5.3pt in LibreOffice (22.2pt).
+
+- **A title raised above the top of its row lifts the row.** A CV entry laid out as
+  a row — a timeline marker beside the entry — raises its title out of its head band to
+  centre it on the marker, so on the page the title stands above the row. A Word paragraph
+  cannot reach above its cell, so the title stood that much lower, and each entry after it
+  lower again: 4.5pt an entry on `NavySidebar`. When the text that opens a cell of a
+  table's first row stands above it, it first takes that much out of the cell's own top
+  padding, as the page takes it out of a card's, and the card stays where it is — a
+  painted or framed cell is never lifted, so what its padding cannot take stays low. What
+  is left lifts the table out of the gap held above it, as far as that gap goes, and the
+  row's other cells start that much lower inside, so only the title stands out, as on the
+  page. Measured in LibreOffice on `NavySidebar`, the three experience titles stand 5.8,
+  5.7 and 5.7pt from the page, against 10.1, 14.4 and 18.7pt. Not yet measured in Word.
+
+- **Overlapping layers keep the page's distances in Word.** A layer stack that is not columns was
+  written layer after layer, each starting again at the top. `MonogramSidebar` opens its sidebar
+  with a badge: a spacer as tall as the badge keeps its place in the flow, and the badge, a drawn
+  ring with the initials centred in it, is laid over the spacer. Word put the initials after the
+  spacer's full height, about 100pt below where the page draws them, and the whole sidebar with
+  them. Such a stack is now one band. A spacer level with another layer's content is a stand-in and
+  is not written. The space above the first block written and below the last is the page's distance
+  from the stack's edges. A later layer resumes the page's distance below the blocks above it.
+  Drawing is not written and does not count as content (drawing since written: see "Drawing reaches
+  Word as shapes where the page draws them"), and a stack nested in a layer is measured past its own
+  stand-ins. A stack holding only drawing keeps its room (below).
+
+- **A drawing the export leaves out still takes its room in Word.** A portrait drawn as paths, a
+  decorative shape in the flow, a vertical rule in a masthead's column: none of it reaches the file
+  (since drawn: see "Paths and polygons reach Word as custom geometry" and "Drawing reaches Word as
+  shapes where the page draws them"), and neither did the space it takes, so everything under it
+  moved up by its height. Such a drawing, and a layer stack or shape container holding only drawing,
+  now owes its placed height and its margins as space above what follows, once, however deeply its
+  drawing is nested; a cell holding only such space keeps it on a paragraph a tenth of a point tall.
+  Measured in Word 16 and LibreOffice on twenty CV presets, together with the entry above:
+  `MonogramSidebar` is one page, as in the PDF, two before, and every one of the twenty has the
+  PDF's page count in both editors. The median line comes within 1.9pt of the page in Word on
+  `SlateOrange` (18.8pt before) and 0.4pt on `CompactMono` (4.0pt), and moves from 21.3pt to 15.2pt
+  on `SidebarPortrait`, whose subtitle still stands under its name strip.
+
+- **Columns drawn as layers stand side by side in Word.** A two-column CV can lay its columns out as
+  the layers of one stack, each inset to its band, so the name is drawn before the sidebar. The DOCX
+  export wrote the layers one after the other: the main column began below the whole sidebar, and
+  `CharcoalGold` ran to three pages in LibreOffice. A stack whose layers are plain containers at its
+  top-left corner, in bands that are either the same or apart, is now written as one table row with
+  a cell per band. Layers that share a band follow one another in its cell, in the stack's order. A
+  spacer placed level with content of another layer of the same band only keeps that content's
+  place, and is left out. The space above a later layer's first block is the gap the page shows
+  below the content before it, not that layer's own padding a second time. In a column the layers no
+  longer overlap anything, so a divider in one is written as a rule. Measured in LibreOffice:
+  `CharcoalGold` (three pages before), `SidebarPortrait` and `SlateOrange` (two before) are one
+  page, as in the PDF. What the page draws inside another layer's fill comes after that fill in
+  Word: `SidebarPortrait`'s subtitle sits under its name strip rather than in it (since set in it:
+  see "A strip drawn in two layers is written as one strip"). `NavySidebar` runs one line onto a
+  second page: its experience entries put the date on a line of its own (the date is since on the
+  title's line, and the preset on one page: see "A title at the left and dates at the right of one
+  band stay on one line in Word").
+
+- **Page backgrounds reach Word.** `DocumentSession.pageBackgrounds(...)` paints fills under every
+  page — a sidebar CV's dark column, an invoice's tinted band — and the DOCX export wrote none of
+  them, so fourteen presets lost their page colour and a sidebar's white text stood on a white page,
+  all but unreadable. Word colours a page in one colour only, so each fill is now a rectangle
+  anchored to the page in the section's headers, behind the text: Word draws a header's shapes on
+  every page that header is shown on, and the rectangle is in each header the section has. A section
+  without a header gets an empty one against the page edge to carry them, and the section after it
+  gets an empty one of its own, so it does not show the fills of the section before. A section of
+  one page is given that header too, though its fills would fit in the body: Word sets a document on
+  a line more than the engine did, and a reader types, and the page that appears then is painted
+  like the first one, where fills anchored in the body would paint the first page alone and leave
+  the sidebar's white text on a white page. Measured in Word 16.0.20527 on a one-page sidebar export
+  with eighty paragraphs appended to it, the page the editor adds carries the column; on the
+  `CharcoalGold` CV in LibreOffice the charcoal column is behind the sidebar on every page. The
+  price is paid in LibreOffice, which gives a header a height of its own however little it holds and
+  sets the body that much lower: measured in LibreOffice 24.2, the seven sidebar CVs of the fidelity
+  corpus stand 2.77 to 3.08pt below the engine by the median, 3.99pt at the furthest line, with
+  every line the measurement matches more than 2pt down, so those seven are outside the set the
+  fidelity report calls set as the page sets them. Word sets them where the page does. The Linux
+  LibreOffice baseline and the capability matrix record the shift. A two-column preset still flows
+  its columns one after the other in Word (columns drawn as layers since stand side by side: see
+  "Columns drawn as layers stand side by side in Word"), so a column fill can stand beside text that
+  is not its column's.
+
+- **A container that writes nothing in Word keeps the space above it waiting.** A container is not a
+  Word object, so the DOCX export carries its top margin and padding to the first paragraph written
+  inside it, together with those of every container it opens. A container that wrote nothing —
+  empty, or holding only a drawing the export drops — cleared all of it, its own edge and the ones
+  around it alike. `SidebarPortrait`'s sidebar opens with a portrait drawn as paths, so its 54pt of
+  top padding was lost, and the contact lines were written 20pt below where the sidebar starts in
+  Word — the portrait's 17pt bottom margin and the first line's own 3pt. Such a container now drops
+  only its own top edge and hands the others on, and the contact lines are written 74pt below it. A
+  table owes the edges waiting above it with the rest of the space above it, held below the
+  paragraph before the table, rather than letting them through: a section padded 30pt that opened
+  with a table put those 30pt under the table, on the paragraph after it. Where no paragraph comes
+  before the table, the space above it is not written, as for any table. Space owed just after a
+  page break no longer lands below the last paragraph of the page before. The portrait's own 98pt
+  was not held until drawings kept their room (below), and Word still writes the sidebar after the
+  name strip rather than beside it (since written beside it: see "Columns drawn as layers stand side
+  by side in Word").
+
+- **A timeline with its markers on the rail keeps its entries in Word.** With `markerOnRail()`, a
+  timeline wraps each entry's header row so the columns it resolves are published, and lays the
+  entry's body out in the content column below it — two engine wrappers the DOCX export did not know
+  and dropped as drawing, taking every entry's title, dates and text with them. Measured on the
+  `CharcoalGold` CV, 78 of the page's 290 words — its whole experience section — were missing from
+  the Word file; one remains, a separator glyph. The row is now written as the row it wraps, and the
+  body in the flow, indented to the column the page lays it out in, within 0.1pt. The rail and the
+  markers are drawing, and are still not written (since written: see "Drawing reaches Word as shapes
+  where the page draws them" and "A DOCX export writes a timeline's rail as the border of the cells
+  it runs along, so it stretches with the entries when one is edited").
+
+- **A right-to-left paragraph in a padded container is held in on the page's sides in
+  Word.** The DOCX export wrote a container's margin and padding, and a rail timeline
+  body's column, as `w:ind` `left` and `right` whatever the paragraph's direction, and in a
+  `w:bidi` paragraph Word and LibreOffice read those as the start and end of the flow — the
+  same reading they give `w:jc`. A Hebrew paragraph in a section padded 90pt on the left
+  ended 90pt short of the right margin in both editors, and a rail timeline's Hebrew body
+  stopped short of it by the rail's column. The two sides are now swapped for a
+  right-to-left paragraph, and measured glyph by glyph against the page the text lands
+  within 0.15pt in both LibreOffice and Word. A left-to-right paragraph is written
+  byte for byte as before; tables, whose `w:tblInd` and cell margins are page sides in a
+  table the export always lays out left to right, are unchanged.
+
+- **A table cell's `lineSpacing` is space between its lines.** The layout sized a row with
+  it — `lines × lineHeight + (lines − 1) × lineSpacing` — and the PDF and PPTX renderers set
+  the lines a line height apart regardless, so the row came out taller than its text by the
+  spacing it never showed, and the text sat in the leftover wherever the anchor put it. The
+  weekly schedule's day notes drew their lines touching inside rows sized to hold them apart.
+  Both renderers now put the spacing between the lines, so the text fills the height the row
+  was sized for; the DOCX export writes a cell whose spacing is above zero as a paragraph per
+  line with the spacing after each but the last, and in LibreOffice its lines stand the same
+  distance apart as on the page. A cell without line spacing is drawn and written as before.
+  Among the presets, `PlatformInvoice`'s quantity-and-unit cells and `ConsultingInvoice`'s
+  quantity cells set spacing, and their two lines now stand it apart — each line moves under
+  a point. Two committed previews move — `invoice-consulting-v2.pdf` and
+  `weekly-schedule.pdf` — and are re-rendered.
+
+- **A picture or an icon in a line reaches Word.** The DOCX export dropped every inline
+  image, SVG icon and emoji, so a contact line lost its phone and mail icons and a sentence
+  its emoji, with a report entry and nothing else. Each is now a picture in its own run
+  between the words, at its size, inside its link, raised or lowered by `w:position` to
+  where the page's alignment puts it — in a paragraph and in a list item alike, each item by
+  its own line's height. Word honours that on a picture; LibreOffice does not, so there a
+  picture stands on the baseline, off by as much as the page moves it — up to the text's
+  descent for a centred icon as tall as its line — except an icon or emoji the page raises,
+  which carries the rise itself (below); an author's own picture is always moved by
+  `w:position`. The editor clips a
+  picture to an exact line height and places the baseline in it by its own rule (measured
+  in LibreOffice: a 14pt icon centred over 9pt text lost its top up to a 17.6pt line), so a
+  paragraph holding a picture that leaves its text — past the ascent or the descent, where
+  Word puts it or on the baseline — has its lines written *at least* the height the picture
+  reaches, and the editor grows them rather than clip. Word has one line height for a
+  paragraph, so every line of it is then at least that reach and otherwise as tall as the
+  editor's font makes it — for 14pt text about 2.5pt taller than the page's in LibreOffice.
+  A picture inside its text in both editors keeps the exact height. A picture's description
+  is the text it stands for, or empty, never the file name. An SVG
+  icon is drawn into a transparent picture from the layers the layout resolves, by the
+  raster the PPTX backend's fallback uses — now shared as `InlineSvgRasters` in the PDF
+  module, with the layout's lowering callable as `InlineSvgLayers`, both internal — so an
+  icon is the same picture on a slide and in a document. The text an icon stands for (an
+  emoji's) is the picture's description, reported `APPROXIMATED`. Measured in LibreOffice
+  against the engine's render, icons, emoji and a centred and a baseline picture sit within
+  2px of the page. Inline shapes follow in their own entry.
+
+- **A dot, an arrow or a checkbox in a line reaches Word.** The DOCX export dropped every
+  inline shape with a report entry, so a status line lost its coloured dots, a contact line
+  the separators between its cities, a step list its arrows and chevrons, and a form its
+  checkboxes. Each is now a picture in its own run, drawn by the same raster as an icon from
+  the outline, fill and stroke the page draws — every outline kind, each layer centred in
+  the run's box as a checkmark sits in its frame — and placed where the page's alignment
+  puts it. The page draws a stroke centred on the outline, part of it outside the run's box,
+  and the pixels that smooth an edge lie just past it, so the picture takes, on each side,
+  as far as the stroked ink reaches there — half the stroke on an edge, further at a sharp
+  corner's miter or where a path's curve leaves the box — and a pixel, and is lowered by
+  what it takes below: the outline stands where the page has it and no edge is cut — a 10pt
+  chevron had come out 9.96pt tall in LibreOffice. A list marker that draws a disc is its
+  picture, followed by the space a text marker gets. An inline run is now dropped only when
+  its picture has no data.
+
+- **A drawn picture the page raises stands where the page puts it in LibreOffice too.**
+  LibreOffice ignores `w:position` on a picture and stands it on the baseline, so a 3pt
+  separator dot the page centres two points above the baseline came out on it. A picture the
+  export draws itself — a shape, an SVG icon, an emoji — now carries such a rise as
+  transparent rows below what it shows and is written with no `w:position`, so it stands
+  where the page puts it in either editor: measured in LibreOffice, the separator within
+  0.06pt of the page and a 6pt status dot within 0.06pt. One whose picture reaches below
+  the baseline — lowered by the page, or a stroked shape raised by less than its stroke's
+  reach — keeps `w:position`, which only Word honours; an author's own picture is written as
+  given.
+
+- **A rule reaches Word as Word's own.** The DOCX export dropped every `LineNode` and standalone
+  `ShapeNode`, so the rules a template draws under a heading or between entries — `addLine(...)` and
+  `addDivider(...)`, together among the most common drawing in the templates — were missing. A
+  horizontal line, and a filled bar no taller than Word's thickest border (12pt) with no stroke,
+  radius, gradient or transform, are now an empty paragraph (a bar is since written so only where it
+  is a divider: see "A DOCX export writes only a divider, of all boxes of a colour, as Word's
+  horizontal rule; any other box goes the way every drawing goes") whose bottom border is the
+  stroke: its colour, its thickness in eighths of a point, its ends as the paragraph's indents, and
+  the space above and below the stroke in its box kept, so the rule flows with the text and a reader
+  moves or deletes it as a line of the document. A dash becomes Word's dashed or dotted border,
+  reported `APPROXIMATED`, and a translucent rule is flattened against what lies under it. A stroke
+  thicker than its box — `horizontal()` sizes the box from the stroke set before it — spills out of
+  the box on the page and takes no room, so the room it takes in Word comes off the space below it.
+  Measured in LibreOffice against the engine's render: a full-width rule, a 200pt divider, a dashed
+  line, a rule in a 12pt box and a rule inside a card land within 3px of the page, their lengths
+  within 2px; Word has not been measured. A line laid over something else in a layer stack or a
+  canvas is not a rule in the flow, and vertical and slanted lines and other shapes are still
+  dropped and reported (since drawn: see "Drawing reaches Word as shapes where the page draws
+  them"), as is a rule in a page zone.
+
+- **A barcode reaches Word, and scans.** The DOCX export dropped a `BarcodeNode` with the
+  geometry-only nodes, so a receipt or a shipping label lost the code a reader scans. It is
+  now a PNG picture of the same ZXing matrix the PDF and PPTX backends draw
+  (`BarcodeMatrices`), one pixel a cell in the symbol's two colours with their alpha, encoded
+  in memory, at the node's size, with its margin as the space around it, its `anchor` as a
+  bookmark and its data as the picture's description. Decoded back from the picture, a QR
+  code and a Code 128 return their data. The data is part of the picture rather than
+  editable in Word, and the report says so (`APPROXIMATED`), naming a link or a transform
+  on the barcode as not carried. Outside the body — in a page zone — a barcode is still
+  skipped. The PDF backend comes in at compile scope for this; see Packaging.
+
+- **A table cell's alignment reaches Word.** The DOCX export read neither half of a cell's
+  `textAnchor`: every column a template right-aligns or centres — amounts, quantities,
+  totals — came out flush left, and since Word's default is the top of the cell while the
+  engine's is the vertical middle, a single line beside a taller neighbour sat at the top of
+  its row. The anchor, cascaded as the layout cascades it, is now `w:vAlign` on every cell
+  and `w:jc` on a text cell's paragraph, with the engine's default when none is stated
+  (middle left, middle right for a right-to-left cell) and `DEFAULT` at the bottom left as
+  the renderer draws it. A composed cell takes the vertical half only, as the engine places
+  it. Measured in LibreOffice against the engine's render: a centred quantity, a
+  right-aligned amount and a bottom-right cell beside a three-line cell land as on the page,
+  and a right-to-left cell starts on the right.
+
+- **A card is a card in Word.** The DOCX export painted a container's fill and borders onto each
+  paragraph inside it, and Word has no element that wraps a run of paragraphs, so in an editor the
+  card came apart: the accent bar broke beside every row and table inside it, the band had white
+  gaps where the space between blocks sat, and the padding above and below lay outside it. A
+  container that paints is now a table of one cell, the way a panel is built in Word by hand: the
+  shading is the fill behind everything inside, the borders run the card's full height, and the
+  padding is the cell's margins on all four sides. The page centres a border on the card's edge and
+  Word keeps it inside the cell, so each margin is the padding less half the border and the table is
+  half a border wider on each side (in the body, the left margin is since the whole padding: see "A
+  DOCX panel in the body starts its text the whole padding in") — measured in LibreOffice against
+  the engine's render at 96 dpi, the band, a 3pt accent bar and the text land within a pixel of the
+  page's. The table takes the width the layout placed the card at, plus a point of slack for the
+  editor's face (since taken out of its right margin: see "A DOCX export ends a panel where the page
+  ends it"), so a card sized round a short line is as narrow as on the page. Panels, rows and tables
+  inside are tables in the cell; a table cell no style fills is written white, as the page draws it
+  on the card, and a composed cell keeps its own fill. A `keepTogether()` card the layout held on
+  one page is a row Word may not split, and the anchors and keeps of the blocks inside it still
+  carry. A page break inside a card closes it and opens it again after the break, since Word breaks
+  no page inside a cell. The corner radius is still dropped, with one warning per export.
+
+- **A container's content sits inside its margin and padding in Word.** The DOCX export
+  never wrote a container's sides: its text ran flush with the page margin. Outside a
+  painted card, every paragraph is now indented by each enclosing container's margin and
+  padding, a numbered list inside keeps its hanging indent, rows and tables move in the same
+  way (`w:tblInd`), and pictures are sized to the width left between the insets — or to the
+  cell they are in, a row's columns included, where a picture used to take the page's
+  width.
+
+- **No empty line under a table inside a cell.** Word requires a cell to end with a
+  paragraph, so one follows every table nested in a cell, and it was a full line tall: a
+  composed cell or a card showed an empty line under each table. It is now a tenth of a
+  point tall; the paragraph written next in the cell takes it over, and a second table
+  written next makes it the separator between the two.
+
+- **Two tables in a row stay two tables in Word.** Word and LibreOffice join two tables
+  with nothing between them into one and lay the second one's rows on the first one's
+  column grid; measured in LibreOffice, a zebra table followed by a narrower one came out
+  at half its width with its text broken letter by letter — and a row (`addRow`) is carried
+  as a table, so two rows in a row were joined the same way. A paragraph a tenth of a point
+  tall (measured in LibreOffice; Word may hold it to its own minimum, still under a point) now
+  separates them, carrying the rest of the gap the layout keeps between them and keeping
+  with the table below it, so a block kept with that table stays kept. Space owed below a table no
+  longer lands on the paragraph above it: a card ending in a table opened its bottom padding
+  between its title and its table, and after a table nested in a cell the space now goes to
+  the paragraph that closes the cell.
+
+- **A table of contents keeps its page numbers in Word, and they stay right.** The DOCX export
+  dropped every page reference, so `addTableOfContents(...)` reached Word with its entries and
+  no numbers, and `addPageReference(...)` wrote nothing. Each is now Word's own `PAGEREF`
+  field to the anchor's bookmark, as a hyperlink, storing the page the layout resolved — so
+  the file opens reading the PDF's numbers, and the editor recomputes them as the document
+  changes. Measured in LibreOffice: with the stored numbers replaced by 99, the table of
+  contents still showed pages 2, 3 and 5. A reference to an anchor the document has no
+  bookmark for is written as its placeholder text rather than a field Word would turn into
+  "Error! Bookmark not defined.". The export does not set `w:updateFields`, which would make
+  Word ask on every open to recompute numbers that already read correctly; the recipe states
+  which field each page number is and what updates it.
+
+- **A table of contents' labels stay whole in the editor.** A row's column sized to its content
+  (`DocumentRowColumn.auto()`) was written exactly as wide as the layout placed it, and an editor
+  setting the text in its own substitute for the face wrapped it: measured in LibreOffice,
+  `addTableOfContents(...)` labels broke mid-word — "Intr" over "o", "Term" over "s", "Appendi" over
+  "x". A row's auto column now gets the point a table's already did, taken from the row's weight
+  columns (since held in the gap after it: see "A DOCX export holds a row's auto column's editor
+  point in the gap after it") so the row keeps the width the layout gave it; ten labels from "Q" to
+  "Appendix A - Pricing schedule" stay on one line in LibreOffice; Word was not measured. A row with
+  no auto column, no weight column, or no stated columns is written as placed.
+
+- **A link to a section, table or image reaches it in Word.** The DOCX export wrote a
+  bookmark only for a paragraph's `anchor(...)`; an anchor on a section, container, table or
+  image was dropped, so an internal link to it went nowhere in Word. Such a block's anchor is
+  now a bookmark around everything the block wrote — opening before the first word of its
+  first paragraph (its first cell's, when it starts with a table) and closing after its last.
+  Converted in LibreOffice, a link on page 1 to a section on page 2 jumps to page 2.
+
+- **A page zone drawn on some pages only lands on the same pages in Word.** The DOCX export
+  wrote every zone on every page and warned when it had an `appliesTo` predicate, so a
+  cover-only header repeated on every page and a footer that skips the cover appeared on it.
+  The predicate is now asked over sample pages and sorted into the kinds of page Word gives a
+  header of its own: a first-page-only zone becomes the section's first-page header (with a
+  title page stated), an every-page-but-the-first zone leaves an empty first-page part, and an
+  even- or odd-page zone becomes the even-page or ordinary part (with different even and odd
+  pages stated for the document). A predicate that picks pages within a kind — the last page —
+  has no Word part; that zone is written on every page and the export report says so. A zone
+  that skips the first page is also placed by where the layout drew it, rather than by its
+  padding. Converted in LibreOffice, a three-page document with a cover header, an even-page
+  header and a not-on-the-cover footer shows the same zones on the same pages as the PDF.
+
+- **A block kept together in the layout is kept together in Word.** `keepTogether()` moves a
+  block to the next page whole, and `keepWithNext()` moves a block down with the first line
+  of the one after it. The DOCX export said neither, and Word re-paginates on its own, so a
+  card split across Word's page break and a heading could be left at the foot of the page
+  above its body. A block the layout placed on one page now gives each of its paragraphs
+  `w:keepLines` and every one but the last `w:keepNext` — the last as well when it is kept
+  with the next — and a table inside it takes part row by row. A block taller than a page,
+  which the layout lets flow, is left to flow. Converted in LibreOffice, a six-line card that
+  the page moves whole split 4 + 2 across the break before and lands whole on the next page
+  after.
+
+- **A landscape page exports as landscape.** Word draws a page from its width and height but
+  reads the orientation from `w:orient` — for Page Setup, for printing, for the paper tray —
+  and the DOCX export wrote portrait for every page. A landscape document opened the right
+  shape and printed on its side. A page wider than it is tall is now stated as landscape; a
+  square page stays portrait, as Word itself treats one.
+
+- **A DOCX table breaks across pages where the page breaks it.** The layout splits a table
+  only between rows, repeats its `repeatHeader(n)` rows at the top of every page it continues
+  on, and never leaves those rows at the foot of a page with nothing under them. The export
+  stated none of it, so Word broke rows mid-line wherever its own page ended and printed a
+  long table's header once. Every row the layout placed is now kept whole (`w:cantSplit`), a
+  repeated header is Word's header row (`w:tblHeader`), and its paragraphs keep with the next
+  row. A row of blocks is kept whole the same way. A document that could not be laid out
+  keeps its rows free to break: the layout refuses a row taller than a page, and no page
+  holds such a row whole.
+
+- **A table cell with no style of its own is written in the face the page draws it in.**
+  With nothing in its cascade stating a face, a cell was written with no run properties and
+  took the document's Normal — 10.5pt on the probe corpus — while the engine draws it in its
+  default cell face, 14pt Helvetica. The row was the right height and the text in it visibly
+  smaller than the page's. The fallback is now read from the engine's own
+  `TableCellLayoutStyle.DEFAULT`, the last step of the cascade the layout runs.
+  <br><br>
+  Writing the true size exposed a second thing: an auto column is exactly as wide as its
+  widest unwrapped cell, with no slack, because the page needs none. An editor does — it sets
+  the text in its own substitute for the face and keeps a border's width clear inside the
+  cell — and measured through LibreOffice the billing table's widest item wrapped and its row
+  doubled. Each auto column now gets a point more in Word than on the page (since taken out of its
+  text cells' side margins, so the column keeps the page's width: see "A DOCX export stands a
+  table's rules where the page draws them beside a column sized to its content"), only where it
+  costs
+  nothing the document stated: a table with an authored width keeps it exactly, a fixed column
+  keeps its size, and the slack never takes a table past the width it sits in.
+
+- **A table cell carries the line height its row was sized with.** The layout measured the height of
+  a line of a cell's text to size the row, then dropped it: the PDF and PPTX renderers measured it
+  again when drawing, and the DOCX export — which has no font runtime — could not measure it at all,
+  so Word set a cell's text at its own spacing for the font. Measured on the probe corpus, a totals
+  row whose style states a 14pt face came out 3pt taller in Word than the page draws it.
+  `TableResolvedCell.lineHeight()` now carries the measurement from the layout; both fixed-layout
+  renderers read it rather than measuring again — the same number, since both paths end in the
+  font's vertical metrics, and no committed PDF preview moved — and the DOCX export writes it as the
+  cell paragraph's exact line height (since written as a least height where the cell's lines are as
+  tall as their faces' own: see "A DOCX export's table text cells grow with their text where they
+  are as tall as their faces' own"). A cell built through the record's previous constructor states
+  `NaN`, and a renderer reading one measures the line itself, as before.
+
+- **A link inside a list item exports as a link.** A list item made of runs is written by its
+  own path, which had learned run styles and chips but not links — so a phrase linked with
+  `link(...)` or `linkTo(...)` inside a bullet came out as plain text, while the same phrase
+  in a sentence was a working hyperlink. List-item runs now go through the same writer a
+  paragraph's do: an address becomes a `w:hyperlink` with its relationship, an internal link
+  points at the bookmark its anchor became.
+
+- **A header or footer sits as far from its page edge as the page puts it.** Nothing was
+  written, so Word used its own distance — 36pt — and the probe corpus's footer sat 14.5pt
+  higher than the page draws it, on every page. The engine does not state the distance
+  either: a zone is a band of a given height against the edge, with its content laid out
+  inside it from the top, so the distance is read from where the zone's content actually
+  landed in the resolved layout and written as `w:pgMar/@w:header` or `@w:footer`. Measured
+  through LibreOffice, the footer now lands within 0.6pt of the page; without a layout the
+  zone's own padding on that edge stands in.
+
+- **A picture and a list keep the space they hold around themselves.** Neither wrote its own
+  box, so on the probe corpus an image holding 12pt at each edge ran straight into the
+  heading under it, and a four-item checklist came out 13pt short of the page —
+  `itemSpacing` and the list's own padding both went unwritten. A picture's paragraph is the
+  picture's block and now carries its spacing; a list hands its edges to the paragraphs
+  around it the way a container does, and the gap it puts between items becomes the space
+  above each item after the first.
+  <br><br>
+  With this, the probe corpus's second page renders within **0.4pt** of the reference PDF,
+  against 37pt before, and the first within 2pt.
+
+- **A table keeps the space it holds above and below itself.** Word has no space above a
+  table and none below one, so a table's `margin` and `padding` were dropped — and a row is
+  exported as a one-row table, so a row's padding went the same way. Measured on the probe
+  corpus through LibreOffice, that was a row's 14pt lost twice over, once at each edge, plus
+  the 6pt a billing table holds above itself.
+  <br><br>
+  Neither edge needs an element of its own: the space above a table is the space below the
+  paragraph before it, and the space below one is the space above the paragraph after. Both
+  now go through the same gap the rest of the document goes through, so a table between two
+  paragraphs reads as two paragraphs with a gap between them. What Word genuinely cannot
+  hold is the top edge of a table with no paragraph above it, and that one is still dropped
+  rather than approximated with an empty line (since kept: see "A table with no paragraph before it
+  keeps the space above it in Word").
+  <br><br>
+  With this and the two changes before it, the first page of the probe corpus renders within
+  **1.2pt** of the reference PDF everywhere, against 87pt of accumulated drift before.
+
+- **A table cell keeps the space the document put inside its edges.** It was never written,
+  so Word used its own — 5.4pt at each side and *nothing* above or below. A row's height in
+  Word is its content's box, so every row came out shorter than the page draws it: measured
+  on the probe corpus through LibreOffice, each row of a five-row table sat 8.1pt short, and
+  the table's last row 40pt above where the page puts it. The padding a cell resolves to —
+  the table's default, then the column's, then the row's, then the cell's own — is now
+  written as `w:tcMar`, and the same table's rows land within 0.1pt of the page.
+  <br><br>
+  All four sides are written, and written even when they are zero, because Word's default is
+  not zero: a table that asked for no padding would otherwise export with Word's side
+  margins and read wider than it is. A table that states no padding at all is written with
+  the padding the engine lays it out with rather than with Word's, and a test pins the two
+  together so the export cannot quietly draw rows of a height nothing asked for.
+
+- **A gap between two blocks in an exported Word file is one gap.** It was written from both
+  sides — `w:after` on the block above and `w:before` on the one below — which is the same
+  distance only in an editor that adds them. LibreOffice takes the larger: measured on the
+  probe corpus, a card holding 20pt below itself followed by a heading asking for 16pt above
+  rendered 20pt where the page shows 36, and every block under it sat 16pt too high. The
+  space a block holds below itself is now written on the paragraph that follows, as part of
+  the one number above it, so an editor that adds and an editor that takes the maximum agree —
+  there is nothing left to add it to.
+  <br><br>
+  It goes back to the block above only where nothing below can carry it: before a table,
+  which has no space above it in Word, before a page break, at the end of a table cell, and
+  at the end of the document. A cell keeps its own: a gap at the end of one no longer travels
+  out and lands on whatever the body writes next. A container of tables now hands its bottom
+  edge to the paragraph after it rather than dropping it — the gap under a table is the space
+  above what follows, and that is a paragraph.
+
+- **An inline chip keeps its fill in the exported Word file.** A status badge and an
+  inline `code()` span both came out as bare text: the reduction every backend shares keeps
+  a chip's glyphs and drops its background, and nothing downstream put it back — so a red
+  badge reading "overdue" was the same colour as the sentence around it, and the document
+  lost the part of itself that was doing the talking. The fill is now the run's own
+  `w:shd`, which takes any RGB, in a paragraph and inside a list item alike. Word's
+  highlighter pen was the other candidate and quantizes to sixteen named colours, which is
+  not a brand palette.
+  <br><br>
+  What Word has no way to say is the chip's *shape*: shading covers the glyph box, so the
+  corner radius is square and the padding that widens the run on the page is not in the
+  file (its sides since written: see "A DOCX chip takes the room its padding takes on the page").
+  Both are recorded in the export report, per chip, and a chip that loses neither
+  reports nothing — a record of loss that lists what did not lose anything cannot be read.
+  <br><br>
+  A `w:shd` fill is opaque, and the chip this DSL reaches for most — `inlineCode(...)` — is
+  a fifth-opacity grey. Written at full strength it is a solid slab where the page has a
+  tint, so a translucent fill is flattened first against what the export itself wrote
+  underneath it: the paragraph's shading, the cell's, or the page. The chip then agrees
+  with the file it is in, which on a white page is the composite the PDF makes of the same
+  chip. What it stops being is translucent — recolour what is under it in Word and the
+  chip no longer follows — so that is recorded too.
+
+- **An exported Word document has an outline.** A reader opened a twenty-page export and
+  found one flat run of paragraphs: nothing in the Navigation Pane, nothing in the outline
+  view, and a generated table of contents that came back empty. Word builds all three from
+  heading *styles*, and the export wrote none. The outline level a document states when it
+  declares a bookmark now becomes Word's own `HeadingN` style — verified through Word 16.0's
+  own heading enumeration, which lists the document's chapters and their nesting.
+  <br><br>
+  The style carries the outline level and nothing else. The paragraph already has the look
+  its author gave it, and a heading style that also set a font and a size would restyle every
+  heading on the way out — describing the page is the job, not redesigning it. Word knows its
+  built-in headings by the pair `HeadingN` and `heading N`, so both are written: with one of
+  them it is a custom style that happens to be called Heading and the Navigation Pane stays
+  empty. Only the levels a document uses are defined, and a level past Word's nine is clamped
+  rather than written as a style that does not exist.
+  <br><br>
+  The role is read from what the document declared and never inferred from type size. A
+  heading guessed from a large first line turns a subtitle into a chapter and leaves a small
+  real heading as body text, and both are wrong in a document someone then edits.
+
+- **A link in the document is a link in the exported Word file.** Every one was dropped: a
+  reader opened an export, found the text of a link with nothing behind it, and a reference
+  to another section that went nowhere — which is most of the point of handing a document
+  over editable rather than as a PDF. A `linkTarget` now becomes a `w:hyperlink`: a
+  relationship carrying the address for an external one, `w:anchor` for one of the
+  document's own anchors. A run's own link wins over the paragraph's, so a sentence with one
+  linked phrase in it exports as one. An `anchor(...)` becomes a `w:bookmarkStart` /
+  `w:bookmarkEnd` pair wrapping that paragraph's text rather than sitting before it, so a
+  reader following the link lands on the paragraph.
+  <br><br>
+  Word takes far less of a name than a document gives: letters, digits and underscores,
+  starting with a letter, forty characters. A name it dislikes is not a broken link but a
+  file it refuses to open, so names are cleaned once and remembered — `Terms & conditions`
+  becomes `Terms_conditions` on both sides — and two anchors that clean to one name stay two
+  bookmarks rather than collapsing onto each other. Forward references need nothing extra:
+  neither side resolves anything at write time.
+  <br><br>
+  Measured by opening the export in Word 16.0: its own PDF carries two live links, one to
+  the address and one jumping within the document.
+
+- **A composed table cell carries whatever it was built from.** `DocumentTableCell.node(...)`
+  lets a cell hold anything the document can hold, and the export wrote paragraphs out of it
+  and nothing else: a cell built from an image, a list or a table came out empty — content
+  the page draws simply missing from the file, with one line in a log to say so. A cell is
+  now a destination the ordinary writers point at rather than a place with a writer of its
+  own, so everything that can be written anywhere is written there too. A nested table is a
+  real `w:tbl` followed by the paragraph Word requires a cell to end with.
+  <br><br>
+  Reading a table's columns back from the layout was wrong wherever a cell was composed: a
+  table whose cell holds another table emits that inner table's rows under the *owner's*
+  path, so a two-column table came out with a three-column grid and Word placed every edge
+  where it was told. Only rows that span the table are read now, and the derived count must
+  match the one the table resolves. A nested table is given the width of the column it sits
+  in, less the margins Word keeps inside a cell — not the width the page gives it, which the
+  layout does not report separately, but with no width at all Word squeezes a nested table
+  to about one character a line.
+
+- **A container's fill and borders now reach the DOCX export.** A `SectionNode` or `ContainerNode`
+  carrying a `fillColor`, per-side `borders` or a uniform `stroke` was treated as a transparent
+  wrapper: its children were written and its paint was dropped with nothing in the log to say so,
+  which is why a card exported as bare text. Each paragraph the container wraps now carries the fill
+  as `w:shd` and the borders as `w:pBdr`; consecutive shaded paragraphs render in Word as one band,
+  nested containers resolve innermost-first, and the paint stops where the container does. Three
+  things are still not representable and are documented rather than approximated: the corner radius,
+  since Word paragraph shading is rectangular — dropped with one warning per export; the container's
+  `padding`, so the band hugs its text (since written as a one-cell table, its padding the cell's
+  margins: see "A card is a card in Word"); and a table inside a painted container, which keeps its
+  own cell paint. A container with no paint exports exactly as before.
+
+- **A row no longer exports with visible table rules, and a page-number footer sits at the
+  right margin again.** Two defects the render made obvious. A `RowNode` is carried as a
+  one-row table so editors keep the side-by-side layout, but POI ships Word's default
+  single-line grid and nothing turned it off, so every two-column block exported ruled
+  where the PDF draws nothing. And the header/footer writer added its right tab stop
+  through `addNewPPr()` after the spacing calls had already created the paragraph
+  properties — a second `w:pPr` that Word ignores in favour of the first, so the tab fell
+  back to Word's default half-inch grid and the page number sat near the left margin.
+  Both are fixed; a table an author asked for keeps its own borders.
+
+- **A row's children sit where the page puts them in its height.** A row's `verticalAlign`
+  never reached Word, so every cell held its content at the top: a table of contents, which
+  aligns its entries to the bottom so the leader sits on the entry's baseline, exported with
+  the dots riding at the top of each entry — measured in LibreOffice, 9pt above where the page
+  draws them. `CENTER` and `BOTTOM` are now each cell's `w:vAlign`, and in LibreOffice the
+  leader lands 0.6pt above the baseline where the page puts it 0.4pt above; Word was not
+  measured. `TOP`, the default, is Word's own and is not written, so a row that never asked
+  stays as it was.
+
+- **A DOCX list is now a real Word list.** The export wrote the marker into the item's
+  run text and indented nesting with two spaces per level, which looks like a list and is
+  not one: measured in Word 16.0, `ListFormat.ListType` came back as "no numbering", so
+  pressing Enter produced a plain paragraph instead of the next item. A list now gets a
+  `numbering.xml` definition, `w:numPr` on each item, and the authored marker as the
+  level's text, with nesting as a level rather than padding characters. The
+  `ListMarker.defaultForDepth` cascade becomes the levels' markers and
+  `markerFor(depth, ...)` still chooses a level's own.
+  <br><br>
+  Four kinds of list deliberately keep the plain-paragraph form, because Word cannot hold
+  them without changing what was asked for: a markerless list, which would gain a marker
+  and an indent it declined; a drawn marker, which has no Word list analogue; a list whose
+  siblings at one depth carry different markers, since a definition names one marker per
+  level; and rich items, whose runs the numbered path does not write.
+  <br><br>
+  This does not make `markerGap` work and does not claim to — real Word numbering was
+  measured against that requirement and rejected for it, and it is still rejected. The
+  level's marker column is a stated constant, 180 twips plus 120 per nesting level (a list the page
+  places since takes the page's column: see "A `hangingIndent(true)` list's top level takes the
+  page's marker column in DOCX, text markers too" and "A DOCX list without `hangingIndent` wraps
+  where the page does"),
+  chosen near the single space the text form used. What changes is behaviour: the list
+  continues, renumbers and demotes. What it costs is that the marker column is a
+  convention rather than the configured gap.
+
+- **A DOCX export now names its own body text as Word's Normal style.** The package
+  carried no styles part at all, so Word invented a latent `Normal` that no run referred
+  to, and every run spelled out its own font and size. A direct run property beats a
+  style, so "change the Normal style" — the ordinary way a person restyles a Word
+  document — was accepted and then did nothing; measured in Word 16.0, setting Normal to
+  14pt left the body at 10.5pt. The export now writes a styles part whose document
+  defaults and `Normal` carry the document's dominant text style, chosen by how many
+  characters are set in it rather than by how many nodes use it, since headings are
+  numerous and short while body text is long. Styles are weighed by what the styles part
+  writes — family, half-points, packed RGB — rather than by `DocumentTextStyle` equality:
+  that record's equality is its components', `DocumentColor` defines no `equals`, and
+  styles built inline per paragraph would each weigh alone, electing whichever style
+  happened to be reused. Measured before the fix: six body paragraphs against three
+  headings elected the heading, and restyling Normal moved the headings instead of the
+  body. A run that only restates that style writes
+  no `w:rFonts`, `w:sz`, `w:szCs` or `w:color`, so the style reaches it; a run that
+  differs still says so. Complex-script sizing is unchanged in effect — `w:szCs` moves to
+  the style along with `w:sz`, so Hebrew and Arabic still read a size rather than falling
+  back to Word's default. A document with no text writes no styles part.
+
+- **A DOCX table and row now state the width the layout gives them, where that width can be known.**
+  POI's `createTable` writes `w:tblW` as `w=0, type=auto` — Word's instruction to shrink a table
+  around its own content — and nothing overrode it, so every exported table sized itself to its text
+  and a row carried as a one-row table collapsed around a label. A row takes the whole width it is
+  offered whatever its children measure, so its carrier gets the content width. A table's own width
+  is written only where it needs no measuring: the width the author stated, and the column grid when
+  every column is fixed, with a stated width's surplus going to the last column as the layout gives
+  it. A table with an `auto` column and no stated width keeps Word's sizing (with a layout, it is
+  since left to the editor only where the layout does not show its widths, and named: see "A DOCX
+  export names a table whose columns it leaves to the editor") — the layout would give it the sum of
+  its natural column widths, and an `auto` column's natural width is its widest unwrapped cell,
+  which is a measurement this backend has no font runtime to make. Writing the content width there
+  would be right for a table whose text fills the line and wrong for one holding three short values.
+  <br><br>
+  A row's slots are arithmetic for three of the four ways it can divide: weights, an even
+  split and fixed columns are shares of what is left after the gaps, and those are now
+  written as the grid. Word has no inter-column gap, so the gap and the row's padding ride
+  in the neighbouring column's width and come back out as that cell's margin — the text
+  box is exactly the slot and each column starts exactly where its slot does. Cell margins
+  are written even when they are zero, because Word's own default is not, and the carrier
+  is marked fixed-layout, without which the grid is a starting suggestion Word re-fits to
+  the content. An `auto` column and the flex path — a non-START arrangement or a grow
+  spacer — ask what a child's content naturally measures, and stay Word's.
+  <br><br>
+  A row carrier also wrote each of its six borders twice, because POI ships a full
+  single-line set and turning them off added to it rather than replacing it, leaving a
+  `w:tblBorders` that `CT_TblBorders` does not allow. Word read the last element and drew
+  nothing, so the render looked right while the part was invalid.
+  <br><br>
+  Measured through Word 16.0 and LibreOffice Writer against the reference render, this
+  moves the columns onto the layout's and uncovers a larger drift that had been partly
+  cancelling it: Word starts the body 12.8pt lower than the reference and sets each body
+  line at 13.9pt against 9.7pt (LibreOffice: 12.1pt), so a row that came out one line too
+  short had been pulling the page back up. Line height is measured from the font, so
+  closing that needs resolved layout rather than arithmetic.
+
+- **The DOCX export now takes line height and column widths from the resolved layout, and carries
+  the space around a block.** _(The layout opt-in is experimental — see [API
+  stability](docs/api-stability.md).)_ Two of the things that decide how an exported document looks
+  are measurements over the font — how tall a line of text is, and how wide a column came out — and
+  a semantic backend has no font runtime, so both were Word's to decide. Measured against the
+  reference render, Word set a body line at 13.9pt where the document says 9.7 (LibreOffice: 12.1),
+  so everything below the first paragraph sat lower than it should and the gap grew with every line.
+  The export now asks for the layout the engine already compiled: the line height is written as
+  `w:spacing w:lineRule="exact"` on every paragraph, table cells and list items included (since
+  written as a least height where the lines are as tall as their faces' own: see "A DOCX export's
+  lines grow with their text where they are as tall as their faces' own"), and a table's columns
+  come from the resolved cells with `w:tblLayout` fixed so Word does not re-fit them. A row's
+  columns come from where the layout placed its children — only their starts, since a placed child
+  is as wide as its own content and its width says nothing about where its column ends.
+  <br><br>
+  The space a block holds above and below itself is not a measurement and was missing too.
+  A paragraph's `margin` and `padding` now become `w:spacing` before and after, and a
+  container — which is not a Word object, its children written where it stood — hands its
+  top edge to the first paragraph inside it and its bottom edge to the last. Both add to
+  what a paragraph asks for itself, so a card inside a section sums the way the page does.
+  A container that begins or ends with a table leaves that edge unwritten (since carried through the
+  paragraph beside the table: see "A table keeps the space it holds above and below itself") rather
+  than
+  parking it on whatever paragraph comes next: Word has no space-before on a table, and an
+  empty paragraph would add a line the document never asked for. The horizontal half of
+  that box still has no paragraph-level equivalent and is still dropped (since written: see "A
+  container's content sits inside its margin and padding in Word").
+  <br><br>
+  Measured through Word 16.0 on the two-page probe: the body now starts at 65.5pt against
+  the reference's 65.2 and sets lines at 9.8 against 9.7; the worst grid cell falls from
+  78.9% to 52.1%; and the largest landmark drift down the first page falls from 44pt to
+  20pt. Editing is unchanged at 7 of 7 scenarios.
+  <br><br>
+  Asking for the layout costs a measurement and pagination pass over the document — the
+  same work a PDF render does — and reads each image a second time. A document the
+  fixed-layout pipeline refuses still exports: the failure is logged once and the writer
+  falls back to what the document itself states, which writes a table width only when the
+  author stated one or every column is fixed, a row's columns only when they are weights,
+  an even split or fixed, and no line height at all.
+
+- **A DOCX export now ships the faces the document is set in.** A face was named and never
+  shipped: the export declared `Lato` on its runs and embedded nothing, so on a machine
+  without Lato installed Word substituted another face — and a substituted face has
+  different glyph widths, so every line breaks somewhere else and the geometry above it
+  stops meaning anything. The package now carries a font table and one obfuscated font
+  part per face, for every family the document names that has a file behind it: the
+  bundled families and whatever the session registered. The standard PDF faces are never
+  written, and not because of their terms — they are names rather than files, and a reader
+  gets the editor's substitution for them, the same one a PDF viewer applies.
+  <br><br>
+  Only the faces the document uses travel: a family's four faces are about 2.5 MB, so the
+  face is chosen from each style's decoration, and a reader who later bolds a word gets
+  whatever their machine does for a missing bold face. And only what the face permits: an
+  OpenType face states its terms in `OS/2`, and the format distinguishes embedding for
+  reading and printing from embedding in a document someone will edit — a face that allows
+  only the first is named but not shipped, with one warning naming the family.
+  <br><br>
+  Measured through Word 16.0 on a machine where Lato is not installed: the exported
+  document reports `Lato` in the render rather than a substitution, and its Lato paragraph
+  breaks at the same word as the reference, ending within 2.3pt over a 489pt line. The
+  two-page probe's file grows from 366 KB with one face to 2.9 MB if all four are written,
+  which is why the slot is read from the style.
+  <br><br>
+  A run also names the family rather than the face. `FontName.HELVETICA_BOLD` is a face,
+  and it was written where Word expects a family: Word resolves a family and takes the
+  weight from `w:b`, so asked for a family by that name it found none and substituted —
+  which is how a document naming its headings by face came out set in something else. The
+  face is now resolved to its family exactly as the layout resolves it, through
+  `FontLibrary.resolveFamily`, and the name written is that family's `wordFamily()`. The
+  weight is deliberately not read from the face name, because the engine does not read it
+  either: a style naming `HELVETICA_BOLD` with no `decoration` lays out regular, and
+  writing `w:b` would make Word bolder than the page it matches. Two names for one family
+  now also weigh as one style when `Normal` is chosen, since they are written identically.
+
+### Packaging
+
+- **`graph-compose-render-docx` is enough on its own.** Opening a `DocumentSession`
+  resolves a font-metrics provider, and `graph-compose-render-pdf` is the only artifact that
+  publishes one — but the DOCX module declared it at test scope, so an application depending
+  on `graph-compose-core` + `graph-compose-render-docx` failed at `create()` with
+  `MissingBackendException` before it could export anything, and the class javadoc said the
+  opposite. The PDF backend is now a dependency of the DOCX module at compile scope, the way
+  the PPTX module already brings it — the DOCX module draws a barcode with its matrix encoder
+  — and an application that declared it by hand resolves the same version. Checked with three
+  consumer applications built outside the reactor against the installed artifacts — DOCX
+  alone, PDF + DOCX, PDF + PPTX + DOCX: each exports, and each resolves one Apache POI
+  (5.5.1, `poi-ooxml-lite`, never `-full`), one XMLBeans (5.3.0) and one PDFBox (3.0.8), so
+  the three office backends share one schema set.
+
+### Tests
+
+- **The Word fidelity baseline records Word's full build, and the Linux LibreOffice baseline
+  takes CI's rows for two proposals.**
+  - `convert-with-word.ps1`, which converts the corpus for `word-fidelity.ps1`, recorded Word's
+    version as Word's own `Build` states it, which stops at `16.0.20527`: an update inside a build,
+    such as `16.0.20527.20150`, left no trace in `word-windows.tsv`. It now reads the four parts
+    from the file Word runs as, as the editing protocol does. Re-shot with Word
+    `16.0.20527.20150`, all 104 documents' rows are unchanged; only the header line moves.
+  - `libreoffice-linux.tsv` takes CI's rows for `proposal-editorial` and `proposal-northline`.
+    On every CI run read since 2026-11-09, LibreOffice 24.2 has set each line of them up to 0.05pt
+    from the committed rows, on the same pages and with no line lost. That is within the gate's
+    half point, so the gate stayed green and the rows were never taken. Their medians go from 0.09
+    to 0.05pt and from 0.11 to 0.07pt, their p90s from 0.20 to 0.21pt and from 0.17 to 0.12pt.
+
+- **A guard holds the DOCX column of the capability matrix to the export's code.**
+  `DocxCapabilityMatrixGuardTest` reads the `render-docx` sources for every note a
+  `DocxExportReport` is given, and the subject and severity it carries — a string, a constant, a
+  local, a method's returns, a record a subject is handed through, and a node's kind as `<kind>`.
+  It fails when the matrix's *DOCX export report subjects* table lists a subject or a severity the
+  export never writes, or leaves out one it does.
+  - A subject it cannot resolve fails it — a parameter, a local assigned again, an accessor it does
+    not know — and so does a severity not written out where a note is added, so a new kind of note
+    cannot pass unread. A note in a comment is not read as one.
+  - It also fails on a capability the table's *Row* column names that the matrix has no row for,
+    and on a `Docx…` class or method the DOCX column names that no source declares.
+  - Its first run found three subjects the export writes and the table did not list:
+    `cell padding`, `list picture` and `panel width`. They are listed now. The *Transform* row
+    said a turned shape container is written upright; so are a turned shape, ellipse, line,
+    picture and barcode, each one's note naming the transform, and the row says so now.
+
+- **Word's editing protocol reads typing onto a new page from the page the saved copy shows.**
+  - `edit-protocol-corpus.ps1` set each edited copy as a PDF after its verification had read the
+    copy. Typing onto a new page reads the footer its last page shows, and reading a footer's text
+    gives a document without one an empty header, which Word sets the body below. In
+    `cv-editorial_blue`, whose top margin (28pt) is shorter than the distance Word gives that header
+    (36pt), the whole body ran 18.96pt lower in the PDF than in the saved file, two paragraphs moved
+    to page 2, and the scenario failed on text over text the saved file does not have. In
+    `synthetic-card_over_pages` the PDF ran to 7 pages where Word counts 4. The PDF is now set
+    before the verification reads the copy. Reading a header's drawings, or asking whether it
+    exists, moves nothing in Word.
+  - `edit-protocol-libreoffice.py` read a line's baseline from its first span, blank or not; it now
+    reads it from the letters. Word's PDF of `cv-editorial_blue` opens "Helix Print Co" on a space
+    0.96pt in size set 7.3pt above its letters, and read there, the line crossed the heading above
+    it once the two shared a page.
+  - Run over the 104 documents in Word 16.0.20527.20150, the save with no edit passes all 104, and
+    typing onto a new page passes 88 and fails 16: the 15 whose last table closes on a point-tall
+    paragraph, which their report names, so that typing goes into the table's last cell, and
+    `invoice-luma_studio_long`, whose typed lines run under the closing banner the export writes
+    over the flow with no room of its own. `cv-editorial_blue` and `synthetic-card_over_pages` now
+    pass; LibreOffice 24.2 already passed `cv-editorial_blue`. The four other edits read from a
+    PDF — a sentence added in a cell and in a drawing, the footer, the link — and lengthening a
+    paragraph, whose verification now runs after its PDF is set, keep every verdict in Word on the
+    84 documents an earlier run covered, and the 20 added since pass or are N/A. LibreOffice 24.2,
+    run over the 104 with the protocol before and after this change, gives every scenario the same
+    verdict and the same detail.
+  - `-SelfCheck` adds a document with no header under a 28pt top margin, whose first line must
+    stand in the typed copy's PDF where the save with no edit sets it, and `--self-check` a line
+    opening on a blank span above its letters, which must read clear of the line above it.
+
+- **The DOCX fidelity corpus holds kept groups at the foot of a page.**
+  - `KeptGroupsAtThePageFoot` adds twenty documents: ten forms of group the layout holds on one
+    page, each as low on page 1 as it fits and one line of filler lower, where the layout moves it
+    whole onto page 2. The forms are a block kept together holding a table, a row of four lines or
+    a table composed in a cell; a panel kept together holding a table, or rows of an icon beside a
+    label; a band of two layers; a shape container holding text; a one-layer stack holding a table;
+    a heading kept with the paragraph after it; and a panel kept with what follows it, holding a
+    table. CI holds where LibreOffice sets each of their lines, and `word-fidelity.ps1` holds
+    Word's, so a change that lets an editor break such a group, or set it on another page than it
+    does now, fails them.
+    `KeptGroupsAtThePageFootTest` holds that the layout sets each group where its document's name
+    says.
+  - Their text is set in Lato, which the export embeds. Set in the session's face, which it does
+    not embed, the LibreOffice 24.2 they were first measured in set the cells' text in DejaVu Sans,
+    wider, and broke the cells' text onto two lines (`R1` / `alpha`, `N1` / `nested`); the rows
+    grew, and six of the groups moved to the next page for a reason that was the face's.
+  - Measured in Word 16.0.20527 in two sittings, which set every line in the same place, and in
+    LibreOffice 24.2 on Linux: every group stands whole in both editors, with no row broken, and
+    on the page the layout set it on in 19 of the 20. The one that is not is the band fitting at
+    the foot. The page sets the band's caption on the last line of its text, and the export writes
+    the caption as a paragraph of its own under it, which its report names (`overlapping layer`),
+    so the band is a line taller in both editors: where it only just fits at the foot it moves to
+    page 2 whole, and where the layout moves it there its caption stands a line low. In the panel
+    of icon rows Word sets each icon where the page draws it, and each label within 0.1pt.
+  - Word passes 95 of the corpus's 104 documents, 18 of the 20 added; LibreOffice on Windows
+    passes the same 18, the two bands short of their lines there too. LibreOffice 24.2 on CI's
+    Linux passes 60 of the 104, 12 of the 20: besides the two bands, it sets four lines of each
+    of the six painted panels more than 2pt across, the panels still whole on their page.
+
+- **Word's editing protocol reads how far drawings and text moved from Word's own PDF.**
+  - `drawings-follow-text` lengthens the first paragraph of body text and holds each drawing a
+    paragraph carries to moving with the text it stands beside. It read both moves through Word's
+    COM: a drawing's place from the page geometry, in whole points, and a line's from a range.
+    Since a Word update (16.0.20527.20150), COM states a layout other than the one Word prints.
+    In `cv-serif_headline` a line that Word's PDF moves 22.08pt reads as moving 22.6pt through a
+    range, and the drawings beside it, which the PDF moves 22.1pt, read 21pt. Drawings that
+    visibly follow their text were failed: the corpus read 277 of 321 following.
+  - COM still says which drawing stands beside which paragraph and on which page. How far each
+    moved is now read from the PDFs Word sets before the edit and after the save, by
+    `edit-protocol-libreoffice.py --places`. A drawing is the box of its own size the PDF draws
+    nearest where the geometry puts it. A drawing that draws no box of its own size is found by the
+    text it holds, or by what it draws inside its rectangle — an icon's glyph, a ring inside its
+    square. A paragraph is the baseline of the first letters of its text, below the top of its line
+    — the line above can open with the same words — or the picture in its line where it has no
+    letter. A drawing or paragraph the PDF does not show there, or reads one way before the edit
+    and another after it, is named and fails the scenario where a paragraph carries the drawing.
+  - The limit a drawing is held to (a point and a half and half a twip) and the move past which
+    text counts as moved (half a point and half a twip) are unchanged. Read from the PDF, every
+    drawing that follows its text does so within 0.16pt, and every one that does not is 8.04pt or
+    more out.
+  - Run over the 84 documents of the corpus in Word 16.0.20527.20150, the scenario reads 305 of
+    316 following (96.52%). `cv-serif_headline` goes from 43 of 70 to 69 of 70, the one left
+    standing on page 2 while its heading stays on page 1; `cv-panel` from 3 of 5 to 5 of 5.
+  - One verdict changes the other way. In `cv-orange_ops` Word puts two 1x11pt rules 23pt above
+    the top of page 2 after the edit and prints nothing of them; COM's geometry read them as having
+    followed their heading there. They are now named as standing off the page, and the scenario
+    fails for that document.
+  - The protocol's JSON records Word's full build, `16.0.20527.20150`, read from the file Word
+    runs as: Word's own `Build` stops at `16.0.20527`, so an update inside a build left no trace.
+    `edit-protocol-word.ps1` records it the same way.
+  - `--self-check` holds each limit the PDF is searched within from both sides with numbers
+    written out, and a bullet that opens with the words of the bullet above being read on its own
+    line. The Word protocol's `-SelfCheck` adds two probes — a drawing anchored to a paragraph
+    that does not move, beside text that does, and a drawing the PDF draws nothing of — and holds
+    the Python it reads the PDF with before it asks for Word.
+
+- **Word's editing protocol makes the edits the LibreOffice one makes, and reads them by the same
+  verdicts.**
+  - `edit-protocol-corpus.ps1` adds four scenarios: a sentence added to the longest paragraph in a
+    table cell and to the longest text a drawing holds, words put at the start of the footer the
+    first page shows, and typing inside the first link that a save with no edit keeps at its
+    address. These are the LibreOffice protocol's edits, except replacing a picture, which Word's
+    COM cannot do.
+  - Those four, the save with no edit and typing onto a new page are now also read from Word's own
+    PDFs. Word sets the document as exported, the unedited save and each edited copy as PDFs, and
+    `edit-protocol-libreoffice.py --judge` gives each scenario its verdict from them. The save is
+    read against the document as exported, and every edit against the save. Both editors are now
+    held to one set of verdicts. A save or a typed page still has to pass what Word itself reports,
+    as before.
+  - A Python 3.10 or later whose PyMuPDF leaves clipped text out is checked before Word is
+    started, by the verdicts' own self-check (`-Python`, `python` on the PATH by default). Without
+    one the protocol records `NOT_RUN` and exits 2; where that self-check fails it records `FAILED`
+    and exits 1. A run naming only scenarios that read nothing from a PDF needs no Python.
+  - A footer is now found word for word, in any order, anywhere in a page's header and footer
+    bands, each word as many times as the footer has it. A footer of two cells, text over two lines
+    beside a page number, reads its lines interleaved there, and was not found on any page. Run
+    again over the 82 documents of the corpus in LibreOffice 24.2.7.2, the LibreOffice protocol
+    gives the same verdict as before for every document and scenario. That run does not reach the
+    new match where it matters: LibreOffice edits no footer in the two `invoice-metered`
+    documents, whose footers are of two cells.
+  - The two editors do not always find the same thing to edit. Word finds a footer with text on
+    the first page in 20 documents, LibreOffice in 16: `invoice-merchant`, `invoice-metered`,
+    `invoice-metered_long` and `invoice-subscription` are edited in Word alone. Word also looks
+    for text in the drawings of a group and in the headers' and footers' drawings; the corpus has
+    text in neither, and both editors find the same 9 drawings.
+  - Run over the 82 documents of the corpus in Word 16.0.20527, the six scenarios read from a PDF
+    record what Word does with the export today. The export does not change.
+
+    | Scenario | PASS | FAIL | N/A |
+    |---|---|---|---|
+    | save with no edit | 82 | 0 | 0 |
+    | type onto a new page | 64 | 18 | 0 |
+    | sentence in a table cell | 53 | 4 | 25 |
+    | sentence in a drawing | 0 | 9 | 73 |
+    | footer | 17 | 3 | 62 |
+    | edit a link | 55 | 0 | 27 |
+
+    - Word's save with no edit keeps every page, every line within 0.525pt and every link, in
+      every document. Every edited link keeps its address.
+    - Text added to a drawing is cut off in all 9 documents that have one: the drawing does not
+      grow with its text, as in LibreOffice.
+    - `invoice-obsidian_long` and `synthetic-sections_and_fields` show a footer edit only in the
+      first section. Word gives each later section a footer of its own, as LibreOffice does. In
+      `invoice-luma_studio` the edited footer runs into the page's text, and the sentence added
+      in its panel pushes two lines of the page off it, found on neither page; in
+      `invoice-luma_studio_long` the panel grown by it sets two lines of the page on one another.
+    - In `invoice-subscription` the panel text added in a cell reads "adde" where "added" was
+      typed: the saved file holds the whole word, and Word does not draw its last letter. In
+      `synthetic-clipped_container`, whose card clips what it holds, the added text is cut off.
+    - Typing at the end of 15 documents goes into the cell of the table they end with, as the
+      protocol already reported. In `synthetic-card_over_pages` Word counts 4 pages after the
+      typing and sets 7 in its PDF: the table starts on the second page and leaves one row on a
+      page of its own each time it breaks. In `cv-editorial_blue` a line moves from the foot of
+      the first page to the second and runs into another; in `invoice-luma_studio_long` the
+      typed lines run into the page's text.
+    - A second run, after the footer was matched word for word, gave the same verdict for every
+      document and scenario apart from the two `invoice-metered` footers, which then pass.
+  - The LibreOffice script's self-check rises to 81 checks. It holds `judge()` given another
+    editor's words for an added sentence and for the footer, `--judge` itself run on a job file,
+    a footer of two cells read out of order, and a footer word lost, once or one of two, where
+    only the footer's own word count can see it.
+
+- **An editing protocol runs the DOCX fidelity corpus through LibreOffice, as one already runs
+  it through Word.**
+  - `scripts/docx-visual/edit-protocol-libreoffice.py` does through LibreOffice what
+    `edit-protocol-corpus.ps1` does through Word, which until now was the only editor anything
+    was edited in. For each document it saves a copy with no edit and makes six edits, each on a
+    copy it saves as DOCX, reopens and sets as a PDF: a sentence added to a table cell and to the
+    text a drawing holds, words put into the footer, typing at the end until a new page opens,
+    the largest picture given another image, and typing inside a link. Four of them — the text in
+    a drawing, the footer, the picture and the link — are edits the Word protocol does not make.
+  - Every verdict is read from the PDF: the save with no edit against the PDF of the document as
+    exported, every edit against the PDF of that unedited save. Each edit is held to the text it
+    added being readable whole, to every other line still being found, to no letters standing on
+    others that did not before, and to what it promises of its own: the footer edit on every page
+    that showed the footer's text, page numbers right in every header and footer after a new page
+    opens, the new image drawn where the old one was, the link's address kept.
+  - Run over the 82 documents of the corpus in LibreOffice 24.2.7.2, the build the DOCX fidelity
+    job runs, it records what LibreOffice does with the export today. The export does not change.
+    - A save with no edit keeps 50 documents as they were. In 22 it moves lines by more than half
+      a point, at most 25.4pt; in 9 it loses links; `invoice-merchant` comes back a page longer.
+      Each of the 9 has a drawing in a link's paragraph, but so do 12 documents whose links the save
+      keeps: what loses them is not established.
+    - Text added to a drawing is cut off in 9 documents of 9. Added to a table cell it runs into
+      other text in 5 documents of 57; in `invoice-luma_studio` two lines of the page are no longer
+      drawn after it, and in `synthetic-clipped_container`, whose card clips what it holds, it is
+      cut off.
+    - Typing at the end of 15 documents sets the new lines a point apart. All 15 end on a closing
+      paragraph of exact lines of two points or less, as 12 documents that do not do this also do.
+      In `invoice-luma_studio_long` the typed lines run into the page's text; `invoice-obsidian_long`
+      had a page more while it was typed into and has none once saved and reopened.
+    - Edited in the footer the first page shows, `invoice-obsidian_long` and
+      `synthetic-sections_and_fields` carry the edit in their first section alone. Every section of
+      both names the same footer part, and LibreOffice gives each section a footer of its own when
+      it opens the file. In `invoice-luma_studio` the edited footer runs into the page's text.
+    - Every picture replaced, in 25 documents, keeps its place; every link edited, in 48, keeps
+      its address.
+  - It runs under a Python that imports LibreOffice's UNO bridge and a PyMuPDF that leaves
+    clipped text out — Ubuntu 24.04's `python3-fitz` 1.23.7 does not, and the script refuses it —
+    and is run by hand, not by the build. `--self-check` breaks each verdict's rule once in a
+    probe PDF only that rule can fail, and holds the limits for a move, a crossing, the spacing of
+    typed lines and the header and footer bands from both sides: 66 checks, which need no
+    LibreOffice.
+
+- **The DOCX fidelity gate holds each line to its width as well as its place, and is fed a
+  document of short lines set in another face.**
+  - A line set in another face that is too short to break at other words keeps its first letter
+    and its baseline where the page has them, so a gate holding a line by those alone could not
+    tell it from the page's. `PdfLines` now reads each line's width — from the left edge of its
+    leftmost letter to the right edge of its rightmost, a space at either end left out — and the
+    baseline holds how much wider than the page's each found line runs, narrower when negative;
+    a line whose width moves more than half a point, either way, fails the gate as a line moved
+    down or across does.
+  - The line file takes a column for it: document, line, drift down, drift across, how much
+    wider, letters. A line file of any other shape — one written before lines were measured
+    across, or before their width was — is refused rather than read as holding less. All three
+    baselines are written in it.
+  - `synthetic-card_over_pages` is changed too: every `w:rFonts` set to Times New Roman, and the
+    run fails unless the gate fails on it with lines it still finds set wider or narrower than in
+    the unchanged document. Measured against the unchanged document in
+    Word 16.0.20527, LibreOffice 26.8 on Windows and CI's LibreOffice 24.2 on Linux, not one of
+    its 114 lines is lost or moves more than half a point down or across — the gate without
+    width let it through in all three — and every one runs wider or narrower than that, by up to
+    16.00, 16.13 and 16.20pt. Courier New, the face `invoice-modern` is changed to, sets these
+    lines 0.84 and 0.85pt higher in Word and LibreOffice 26.8, which the gate already caught; a
+    LibreOffice 24.2 with no Courier New installed sets them within 0.20pt of the unchanged
+    document's, and only their width tells them apart.
+  - The width a line is set at is the editor's own: two conversions of the corpus by Word, and two
+    by LibreOffice 26.8, give every line the same width to the hundredth. Against the page, Word
+    sets 914 of the 5788 lines it finds more than 2pt wider or narrower, 206 of them more than 5pt
+    — a CV's or a letter's long lines 12 to 17pt apart, a line of Arabic 18.8pt. The baseline
+    records them as they stand; the acceptance report does not count width.
+  - The Word baseline, shot whole on Word 16.0.20527, moves no line more than half a point down
+    or across and finds the same lines. The Windows LibreOffice baseline, shot whole on
+    LibreOffice 26.8, moves the 16 documents it had gone stale in and no other: the seven sidebar
+    CVs' 487 lines 2.50 to 3.60pt lower, their page backgrounds drawn from a header again; 229
+    lines of eight documents nearer the page, one of them a sidebar CV, by 0.55 to 1.05pt; and `invoice-obsidian` and
+    `proposal-indigo`, held on one page, now on two, 8 of their lines lost and 14 and 51 of the
+    rest up to 5.60 and 10.25pt lower. What moved those two is not found; the file's note records
+    what it held, and its history the rows. The Linux baseline is taken from CI's run of this
+    change, and moves no line more than half a point down or across and finds the same lines.
+
+- **The DOCX fidelity gate reads only the text the page's clip does not hide, and is fed a
+  document whose last card is held to a height its text does not fit.**
+  - `PdfLines` reads a glyph only where the clip it is drawn under holds its middle — half its
+    advance along the baseline, three tenths of its size up. A PDF keeps the text it clips: Word
+    writes every line of a table row held to an exact height its text does not fit, and the
+    end of a line it runs past its cell, and clips them away. Read whole, those lines were
+    found where the page has them. The clip is followed by a second reading of each page, through PDFBox's graphics
+    engine, in the order the page draws; the two readings must count the same glyphs, or the
+    page is refused rather than half read. Only a path's clip is followed: text drawn invisible
+    (rendering mode 3), or painted over, is still read. No PDF of the corpus, the engine's or
+    an editor's, draws a glyph invisible.
+  - What the clip hides, measured on Word 16.0.20527's PDFs of the corpus: 54 of the 82
+    documents hold clipped glyphs, and in 51 of them every one is a space — past the right edge
+    of the clip its line is drawn under, just above the cell that clips it, or set above the top
+    of the page; up to 57 in a document. A space opens no line and adds no letter,
+    so none of them changes a line. The other three are where the reading changes: the end of
+    one line in each of `cv-engineering_resume` and `cv-timeline_minimal`, which Word runs past
+    its cell's right edge, at 575pt and 573.5pt on a 595pt page, and clips there; and two lines
+    of `synthetic-clipped_container`, whose container clips them on the engine's own page too.
+    LibreOffice 26.8 on Windows clips the same two CV lines; CI's LibreOffice 24.2 on Linux sets
+    them whole.
+  - The baselines change for those three documents alone: each CV loses that line, which the
+    gate had found at the place of its first letter, and the gate reads 8 lines of the
+    container's page where it read 10, the page's own clip hiding two. In the Word baseline
+    that is four rows taken out, every other line of the three standing where it stood. The
+    Windows LibreOffice baseline takes the three documents' rows from a run on the build it
+    names and keeps the rest, stale as they are; the CVs' other lines stand within 0.41pt of
+    the rows they replace. The Linux baseline changes in the container's count of lines alone,
+    taken from CI's run of this change.
+  - `invoice-luma_studio` is changed too: its notes card, the last thing in its body that
+    holds text, held to exactly 22.5pt. Nothing below it moves when it shrinks, so the gate can
+    fail on it only through the card's own lines — and with the whole text read, it passed in
+    Word, every line found where the page has it. Each document changed is converted with a
+    copy of it left unchanged, and each change is held to its own document's measurement.
+  - A card's row held short of its text must now cost lines, not only move what follows it.
+    Word 16.0.20527 and LibreOffice 26.8 on Windows each lose 9 lines of `invoice-modern`'s
+    card, which Word had only shown by the closing paragraph below it moving up 65.9pt, and 18
+    of `invoice-luma_studio`'s; CI's LibreOffice 24.2 on Linux loses 9 and 17.
+  - The acceptance report counts what the clip shows too: Word still passes 70 of the 82
+    documents, LibreOffice 26.8 on Windows 59 where it passed 58, and CI's LibreOffice 24.2 on
+    Linux 45 where it passed 44, `synthetic-clipped_container` now finding every line its
+    clip shows in both.
+
+- **The DOCX fidelity gate is fed a document changed after export in each way it is there to
+  fail on, through the same editor and the same measurement as the corpus, and the run fails
+  unless the gate fails on every one.**
+  - `invoice-modern`'s DOCX is changed five ways (`DocxTamper`):
+    - a paragraph taken out;
+    - every `w:rFonts` set to Courier New for each script, with no theme font left to outrank
+      it (in this document, those of its default run properties, its Normal style and its two
+      list levels);
+    - a page break before the closing paragraph;
+    - the notes card's row held to exactly 25pt;
+    - the line items replaced by a picture.
+  - A change refuses a document it would leave as it was, so a change that changed nothing
+    cannot pass as caught: one that finds its target by the letters it holds refuses unless
+    exactly one element directly in the body, or in the table, holds them; the row change
+    refuses a row already written as it would write it; and the font change refuses a document
+    whose every `w:rFonts` already reads as it would write it.
+  - Each changed document is held to the run's own measurement of the unchanged one, not to the
+    baseline, so what fails is the change and nothing the baseline holds besides: the local
+    LibreOffice baseline, which was then stale for 16 documents, `invoice-modern` among them,
+    gave the same answer as a green one (it has since been shot whole, above). A paragraph or a table taken out must cost the page's lines,
+    and a page break a page, not merely move something. The changed documents are converted
+    apart from the corpus, with a copy left unchanged that must stand where the corpus's
+    conversion set it, so a difference the second conversion makes on its own does not count as
+    a change caught.
+  - The LibreOffice run converts them into `libreoffice-tampered`, logging to
+    `libreoffice-tampered.log`, and CI uploads both; `word-fidelity.ps1` has Word convert them
+    into `word-tampered`. The same DOCX changed the same way is the same bytes — each part keeps
+    the time it was written with — which is what lets the `word` run find, by the SHA-256 Word
+    recorded, that Word converted what this tree makes. In Word 16.0.20527, LibreOffice 26.8 on
+    Windows and CI's LibreOffice 24.2 on Linux, the gate fails on all five, and the unchanged copy
+    stands where the corpus's conversion set it. Word failed the card's change at first only
+    through the closing paragraph below it, which moves up 65.9pt: Word's PDF still holds the
+    nine lines it clips out of the card, and the gate read them where they were, until it came
+    to read only the text the page's clip does not hide (above). LibreOffice does not write
+    them.
+  - The acceptance report now counts a line far off when it stands more than 2pt off across as
+    well as down, and gives the corpus's count of such lines each way. Counting only down, 14
+    documents passed on CI's LibreOffice with lines set across — `invoice-classic_long` with
+    136 of the 166 lines found. Measured, the documents passing go from 58 to 44 of 82 on CI's
+    LibreOffice, from 59 to 58 on LibreOffice 26.8 for Windows and from 71 to 70 in Word
+    16.0.20527, and Word sets 55 of the corpus's lines more than 2pt across, 49 of them in
+    `synthetic-card_over_pages`. The report is not a gate, and no baseline changes.
+
+- **The DOCX fidelity corpus holds eleven more documents composed the way a user builds one, so
+  the line-by-line gate reaches forms no template preset has.**
+  - `SyntheticDocxCorpus` adds: a panel kept together, of icon rows, that the layout moves whole
+    onto the next page; nested rows, a table in a panel beside a list, a picture and an icon row;
+    a rounded banner with its title centred in it, and initials centred in a circle; a repeated
+    table header, a heading kept with the next block and a kept panel over three pages, under a
+    footer holding the page's number; a turned picture and a turned shape; a column painted down
+    the left of three pages; a header holding a logo, over a row filled and outlined; margins
+    that change from page 2 and again from page 3, under a footer reading the page's number of
+    the pages; Hebrew and Arabic paragraphs set right to left, one mixing in Latin and numbers;
+    a table of contents with a link to a heading and one to a web page; and five pages of
+    free text. No two paragraphs of a document open on the same two sentences, so that lines of the
+    same letters on a page, which the gate pairs each with the editor's nearest, stay few.
+  - Their rows are added to the Word, LibreOffice Windows and LibreOffice Linux baselines,
+    measured on Word 16.0.20527, LibreOffice 26.8 (build bf6ef2662401) and CI's LibreOffice 24.2; no
+    other row of any of them changes.
+  - Down the page, nine of the eleven stand within 0.11pt of the page's lines in both editors,
+    at the median and nine lines in ten. Across it, both editors set the Arabic paragraph's two
+    lines 12.2 to 19.0pt right of the page's, and the header's line beside its logo 8pt left,
+    LibreOffice 3.27pt high as well; LibreOffice on Linux sets the filled row's two lines 8.6pt
+    right.
+  - Some of the page's lines are not found, and the baselines hold them so:
+    - a few paragraphs LibreOffice breaks at other words, the one under the turned picture
+      among them;
+    - the footers' lines holding a page number, which the export writes as one line of Word's
+      footer;
+    - the Hebrew line mixing in Latin and numbers, in both editors;
+    - the lines the editors carry onto another page than the page's, in the two documents below;
+    - in Word, the nested table's row reading "Build" and "12 500", whose text Word's PDF holds
+      but not as the page's two lines.
+  - In the column-painted document and the free text, the two not within 0.11pt, the page sets
+    a paragraph's last line alone at the top of a page, or its first line alone at the foot of
+    one, and Word and LibreOffice each carry a line over the break, so that no line of a
+    paragraph stands alone there. In the column-painted document that runs page 2 a line long
+    and leaves a paragraph's first line alone at its foot, which they carry over too: its page 2
+    stands one line low and page 3 two. The free text's page 5 stands one line low. The export
+    writes no `w:widowControl`, and Word reads widow control as on for every paragraph. The
+    baselines hold the lines where the editors set them.
+
+- **A plate, a progress bar and a divider — boxes of one colour each, no taller than Word's
+  thickest border — are held to the forms the DOCX export writes them in: the plate and the bar
+  drawn at their own size, place and colour, and only the divider written as Word's rule.**
+  - Such a box standing in the flow used to be written as a rule, an empty paragraph bordered
+    below — the plate with the divider; the bar's two layers, in a stack, were drawn either way —
+    and the divider signal (`ShapeNode.divider`, above) left only the divider so.
+    `DocxPlateBarAndDividerTest` exports a 10×10pt plate, a 6pt bar — a 200pt track and a 120pt fill laid over it in a layer
+    stack — and a 1pt divider across the column, and asserts what an editor draws them from:
+    each drawing's extent, its distance from the page's left edge, the paragraph it moves with
+    and its offset there, its colour and its paint order; the divider's border, colour and the
+    indents Word draws it past; the form the export report names for each; and, beside it, that
+    a divider of the plate's own size is still a rule, so it is the signal and not the size that
+    keeps the plate a drawing.
+  - CI runs no Word, so the picture is not in the test: it was taken once, on the same document
+    converted by Word 16.0.20527 and LibreOffice 24.2 against the engine's own PDF. The plate,
+    the track and the fill stood at the page's place and size to within 0.01pt in both, in their
+    exact colours, the fill over the track; Word drew the divider as its rule from 20.04pt to
+    380.16pt across a column ruled from 20pt to 380pt, within 0.17pt of the page's line, and
+    LibreOffice between its indents, from 21.40pt to 378.45pt.
+
+- **A table composed in a cell inside a block held on one page is now held to what actually keeps
+  it whole — the row round it, since neither of the two writers that hold an ordinary table
+  reaches it. And a kept block's table is asked for both of those writers on the `keepTogether`
+  path, where only one half of the pair was asked for before.**
+  - A table in a kept block is held twice over: the keep chain puts `w:keepNext` on its rows'
+    paragraphs, on every unit of the block but its last — the last too where the block is kept
+    with the next, and none of it inside a table cell — which keeps each row on the page of the
+    row under it; and the table writer gives every row the layout placed `w:cantSplit`, which
+    holds a row whole where the chain cannot reach inside it, the chain reaching only a cell's own
+    paragraphs. Neither writer knows about the other. The `keepWithNext` path was already held to
+    the pair (`DocxOneRowTableKeptWithTheNextTest`); on the `keepTogether` path
+    `aTableInsideAKeptBlockIsChainedRowByRow` asked only for the chain, and now asks for both, and
+    `aRowOfSeveralParagraphsIsHeldWholeByItsRow` pins the shape a plain table reaches for which,
+    inside a kept block, `w:cantSplit` is the only thing holding the row — a cell of several
+    paragraphs, which a plain cell is where its style sets a line spacing and it holds more than
+    one line, and a composed cell is whenever it holds them. (The other such shape is a cell
+    holding a table, which the fixture below covers.)
+  - `theSameRowKeptWithTheNextIsHeldByNothing` records the boundary beside it: the same row in a
+    block asking only to be kept with the next takes `w:keepNext` on its last unit too, which makes
+    its table one the removal pass frees, so `w:cantSplit` comes off and the two paragraphs are held
+    by nothing. No document of the corpus reaches it — of the twenty blocks that hold a table the
+    three in the body all ask to be kept together, and the other seventeen are in a cell, which
+    that pass never reads — so the fixture records the shape rather than guarding a fix.
+  - No one rule says which rows carry `w:cantSplit`: four writers decide which rows are given it.
+    `breakRowsWhereTheLayoutDoes` gives it to each row of a table where the layout placed that row,
+    `writeRow` to a row written as a table where the layout placed that row, and `writePanelPiece`
+    to a block written as a panel on its own row where the layout put the block on one page and it
+    either asks to be kept together or is a row or a shape container; then
+    `letTheOneRowTablesKeptWithTheNextBreak` takes it off a one-row body table of paragraphs all
+    kept with the next, whichever of the three put it there. Where the export splits a table
+    (`DocxTableSplit`) — a panel cut at its pages, or a body table cut for a page's own margins —
+    the second part is copied with its rows' flags, so a copied row carries what the original was
+    given rather than anything decided for it. Both cuts run before that pass, which sees each
+    copy: a panel's row it leaves alone, that cell holding a table, and the copied rows of the
+    inner table it never reaches; a body table's copy it judges like any other. 56 one-row tables
+    of the corpus carry keeps without `w:cantSplit`; the count was not apportioned between the
+    causes.
+  - A table composed in a cell is reached by neither writer: the chain reads a cell's own
+    paragraphs, which are not those of a table in that cell, and the layout places no row for such
+    a table, so the table writer gives its rows no `w:cantSplit` either. What holds it is the row
+    it stands in. `aTableComposedInACellIsHeldByTheRowRoundIt` asserts the two absences together
+    with that row, so the reason the gap costs nothing stands beside the gap, and names where it
+    would begin to cost something: a row the layout did not place, which carries no `w:cantSplit`
+    of its own. Nothing in the backend's tests asserted anything about a composed table's keeps
+    before.
+  - Measured at the foot of a page in Word 16.0.20527 and LibreOffice 24.2, for a block that fits
+    there and for one the layout moved to the next page whole: nine shapes over eighteen documents
+    — a block kept together holding a table, a kept block holding one row of several lines, a
+    table composed in a cell, a painted panel holding a table, a band, a shape container, a stack
+    holding a table, a block kept with the next, a painted panel kept with the next holding a
+    table — each stood whole in both editors, with no group and no row broken. Where the editors
+    differ from the page it is which page holds the whole block, never whether it is broken: the
+    band of two layers moved to the next page in both editors, and LibreOffice moved six more,
+    whose tables' rows it set taller. Those six were set in a face the export does not embed,
+    which that LibreOffice set wider, breaking their cells' text onto two lines; set in a face it
+    embeds, LibreOffice holds them where the layout does (see the documents the fidelity corpus now
+    holds at the foot of a page, under Tests).
+  - Counted over the 71-document fidelity corpus, with every node of every document classified and
+    none of the 1116 found left unclassified: 1116 blocks are held on one page — 214 in the body,
+    902 in a cell or a row's column, layer stacks and shape containers among them as well as the
+    two keep flags — of which 20 hold a table, 338 hold a band or a container, and none holds a
+    table composed in a cell. Across the whole corpus, all 685 layer stacks and shape containers
+    the layout placed are on one page, and no row a keep chain reaches, in any of the corpus's 68
+    tables of more than one row, lacks `w:cantSplit`.
+- **A fixture holds the record a page an editor adds past a one-page section is painted from: the
+  export is grown by eighty appended paragraphs through POI and read back, and the fills are in the
+  header of the one section the grown document has.**
+  - **The limit of it.** Page two is the editor's — it exists once Word or LibreOffice lays the
+    grown document out, and CI runs neither — so the fixture asserts the record and not a picture:
+    one section, so every page of the grown document is its page; a header carrying the fills, of
+    the colour and extent the page paints them at, for every kind of header its pages can take;
+    nothing of them in the body, which a page the editor adds does not hold; and the eighty
+    paragraphs in the document that was read back. The fixture's javadoc says so, and says where
+    the reading of the picture is: in the change that moved the fills, taken in Word 16.0.20527
+    on a throwaway probe of a one-page sidebar export grown this way.
+  - Eighty is a measured number rather than a guess: the engine, laying the same text out itself,
+    needs more than the section's one page for it.
+- **The reading that answers whether a document states different even and odd pages reads the
+  element in either form it can be written in, and is one helper the tests share where two of them
+  held a copy of their own.**
+  - A pattern for the self-closed form alone called a document that writes
+    `<w:evenAndOddHeaders w:val="1"></w:evenAndOddHeaders>` one that does not state even and odd
+    pages, which is the answer that lets a check of the even pages' own header pass without
+    running. This backend writes the self-closed form, so no test was reading the wrong answer.
+  - The reading goes to the part rather than to POI's accessor, which returns whether the element
+    is there and not whether it says yes.
+- **The editing protocol reads both thresholds it judges a drawing by off the grid Word's own
+  readings land on, and reads a cell's text as reaching to that cell's edges rather than past them
+  — so neither the verdict nor the set it is taken over turns on the last digit of a float, and
+  neither turns on the column beside the drawing.**
+  - **The limit.** A drawing's place comes from Word's page geometry in whole points; the line of
+    the paragraph it is measured against comes from a range, which gives Word's own layout in
+    twips, a twentieth of a point. Measured over the corpus, 22107 readings: every drawing place
+    and every drawing move is a whole number of points exactly, and every paragraph line and move
+    is a whole number of twips to within 4.9e-05, which is that float's own error. So the
+    difference the verdict is read from is a whole number of twips, and a limit of a whole number
+    of twips is a difference the readings can produce exactly. At a point and a half it was one:
+    of the 279 drawings in the verdict of the documents that hold every finding, 15 passed with
+    the difference at exactly 1.50 and three failed by between 0.00002 and 0.05 of a point, one of
+    them by two parts in a hundred thousand — and two runs of the script on bytes that had not
+    changed came to report five fewer followers over one more drawing in the set, taking the
+    figure with them. The limit is now held half a twip above the point and a half its promise
+    needs, as far from 1.50 as from 1.55, the two nearest differences there are. Neither bound of
+    what it promises moves, drift landing on that same grid: a drawing that drifted half a point
+    still passes always, one that drifted two and a half can still pass, and 0.55 and 2.55, the
+    next drifts there are, still cannot.
+  - **The sets.** Which of the two sets a drawing is counted in — beside text the edit moved, or
+    beside text it left standing — turned on the text having moved past half a point, and a
+    paragraph's move is a whole number of twips too, so half a point is ten of them and a move of
+    exactly that fell on the comparison. It is held half a twip above, for the reason the limit is.
+    The corpus divides nowhere near it, measured as this change now divides it: of the 728
+    drawings in the verdict the text that stayed stayed exactly, not one of those 403 moving by so
+    much as a twip, and the least any of the other 325 moved by was 9.35pt — half a point of clear
+    air below the threshold and 8.825pt above, so the half twip moves no drawing of the corpus
+    between the sets, and is there against a document that would sit on it, which the corpus does
+    not hold.
+  - **A cell's text.** How far a paragraph's text can run was read as its text's left plus its
+    cell's width. A cell's width counts the padding it holds its text away from on both sides, so
+    that reached past where that text can run by both of them — 35.1pt in `cv-terracotta_rail`,
+    whose sidebar holds its text 25.4pt from its left edge and 9.7pt from its right, which is what
+    the file says (`tcMar` of 508 and 194 twips) and what Word states. That sidebar's text was then
+    read as running on over the next column's text and over the gutter four of that column's rail
+    dots stand in, and those four were read as standing beside the sidebar's list — a list the edit
+    leaves where it is — rather than beside the entries that carry them. The reach is now read from
+    the cell's own edges inward, and `Get-ParagraphPlaces` carries the measurement to the point.
+  - Over the corpus the two together move five drawings of the 728 a paragraph carries, each by one
+    of the two rules: the four rail dots of `cv-terracotta_rail`, whose owner becomes the entry
+    carrying it and whose difference falls from 23 and 24pt to 0.35 and 0.65 — they had been
+    following their own text all along — and `Drawing 21` of `invoice-luma_studio`, whose
+    difference is exactly 1.50 and which was failed by 0.00002. **The figure goes from 305 of 320
+    drawings, which is what it last reported, through 300 of 321 as it reads today, to 305 of 325
+    — 93.85%.** The 320 counted those four dots in the other set, against text the edit leaves
+    standing; the 321 is a later reading of the same instrument on the same bytes, five drawings
+    down, which is what sent this change after the limit; and the 325 counts the four dots where
+    their own text is. One drawing of the 728 is in a different set in those first two readings
+    and is not accounted for by any of this: the four dots are, and the document whose bytes
+    differ between the two is not — measured, its one drawing is counted beside text that moved
+    under each instrument on each set of bytes. Which drawing it is cannot be recovered, the
+    earlier run having recorded only totals; it is one more thing that moved between two sittings
+    of an instrument whose thresholds stood on the grid, and it is named here rather than
+    reconciled away. Beside text
+    that stayed, 400 of 403 stand still, where today's reading of the same instrument had 400 of
+    407 and the reading before it 400 of 408 — the two buckets coming to 728 in each of the three,
+    which is every `wp:positionV relativeFrom="paragraph"` anchor the 71 files hold in their
+    bodies. Thirty documents pass, eight fail, 33 have nothing to measure.
+  - The three readings — as the limit stood, with it off the grid, and with the cell's padding as
+    well — were taken from one run of Word, by replaying the readings that run dumped through each
+    rule in turn. That is what gives each of the five drawings one rule rather than both.
+  - `-SelfCheck`: **18 of 18**, where it ran 15. A drawing standing in the gutter of its own column
+    with another column's text beside it at the same height, which has to be read as standing
+    beside its own — the probe fails if the reach keeps either padding or adds them. And one check
+    for each threshold, without a document, since no document can be laid out to put a difference
+    exactly on one: each held off the grid and from either side, a limit under a point and a half
+    being able to fail a drift of half a point and one at or past 1.55 passing a drift of 0.55
+    however the reading fell, and a sets threshold under half a point counting text that stayed as
+    moved and one at or past 0.55 counting a move as none. Those two run before Word is asked for,
+    so a machine without Word holds both thresholds even where it can run nothing else. Twelve
+    sabotages, twelve caught, each by the check written for it.
+  - The export is untouched: the corpus exports 71 of 71 documents byte for byte, with 1497 notes
+    before and after.
+
+- **The editing protocol asks a drawing to follow text only where a paragraph carries it, and names
+  the ones nailed to the sheet with what they did instead of counting them as having failed to
+  follow — so the figure it reports is of the drawings the question is about.**
+  - A drawing nailed to the sheet — `wp:positionV relativeFrom="page"` — is placed from the top of
+    the page it is drawn on and by nothing else. Measured on the self-check's two alike probe
+    documents, with the paragraph above lengthened by two lines: such a drawing moved 0.00pt in
+    Word 16 and 0.00pt in LibreOffice 24.2 while its own text moved 32.04 and 52.50pt, where the
+    same drawing carried by that text's paragraph in the other document moved 31.96 and 52.50pt
+    with it. Which anchor the export chose is a question of its own, held by
+    `DocxDrawingAnchorGuardTest`, whose ledger names every drawing of the corpus still placed from
+    the page and fails when one is added to it or taken off.
+  - What a drawing is placed down from is read from Word, per drawing. Measured over the corpus
+    both ways round: the files hold 760 `wp:anchor` in the body and Word names 760 shapes there,
+    and `wp:positionV relativeFrom` agrees with Word's `RelativeVerticalPosition` on every one —
+    32 from the page and 728 from their paragraph, with no third answer and no name carried
+    twice. Those 32 are the 32 the guard's ledger names, document for document and name for
+    name; the 32 further anchors the files hold outside the body are the page fills, which live
+    in the headers and which the main story does not reach.
+  - Over the corpus, **305 of the 320 drawings a paragraph carries that stand beside text the edit
+    moved follow it**, and 400 of the 408 beside text it leaves standing stand still too. The 32
+    nailed to the sheet are measured the same way and reported apart: 13 stood beside text that
+    moved and none followed it, 19 stood beside text that stayed and all 19 stood still. Added back
+    together those give 305 of 333 and 419 of 427 — the two figures this protocol last reported, so
+    the denominator is all that has changed.
+  - 30 documents pass, 8 fail and 33 have nothing to measure, where it was 28, 10 and 33. The two
+    that pass now failed only on drawings nailed to the sheet: `invoice-payments`, whose eleven
+    line-item tiles do not move while their text moves 40pt, and `invoice-luma_studio_long`, two of
+    its six. A document is not let off for holding them: `invoice-merchant` sets its four aside and
+    still fails, on `Drawing 15`, which a paragraph carries and which crosses onto the page after
+    while the text it stands beside stays. The figure is of the drawings the export already anchors
+    in a paragraph and says nothing of the 32 the ledger still holds; the eight failing documents
+    answer for 23 carried drawings, 15 that do not follow text that moved and 8 that move from text
+    that did not.
+  - Two further readings are now named. A drawing placed down from anything that is neither its
+    paragraph nor the page is one the scenario has no question for, which is a hole the new
+    exclusion would otherwise open; it was measured against its text before, there being no anchor
+    read at all. And a name Word gives to more than one drawing, which is read as no drawing at
+    all, was until now passed over in silence. Both fail the scenario. A drawing the reading no longer
+    finds after the save and the reopen is counted apart from one whose own text cannot be placed
+    again, and fails for either set, of the drawings each set measures: a drawing gone from the
+    document, or one that can no longer be told apart, is not a question of what it was placed
+    from. Text that cannot be placed again fails for the carried set alone, since it answers
+    nothing about a drawing nothing is asked of.
+  - `-SelfCheck` runs 15 probes where it ran 10, and 13 sabotages break one rule each: 9 are caught
+    by the probe written for them. The other 4 are reached by no probe and are run to record that:
+    a drawing the reading no longer finds no longer failing, on either side, and the two the nailed
+    set is excused — one whose own text cannot be placed again, and one whose place the geometry
+    stops giving after the edit. The order the names print in is not probed either; it changes no
+    verdict.
+- **The editing protocol holds a drawing to the paragraph whose space above it stands in, reads the
+  drawings beside text an edit leaves standing, and lengthens the first paragraph of body text
+  rather than the longest — so what it measures of a document is most of it, and what it says of a
+  drawing no longer depends on a space it could not see.**
+  - A drawing placed from its paragraph stands at the top of that paragraph's box, the space above
+    the paragraph included, while the paragraph it was held against was read from its first letter
+    alone. The drawing therefore stood that whole space away from its own text and nearer the text
+    above it wherever the space was the wider of the two: measured at 11.87pt from its own line
+    against 15.98pt from the line above, so 4.11pt of margin stood between the right attribution
+    and the wrong one, and a space wider than the line above would cross it. The space is now read
+    from Word's page geometry wherever the geometry draws that paragraph a box and nothing else, and
+    a drawing standing in it counts as standing no distance down the page from that paragraph — the
+    width its text runs to still having its say. No drawing of the template corpus stands in such a
+    space, so none of its 760 attributions moves: this is a reading that could not be relied on,
+    made one that can.
+  - A text rectangle holds a block and not a paragraph — a whole table is one, and inside it the
+    geometry's lines run one to a row — so only 73 of the 3647 paragraphs of the corpus's documents
+    with drawings have a box of their own, and a page laid out as one table row is drawn as a single
+    box. Reading every paragraph at its box's top was measured and refused: it moves 96 of the 760
+    attributions, since in a sidebar it puts every paragraph of the page at that page's top. So a
+    paragraph of a row keeps its first line, and the limit with it: where the space above such a
+    paragraph is wider than the text above it within that row, its drawing is still held against
+    that text.
+  - A paragraph's page is read from the geometry too, as a drawing's is. Wherever the geometry names
+    one page for a paragraph it is the page a range reports as well — 3629 of those 3647, and all
+    ten probes — and a sabotage that takes the page from a range passes every probe, so this removes
+    a way of being wrong rather than a wrong number: what Word reported on the page before was a
+    drawing's anchor, not the paragraph. For the other 18 the geometry names several pages, because
+    Word draws their row on more than one, and none of those lines answers for one paragraph of it;
+    there the page a range reports is taken, which is one of the pages the geometry names, and the
+    scenario's detail counts the paragraphs of such a row. A paragraph
+    the reading cannot place before the edit is named there with the reason instead of failing the
+    scenario; one it cannot place after the edit counts among the drawings it could not find again,
+    which fails; and a document it can place no paragraph of is raised as the instrument failing,
+    as Word naming no rectangle for any drawing is.
+  - A drawing beside text an edit leaves standing now has to stay standing. Only drawings beside
+    text that moved were read before, so a drawing could wander off while the text it belongs beside
+    stood still and the scenario would say nothing of it. Over the corpus 427 drawings stand beside
+    text the edit leaves where it is, and 419 of them stay with it; the eight that do not are in
+    four documents, one of them crossing onto the page after while its text stays.
+  - Which paragraph is lengthened decides how much of a document moves at all, and the longest one
+    is often among the last things these templates set. Lengthening the first paragraph of body text
+    instead measures 333 drawings against text that moved where 227 were measured before, and 305 of
+    them follow it: 91.6% where the figure was 93.8% of a third fewer drawings. The 106 further
+    drawings bring 92 that follow and 14 that do not, so 28 documents of the 71 pass, 10 fail and 33
+    have nothing to measure, where it was 31, 7 and 33. Four that passed now fail — one on six
+    drawings that cross to the next page 40pt from their text, one on eleven that do not move while
+    their text moves 40pt, one on four that move 23 to 24pt while their text stands, and one on a
+    drawing that crosses onto the page after while its text stays — and one that failed now passes,
+    its five drawings all standing beside text this edit leaves where it is. "The first paragraph
+    with any text" was measured and refused: where that text is one character in a sidebar's own
+    cell, lengthening it grew the row past the page, and Word, which will not break a row, drew it
+    over the page's edge — page 1's rectangles at 1006 and 1510pt — so every drawing of that
+    document was measured against a layout that had collapsed. Both finders now measure a paragraph
+    of body text by one rule: 40 characters or more, outside a frame, holding no field.
+  - `-SelfCheck` runs ten documents it writes itself, six of them the scenario: the three of the
+    change before this one, and three more — a paragraph with more space above it than the line
+    above is tall, which must keep its own drawing; a drawing that moves while the text it stands
+    beside stays, which must be caught; and a row a page break runs through, whose paragraph the
+    geometry alone cannot put on a page, held to having reached that case by the count in its own
+    detail. Seven sabotages, six caught by the probe written for each and the seventh — the page
+    from a range — caught by nothing, which is what it was run to show. A move onto another page is
+    written in the detail as the pages and the points now: a place counts its page as 10000 points,
+    so a drawing that crossed one read as "by 9225", which is a page on and 775pt up it. The figures of the entry
+    below were measured with the longest paragraph lengthened and the paragraph read from its first
+    letter; these replace them.
+- **The editing protocol reads where a floating drawing stands from Word's own page geometry, so
+  a drawing that follows its text is no longer recorded as leaving it behind.**
+  - It took the place of a drawing placed from its paragraph to be where the paragraph's text
+    begins plus the offset the drawing states. Word reckons that offset from the top of the
+    paragraph's box, the space above the paragraph included, and a range reports the top of the
+    paragraph's first line instead — 11.87pt lower wherever 12pt of space stands above it. A place
+    a line out is held against the text a line out: seven drawings in four invoices were recorded
+    as not following text they never stood beside, each read as not having moved at all while the
+    paragraph it was held against moved 9.4 to 10.9pt.
+  - Word's page geometry gives a drawing a rectangle wherever it draws it, in points from the
+    top-left corner of that page, and the rectangle's range starts on the character the shape's
+    anchor sits on, so the two are matched one for one — by that character and the story it
+    counts from, since a page's background is a shape anchored in a header and its rectangle sits
+    on character 0 of that header. Measured on 29 probe documents of
+    one 20x10pt rectangle each at offset 0 — where the place Word draws it at is the very point
+    Word reckons the offset from — against the same rectangle in Word's own PDF: the page geometry
+    is right within 0.41pt in all 29. It gives the left edge the same way, and the page the
+    drawing is drawn on, which the old reckoning named wrongly altogether for a drawing in a row
+    that begins on the page before. Word states the geometry in whole points, so a drawing is held
+    to its text within a point and a half rather than a point.
+  - A drawing the page geometry does not name — none of its size on the character it is anchored
+    on, or more than one — is reported with the reason and not measured. A place reckoned from its
+    anchor is no fallback, since that is what was wrong, and neither is a rectangle of another
+    size: Word states the size it draws and clips nothing, measured at 700pt on a 595pt page. A
+    row Word repeats as a table's head is drawn on every page the table reaches, and the one
+    drawing it holds stands in a rectangle on each of them, so which of those followed the text is
+    not a question with an answer.
+  - Over the template corpus the protocol now passes 31 documents of the 71 where it passed 27,
+    the four invoices it had wrong among them, and fails 7 where it failed 11; no document went the
+    other way, and all 760 drawings it measures were named by the page geometry. Of the drawings
+    standing beside text an edit moved, 213 of 227 follow it where 211 of 232 did. Two of those
+    four invoices pass with no drawing beside text the edit moves at all: read where Word draws
+    them, their tiles stand beside text that stays where it is.
+  - `-SelfCheck` holds the protocol to that, over seven documents it writes itself: four fix the
+    place Word's PDF puts a drawing at — 12pt of space above a body paragraph, the second
+    paragraph of a cell a line below the top of its row, a row Word opens a page with, and a body
+    drawing sharing character 0 with a header drawing of its size — and three run the scenario
+    itself: the same drawing beside the same line of text, anchored to that line's paragraph where
+    it must follow and to the page at the very place it already stands where it must not, and one
+    in a repeated head, where its place cannot be read at all. Each of the three is read for
+    what the protocol measured and not only for whether it passed, since any breakage at all
+    would satisfy a document that is meant to fail.
+- **A test holds every drawing the DOCX export writes for a block that writes text to a paragraph
+  of that text, so none of them is left placed from the page.**
+  - Word and LibreOffice move a drawing placed from its paragraph with that paragraph when the
+    text above it is edited; one placed from the page keeps its place on the sheet while the text
+    it belongs to is edited away from under it. Four changes in a row taught the export to carry
+    such drawings, bringing the template corpus from 465 drawings placed from the page down to
+    32, and nothing held what they won: a change putting one back on the sheet would have left
+    every suite green.
+  - Held over the template corpus, where 728 of the 760 floating drawings a node paints are
+    carried by a paragraph — its 381 inline ones stand in the text itself and are placed from
+    nothing — and over six documents of its own, one for each paragraph that carries a drawing
+    today: a paragraph of the body, a panel's, a column of a row, an item of a list, the one line
+    two halves of a band share, and a table cell a drawing is all of. Between them they cover all
+    three writers of text that offer a paragraph — a paragraph node, a list's item, a band's
+    shared line — and the exception for a drawing that is all a cell holds, which offers none.
+    The corpus fixes what the export does today; the six hold the rule, and every drawing in them
+    must be placed down from a paragraph, not merely kept off the page.
+  - The 32 the corpus still places from the page are named one by one with the reason each is
+    there: 25 of a table's composed cell, where the walk from the cell whose box holds the
+    drawing finds no paragraph of that cell it can be placed from and the fallback to the nearest
+    text refuses it too; 6 whose owner's own text is written as the drawing itself — a brand
+    lockup's badges and a closing banner's, laid over the flow — so no paragraph of the blocks
+    holding it stands on its page at all; and one with four paragraphs of its own block on its
+    page that none of them was placed from, nor any other paragraph of that page. How far that
+    one rises is not what refuses it: the rise is read only on the path a composed cell's drawing
+    takes, and a drawing a node paints is placed by a walk that never asks. The list is a ledger of work
+    still to do and not a set of cases where the page is right: when the export learns to carry
+    those drawings, the test fails until the ledger is brought down to match.
+  - It fails closed on a reader that stops reading. Every page fill must come back placed from
+    the page, which a reader that lost the ability to read what a drawing is placed from cannot
+    show; the corpus must come back with the hundreds of carried drawings it holds; and an anchor
+    the reader cannot classify — one with nothing to be placed down from, no name of its own, a
+    name that is neither a drawing nor a page fill, an offset that is no number, or a place this
+    reader was not written to judge — is a failure rather than a silence.
+  - `simplePos` is read as well as `positionV`, because at `simplePos="1"` Word and LibreOffice
+    take the place from `wp:simplePos` and read neither `positionH` nor `positionV`: a drawing
+    nailed to the sheet that way still says `relativeFrom="paragraph"` in the file, and a test
+    reading only what a drawing says it is placed from would call it carried. Every floating
+    drawing of the corpus must carry an explicit `simplePos="0"`, and a truthy value is a
+    failure; left out, the attribute means what `"0"` means.
+
+- **The DOCX fidelity gate holds each document where its baseline puts it, whichever way it
+  moved, instead of only catching lines set further from the page.**
+  - A document failed when a line stood more than 0.5pt further from the engine's PDF than its
+    baseline held it, when a line the baseline found was no longer found, or when the editor set
+    it on a page count further from the engine's. A line that moved nearer the page, a page count
+    that came nearer, and a line found that the baseline did not hold all passed, at any size.
+  - Each is now measured as a step from where the baseline holds it: a line fails when its drift
+    moves more than 0.5pt, down or across, nearer the page or further, and a document fails when
+    the editor sets it on another number of pages, when the engine draws it on another number of
+    pages or the gate reads another number of lines off them, or
+    when the set of its lines found is not the set the baseline holds. The failure names each
+    line's step — `+1.10 -> +0.00pt (-1.10)` — so the direction is in the message.
+  - Measured on the gate as it stood: a line moving 1.10pt nearer the page, one moving 5pt
+    nearer, a page count coming onto the engine's own, and a line newly found were each let
+    through in silence, as was `+3.00 -> -3.00pt` — six points of movement, which a rule comparing
+    which of two drifts is further from the page cannot see at all, since both stand three points
+    away.
+  - A change that moves documents, nearer the page included, now rewrites the baseline in the
+    same commit (`-Dgraphcompose.docxFidelity.update=true`), and that diff is the record of what
+    moved. A rewrite now also keeps the notes the file it replaces carried, since those are where
+    a row's reckoning is written and a rewrite is the ordinary answer to a document moving.
+  - Held one-sidedly, the Word baseline went stale in 1609 of its 5165 rows over 74 commits
+    without one red run: 1388 rows moved down the page — 717 nearer it, 635 further, and 36
+    crossing it to stand the same distance on the other side — and 229 moved across, 228 of them
+    nearer by as much as 1.10pt. Of all that, 228 rows had moved more than the slack, 226 across
+    and 2 down. And yet no row's *distance* from the page had grown by more than 0.48pt — 21 rows
+    of `cv-serif_headline`, `cv-panel` and `invoice-obsidian` by that much, the rest by 0.36pt or
+    less — which against half a point of slack is exactly why a rule reading distances stayed
+    quiet, and those three documents are the ones that ended 0.48pt further.
+  - A baseline line row whose drift or place across is not a number is now refused. Every
+    comparison against `NaN` is false, so such a row held its line to nothing however far it
+    moved — and these files are patched by hand, so one mistyped cell was enough.
+  - The slack stays one number for both directions: it is rounding, and rounding is the same size
+    whichever way a line rounds. A step of exactly 0.5pt is still rounding, for every drift from
+    0 to 5pt and in both directions. The aggregates a row carries — its median, its p90, its
+    lines past 2pt — are held to nothing: they follow from the lines, which are held one by one.
+  - The export does not change: the 71-document corpus exports byte for byte as before, and the
+    Word baseline needs no rewrite — Word 16.0.20527 measures all 71 documents and 5165 line rows
+    exactly as `word-windows.tsv` holds them, not a row differing.
+  - `libreoffice-linux.tsv` is rewritten here, from the run of this change. Not shot whole since
+    #898, it had gone stale in 1778 of its 5149 rows, of which 230 stood more than half a point
+    from where it held them — 226 across and 4 down, in 8 documents — and **every one of the 230
+    stood nearer the engine's PDF, not one further**, on the LibreOffice build the file names. So
+    the two-sided rule's first real run recorded 230 improvements the one-sided rule had swallowed,
+    which is what it is for; the file's note records the run and the reckoning.
+  - `libreoffice-windows.tsv` is left as it stands and marked stale in the file instead, because
+    it is the opposite case. Nothing in CI runs it, and it is red already under the rule it was
+    written for: 2 documents, 8 lines no longer found, 2 page counts and 65 lines standing more
+    than half a point further. `proposal-indigo` accounts for the worst, 8 lines 10.25pt lower
+    than it holds them on the build it names, so the move is the export's and not the editor's.
+    Rewriting it alongside the Linux file would bury a 10pt move in a baseline diff; a move
+    further from the page wants attributing to the commit that made it first, as the Word
+    baseline's drift was attributed before #975 rewrote it. (It has since been shot whole, when
+    the line file took a column for each line's width, with that move still unattributed and
+    recorded in its note; above.)
+
+- **The DOCX fidelity corpus holds an icon laid over a card's corner, as the export writes it
+  today.**
+  - `SyntheticDocxCorpus` takes `icon_over_card`: a layer stack laying an 18pt icon over the top
+    right corner of a card, a section painted as a panel with 14pt padding, between the
+    document's longest paragraph above it and a paragraph under it.
+  - Measured in Word 16 and in LibreOffice 24.2 and 26.8, which set it alike down the page;
+    LibreOffice 24.2 also sets the card's text 14pt right of the page, as it sets a card with the
+    same padding and no icon over it.
+  - The stack is written as a band, and a band measures the space above and below it to its
+    first and last block written, through the card's padding, which the card writes again inside
+    its cell: the card's text stands 14.0pt lower than the page sets it, and the paragraph under
+    the card 28.0pt lower.
+  - The icon is drawn from the page's edges, where the page draws it, as the paragraph nearest
+    it, the card's, starts 14pt below its top, further than a shape may rise above a paragraph in
+    a table cell. It stands 14pt above the card's top as the editors set it, and stays there when
+    text above the card is edited: Word's editing protocol (`edit-protocol-corpus.ps1`),
+    lengthening the paragraph above the card, finds the card moved 36pt and the icon not
+    (`drawings-follow-text` fails).
+  - The baselines record the document as it stands: its rows hold the card's lines and the
+    paragraph under it that far from the page. A change that writes the band's space from the
+    card's edges moves them nearer and rewrites the rows; a change that moves them further fails
+    the gate. The gate measures lines of text: where the icon stands, it does not see.
+  - Each baseline takes the document's rows alone, from the run of its editor — Linux's from
+    CI's.
+
+- **A body card whose text fills its outline is held to grow with that text.** The fidelity gates
+  measure where lines stand. Were such a card's row written exactly as tall as its outline, every
+  line of it in Word would stand where it stood, the paragraph under it in LibreOffice 24.2 would
+  stand nearer the page, and the card would not grow when text is added to it in an editor.
+  `DocxBodyShapePanelTest` now holds a card whose text and padding fill it to within a quarter of a
+  point, under its default clip, which cuts nothing: its row is held at least its outline's height,
+  as is the row of a card with room to spare.
+
+- **The DOCX fidelity corpus holds its three body shape containers where the export now sets
+  them.** With the boxes written as panels, Word and LibreOffice set every line of
+  `narrow_container` and `rounded_card` at the page's words, and Word the paragraph under each box
+  where the page sets it. The rows of the three documents are rewritten — Word's and
+  LibreOffice's on Windows from local runs, LibreOffice's on Linux from CI — and every other row
+  is as it was. Every line of `narrow_container` and `clipped_container` stands nearer the page or
+  where it stood, and the lines inside each box are found; of `rounded_card`, the paragraph under
+  the card stands 0.6pt high in LibreOffice 24.2, which counts a cell's borders inside the row's
+  least height.
+  `DocxBodyShapePanelTest` holds the panel: its size, its row's height and rule, the layers held
+  in across, the top border taken out of the space above, the clip written as an exact height,
+  and the boxes that stay drawn.
+
+- **The DOCX fidelity corpus holds three shape containers in the body, as the export writes them
+  today.**
+  - Three documents join `SyntheticDocxCorpus`, each a rounded shape container holding text,
+    between a paragraph above it and one under it:
+    - `narrow_container`: a note set left in a block centred in a box 220pt wide, which the page
+      wraps over three lines inside it;
+    - `clipped_container`: a box 60pt tall, clipped to its outline, holding 84pt of text, which
+      the page cuts at the box's foot;
+    - `rounded_card`: a card as wide as the page between its margins, its heading and text
+      filling it.
+  - Measured in Word 16 and in LibreOffice 24.2 and 26.8, which set the three alike. The export
+    draws each outline at its size, where the page draws it, and writes its text in the flow,
+    held in from the edges of the block the container stands in rather than from the outline's,
+    so the right edge of its room stands past the outline:
+    - the narrow box's note runs over two lines instead of three, up to 95pt past the box's right
+      edge, and the paragraph under the box stands 12pt high, its first line reaching 4pt into
+      the box;
+    - the clipped box's text is written whole, none of it cut, up to 124pt past the box, and the
+      paragraph under it stands 20pt high, inside the box;
+    - the card stands where the page sets it, every line within 0.1pt. Text added to it in Word
+      runs past its foot: the outline keeps its height, the card's text runs over seven lines to
+      22pt below it, and the paragraph under it moves down 36pt.
+  - The baselines record the three as they stand. Of the narrow box and the clipped box, the
+    gate holds the lines the editors set at the page's words — the paragraph above the box, and
+    the paragraph under it, 12 and 20pt high — and none of the text inside the box, which they
+    set at other words. A change that writes a container's text inside its outline finds that
+    text and moves the paragraph under each box nearer the page, and rewrites their rows. The
+    card, which the export sets where the page does today, holds such a change to keep it there.
+  - The gate measures lines of text, not outlines. It does not see whether the text stays inside
+    the outline, or whether the card grows when text is added to it. Word's editing protocol
+    (`edit-protocol-corpus.ps1`) does not either: it passes all three, since the paragraph it
+    lengthens grows and still ends above the paragraph under it, past the outline as it is.
+  - Each baseline takes the three documents' rows alone, from the run of its editor — Linux's
+    from CI's.
+
+- **Every page reference a DOCX export writes names a bookmark the file holds.**
+  - `DocxPageReferenceGuardTest` reads each `PAGEREF` field, bookmark and paragraph from every XML
+    part of the exported file — the body, its headers and footers, nested tables and text boxes.
+    It fails on a field naming a bookmark the body does not hold, or a name Word does not give a
+    bookmark, which Word reads as "Error! Bookmark not defined." once it updates the field; and on
+    one naming more than one bookmark, one in another case or one never closed, since the export
+    names exactly the bookmark it wrote.
+  - It holds the template corpus, which refers to no page, and four documents that refer to an
+    anchor on each kind of node that declares one — the kinds read off the node classes — from a
+    table of contents, the body, a table's composed cell, a layer stack's column, a panel and a
+    row's column: blocks of drawings alone, a layer stack's columns, anchors named past Word's 40
+    characters, names that clean or fold to another's, and tables split for other page margins —
+    the split tables and the page nothing is written on held by the notes the export's report
+    gives them, the rest by the bookmarks the fields name. A reference whose anchor the export
+    writes no bookmark for — a block that draws nothing, one whose first drawing fills a page
+    nothing is written on, one composed in a table's cell, a drawn shape, an anchor the document
+    lacks — must be the number it reads, read off its paragraph, with a report note. Each
+    document must be exported from its layout: a document the layout cannot lay out is exported
+    without it, and its references read no page.
+  - Measured on the four documents in Word 16, every field updated, and again with a page put in
+    at the start: each of the 27 fields read its bookmark's page, and the next one with the page
+    put in; the 8 references written as text did not move. LibreOffice 24.2 read 25 of the fields
+    alike. The DOCX recipe and the capability matrix name the three cases that differ: a reference
+    in a table's composed cell stores no number, and LibreOffice reads neither a bookmark named like
+    one of its numbering sequences nor one of a block that opens with a table right after another
+    table.
+
+- **The DOCX fidelity corpus holds the ways a page breaks inside a panel.**
+  - Five documents join it, so the gate holds every line it finds of each where the editor set
+    it, in LibreOffice in CI and in Word on Windows, as it holds the presets:
+    - `SyntheticDocxCorpus`, a family of documents built for shapes no preset has on its own
+      fixture: a page break among a card's children and inside a card nested in it; page breaks
+      in a row's column and in a stack's layer, where the page breaks none; and a bordered card
+      whose table runs over three pages, the pages after the first set against a larger top
+      margin. Their text is set in Lato, which the export embeds, so both editors break its lines
+      at the page's words.
+    - `ObsidianInvoice` with its line items repeated 12 times — its line items card run over four
+      pages with other margins from page 2, and the page break after its info cards — and
+      `MeteredInvoice` with them repeated 9 times, the gap above its closing row carried onto
+      page 4.
+  - Measured in Word 16, every line of all five stands on the page the PDF sets it on, nine in
+    ten within 1.2pt of it down. Across, Word sets the amounts of the bordered card's table 36.4pt
+    left, the table's first column narrower than its grid, which LibreOffice keeps. In
+    LibreOffice 24.2 and 26.8 the parts of the card after its explicit breaks stand 3 to 5pt high.
+    LibreOffice 24.2, CI's, sets each on the pages the PDF does; it sets the line items of the
+    two long invoices high (`ObsidianInvoice`'s up to 10pt; `MeteredInvoice`'s more so page after
+    page, by a median of 52 and 87pt on its second and third pages, 16 of its lines on another
+    page), as it does the presets'
+    long tables, and holds their last pages, which carry the page break after the cards and the
+    gap above the closing row, within 0.8pt. LibreOffice
+    26.8 on Windows carries `ObsidianInvoice`'s info cards to page 5, 17 lines, where Word and
+    LibreOffice 24.2 keep them on page 4, as it did before the page break after them was fixed;
+    its baseline holds that as it stands.
+  - Each baseline takes the five documents' rows alone, from the run of its editor — Linux's from
+    CI's; the presets' rows stay as recorded. The tests holding `ObsidianInvoice` and
+    `MeteredInvoice` with their line items repeated take the corpus's helper for that.
+
+- **The DOCX field ledger names what a session hands an export beside the tree.** Every part
+  of `SemanticExportContext` and of the `LayoutGraph` it carries has a fate, and a part with
+  none fails the ledger. A session's per-page margins reached the layout, no export read them,
+  and no entry said so.
+
+- **The DOCX field ledger states where a field it gave as written, or as moving nothing, is
+  lost.**
+  - A drawing the export drops — with no layout, in a page zone, painted only with a gradient
+    or nothing, or on a page no paragraph is written on — loses its geometry and paint, which a
+    note names; a line or a shape written as a rule is written as a rule. With no layout, a
+    paragraph's line spacing and a section's or a line's keeps are lost, as the section's note
+    says. Inside a panel the layout runs on to the next page, a keep is named as one Word may
+    break; composed in a table cell, the table row is what is kept. A page field anywhere but
+    on a page zone's line is not written, which its note names.
+  - A page field's alignment was given as moving nothing, and `TextAlign`'s centre and right
+    as not applied to one. The page sets the field in a box a point wider than its number, so
+    its alignment moves the number up to that point. In a page zone, where the part stands is
+    the zone's note, as for any part. The capability matrix and the DOCX recipe said the same
+    and are corrected.
+  - Two losses no note names are now gaps: a spacer of a layer, level with another layer's
+    content in a band or a stack written as columns, where that content is not written in its
+    place; and a paragraph composed in a table cell whose text no line the layout set carries,
+    which is written with no line gap.
+
+- **The DOCX field ledger reaches the values a node holds, and names the losses it knows of
+  and its report does not.** `DocxNodeFieldLedgerTest` gives every field of every node a fate,
+  and stopped at the field: a part added to a value one holds — a style's colour, a run's
+  alignment, a border's width, an enum's constant — passed it with no decision.
+  - `DocxValueFieldLedgerTest` reads the value types from the node classes and the output
+    options, down to the last one they hold, and gives each of their 421 parts a fate: 149
+    written, 221 reported, 12 with nothing for Word to carry and 39 gaps. It fails on a value
+    type or a part with no entry, on an entry for a part that is gone, on a type any class may
+    implement or extend, and on a node type held from outside the node ledger's packages.
+  - Read against the export, some parts are lost in a case the report does not name. Each is a
+    gap, a fourth fate whose entry opens with the case, in 39 parts of values and 48 node fields:
+    - a top below zero, not written on a picture, a barcode or a block written as a table, and
+      partly on another block;
+    - a bottom below zero on a list, a table, a row, a stack, a canvas, a shape container in the
+      flow or a block with no paint of its own, which does not pull the next block up;
+    - a table cell's or a panel's padding below zero, and a row's at its sides, written as none;
+    - the space below a table that ends a cell set at its middle or foot;
+    - a panel's right border drawn short of its table cell's edge;
+    - a cell's top or bottom margin that Word gives the whole row;
+    - pictures in a list's items, placed by the list's first line;
+    - a text badge's vertical seat, and a paragraph's where its lines are not read;
+    - a drawing the page paints over a layer of text, drawn behind it in Word;
+    - a stack's one layer composed in a table cell, written at the cell's top left; a layer set
+      past its stack's right edge in a table cell; with no layout, a stack's one layer moved down;
+    - with no layout, a row's fixed or weighted column beside an auto one;
+    - a box shape written as a panel in a table cell narrower than it.
+  - A gap whose note does not open with one of these cases fails the ledger.
+  - A node's alignment, a row's arrangement and a paragraph's indent strategy move from written
+    to reported: the report already names where Word sets them otherwise. A row's columns move
+    to a gap.
+- **Word's editing protocol fails a restyle that leaves text without room for it.**
+  `restyle-body-through-normal` checked only that the body's letters grew with Normal by 2pt,
+  and passed every corpus document. Most paragraphs of an exported DOCX stand on exact lines,
+  which keep their height when the letters grow: Word then sets `cv-editorial_blue`'s profile in
+  11.5pt letters on the 10.3pt lines its 9.5pt letters had, the lines overlap, and on screen
+  Word also cuts the letters' tops, which its PDF export does not show. The scenario now reads
+  every paragraph the restyle reaches — the main text, each section's headers and footers, the
+  text drawings hold — and fails when one whose letters grew stands on exact lines shorter than
+  1.1 of them (the share `add-a-page` already holds typed text to), sits in a row or frame of
+  exact height, or when a drawing's text no longer fits it, naming the first of each. A
+  paragraph the restyle did not grow is not judged: the page sets many exact lines tighter than
+  that for their own letters. On documents Word wrote itself the scenario passes, and fails on a
+  header line on an exact line, a footer line in a frame of exact height and a text box its text
+  just fills. Over the 62 corpus documents in Word 16.0.20430 it fails in 60: of the 1,989
+  paragraphs whose letters grew, 1,730 stand on exact lines too short for them, none in a row or
+  frame of exact height, and one drawing's text overflows; `MintEditorial` and
+  `MintEditorialLetter` pass: none of their exact lines falls below that share. The body still
+  follows Normal in all 62. A scenario a document has nothing to edit for — no table, no list,
+  no drawing beside text — is now recorded `N/A` with what the document lacks, instead of
+  missing from the protocol's JSON; an edit is read as having nothing to edit only when it says
+  so with `$false`, not when it ends on a call that returns 0; and a run of one scenario writes
+  each document's results as a list, as a run of several does.
+- **The DOCX fidelity corpus holds a line where it stands across, as well as down.** It measured
+  how far from the page's an editor set each line up or down, and nothing across: a table's
+  left margin the export dropped (fixed in #831) stood `PaymentsInvoice`'s bank details 36.7pt
+  and `VioletGrid`'s education lines 51pt left of the page's in both editors, no line further
+  down than its baseline held, and the gate passed both. The line file now records each line's
+  first letter's drift right of the page's (`FidelityMeasurement.Found.across`), and a line set
+  more than half a point further from the page across fails as one set further up or down does.
+  With #831 reverted, the LibreOffice gate now fails those two documents and `PlatformInvoice`'s
+  footer. The line file has since taken a column for each line's width too, and a file of either
+  earlier shape is refused (above). "More than half a point" is counted in the hundredths
+  drifts are written in, down and across: in doubles, 22 of the 501 steps of exactly half a
+  point between 0 and 5pt counted as further. Across the corpus the median line stands 0.07pt off across in Word and 0.10pt in
+  LibreOffice on Windows; 175 and 130 lines stand more than 2pt off, and 427 in LibreOffice on
+  Linux, held where they are.
+
+- **The DOCX fidelity corpus measures a line from its first letter.** A space opened a line
+  (`PdfLines`), and Word writes one for an empty paragraph: drawn just before a line of text
+  beside it, a few points off its baseline, it gave that line its own. The lines measured past
+  2pt in Word fall from 9 to 0 in `SlateOrange`, from 14 to 2 in `VioletGrid` and from 2 to 0
+  in `OrangeOps`; the text did not move. LibreOffice's measurement is unchanged.
+
+- **The DOCX fidelity corpus reports which presets are set as the page sets them.** Each run writes
+  `measured-<editor>-acceptance.md` (`FidelityAcceptance`): a document passes when the editor sets
+  it on as many pages as the engine does, finds 95% of its lines, sets them a median of 1pt or less
+  from the page, and no more than 10% past 2pt; the rest are listed with what keeps them short of
+  it, the furthest first. It reports and does not gate — the baseline gates. Measured on 2026-11-06
+  over the corpus's 84 documents, Word 16 passes 77 and LibreOffice 24.2 on CI's Linux 48; the first
+  run, over 62 presets, passed 41 in Word and 37 in LibreOffice. CI writes LibreOffice's report into
+  the job summary.
+
+- **Word holds the DOCX export to its corpus too.** `scripts/docx-visual/word-fidelity.ps1`
+  runs `DocxFidelityCorpusTest` in two halves around a conversion by a private Word instance:
+  `export` writes the documents, Word converts them, and `word` measures Word's PDFs against
+  `word-windows.tsv`. `convert-with-word.ps1` records the SHA-256 of each DOCX it converts, and
+  a document is measured only when that is the digest of the DOCX this tree exports, so a
+  conversion left from another tree fails and names the documents rather than passing. Word is
+  driven from PowerShell, not from the build: Word driven through COM from a process Git Bash
+  started has stalled on its first document. `convert-with-word.ps1` also repaginates before it
+  exports, as Word settles pagination on screen.
+
+- **CI holds the DOCX export to its corpus.** The `DOCX Fidelity` job runs
+  `DocxFidelityCorpusTest` on a pinned Ubuntu image with LibreOffice whenever the engine, a
+  backend it measures with, the DOCX backend, a template or the corpus changes, against a
+  Linux baseline of its own, and is part of `CI Gate`. It uploads what it measured, which is the
+  new baseline when a change moves documents nearer the page.
+
+- **The DOCX export is held to its corpus, line by line.** `DocxFidelityCorpusTest` exports every
+  template preset — 64 documents across CVs, cover letters, invoices, proposals, a receipt and a
+  rota (62 when it was added) — and 20 documents built for cases no preset has, to DOCX, has
+  LibreOffice set each one, and finds each of the page's lines in it by its letters — lines of the
+  same letters on a page, a rota's shifts, each paired with the editor's nearest. Against the
+  committed baseline a document fails when a line is no longer found (set at other words or on
+  another page), when a line drifts more than half a point further from the page, or when it takes a
+  page more. Counts per document would not do: a sidebar CV that LibreOffice sets about 3pt off
+  throughout lost an indented list without its counts moving, and the line check names the two lines
+  lost and the six set 12pt higher. It runs on request, `-Dgraphcompose.docxFidelity=libreoffice`; a
+  change that moves documents nearer the page rewrites the baseline, whose diff shows which.
+  `DocxFidelityGateTest` holds the gate itself to lines set lower, a line lost and a page more.
+
+- **One DOCX export's state stays in that export — now pinned.** The backend keeps what an
+  export is in the middle of in its own fields, and starts each export from nothing.
+  `DocxExportIsolationTest` holds that to the byte on deterministic output: a backend used
+  for other documents first — one with a bookmark, a list, a chart and a dropped line —
+  exports each document exactly as a fresh backend does; an export that throws halfway, with
+  spacing still owed and a section's top edge still waiting, leaves nothing for the next one;
+  a reused backend reports what its own export lost; and eight sessions exporting at the same
+  moment produce the bytes one export alone does. Each reset it relies on was removed in turn
+  to confirm a test fails without it. The threading contract — reusable one export at a time,
+  not by two threads at once — is written on the class and in the DOCX recipe.
+
+- `EmojiSequencesTest` pins the fully-qualified spelling — a text-default character gains
+  U+FE0F, an emoji-presentation one does not, a skin-tone modifier or a selector already in
+  the key suppresses it, a keycap base is qualified before U+20E3 — and compares the table of
+  text-default emoji with the running JDK's Unicode data on JDK 21 and later.
+  `EmojiLibraryTest` checks resolved emoji carry their text and a glyph named by anything
+  but codepoints resolves without one; `SvgIconTextTest` checks `withText` copies the icon
+  and leaves the original as it was.
+- `PdfTextLayerTest` extracts `Launch 🚀 by 👩‍💻 with ❤️ done.` from a rendered line, codepoint
+  for codepoint; renders the same icon with and without text and compares the pages pixel for
+  pixel, which also fails if the invisible rendering mode leaks onto the words after the icon;
+  checks an icon given `withText("✓")` copies as `✓` and one without text adds no font; fills
+  one font with 255 texts and starts a second (each text used twice, one code each), its
+  `ToUnicode` in blocks of at most 100; keeps one font across the sections of a multi-section
+  document; writes a 256-unit text but not a 257-unit one; gives a 2:1 icon after a word
+  tracked in `Tc` a glyph exactly as wide as the icon, on the baseline, so neither the
+  horizontal scaling nor the spacing and rise left by the run before can go astray; keeps
+  `deterministic(true)` output byte-identical; fails a call made inside an open text object
+  with nothing written, and closes the glyph's text object and saved state when writing fails
+  half-way. In right-to-left Hebrew and Arabic lines it places the emoji's glyph between the
+  words it was written between and keeps a ZWJ sequence and a U+FE0F on one glyph each; a
+  left-to-right sentence with a Hebrew word reads back in written order.
+- **`PublishTrainGuardTest`** holds the deploy to exactly one `-pl` reactor run, its selection
+  to the lockstep modules derived from the poms (standalone, publishing, on the reactor
+  version), and keeps fonts, emoji and the build-only modules out of it. It forbids `-am`, which
+  would pull fonts and emoji into the deployment, and requires the eight `release` profiles to
+  declare the plugin identically, because the upload runs with the settings of the module the
+  reactor orders last. `PublishedModules` reads `-pl` deploys as well as `-f` ones, so the
+  CodeQL scope guard keeps its inventory.
+- **The release smoke can run before anything is published.** `run.sh --staged-repo <dir>` /
+  `run.ps1 -StagedRepo <dir>` resolves the GraphCompose coordinates from an unzipped
+  `central-bundle.zip` — a local dry run's, or the tagged run's workflow artifact while the
+  deployment waits at `VALIDATED` — and everything else from Central. A scenario fails unless
+  every file of every train artifact it resolved came from the staged directory at the staged
+  version.
+- **The release smoke exports Word the way a consumer does.** Scenario `s8-core-render-docx`
+  calls `toDocxBytes()`, `writeDocx(stream)` and `buildDocx(path)`, which find the backend
+  through the ServiceLoader and pass only if the published render-docx jar carries its service
+  registration; until now it named `new DocxSemanticBackend()` alone, which kept passing
+  without one. The named Stable backend stays checked beside them. The scenario no longer
+  declares `graph-compose-render-pdf`: render-docx brings it at compile scope, so a session
+  that opens proves the published POM carries it. It therefore requires 2.5.0. The nine
+  scenario poms move to the reactor's surefire 3.6.1, and `s2` to its enforcer 3.7.0.
+- **Five render-docx test classes that passed on a broken export now check what they claim.**
+  - `DocxListParityTest` exports each list to Word and to PDF from one session, and requires the
+    same marker beside the same text in both. Until now it read only the Word file. Its nested
+    lists are set in Lato, because the standard Helvetica cannot encode ◦, ▪ or →.
+  - `DocxGeometryDropTest` is renamed `DocxPathGeometryTest`. Since paths became custom geometry,
+    its test of a path on its own asserted only that the path left no text, which an empty
+    document also passes. It now requires the drawing and no `DROPPED` note, and a stack that
+    holds a path must draw it as well as keep its text.
+  - `SessionSemanticExportTest` reads the session's paragraph back, where it checked only the ZIP
+    signature.
+  - `DocxExportReportTest` holds that asking for the export report leaves the document
+    byte-identical with the package clocks pinned, and every part but the dated core properties
+    identical through the constructors, where it held the size within 64 bytes.
+    `DocxDeterminismTest` requires the deterministic builder to hand over the notes the plain
+    constructor does, where it had only to hand over a report.
+- **Six export-report notes that no test asserted are now asserted, each on the document that
+  makes it:**
+  - a face whose OS/2 `fsType` forbids embedding, and a face whose file cannot be read, are each
+    named `DROPPED` (`embedded font`) and not shipped. The page cannot lay either face out, so
+    both documents are written without a layout;
+  - a page zone whose content builds nothing for the first page Word writes it on, while the page
+    draws it there, is named `DROPPED` (`page zone`);
+  - a node of a kind the caller registers, drawn over three pages, whose middle page has no
+    paragraph to carry its shape, is named `DROPPED` for that part only;
+  - a page that no block of the body starts is named where its top and bottom margins differ from
+    those Word sets it with (`page margin`);
+  - without a layout, a painted shape container's outline is named `DROPPED` (`shape container
+    outline`), and an unpainted one is not.
+- **The numbers the Word export takes from an editor say where they came from.**
+  - `DocxEditorConstantsFreezeTest` pins each editor, format or convention constant other tests
+    name by symbol as a literal, with the pull request it came from and what it was measured in or
+    why it is what it is:
+    Word's rule reach (1.42 and 1.51pt), the four-fifths baseline share, a column's point of
+    slack, a picture's quarter-point edge, a band's line factor, a stack's ink margin, the 1024
+    steps page backgrounds stand apart in, Word's 12pt thickest border, the engine's 4pt cell
+    padding and a badge's four characters. Where a source names no editor version, the test says
+    it is not recorded.
+  - `DocxWordSizeMeasureTest`'s size tests read the size Word writes a run at, where they restated
+    the export's rounding to the half point. One line is held to as many ems as the page's; a
+    paragraph whose lines stand clear of the room, to those ems a point short.
+  - `DocxComposedCellTest` and `DocxLineHeightTest` record the source of 9.2, 7.98, 140, 184 and
+    259: two fixture values, a derivation recorded in its pull request, a row height that follows
+    from the border rule measured in Word 16 and LibreOffice on Windows, and Helvetica's AFM
+    ascender and descender.
+- **Branches of three render-docx classes that no test took are taken, each asserted on DOCX
+  XML.**
+  - `DocxColourUnderTest`: what a translucent panel is flattened against, over an ellipse, a
+    polygon, a path, a gradient box, a gradient path and a table cell, each under the panel's
+    centre and beside it, a box under a transform under it and a picture beside it. A gradient or
+    a turned fill under the centre leaves the colour unknown, and the panel is flattened against
+    white.
+  - `DocxZoneByPageTest`: a page zone built for the first page with another constant of an enum,
+    another kind of node, a row of one line fewer, or one column fewer styled or one styled
+    otherwise, is written as Word's first-page footer; built alike, it is written once, unless it
+    nests deeper than its values are read.
+  - `DocxTimelineRailGuardsTest`, on documents built for it: each check a timeline's rail must
+    pass to be written as its cells' border leaves the timeline as it was written when it fails:
+    no bar, a bar not offset from its column or past the last one, entries of other rows, grids
+    or cells, a rail past either end, a cell on the rail holding anything but the bar, anything
+    but an exact empty line between entries. A rail on a cell's left edge is that cell's border, and the line between two
+    entries keeps its row with the next only when it keeps with the next itself.
+
+### Performance
+
+- **A large table's DOCX export is linear in its size again.** Writing each text cell's line
+  height looked the cell up by scanning every row of its table, so a table's export grew with
+  the square of its cells: measured, doubling a 1000-row table's rows took its export from
+  545ms to 1463ms. Each table's cells are now indexed once, on first use. JMH on the same
+  machine, a 1000-row, five-column table exported through a session: **527 ± 247 → 257 ± 43
+  ms/op**; the other shapes measured move within noise, and allocation is unchanged — the
+  cost removed was comparison, not memory.
+- **What a DOCX export costs is now measured.** `DocxExportJmhBenchmark` (in `benchmarks`)
+  exports four shapes of document through a session — one small page, a report of about
+  twenty pages, a thousand-row table, twenty repetitions of one image — beside the PDF render
+  of each, so the numbers read as a ratio rather than as absolutes on one machine. The
+  baseline, one machine, 5 iterations, 1 fork, `-prof gc`:
+
+  | shape | DOCX ms/op | PDF ms/op | DOCX alloc/op | PDF alloc/op |
+  |---|---|---|---|---|
+  | small | 3.2 ± 2.6 | 2.2 ± 0.2 | 1.35 MB | 0.36 MB |
+  | report20 | 10.7 ± 3.6 | 5.1 ± 0.4 | 5.7 MB | 2.9 MB |
+  | table1000 | 257 ± 43 | 296 ± 8 | 116 MB | 39 MB |
+  | images20 | 4.3 ± 3.6 | 1.0 ± 0.1 | 2.8 MB | 0.38 MB |
+
+  Twenty identical images are stored once — one media part — and an embedded font once per
+  face, so neither grows the package with repetition.
 
 ### Build
 
+- **The coverage aggregate counts the Word export.** `graph-compose-render-docx` ran its tests
+  without the JaCoCo agent and was not among the modules `graph-compose-coverage` reports on, so
+  the export had no coverage figure and its classes were outside the ratchet. Its pom now runs the
+  agent (`prepare-agent`, the same pinned `jacoco.plugin.version` as the other measured modules,
+  held by `VersionConsistencyGuardTest`), and the aggregate unpacks its classes and merges its
+  exec beside the engine's, the PDF backend's and the templates'. The module measures 96.90%
+  instructions and 85.00% branches, its own tests and the `qa` suites together, so the aggregate
+  rises from 93.99% / 77.52% to 94.88% / 81.37%; the floors stay at 0.875 / 0.68. The agent adds
+  no measurable time to the module's 2545 tests.
+- **The binary-compatibility gate holds the Word export's Stable path.** japicmp did not diff
+  `graph-compose-render-docx`, so the Stable members of `DocxSemanticBackend` (the class, its
+  no-argument constructor, `name()` and `export(...)`) could break in a 2.x minor with every check
+  green. The module's pom now carries the `japicmp` profile: one diff against the 2.x floor, `2.0.0`,
+  the baseline the engine's gate holds, excluding only the `@Internal` marker and failing on a
+  baseline it cannot resolve. The pull-request job (now also run when `render-docx/src/**` or its pom changes),
+  the publish workflow and `cut-release.ps1` Step 5b run it beside the engine and templates gates,
+  and `BinaryCompatibilityGateGuardTest` and `VersionConsistencyGuardTest` hold the wiring and the
+  pin. Against 2.0.0 and 2.4.1 the module reports additions only. Everything it gained in 2.5 is
+  `@Beta` and absent from the floor; a member that becomes Stable later is not held by a floor-only
+  diff, which `docs/api-stability.md` leaves to graduating the DOCX `@Beta` API to Stable.
+- **CI and CodeQL run on every push to `2.5-dev`.** The 2.5 line was checked only through its
+  pull requests, so no commit merged into it had a CI run of its own, and its pull requests had
+  no CodeQL analysis of their base branch. `ci.yml` and `codeql.yml` now list `2.5-dev` beside
+  `main` and `develop` under `push.branches`; the trigger is removed with the branch once the
+  line has reached `develop` for its cut. `ci.yml` drops `2.0-dev`, a branch that no longer
+  exists.
 - **A release reaches Maven Central as one deployment instead of eight.** Central now counts
   every distinct publish operation against an organisation's monthly Release Count, and
   `publish.yml` deployed the train as eight separate `-f <module>/pom.xml deploy` runs — eight
@@ -22,23 +6760,80 @@ follow semantic versioning; release dates are ISO 8601.
   components the Portal already reports as published, for recovering a version that is
   partially live. The uploaded zip is kept as a workflow artifact.
 
-### Tests
-
-- **`PublishTrainGuardTest`** holds the deploy to exactly one `-pl` reactor run, its selection
-  to the lockstep modules derived from the poms (standalone, publishing, on the reactor
-  version), and keeps fonts, emoji and the build-only modules out of it. It forbids `-am`, which
-  would pull fonts and emoji into the deployment, and requires the eight `release` profiles to
-  declare the plugin identically, because the upload runs with the settings of the module the
-  reactor orders last. `PublishedModules` reads `-pl` deploys as well as `-f` ones, so the
-  CodeQL scope guard keeps its inventory.
-- **The release smoke can run before anything is published.** `run.sh --staged-repo <dir>` /
-  `run.ps1 -StagedRepo <dir>` resolves the GraphCompose coordinates from an unzipped
-  `central-bundle.zip` — a local dry run's, or the tagged run's workflow artifact while the
-  deployment waits at `VALIDATED` — and everything else from Central. A scenario fails unless
-  every file of every train artifact it resolved came from the staged directory at the staged
-  version.
-
 ### Documentation
+
+- **The knowledge pack routes a Word export.** `api-query --task export.docx` recommends
+  `session.buildDocx(path)` — or `writeDocx` / `toDocxBytes` — and says when to export through
+  another path instead: `DocxSemanticBackend.builder().deterministic(true).reportSink(...)` for
+  the `DocxExportReport` or the same bytes on every run on one platform (a `{date}` token aside),
+  `new DocxSemanticBackend()` where only Stable API may be used, and `buildPdf` where the reader
+  must see the page as laid out rather than edit it. It names what each path costs and which of
+  these calls are `@Beta`, and points at the `render-docx` README's usage. The route is not yet
+  confirmed by a maintainer, and `api-query` says so when it prints it.
+- **`ROADMAP.md` says what 2.5 did for DOCX and what is left.** The strict-mode item said shapes,
+  lines and ellipses are dropped with a warning; they are written where the layout places them, and
+  every loss is named in the `DocxExportReport`. A built-in option that fails the export instead
+  stays a direction: the report reaches its sink only after an output file is written, so it cannot
+  stop that file. The item that asked whether to expand DOCX or fence it off as experimental now
+  records that 2.5 expanded it, and names what is left: graduating its `@Beta` parts, the charts
+  still written as their data table, bytes that differ across platforms, and LibreOffice setting
+  the document further from the engine's page than Word. The *Now* section no longer lists moving
+  DOCX onto the compiled layout as work to come.
+- **The `render-docx` README and `WordExportExample` show the session's Word export as it is.**
+  - The README's usage opens on `session.buildDocx(path)`, and says what it and `writeDocx` /
+    `toDocxBytes` do not give: they build a default backend, so they hand back no
+    `DocxExportReport` and stamp the file with the date it was written. A second snippet exports
+    through `DocxSemanticBackend.builder().deterministic(true).reportSink(...)`, and the README
+    says what a report note holds and what deterministic output pins.
+  - Three README statements were false and are corrected. Shapes, ellipses, slanted and vertical
+    lines, polygons and paths are drawn as floating shapes where the page draws them, not
+    left out; what is still dropped is a drawing painted only with a gradient, one with no
+    layout or no paragraph on its page, and one in a page zone. A layer stack takes more Word
+    forms than side-by-side columns. A line becomes a paragraph border only when it is level,
+    untransformed, no thicker than 12pt and in the flow.
+  - The README and the recipe said deterministic output is the same bytes "on every run and
+    machine". It is on every run on one platform; across platforms the parts Apache POI writes
+    still end their XML declaration with the platform's line separator, and both now say so.
+  - `WordExportExample` exports through that configured backend and prints its report, so the
+    committed `word-export-companion.docx` comes out as the same bytes on every run on one
+    platform. The
+    document's own captions said the divider and the badge stay PDF-only and that a nested list
+    indents two spaces a level; in Word they are a paragraph border, a drawn shape holding its
+    letters and a Word list level, and the captions say so. The title and the nested markers no
+    longer use characters Helvetica lacks, which the PDF printed as `?`. The class Javadoc no
+    longer calls Apache POI an optional dependency, and the Word export section of
+    `examples/README.md` follows the example.
+
+- **The DOCX recipe says what Word and LibreOffice do with the export's page fields once a page is
+  added, and why the file asks for no update on open.**
+  - Measured in Word 16 and LibreOffice 24.2, with a page put in at the start of the corpus's
+    documents that hold fields and of two built for every kind of field the export writes: a page
+    number or total in a header or footer reads the new pages with no update in the PDF Word
+    saves, and in LibreOffice's but for its `SECTIONPAGES`, which keeps the total the file held.
+    A page reference reads its anchor's new page in LibreOffice and in a PDF Word saves; in
+    Word's own reading it keeps the number the file held until its fields are updated.
+  - The export sets neither `w:updateFields` nor `w:dirty`, as before, and the recipe now says
+    what either would cost: Word asks, when it opens the file, whether to update "fields that
+    may refer to other files", and the update it runs on a yes sets every page reference to 1,
+    on a file as exported as much as on an edited one. LibreOffice lays the file out the same
+    with either or none.
+  - The recipe and the capability matrix also say that a page reference from one section into
+    another stores no number, and what each editor shows for it.
+  - `DocxFieldsUpdateOnOpenTest` holds the policy over a document of one section and one of two
+    holding every kind of field the export writes — a page zone's and a text header's, a table of
+    contents, a page reference and one into another section — and proves on a changed file that
+    it reads either flag in each of its spellings. It replaces the one check of
+    `w:updateFields`, made on page references alone.
+
+- **The recipe and the capability matrix now say what was measured of a kept block at the foot of a
+  page, and finish the half-sentence they carried about a table inside one.** Both said that the
+  keep chains a cell's own paragraphs and not the rows of a table in it, and left it there — not
+  saying that the table writer holds those rows instead, that a table composed in a cell is
+  therefore held by the row it stands in rather than by either writer, or that any of it had ever
+  been put to the two editors. They now carry the rest of the mechanism and the measurement — nine
+  shapes at the foot of a page, eighteen documents, each whole in Word 16.0.20527 and LibreOffice
+  24.2, the editors differing only over which page holds the whole block — together with the
+  corpus counts behind it, so the next reader is not left to measure it again.
 
 - **The release runbook describes the single deployment.** `docs/contributing/release-process.md`
   explains the one-deployment train, how to dry-run it against a dead endpoint and smoke the
@@ -80,6 +6875,51 @@ follow semantic versioning; release dates are ISO 8601.
   a preview by URL. `twitter:card` stays `summary_large_image`, and both tags now declare the
   size and an alt text. A document's own page keeps its own preview: there the document is the
   subject.
+
+- **The DOCX module's README says what the export writes today.** It listed as missing what the
+  export has since learned to write — links, bookmarks and the navigation outline, headers and
+  footers, barcodes, pictures in a line, a chip's fill, composed cells with an image or a list,
+  byte-identical output — and said the page geometry was ignored, where line heights and column
+  widths now come from the layout. It now lists what is written and what is not: other drawing,
+  inline shapes, positions and clips in a layer stack or canvas, a barcode or rule in a page
+  zone, the text header and footer slots, watermarks and `markerGap`. The DOCX recipe, the
+  charts recipe and the examples README no longer say the export has no layout pass.
+
+- **The capability matrix's DOCX column says what the export carries.** It said the export
+  ignores the layout's geometry, carries no font, writes no external link and no reproducible
+  bytes, and that an anchor on a shape or a barcode marks nothing. The export reads the layout
+  for how tall a line is, how wide a column came out and where a drawing stands. It ships the
+  faces its styles name (`DocxFontTable`), naming one whose licence keeps it out. It writes the
+  link of a paragraph, a run and a picture in a line as a `w:hyperlink`, and names one on a
+  block it holds as a picture, a drawing, a rule or a table. It pins its clocks under
+  `deterministic(true)`, and bookmarks a barcode's anchor, naming a drawing's. The two link rows
+  are ⚠️ for the blocks that carry none.
+
+- **The capability matrix's DOCX column agrees with the code, and lists every subject the export
+  report names.**
+  - The ServiceLoader row said discovery was n/a for DOCX, and the convenience row that the
+    backend is named rather than discovered. `DocxBackendProvider` is registered as a
+    `SemanticBackendProvider`, and `buildDocx` / `writeDocx` / `toDocxBytes` find it through
+    `SemanticBackendProviders.forFormat("docx")`. Those methods take a default backend: no report
+    sink, and live dates.
+  - The table-cell direction row said a cell's `textAnchor` reaches no cell. It is written as
+    `w:vAlign` and `w:jc`, as the Table rows row says.
+  - Four other claims were wrong:
+    - a rectangle's side border is a filled bar the stroke's width, not a line;
+    - a rounded panel's lost corner radius is named in the report for each panel, not only logged
+      once;
+    - a shape or path painted only with a gradient is reported `DROPPED`, not only logged;
+    - a chip's left padding is written in the fill of a chip right before it.
+  - Ten marks follow the legend now. A ✅ whose capability the report names a loss for is ⚠️:
+    anchors, bookmarks, fonts, images, the timeline rail, headers and footers, page zones, keeps,
+    and several sections. Viewer preferences are ❌, since the option does reach the export.
+  - The outline row is ⚠️ rather than ❌: the bookmarks' levels become `HeadingN` styles, from
+    which Word builds its Navigation Pane.
+  - The gradient rows say what the export does with a gradient.
+  - New: a row for a node kind of the caller's own, and a table mapping each report subject to
+    its severity, what the file holds instead, and its row.
+  - The DOCX recipe no longer lists a panel's corner radius as left undone rather than
+    approximated: the report names it on each panel.
 
 ## v2.4.1 — 2026-09-21
 

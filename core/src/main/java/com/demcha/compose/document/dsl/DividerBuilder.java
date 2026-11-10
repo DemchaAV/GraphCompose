@@ -2,7 +2,9 @@ package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTransform;
 
 import java.awt.*;
 
@@ -107,13 +109,36 @@ public final class DividerBuilder extends ShapeBuilder {
     }
 
     /**
-     * Builds the divider as a thin shape node.
+     * Builds the divider as a thin shape node carrying the divider signal.
+     *
+     * <p>The node is the box of a colour it has always been — nothing is drawn
+     * differently for the signal. It says only that this box asked to be a rule,
+     * which no geometry of the box tells: a divider's thickness is its height and
+     * it carries a fill, exactly as a swatch of the same size does. A backend with
+     * a rule of its own reads it: the DOCX export writes a divider in the flow, only a
+     * fill and no taller than Word's thickest border, as Word's horizontal rule, and
+     * leaves any other box of that size to its drawing path, which draws it where the
+     * page puts it or drops it with a note.</p>
+     *
+     * <p>What this builder carries is the node's name, width, thickness, colour,
+     * padding, margin, stroke, link, outline entry and anchor — a rule written as
+     * Word's own holds its anchor's bookmark on its paragraph, so a divider the DSL
+     * builds can be the target of a link or a page reference. What the inherited
+     * setters for a corner radius, a transform and a paint fill set is dropped. The first two
+     * would stop the box being a rule at all, as a gradient paint would; a paint is
+     * dropped whole, a solid one too, so a divider's colour is set with
+     * {@code color(...)}. A divider that wants one of them is built from the node's
+     * own constructor. A divider given a stroke wide enough to draw is
+     * carried with it and is then drawn rather than written as a rule, since Word's
+     * rule is a border of one colour with no stroke of its own to carry.</p>
      *
      * @return divider shape node
      */
     @Override
     public ShapeNode build() {
-        return new ShapeNode(name, width, height, fillColor, stroke, null, null, padding, margin);
+        return new ShapeNode(name, width, height, fillColor, stroke, DocumentCornerRadius.ZERO,
+                linkTarget, bookmarkOptions, padding, margin, DocumentTransform.NONE, null,
+                anchor, true);
     }
 }
 

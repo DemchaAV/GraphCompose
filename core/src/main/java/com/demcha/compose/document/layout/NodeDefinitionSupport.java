@@ -636,8 +636,9 @@ public final class NodeDefinitionSupport {
                                     : null)));
             // Composed cells: dispatch each prepared child's fragments
             // at the cell's absolute table-local position. The child's
-            // FragmentPlacement is constructed from the cell's width,
-            // height, and position relative to the placement path.
+            // FragmentPlacement is constructed from the cell's box, its
+            // position relative to the placement path, and the child's own
+            // size (emitComposedCellFragments).
             List<TableResolvedCell> rowCells = layout.rows().get(rowIndex);
             for (TableResolvedCell cell : rowCells) {
                 int columnIndex = locateCellColumn(layout, rowIndex, cell);
@@ -739,8 +740,17 @@ public final class NodeDefinitionSupport {
         // quantities, which is what keeps the reserved row and the drawn content
         // the same size.
         DocumentInsets contentMargin = child.node().margin();
-        double childWidth = Math.max(0.0,
+        // A composite child is given the cell's inner box to lay itself out in, as a row slot gives
+        // one its slot, and so is text, which aligns in the width it is given: a page number
+        // measures as wide as its digits, and set right it stands at the cell's right edge. A
+        // leaf of a size of its own is laid out at the width it measured, as the flow and a row
+        // slot place one. Given the cell's width, a picture fitted to 100pt in a 120pt column was
+        // drawn in a box 112pt wide, and a 20pt circle as an ellipse 112pt wide.
+        double innerWidth = Math.max(0.0,
                 cellWidth - padding.horizontal() - contentMargin.horizontal());
+        double childWidth = child.isComposite() || alignsInTheWidthItIsGiven(child.node())
+                ? innerWidth
+                : Math.min(innerWidth, Math.max(0.0, child.measureResult().width()));
         double childHeight = Math.max(0.0, child.measureResult().height());
         // Where in the cell's box the child sits. Follows resolveTextLines on
         // the vertical axis: same default (centre, from
@@ -749,8 +759,9 @@ public final class NodeDefinitionSupport {
         // cell land on the same line.
         //
         // Two deliberate differences. The horizontal half of the anchor is not
-        // read: a composed child is laid out at the cell's inner width, so
-        // there is no slack across for it to sit in, where a text line has its
+        // read: a composite child and text lay themselves out in the cell's
+        // inner box, and a leaf of a size of its own starts at the cell's
+        // content edge, as a row slot starts one, where a text line has its
         // own measured width. And slack is clamped at zero rather than allowed
         // to go negative — an over-tall child keeps starting at the bottom and
         // overflowing upward instead of being pushed below its own cell. No
@@ -815,6 +826,15 @@ public final class NodeDefinitionSupport {
                     cf.payload()));
         }
         return translated;
+    }
+
+    /**
+     * Whether a leaf sets its text in the width it is given rather than drawing at a size of its
+     * own: a paragraph, a list, a page number and a page reference, each by its alignment.
+     */
+    private static boolean alignsInTheWidthItIsGiven(DocumentNode node) {
+        return node instanceof ParagraphNode || node instanceof ListNode
+               || node instanceof PageReferenceNode || node instanceof PageFieldNode;
     }
 
     private static List<LayoutFragment> emitDecorationFragment(Color fillColor,

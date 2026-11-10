@@ -6,7 +6,6 @@ import ch.qos.logback.core.read.ListAppender;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.svg.SvgIcon;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,11 +26,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * per node kind; without the inline mirror the only observable difference
  * between "rendered" and "lost" was opening the file. The warning is the
  * whole of what makes the inline drop visible, which makes it worth a test.</p>
+ *
+ * <p>Every inline run the model has is written now — pictures, SVG icons and shapes as
+ * pictures (see {@code DocxInlinePictureTest} and {@code DocxInlineShapeTest}) — so the
+ * warning is what a run kind added later, and not taught to this export, would raise.</p>
  */
 class DocxInlineRunDropWarningTest {
-
-    private static final String ICON = """
-            <svg viewBox="0 0 10 10"><rect width="10" height="10" fill="#ff0000"/></svg>""";
 
     private ListAppender<ILoggingEvent> appender;
     private ch.qos.logback.classic.Logger logger;
@@ -58,34 +58,30 @@ class DocxInlineRunDropWarningTest {
     }
 
     @Test
-    void droppedInlineSvgRunsWarnOncePerExportAndKeepTheText() throws Exception {
-        SvgIcon icon = SvgIcon.parse(ICON);
+    void everyKindOfInlineRunReachesWordAndNoneIsDropped() throws Exception {
+        com.demcha.compose.document.style.DocumentColor ink = com.demcha.compose.document.style.DocumentColor.rgb(255, 0, 0);
+        com.demcha.compose.document.svg.SvgIcon icon = com.demcha.compose.document.svg.SvgIcon.parse(
+                "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10'/></svg>");
         byte[] docx;
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(400, 200)
                 .margin(DocumentInsets.of(20))
                 .create()) {
-            document.pageFlow(page -> {
-                page.addParagraph(p -> p
-                        .inlineText("before ")
-                        .inlineSvgIcon(icon, 10)
-                        .inlineText(" after"));
-                page.addParagraph(p -> p
-                        .inlineText("second ")
-                        .inlineSvgIcon(icon, 10));
-            });
+            document.pageFlow(page -> page.addParagraph(p -> p
+                    .inlineText("before ")
+                    .dot(6, ink)
+                    .inlineText(" middle ")
+                    .arrow(8, com.demcha.compose.document.style.ShapeOutline.Direction.RIGHT, ink)
+                    .inlineSvgIcon(icon, 10)
+                    .inlineText(" after")));
             docx = document.export(new DocxSemanticBackend());
         }
 
-        List<String> warned = inlineDropWarnings();
-        assertThat(warned).hasSize(1);
-        assertThat(warned.get(0)).contains("InlineSvgRun");
-
+        assertThat(inlineDropWarnings()).isEmpty();
         try (XWPFDocument opened = new XWPFDocument(new ByteArrayInputStream(docx))) {
-            String text = opened.getParagraphs().stream()
-                    .map(paragraph -> paragraph.getText())
-                    .reduce("", (a, b) -> a + "\n" + b);
-            assertThat(text).contains("before").contains("after").contains("second");
+            assertThat(opened.getParagraphs().get(0).getText())
+                    .contains("before").contains("middle").contains("after");
+            assertThat(opened.getAllPictures()).as("the dot, the arrow and the icon").hasSize(3);
         }
     }
 

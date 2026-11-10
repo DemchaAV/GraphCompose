@@ -1,0 +1,179 @@
+package com.demcha.compose.document.backend.semantic.docx;
+
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.backend.semantic.SemanticBackend;
+import com.demcha.compose.document.backend.semantic.SemanticExportContext;
+import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.layout.DocumentGraph;
+import com.demcha.compose.document.layout.LayoutCanvas;
+import com.demcha.compose.document.style.DocumentInsets;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+
+import java.io.ByteArrayInputStream;
+import java.util.List;
+import java.util.function.Consumer;
+
+/**
+ * Exports a small document both ways: with the compiled layout behind it, and without.
+ *
+ * <p>The backend asks for the resolved layout and uses it where it has one — measured line
+ * heights, resolved column widths — so a session export and a bare export are two different
+ * outputs of the same writer. Both are real: a session is how the export is reached, and a
+ * caller holding a graph and a canvas can call {@code export} directly, which is also what
+ * happens when a document cannot be laid out at all. Tests that pin the fallback have to
+ * ask for it.</p>
+ *
+ * @author Artem Demchyshyn
+ */
+final class DocxExports {
+
+    /**
+     * How far a line of the default text — Helvetica at 14pt — is raised into the space written
+     * above it, in twips: the page seats its baseline 10.05pt down its 12.95pt line, Word four
+     * fifths of the way down, 0.31pt lower ({@code DocxBaselineSeatTest} holds it to that). A
+     * test of the space between blocks of default text reads the space above such a line as that
+     * much less, and the space below it as that much more. A table cell's default face is the same
+     * text, and a row of such cells is moved up as much through its margins
+     * ({@code DocxCellSeatTest}); a panel's or a composed cell's first line rises as much into its
+     * top padding, and a row of columns' out of the space above its table
+     * ({@code DocxFirstLineSeatTest}); a list's item rises as much into the gap above it, the item
+     * under it into what it owes ({@code DocxListItemSeatTest}).
+     */
+    static final long DEFAULT_LINE_RAISE = 6;
+    /** {@link #DEFAULT_LINE_RAISE} for the default face at 7pt, the size tests set small text in. */
+    static final long SMALL_LINE_RAISE = 3;
+
+    /** The subject of the note naming the lines of text written at an exact height. */
+    static final String EXACT_LINES = "line height";
+
+    private DocxExports() {
+    }
+
+    /**
+     * A report's notes besides the one naming the lines of text written at an exact height
+     * ({@code DocxSemanticBackend#nameTheExactLines}). The default face, Helvetica, is a name the
+     * document does not ship, so a test's lines of default text are exact and the report says so;
+     * a test of what else the export says reads past it.
+     */
+    static List<DocxExportReport.Note> besidesTheExactLines(DocxExportReport report) {
+        return report.notes().stream().filter(note -> !EXACT_LINES.equals(note.subject())).toList();
+    }
+
+    /** Exports through a session, so the backend is handed the compiled layout. */
+    static XWPFDocument withLayout(double pageWidth, double pageHeight, double margin,
+                                   Consumer<PageFlowBuilder> content) throws Exception {
+        byte[] docx;
+        try (DocumentSession session = session(pageWidth, pageHeight, margin, content)) {
+            docx = session.export(new DocxSemanticBackend());
+        }
+        return new XWPFDocument(new ByteArrayInputStream(docx));
+    }
+
+    /** Exports the same document with no layout behind it, the way a bare caller does. */
+    static XWPFDocument withoutLayout(double pageWidth, double pageHeight, double margin,
+                                      Consumer<PageFlowBuilder> content) throws Exception {
+        Captured captured = new Captured();
+        byte[] docx;
+        try (DocumentSession session = session(pageWidth, pageHeight, margin, content)) {
+            session.export(captured);
+            docx = new DocxSemanticBackend().export(captured.graph,
+                    new SemanticExportContext(captured.canvas, List.of(), null, null));
+        }
+        return new XWPFDocument(new ByteArrayInputStream(docx));
+    }
+
+    /** The report of an export through a session, with the compiled layout behind it. */
+    static DocxExportReport report(double pageWidth, double pageHeight, double margin,
+                                   Consumer<PageFlowBuilder> content) throws Exception {
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        try (DocumentSession session = session(pageWidth, pageHeight, margin, content)) {
+            session.export(new DocxSemanticBackend(report::set));
+        }
+        return report.get();
+    }
+
+    /** The report of an export with no layout behind it, the way a bare caller makes one. */
+    static DocxExportReport reportWithoutLayout(double pageWidth, double pageHeight, double margin,
+                                                Consumer<PageFlowBuilder> content) throws Exception {
+        Captured captured = new Captured();
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        try (DocumentSession session = session(pageWidth, pageHeight, margin, content)) {
+            session.export(captured);
+            new DocxSemanticBackend(report::set).export(captured.graph,
+                    new SemanticExportContext(captured.canvas, List.of(), null, null));
+        }
+        return report.get();
+    }
+
+    /** The document graph a session hands its backends, for a writer that reads the graph alone. */
+    static DocumentGraph graphOf(Consumer<PageFlowBuilder> content) throws Exception {
+        Captured captured = new Captured();
+        try (DocumentSession session = session(400, 600, 20, content)) {
+            session.export(captured);
+        }
+        return captured.graph;
+    }
+
+    /** Exports with neither a layout nor a canvas, as a caller holding only the graph does. */
+    static XWPFDocument withoutCanvas(Consumer<PageFlowBuilder> content) throws Exception {
+        Captured captured = new Captured();
+        byte[] docx;
+        try (DocumentSession session = session(595, 842, 36, content)) {
+            session.export(captured);
+            docx = new DocxSemanticBackend().export(captured.graph,
+                    new SemanticExportContext(null, List.of(), null, null));
+        }
+        return new XWPFDocument(new ByteArrayInputStream(docx));
+    }
+
+    private static DocumentSession session(double pageWidth, double pageHeight, double margin,
+                                           Consumer<PageFlowBuilder> content) {
+        DocumentSession session = GraphCompose.document()
+                .pageSize(pageWidth, pageHeight)
+                .margin(DocumentInsets.of(margin))
+                .create();
+        session.pageFlow(content::accept);
+        return session;
+    }
+
+    /**
+     * A sidebar laid over the flow, holding the given layer: an overlay its margins give no room,
+     * pulled up over the page's top margin and handing its height back below.
+     *
+     * <p>What makes the export write a node over the flow rather than in it is its own
+     * arithmetic, so the shape that meets it is written once here and read by every test of
+     * that path.</p>
+     */
+    static com.demcha.compose.document.node.DocumentNode laidOverTheFlow(
+            com.demcha.compose.document.node.DocumentNode layer) {
+        double height = 120;
+        return new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Sidebar")
+                .rectangle(100, height)
+                .clipPolicy(com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE)
+                .margin(new DocumentInsets(-20, 0, 20 - height, -20))
+                .position(layer, 10, 10, com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
+                .build();
+    }
+
+    /** Takes the graph and the canvas the session would hand any backend. */
+    private static final class Captured implements SemanticBackend<byte[]> {
+
+        private DocumentGraph graph;
+        private LayoutCanvas canvas;
+
+        @Override
+        public String name() {
+            return "capture";
+        }
+
+        @Override
+        public byte[] export(DocumentGraph documentGraph, SemanticExportContext context) {
+            this.graph = documentGraph;
+            this.canvas = context.canvas();
+            return new byte[0];
+        }
+    }
+}

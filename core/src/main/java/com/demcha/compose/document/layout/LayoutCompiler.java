@@ -72,7 +72,8 @@ public final class LayoutCompiler {
         LayoutCanvas canvas = prepareContext.canvas();
         LAYOUT_LOG.debug("layout.compile.start roots={} canvas={}x{}", graph.roots().size(), Math.round(canvas.width()), Math.round(canvas.height()));
         PAGINATION_LOG.debug("pagination.compile.start roots={} innerHeight={}", graph.roots().size(), Math.round(canvas.innerHeight()));
-        CompilerState state = new CompilerState(canvas, prepareContext.pageGeometry());
+        PageGeometry pageGeometry = prepareContext.pageGeometry();
+        CompilerState state = new CompilerState(canvas, pageGeometry);
         List<PlacedNode> nodes = new ArrayList<>();
         List<PlacedFragment> fragments = new ArrayList<>();
 
@@ -107,7 +108,7 @@ public final class LayoutCompiler {
         int totalPages = nodes.isEmpty() && fragments.isEmpty()
                 ? 0
                 : state.maxTouchedPage + 1;
-        LayoutGraph layoutGraph = new LayoutGraph(canvas, totalPages, nodes, fragments);
+        LayoutGraph layoutGraph = new LayoutGraph(canvas, totalPages, nodes, fragments, pageGeometry);
         PAGINATION_LOG.debug(
                 "pagination.compile.end roots={} pages={} nodes={} fragments={} durationMs={}",
                 graph.roots().size(),

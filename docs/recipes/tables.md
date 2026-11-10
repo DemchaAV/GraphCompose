@@ -67,6 +67,10 @@ exactly one. Use `lines(...)` when the break is part of the content,
 or `node(...)` when the cell needs styling, markdown, or structure
 around it.
 
+The lines of a `lines(...)` cell stand one line height apart, plus the
+cell style's `lineSpacing(...)` between each pair: the row is sized for
+that space, and PDF, PPTX and DOCX all draw it.
+
 Paragraph content is a different story: `ParagraphNode` **does** treat
 `\n` as a hard line break, inside a cell exactly as it does anywhere
 else on the page. So a composed cell built from a paragraph whose text
@@ -77,6 +81,13 @@ child's whole sub-tree, so a `SectionNode` of three paragraphs is three
 paragraphs in the cell, not just the section's background. The row stays
 atomic: a composed cell does not split across a page break, so keep the
 child shorter than one page's content area.
+
+Text in a composed cell aligns in the cell's inner width, and a section,
+a row or any other composite lays itself out in the cell's inner box. A
+picture, a shape, a barcode or any
+other node of a size of its own keeps that size, held to the cell's
+inner width where it is wider, and starts at the cell's left content
+edge: the cell's horizontal anchor is not read for composed content.
 
 ## Row span — merge a cell vertically
 

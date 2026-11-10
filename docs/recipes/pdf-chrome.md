@@ -6,7 +6,8 @@ and the outline panel — is configured through backend-neutral value
 types in `com.demcha.compose.document.output` and applied with
 `DocumentSession` mutators: `metadata`, `watermark`, `header`,
 `footer`, `protect`. Backends that cannot honour a surface ignore it
-(DOCX honours metadata, skips watermark/header/footer/bookmarks).
+(DOCX honours metadata and writes the text header and footer as a Word
+header and footer; it skips the watermark and the outline bookmarks).
 
 ## Document metadata
 
@@ -126,10 +127,19 @@ document.footer(DocumentHeaderFooter.builder()
         .build());
 ```
 
-There is no automatic fallback — not in a zone, and not in body text
-either. The engine draws what the family you named can encode and
+There is no per-glyph fallback chain — not in a zone, and not in body
+text either. The engine draws what the family you named can encode and
 substitutes `?` for the rest, so the family has to cover the script.
-Custom families registered on the session are resolved here too.
+Custom families registered on the session are resolved here too. A
+family the session's font library does not hold is drawn in Helvetica,
+and the render logs a warning naming it (`render.pdf.header-footer.font`).
+
+A zone's text and its separator are drawn opaque: a translucent
+`textColor` or `separatorColor` is drawn at full strength, and the render
+logs a warning with its alpha (`render.pdf.header-footer.opaque`). Each
+warning is given once per zone and section — once per render for a
+document of one section — for a zone drawn on at least one page; the
+warning changes nothing drawn.
 
 ## A zone: nodes in the band, not text slots
 

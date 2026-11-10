@@ -18,7 +18,7 @@ tracks what is `Partial` or `Planned`.
 |---|---|---|---|
 | Open a document session | `GraphCompose.document(...)` → `DocumentSession` | Stable | [Your first document](first-document.md) |
 | Describe content in reading order | `pageFlow(...)`, `module(...)`, `addSection(...)` | Stable | [Getting started](getting-started.md) |
-| Combine sections with different page sizes and chrome | `GraphCompose.documents(...)`, `MultiSectionDocument` | Stable | [Runnable example](../examples/src/main/java/com/demcha/examples/features/structure/MultiSectionExample.java) |
+| Combine sections with different page sizes and chrome | `GraphCompose.documents(...)`, `MultiSectionDocument` (PDF; Word through `toDocxBytes` / `writeDocx` / `buildDocx`, Experimental) | Stable | [Runnable example](../examples/src/main/java/com/demcha/examples/features/structure/MultiSectionExample.java) |
 | Maintained document templates | `ModernInvoice`, `ModernProposal`, the `templates.cv.*` / `templates.coverletter.*` preset galleries | Stable | [Templates](templates/which-template-system.md) |
 | Reusable building blocks (helpers) | helper methods / widgets over the DSL | Stable | [Diagrams](diagrams.md#choose-your-authoring-path) |
 | Custom node / backend | `NodeDefinition`, render-handler SPI, `FixedLayoutBackend` | Extension SPI (`@Beta`) | [Extending](recipes/extending.md) |

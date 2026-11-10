@@ -24,7 +24,7 @@ ships them differs.
 | `graph-compose-core` | The lean engine: `com.demcha.compose`, the canonical `document.*` authoring surface (`api` / `dsl` / `node` / `style` / `table` / `snapshot`), `document.showcase` (`FontShowcase`), the `document.backend.fixed` SPI seam, the public `document.backend.fixed.pdf.options` records, `document.layout`, `font.*`, and the internal `engine.*` foundation. |
 | `graph-compose-render-pdf` | The PDFBox backend: `document.backend.fixed.pdf.**` (the `PdfFixedLayoutBackend` impl + handlers) and the `engine.render.pdf.**` render tree. Registers the PDF `FixedLayoutBackendProvider` / `FontMetricsProvider`. |
 | `graph-compose-render-pptx` | The POI XSLF backend: `document.backend.fixed.pptx.**` (the `PptxFixedLayoutBackend` impl + handlers), registering the `"pptx"` `FixedLayoutBackendProvider`. Also carries the older `document.backend.semantic.pptx` manifest exporter. Depends on `graph-compose-render-pdf` for shared font measurement and the clip raster pass. |
-| `graph-compose-render-docx` | The POI semantic exporter — `document.backend.semantic.docx`. |
+| `graph-compose-render-docx` | The POI semantic exporter — `document.backend.semantic.docx`. Brings `graph-compose-render-pdf` at compile scope, because opening a session needs its font-metrics provider, a barcode is drawn with its matrix encoder, and text seated off its baseline is moved by its seating correction over the same measurement fonts. |
 | `graph-compose-templates` | The built-in preset families — `document.templates.**`. |
 | `graph-compose-testing` | Consumer test support — `com.demcha.compose.testing.**`. |
 | `graph-compose` | Back-compat wrapper: an empty jar over `graph-compose-core` + `graph-compose-render-pdf`. |
@@ -57,7 +57,7 @@ per-package artifact.
 | `com.demcha.compose.document.backend.fixed.pdf` | Canonical fixed-layout PDF backend, fragment handlers, PDF-specific options, and PDF-backed measurement resources. | Keep PDFBox lifecycle internal; normal callers should use `DocumentSession` and default PDF convenience methods. |
 | `com.demcha.compose.document.backend.fixed.pptx` (`@Beta` at package level) | Fixed-layout PowerPoint backend — `PptxFixedLayoutBackend`, its provider, deterministic writer, embedded-font and clip support, plus the `.handlers` fragment handler set. Consumes the same resolved `LayoutGraph` as the PDF backend. | Keep POI XSLF lifecycle internal. Any capability change must update [backend-capability-matrix.md](./backend-capability-matrix.md) in the same commit. |
 | `com.demcha.compose.document.dsl.internal` | Internal helpers for public DSL builders such as semantic name normalization and builder callback application. | Do not expose these helpers in examples; move reusable authoring concepts to public builder classes instead. |
-| `com.demcha.compose.document.backend.semantic` | Experimental semantic export contracts for non-fixed outputs. | Keep exporters separate from PDF fixed-layout rendering. |
+| `com.demcha.compose.document.backend.semantic` | Semantic export contracts for non-fixed outputs. Stable; what 2.5.0 added is `@Beta` element by element (see `docs/api-stability.md`). | Keep exporters separate from PDF fixed-layout rendering. |
 | `com.demcha.compose.document.debug` | Snapshot/debug adapters for canonical layout graph inspection. | Debug output should be deterministic and safe for tests. |
 
 ## Shared Engine Foundation

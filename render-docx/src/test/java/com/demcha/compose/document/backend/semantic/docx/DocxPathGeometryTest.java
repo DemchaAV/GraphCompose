@@ -11,21 +11,20 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * DOCX geometry-drop behaviour: overlay/positioned wrappers recurse so their
- * semantic children (text, images) survive the Word export, while pure
- * geometry leaves (paths, polygons) are dropped without throwing — the
- * fixed-layout PDF backend is the path for pixel-perfect geometry.
+ * A path in the Word export: drawn as custom geometry whether it stands in the flow on its own
+ * or as a layer of a stack, and a stack that holds one still writes its text.
  */
-class DocxGeometryDropTest {
+class DocxPathGeometryTest {
 
     @Test
-    void layerStackRecursesSoChildTextSurvives() throws Exception {
-        List<String> texts = exportTexts(flow -> flow.addLayerStack(stack -> stack
+    void aLayerStackKeepsItsTextAndDrawsItsPath() throws Exception {
+        Exported exported = export(flow -> flow.addLayerStack(stack -> stack
                 .name("Overlay")
                 .layer(new com.demcha.compose.document.dsl.PathBuilder()
                         .name("Backdrop").size(120, 40)
@@ -36,23 +35,34 @@ class DocxGeometryDropTest {
                         .text("Caption over the shape")
                         .build())));
 
-        assertThat(texts).contains("Caption over the shape");
+        assertThat(exported.texts()).contains("Caption over the shape");
+        assertThat(exported.customGeometries()).as("the backdrop, drawn").isEqualTo(1);
+        assertThat(exported.report().count(DocxExportReport.Severity.DROPPED)).isZero();
     }
 
     @Test
-    void standaloneGeometryIsDroppedWithoutThrowing() throws Exception {
-        // A bare path has no semantic Word analogue; the export completes and
-        // simply carries no paragraph for it.
-        List<String> texts = exportTexts(flow -> flow.addPath(path -> path
+    void aPathOnItsOwnIsDrawnAsCustomGeometry() throws Exception {
+        Exported exported = export(flow -> flow.addPath(path -> path
                 .name("Wave").size(200, 40)
                 .moveTo(0, 0.5).curveTo(0.25, 1, 0.75, 0, 1, 0.5)
                 .stroke(DocumentStroke.of(DocumentColor.rgb(0, 0, 0), 2))));
 
-        assertThat(texts).allMatch(String::isBlank);
+        assertThat(exported.customGeometries()).isEqualTo(1);
+        assertThat(exported.xml()).contains("<a:cubicBezTo>");
+        assertThat(exported.texts()).as("a drawing, not text").allMatch(String::isBlank);
+        assertThat(exported.report().count(DocxExportReport.Severity.DROPPED)).isZero();
     }
 
-    private static List<String> exportTexts(
+    private record Exported(List<String> texts, String xml, DocxExportReport report) {
+
+        long customGeometries() {
+            return xml.split("<a:custGeom>", -1).length - 1L;
+        }
+    }
+
+    private static Exported export(
             Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> author) throws Exception {
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
         byte[] docxBytes;
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(595, 842)
@@ -61,12 +71,13 @@ class DocxGeometryDropTest {
             var flow = session.dsl().pageFlow().name("Flow");
             author.accept(flow);
             flow.build();
-            docxBytes = session.export(new DocxSemanticBackend());
+            docxBytes = session.export(new DocxSemanticBackend(report::set));
         }
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
-            return document.getParagraphs().stream()
-                    .map(XWPFParagraph::getText)
-                    .toList();
+            return new Exported(
+                    document.getParagraphs().stream().map(XWPFParagraph::getText).toList(),
+                    document.getDocument().xmlText(),
+                    report.get());
         }
     }
 }

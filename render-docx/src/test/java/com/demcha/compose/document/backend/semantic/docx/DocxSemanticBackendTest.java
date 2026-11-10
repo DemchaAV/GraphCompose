@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DocxSemanticBackendTest {
 
     @Test
-    void chartExportsAsItsDataTable() throws Exception {
+    void chartExportsAsAWordChartWithItsDataInTheEmbeddedWorkbook() throws Exception {
         com.demcha.compose.document.chart.ChartData data =
                 com.demcha.compose.document.chart.ChartData.builder()
                         .categories("Q1", "Q2")
@@ -49,22 +49,24 @@ class DocxSemanticBackendTest {
             docxBytes = session.export(new DocxSemanticBackend());
         }
 
+        // Read back through POI, as a reader of the file would: the chart part and its workbook.
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
-            List<XWPFTable> tables = document.getTables();
-            assertThat(tables).hasSize(1);
-            XWPFTable table = tables.get(0);
-            // Header (blank corner + series names) plus one row per category.
-            assertThat(table.getRows()).hasSize(3);
-            assertThat(table.getRow(0).getCell(1).getText()).isEqualTo("2024");
-            assertThat(table.getRow(0).getCell(2).getText()).isEqualTo("2025");
-            assertThat(table.getRow(1).getCell(0).getText()).isEqualTo("Q1");
-            assertThat(table.getRow(1).getCell(1).getText()).isEqualTo("12.4");
-            assertThat(table.getRow(2).getCell(2).getText()).isEqualTo("18.2");
+            assertThat(document.getTables()).as("no data table").isEmpty();
+            assertThat(document.getCharts()).hasSize(1);
+            try (org.apache.poi.xssf.usermodel.XSSFWorkbook book = document.getCharts().get(0).getWorkbook()) {
+                org.apache.poi.xssf.usermodel.XSSFSheet sheet = book.getSheetAt(0);
+                // Series names across the head, then a row per category, as Word lays out a chart's data.
+                assertThat(sheet.getRow(0).getCell(1).getStringCellValue()).isEqualTo("2024");
+                assertThat(sheet.getRow(0).getCell(2).getStringCellValue()).isEqualTo("2025");
+                assertThat(sheet.getRow(1).getCell(0).getStringCellValue()).isEqualTo("Q1");
+                assertThat(sheet.getRow(1).getCell(1).getNumericCellValue()).isEqualTo(12.4);
+                assertThat(sheet.getRow(2).getCell(2).getNumericCellValue()).isEqualTo(18.2);
+            }
         }
     }
 
     @Test
-    void listsExportAsMarkerPrefixedParagraphs() throws Exception {
+    void listsExportAsWordListItems() throws Exception {
         byte[] docxBytes;
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(595, 842)
@@ -79,13 +81,15 @@ class DocxSemanticBackendTest {
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
             List<String> texts = document.getParagraphs().stream()
                     .map(XWPFParagraph::getText).toList();
-            assertThat(texts).anyMatch(t -> t.endsWith("First") && t.length() > "First".length());
-            assertThat(texts).anyMatch(t -> t.endsWith("Second"));
+            // Word owns the marker now, so the item's text is the item and nothing more;
+            // that the paragraph is a list item is asserted through w:numPr, in
+            // DocxListNumberingTest.
+            assertThat(texts).contains("First", "Second");
         }
     }
 
     @Test
-    void nestedListItemsIndentTwoSpacesPerDepth() throws Exception {
+    void nestedListItemsUseListLevelsRatherThanIndentCharacters() throws Exception {
         byte[] docxBytes;
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(595, 842)
@@ -104,13 +108,11 @@ class DocxSemanticBackendTest {
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
             List<String> texts = document.getParagraphs().stream()
                     .map(XWPFParagraph::getText).toList();
-            // Two spaces of indent per depth; without per-item markers the
-            // semantic export falls back to the same depth cascade the
-            // fixed-layout pipeline uses (• ◦ ▪), so PDF and DOCX agree.
-            assertThat(texts).contains(
-                    "• Level zero",
-                    "  ◦ Level one",
-                    "    ▪ Level two");
+            // Nesting is a list level rather than padding characters, so no indent
+            // reaches the text. Without per-item markers the export still falls back to
+            // the same depth cascade the fixed-layout pipeline uses (• ◦ ▪) — that it
+            // does is asserted on the level definitions in DocxListNumberingTest.
+            assertThat(texts).contains("Level zero", "Level one", "Level two");
         }
     }
 
@@ -133,13 +135,17 @@ class DocxSemanticBackendTest {
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
             List<String> texts = document.getParagraphs().stream()
                     .map(XWPFParagraph::getText).toList();
-            // The per-depth override survives; the flat-list marker("→") does
-            // not leak into nested fallbacks — depth 0 takes the cascade
-            // bullet exactly as fixed-layout rendering does (markerFor(0, ...)
-            // is the way to control depth 0).
-            assertThat(texts).contains(
-                    "• Root",
-                    "  ‣ Child");
+            assertThat(texts).contains("Root", "Child");
+
+            // The claim is about which marker each depth gets, and the markers now live
+            // in the list definition rather than in the text. The per-depth override
+            // survives; the flat-list marker("→") does not leak into nested fallbacks —
+            // depth 0 takes the cascade bullet exactly as fixed-layout rendering does
+            // (markerFor(0, ...) is the way to control depth 0).
+            var levels = document.getNumbering()
+                    .getAbstractNum(java.math.BigInteger.ZERO).getAbstractNum().getLvlList();
+            assertThat(levels.get(0).getLvlText().getVal()).isEqualTo("•");
+            assertThat(levels.get(1).getLvlText().getVal()).isEqualTo("‣");
         }
     }
 
@@ -153,32 +159,36 @@ class DocxSemanticBackendTest {
             assertThat(paragraphs).hasSize(2);
 
             // The marker still reads the same down the whole list, and the
-            // item's text is all there. The geometry hangingIndent(true) asks
-            // for has no Word analogue; which piece of an item is bold does.
-            assertThat(paragraphs.get(0).getText()).isEqualTo("- Plain item");
+            // item's text is all there, a tab after the marker to the column the
+            // layout set it in; which piece of an item is bold is kept as well.
+            assertThat(paragraphs.get(0).getText()).isEqualTo("-\tPlain item");
             XWPFParagraph rich = paragraphs.get(1);
-            assertThat(rich.getText()).isEqualTo("- Status: pending");
+            assertThat(rich.getText()).isEqualTo("-\tStatus: pending");
             assertThat(rich.getRuns().stream().map(XWPFRun::text).toList())
-                    .as("the marker leads in the list's own style, then one run each")
-                    .containsExactly("- ", "Status: ", "pending");
+                    .as("the marker leads in the list's own style, a tab, then one run each")
+                    .containsExactly("-", "\t", "Status: ", "pending");
             assertThat(rich.getRuns().stream().map(XWPFRun::isBold).toList())
                     .as("and only the bold run is bold")
-                    .containsExactly(false, true, false);
+                    .containsExactly(false, false, true, false);
         }
     }
 
     @Test
-    void aRichListItemExportsTheSameWhetherOrNotTheListOptedIntoMarkerGeometry() throws Exception {
-        // hangingIndent is fixed-layout geometry, and the semantic export lays
-        // nothing out — so unlike the PDF path, which needs the opt-in before it
-        // can carry runs at all, this one is indifferent to it. Word owns the
-        // layout here and can hold a run's style either way.
-        assertThat(runStructure(richListDocx(false)))
-                .isEqualTo(runStructure(richListDocx(true)));
+    void aRichListItemOptedIntoMarkerGeometryTabsToItsColumnAndKeepsItsRunsOtherwise() throws Exception {
+        // With the opt-in the layout sets the marker in a column of its own, and the item
+        // follows it with a tab to that column; without it, with the space it has always had.
+        // Which runs the item is made of, and their styles, are the same either way.
+        List<String> plain = runStructure(richListDocx(false));
+        List<String> opted = runStructure(richListDocx(true));
+        assertThat(plain).contains("- Plain item|bold=false", "- |bold=false");
+        assertThat(opted).contains("Plain item|bold=false", "-|bold=false", "\t|bold=false")
+                .doesNotContain("- Plain item|bold=false", "- |bold=false");
+        assertThat(opted.stream().filter(run -> run.startsWith("Status") || run.startsWith("pending")).toList())
+                .isEqualTo(plain.stream().filter(run -> run.startsWith("Status") || run.startsWith("pending")).toList());
     }
 
     @Test
-    void aDrawnListMarkerDropsAndATextMarkerKeepsItsOwnStyle() throws Exception {
+    void aDrawnListMarkerIsItsPictureAndATextMarkerKeepsItsOwnStyle() throws Exception {
         byte[] docxBytes;
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(595, 842)
@@ -203,9 +213,16 @@ class DocxSemanticBackendTest {
                     .toList();
             assertThat(paragraphs).hasSize(2);
 
-            // A disc has no Word analogue, so it drops — and drops rather than
-            // being replaced by a bullet nobody asked for. The item survives.
-            assertThat(paragraphs.get(0).getText()).isEqualTo("Drawn marker item");
+            // A disc is the picture it draws — not a bullet nobody asked for — followed by a
+            // tab to where the page starts the item: the disc's width and markerGap past it.
+            XWPFParagraph drawn = paragraphs.get(0);
+            assertThat(drawn.getText()).isEqualTo("\tDrawn marker item");
+            assertThat(drawn.getRuns().stream().filter(run -> !run.getEmbeddedPictures().isEmpty()))
+                    .as("the disc").hasSize(1);
+            var stops = drawn.getCTP().getPPr().getTabs().getTabArray();
+            assertThat(stops).hasSize(1);
+            assertThat(DocxTwips.of(stops[0].getPos())).as("the disc's width and the gap after it")
+                    .isEqualTo(Math.round((4.0 + com.demcha.compose.document.node.ListNode.DEFAULT_MARKER_GAP) * 20));
 
             // A marker written as text keeps the colour it was given, because a
             // run colour is something Word holds.
@@ -266,7 +283,7 @@ class DocxSemanticBackendTest {
                     .map(XWPFParagraph::getText).toList();
             // writeNode recurses through section/container wrappers, so the
             // nested list is not dropped.
-            assertThat(texts).contains("• Inside section");
+            assertThat(texts).contains("Inside section");
         }
     }
 
@@ -362,17 +379,62 @@ class DocxSemanticBackendTest {
             assertThat(props.getTitle()).isEqualTo("Q1 Report");
             assertThat(props.getCreator()).isEqualTo("Engineering");
             assertThat(props.getKeywords()).isEqualTo("docx, metadata, report");
+            assertThat(document.getProperties().getExtendedProperties().getApplication())
+                    .as("the application that created it, GraphCompose by default, as a PDF's creator")
+                    .isEqualTo("GraphCompose");
         }
     }
 
     @Test
-    void shapeContainerExportsLayersInlineWithoutOutline() throws Exception {
+    void theCreatingApplicationIsWrittenAndAProducerApartFromItIsNamed() throws Exception {
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        byte[] docxBytes;
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
+            session.metadata(DocumentMetadata.builder().creator("Billing").producer("Billing PDF").build());
+            session.pageFlow(page -> page.addParagraph("Body"));
+            docxBytes = session.export(new DocxSemanticBackend(report::set));
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+            assertThat(document.getProperties().getExtendedProperties().getApplication()).isEqualTo("Billing");
+        }
+        assertThat(report.get().notes()).filteredOn(note -> note.subject().equals("producer"))
+                .extracting(DocxExportReport.Note::severity, DocxExportReport.Note::detail)
+                .containsExactly(org.assertj.core.groups.Tuple.tuple(DocxExportReport.Severity.DROPPED,
+                        "a Word file names the application that created it, \"Billing\", and has no field for "
+                        + "a producer, so \"Billing PDF\" is not in it"));
+    }
+
+    @Test
+    void aProducerThatIsTheApplicationWrittenOrNoOneSetIsNotNamed() throws Exception {
+        // Setting only a creator leaves the producer every metadata starts with, which states nothing.
+        for (DocumentMetadata metadata : List.of(DocumentMetadata.builder().title("Defaults").build(),
+                DocumentMetadata.builder().creator(null).producer("Billing").build(),
+                DocumentMetadata.builder().creator("Billing").build())) {
+            java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+            byte[] docxBytes;
+            try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
+                session.metadata(metadata);
+                session.pageFlow(page -> page.addParagraph("Body"));
+                docxBytes = session.export(new DocxSemanticBackend(report::set));
+            }
+
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+                assertThat(document.getProperties().getExtendedProperties().getApplication())
+                        .as("with no creator, the producer is the application named")
+                        .isEqualTo(metadata.getCreator() != null ? metadata.getCreator() : metadata.getProducer());
+            }
+            assertThat(report.get().notes()).noneMatch(note -> note.subject().equals("producer"));
+        }
+    }
+
+    @Test
+    void shapeContainerExportsLayersInline() throws Exception {
         // POI/DOCX has no portable equivalent of a graphics-state path
         // clip, so the canonical contract (canonical-legacy-parity.md)
         // is for DocxSemanticBackend to render a ShapeContainer's layers
-        // inline — the inner paragraph survives, but the circle outline
-        // is not drawn. The single capability warning is logged once per
-        // export pass.
+        // inline, unclipped — the inner paragraph survives. The single
+        // capability warning is logged once per export pass.
         ParagraphNode label = new ParagraphBuilder()
                 .text("Featured")
                 .build();

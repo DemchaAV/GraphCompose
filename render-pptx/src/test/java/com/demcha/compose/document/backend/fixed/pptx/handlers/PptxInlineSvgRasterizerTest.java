@@ -81,7 +81,7 @@ class PptxInlineSvgRasterizerTest {
 
     private static ParagraphSvgSpan span(ResolvedSvgLayer layer) {
         return new ParagraphSvgSpan(List.of(layer), 20, 20,
-                InlineImageAlignment.CENTER, 0, null);
+                InlineImageAlignment.CENTER, 0, null, null);
     }
 
     private static ResolvedSvgLayer layer(List<DocumentPathSegment> segments,

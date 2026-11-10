@@ -2,16 +2,16 @@
   "schemaVersion": 2,
   "targetLibrary": "GraphCompose",
   "surface": "backends",
-  "targetVersion": "2.4.x",
-  "verifiedAgainst": "2.4.2-SNAPSHOT",
+  "targetVersion": "2.5.x",
+  "verifiedAgainst": "2.5.0-SNAPSHOT",
   "generator": "knowledge/tools/api-surface/extract-api.mjs",
   "generatedFrom": [
-    "io.github.demchaav:graph-compose-core:2.4.2-SNAPSHOT",
-    "io.github.demchaav:graph-compose-templates:2.4.2-SNAPSHOT",
-    "io.github.demchaav:graph-compose-render-pdf:2.4.2-SNAPSHOT",
-    "io.github.demchaav:graph-compose-render-docx:2.4.2-SNAPSHOT",
-    "io.github.demchaav:graph-compose-render-pptx:2.4.2-SNAPSHOT",
-    "io.github.demchaav:graph-compose-testing:2.4.2-SNAPSHOT"
+    "io.github.demchaav:graph-compose-core:2.5.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-templates:2.5.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-pdf:2.5.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-docx:2.5.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-pptx:2.5.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-testing:2.5.0-SNAPSHOT"
   ],
   "parameterNamesFrom": [
     "graph-compose-core:sources",
@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 70,
-    "methods": 375,
-    "constants": 18,
-    "generated": 192
+    "types": 78,
+    "methods": 408,
+    "constants": 21,
+    "generated": 210
   },
   "packages": [
     {
@@ -1056,6 +1056,41 @@
                 {
                   "type": "String",
                   "name": "text"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "writeTextLayer",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PDPageContentStream",
+                  "name": "stream"
+                },
+                {
+                  "type": "String",
+                  "name": "text"
+                },
+                {
+                  "type": "double",
+                  "name": "x"
+                },
+                {
+                  "type": "double",
+                  "name": "baselineY"
+                },
+                {
+                  "type": "double",
+                  "name": "width"
+                },
+                {
+                  "type": "double",
+                  "name": "height"
                 }
               ],
               "stability": "beta"
@@ -5923,6 +5958,63 @@
       "name": "com.demcha.compose.document.backend.semantic",
       "types": [
         {
+          "name": "SemanticBackendProvider",
+          "binaryName": "com.demcha.compose.document.backend.semantic.SemanticBackendProvider",
+          "kind": "interface",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "method",
+              "name": "format",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "SemanticBackend<byte[]>",
+              "params": [],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "SemanticBackendProviders",
+          "binaryName": "com.demcha.compose.document.backend.semantic.SemanticBackendProviders",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "method",
+              "name": "forFormat",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "SemanticBackendProvider",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "format"
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
           "name": "SemanticExportContext",
           "binaryName": "com.demcha.compose.document.backend.semantic.SemanticExportContext",
           "kind": "record",
@@ -5954,6 +6046,41 @@
                 {
                   "type": "DocumentOutputOptions",
                   "name": null
+                },
+                {
+                  "type": "LayoutGraph",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "constructor",
+              "name": "SemanticExportContext",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "LayoutCanvas",
+                  "name": "canvas"
+                },
+                {
+                  "type": "Collection<FontFamilyDefinition>",
+                  "name": "customFontFamilies"
+                },
+                {
+                  "type": "Path",
+                  "name": "outputFile"
+                },
+                {
+                  "type": "DocumentOutputOptions",
+                  "name": "outputOptions"
                 }
               ]
             },
@@ -5978,6 +6105,16 @@
                   "name": "outputFile"
                 }
               ]
+            },
+            {
+              "kind": "method",
+              "name": "requireLayoutGraph",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "LayoutGraph",
+              "params": [],
+              "stability": "beta"
             },
             {
               "kind": "method",
@@ -6014,6 +6151,26 @@
               "typeParameters": null,
               "returns": "DocumentOutputOptions",
               "params": []
+            },
+            {
+              "kind": "method",
+              "name": "layoutGraph",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "LayoutGraph",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "layoutFailure",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [],
+              "stability": "beta"
             }
           ]
         },
@@ -6089,12 +6246,292 @@
               "params": []
             }
           ]
+        },
+        {
+          "name": "SemanticSection",
+          "binaryName": "com.demcha.compose.document.backend.semantic.SemanticSection",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "SemanticSection",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "DocumentGraph",
+                  "name": null
+                },
+                {
+                  "type": "SemanticExportContext",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "graph",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentGraph",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "context",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "SemanticExportContext",
+              "params": [],
+              "stability": "beta"
+            }
+          ]
         }
       ]
     },
     {
       "name": "com.demcha.compose.document.backend.semantic.docx",
       "types": [
+        {
+          "name": "DocxBackendProvider",
+          "binaryName": "com.demcha.compose.document.backend.semantic.docx.DocxBackendProvider",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-docx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "DocxBackendProvider",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "format",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "SemanticBackend<byte[]>",
+              "params": [],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "DocxExportReport",
+          "binaryName": "com.demcha.compose.document.backend.semantic.docx.DocxExportReport",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-docx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "EMPTY",
+              "static": true,
+              "origin": "generated",
+              "type": "DocxExportReport",
+              "stability": "beta"
+            },
+            {
+              "kind": "constructor",
+              "name": "DocxExportReport",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "List<DocxExportReport.Note>",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "isEmpty",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "count",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "long",
+              "params": [
+                {
+                  "type": "DocxExportReport.Severity",
+                  "name": "severity"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "bySubject",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Map<String, List<DocxExportReport.Note>>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "notes",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<DocxExportReport.Note>",
+              "params": [],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "DocxExportReport.Note",
+          "binaryName": "com.demcha.compose.document.backend.semantic.docx.DocxExportReport$Note",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-docx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "Note",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "DocxExportReport.Severity",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "severity",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocxExportReport.Severity",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "subject",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "path",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "detail",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "DocxExportReport.Severity",
+          "binaryName": "com.demcha.compose.document.backend.semantic.docx.DocxExportReport$Severity",
+          "kind": "enum",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-docx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "DROPPED",
+              "static": true,
+              "origin": "generated",
+              "type": "DocxExportReport.Severity",
+              "stability": "beta"
+            },
+            {
+              "kind": "constant",
+              "name": "APPROXIMATED",
+              "static": true,
+              "origin": "generated",
+              "type": "DocxExportReport.Severity",
+              "stability": "beta"
+            }
+          ]
+        },
         {
           "name": "DocxSemanticBackend",
           "binaryName": "com.demcha.compose.document.backend.semantic.docx.DocxSemanticBackend",
@@ -6114,6 +6551,31 @@
               "params": []
             },
             {
+              "kind": "constructor",
+              "name": "DocxSemanticBackend",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "Consumer<DocxExportReport>",
+                  "name": "reportSink"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocxSemanticBackend.Builder",
+              "params": [],
+              "stability": "beta"
+            },
+            {
               "kind": "method",
               "name": "name",
               "static": false,
@@ -6121,6 +6583,16 @@
               "typeParameters": null,
               "returns": "String",
               "params": []
+            },
+            {
+              "kind": "method",
+              "name": "requiresResolvedLayout",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": [],
+              "stability": "beta"
             },
             {
               "kind": "method",
@@ -6142,6 +6614,36 @@
             },
             {
               "kind": "method",
+              "name": "exportSections",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "byte[]",
+              "params": [
+                {
+                  "type": "List<SemanticSection>",
+                  "name": "sections"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "exportSections",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Object",
+              "params": [
+                {
+                  "type": "List",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
               "name": "export",
               "static": false,
               "origin": "source",
@@ -6157,6 +6659,73 @@
                   "name": "context"
                 }
               ]
+            }
+          ]
+        },
+        {
+          "name": "DocxSemanticBackend.Builder",
+          "binaryName": "com.demcha.compose.document.backend.semantic.docx.DocxSemanticBackend$Builder",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-docx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "method",
+              "name": "reportSink",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocxSemanticBackend.Builder",
+              "params": [
+                {
+                  "type": "Consumer<DocxExportReport>",
+                  "name": "reportSink"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "deterministic",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocxSemanticBackend.Builder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": "enabled"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "deterministic",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocxSemanticBackend.Builder",
+              "params": [
+                {
+                  "type": "Instant",
+                  "name": "timestamp"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocxSemanticBackend",
+              "params": [],
+              "stability": "beta"
             }
           ]
         }

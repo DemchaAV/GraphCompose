@@ -188,7 +188,10 @@ public final class PptxTableRowFragmentRenderHandler
                                        double cellY,
                                        PptxRenderEnvironment environment) {
         PdfFont font = fonts.getFont(cell.style().textStyle().fontName(), PdfFont.class).orElseThrow();
-        double lineHeight = font.getLineHeight(cell.style().textStyle());
+        // The height the row was sized with, when the layout says it — see the PDF handler.
+        double lineHeight = cell.hasMeasuredLineHeight()
+                ? cell.lineHeight()
+                : font.getLineHeight(cell.style().textStyle());
         Padding padding = cell.style().padding() == null ? Padding.zero() : cell.style().padding();
         Anchor anchor = cell.style().textAnchor() == null ? Anchor.centerLeft() : cell.style().textAnchor();
 
@@ -197,7 +200,10 @@ public final class PptxTableRowFragmentRenderHandler
         double innerWidth = Math.max(0, cell.width() - padding.horizontal());
         double innerHeight = Math.max(0, cell.height() - padding.vertical());
         List<String> safeLines = sanitizeLines(cell.lines());
-        double blockHeight = lineHeight * Math.max(1, safeLines.size());
+        // A line height and the cell's line spacing apart — see the PDF handler.
+        double lineSpacing = cell.style().lineSpacing() == null ? 0.0 : cell.style().lineSpacing();
+        int lineCount = Math.max(1, safeLines.size());
+        double blockHeight = lineHeight * lineCount + lineSpacing * (lineCount - 1);
 
         double blockY = switch (anchor.v()) {
             case TOP -> innerY + innerHeight - blockHeight;
@@ -222,7 +228,7 @@ public final class PptxTableRowFragmentRenderHandler
                 case CENTER -> innerX + (innerWidth - lineWidth) / 2.0;
                 case LEFT, DEFAULT -> innerX;
             };
-            double lineBoxY = blockY + lineHeight * (safeLines.size() - lineIndex - 1);
+            double lineBoxY = blockY + (lineHeight + lineSpacing) * (safeLines.size() - lineIndex - 1);
             double baselineY = lineBoxY + metrics.baselineOffsetFromBottom();
             // The line goes over exactly as it was typed, and PowerPoint runs the whole
             // algorithm on it: ordering, joining and the mirroring of paired punctuation.

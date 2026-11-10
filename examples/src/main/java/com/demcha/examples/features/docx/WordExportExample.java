@@ -2,6 +2,7 @@ package com.demcha.examples.features.docx;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.backend.semantic.docx.DocxExportReport;
 import com.demcha.compose.document.backend.semantic.docx.DocxSemanticBackend;
 import com.demcha.compose.document.chart.ChartData;
 import com.demcha.compose.document.chart.ChartSpec;
@@ -30,17 +31,24 @@ import java.nio.file.Path;
 /**
  * One document, two outputs: the same {@link DocumentSession} renders a
  * fixed-layout PDF <em>and</em> exports an editable Word file through
- * {@link DocxSemanticBackend}. Each section demonstrates one row of the
- * DOCX capability table from {@code docs/recipes/docx-export.md}:
- * styled paragraphs and inline runs map 1:1, lists keep markers and
- * per-depth indent, tables and side-by-side rows stay tables, images
- * embed at their declared size, page breaks survive, charts fall back to
- * their data table, and pure geometry (dividers, shape containers) stays
- * PDF-only by design.
+ * {@link DocxSemanticBackend}. Each section shows what the Word export makes
+ * of one kind of content: styled paragraphs and inline runs are Word
+ * paragraphs and runs, lists are Word lists with their markers, tables and
+ * side-by-side rows are tables, an image keeps its size, a page break stays
+ * a page break, a chart is a Word chart with its numbers in an embedded
+ * workbook, and a divider and a badge are a paragraph border and a drawn
+ * shape holding its letters.
  *
- * <p>Requires {@code org.apache.poi:poi-ooxml} on the classpath — the
- * dependency is optional in the GraphCompose POM, so this module adds it
- * explicitly, exactly like a consuming project would.</p>
+ * <p>{@code document.buildDocx(path)} exports in one call. It builds a
+ * default backend, so it has no report and stamps the file with the date of
+ * the export. This example configures the backend instead, for the two
+ * things that call does not give: {@code reportSink} hands over what Word
+ * could not carry as authored, which {@code printReport} prints, and
+ * {@code deterministic(true)} pins the package's clocks, so the committed
+ * preview comes out as the same bytes on every run on one platform.</p>
+ *
+ * <p>Requires {@code io.github.demchaav:graph-compose-render-docx} on the
+ * classpath, which brings Apache POI with it.</p>
  *
  * @author Artem Demchyshyn
  */
@@ -100,12 +108,12 @@ public final class WordExportExample {
             document.metadata(DocumentMetadata.builder()
                     .title("GraphCompose Word export companion")
                     .author("GraphCompose")
-                    .subject("Every node the semantic DOCX backend maps, falls back on, or skips")
+                    .subject("What the semantic DOCX backend makes of each node, and what its report names")
                     .keywords("graphcompose, docx, semantic export")
                     .build());
 
             document.pageFlow().name("Flow").spacing(14)
-                    .addParagraph("GraphCompose → Word, from one document", title)
+                    .addParagraph("GraphCompose to Word, from one document", title)
                     .addRich(rich -> rich
                             .plain("This file exists twice: a fixed-layout ")
                             .bold("PDF")
@@ -117,7 +125,7 @@ public final class WordExportExample {
                             .accent("bold accents", TEAL)
                             .plain(" — survive in both."))
 
-                    .addParagraph("Lists keep markers and indent", heading)
+                    .addParagraph("Lists stay Word lists, with their markers", heading)
                     .addList(list -> list
                             .name("FlatList")
                             .textStyle(body)
@@ -128,10 +136,10 @@ public final class WordExportExample {
                             .name("NestedList")
                             .textStyle(body)
                             .itemSpacing(2)
-                            .markerFor(1, ListMarker.custom("◦"))
-                            .markerFor(2, ListMarker.custom("▪"))
+                            .markerFor(1, ListMarker.custom("»"))
+                            .markerFor(2, ListMarker.custom("·"))
                             .addItem("Nested authoring", l1 -> l1
-                                    .addItem("Two spaces of indent per depth in Word", l2 -> l2
+                                    .addItem("Each depth is a level of one Word list", l2 -> l2
                                             .addItem("Custom markers survive the export"))))
 
                     .addParagraph("Tables stay tables, and keep their paint", heading)
@@ -166,15 +174,17 @@ public final class WordExportExample {
 
                     .addPageBreak(pb -> pb.name("ToPage2"))
 
-                    .addParagraph("Charts fall back to their data", heading)
-                    .addParagraph("The PDF renders the vector chart; Word has no layout pass, "
-                            + "so the same node exports as a categories-by-series table.", caption)
+                    .addParagraph("Charts become Word charts", heading)
+                    .addParagraph("The PDF draws the vector chart; the Word export writes the "
+                            + "same node as a Word chart, its numbers in an embedded workbook "
+                            + "you edit through Edit Data.", caption)
                     .addSection("Chart", s -> s.chart(ChartSpec.bar().data(quarters).build()))
 
-                    .addParagraph("Geometry stays PDF-only by design", heading)
-                    .addParagraph("The divider and the badge below render in the PDF; the "
-                            + "semantic export skips pure geometry and writes the badge's "
-                            + "text inline instead.", caption)
+                    .addParagraph("Drawing becomes Word's own", heading)
+                    .addParagraph("In Word the divider below is a paragraph border, and the "
+                            + "badge a drawn shape that holds its letters. The export report "
+                            + "names both, as each is written in a form of Word's own.",
+                            caption)
                     .addDivider(d -> d.width(420).thickness(2).color(GOLD))
                     .addCircle(72, TEAL, c -> c
                             .stroke(DocumentStroke.of(GOLD, 1.2))
@@ -189,10 +199,41 @@ public final class WordExportExample {
                     .build();
 
             document.buildPdf();
-            document.export(new DocxSemanticBackend(), docxFile);
+
+            // document.buildDocx(docxFile) is the one-call export. A configured backend adds
+            // the report of what Word could not carry as authored, and pinned clocks, so the
+            // same document exports to the same bytes on every run on one platform.
+            document.export(DocxSemanticBackend.builder()
+                    .deterministic(true)
+                    .reportSink(WordExportExample::printReport)
+                    .build(), docxFile);
         }
         System.out.println("Generated: " + docxFile);
         return pdfFile;
+    }
+
+    /**
+     * Lists, by subject, what the Word export could not carry as authored. A
+     * note that is {@code DROPPED} is not in the file; one that is
+     * {@code APPROXIMATED} is there as the nearest thing Word has. Each line
+     * gives a note's severity and where it was: a node's layout path, which
+     * traces it back to the code that authored it, a page, or no path at all
+     * for a note about the whole document or a page zone. Each note's
+     * {@code detail()} says what it means for the document.
+     */
+    private static void printReport(DocxExportReport report) {
+        if (report.isEmpty()) {
+            System.out.println("Word export: everything written as authored");
+            return;
+        }
+        System.out.printf("Word export: %d dropped, %d approximated%n",
+                report.count(DocxExportReport.Severity.DROPPED),
+                report.count(DocxExportReport.Severity.APPROXIMATED));
+        report.bySubject().forEach((subject, notes) -> {
+            System.out.println("  " + subject + " (" + notes.size() + ")");
+            notes.forEach(note -> System.out.println("    " + note.severity() + " "
+                    + (note.path() == null ? "(no path)" : note.path())));
+        });
     }
 
     /**

@@ -2,16 +2,16 @@
   "schemaVersion": 2,
   "targetLibrary": "GraphCompose",
   "surface": "authoring",
-  "targetVersion": "2.4.x",
-  "verifiedAgainst": "2.4.2-SNAPSHOT",
+  "targetVersion": "2.5.x",
+  "verifiedAgainst": "2.5.0-SNAPSHOT",
   "generator": "knowledge/tools/api-surface/extract-api.mjs",
   "generatedFrom": [
-    "io.github.demchaav:graph-compose-core:2.4.2-SNAPSHOT",
-    "io.github.demchaav:graph-compose-templates:2.4.2-SNAPSHOT",
-    "io.github.demchaav:graph-compose-render-pdf:2.4.2-SNAPSHOT",
-    "io.github.demchaav:graph-compose-render-docx:2.4.2-SNAPSHOT",
-    "io.github.demchaav:graph-compose-render-pptx:2.4.2-SNAPSHOT",
-    "io.github.demchaav:graph-compose-testing:2.4.2-SNAPSHOT"
+    "io.github.demchaav:graph-compose-core:2.5.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-templates:2.5.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-pdf:2.5.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-docx:2.5.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-pptx:2.5.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-testing:2.5.0-SNAPSHOT"
   ],
   "parameterNamesFrom": [
     "graph-compose-core:sources",
@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 237,
-    "methods": 2123,
+    "methods": 2135,
     "constants": 236,
-    "generated": 1129
+    "generated": 1130
   },
   "packages": [
     {
@@ -1197,6 +1197,46 @@
             },
             {
               "kind": "method",
+              "name": "toDocxBytes",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "byte[]",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "writeDocx",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "OutputStream",
+                  "name": "output"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "buildDocx",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "Path",
+                  "name": "outputFile"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
               "name": "toPptxBytes",
               "static": false,
               "origin": "source",
@@ -1413,6 +1453,61 @@
                   "name": "outputFile"
                 }
               ]
+            },
+            {
+              "kind": "method",
+              "name": "export",
+              "static": false,
+              "origin": "source",
+              "typeParameters": "<R>",
+              "returns": "R",
+              "params": [
+                {
+                  "type": "SemanticBackend<R>",
+                  "name": "backend"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "toDocxBytes",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "byte[]",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "writeDocx",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "OutputStream",
+                  "name": "output"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "buildDocx",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "Path",
+                  "name": "outputFile"
+                }
+              ],
+              "stability": "beta"
             },
             {
               "kind": "method",
@@ -23893,6 +23988,68 @@
                   "name": "cornerRadius"
                 },
                 {
+                  "type": "DocumentLinkTarget",
+                  "name": "linkTarget"
+                },
+                {
+                  "type": "DocumentBookmarkOptions",
+                  "name": "bookmarkOptions"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "padding"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "margin"
+                },
+                {
+                  "type": "DocumentTransform",
+                  "name": "transform"
+                },
+                {
+                  "type": "DocumentPaint",
+                  "name": "fillPaint"
+                },
+                {
+                  "type": "String",
+                  "name": "anchor"
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ShapeNode",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "name"
+                },
+                {
+                  "type": "double",
+                  "name": "width"
+                },
+                {
+                  "type": "double",
+                  "name": "height"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "fillColor"
+                },
+                {
+                  "type": "DocumentStroke",
+                  "name": "stroke"
+                },
+                {
+                  "type": "DocumentCornerRadius",
+                  "name": "cornerRadius"
+                },
+                {
                   "type": "DocumentLinkOptions",
                   "name": "linkOptions"
                 },
@@ -24030,6 +24187,10 @@
                 },
                 {
                   "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "boolean",
                   "name": null
                 }
               ]
@@ -24283,6 +24444,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "divider",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
               "params": []
             }
           ]
@@ -27129,6 +27299,25 @@
               "typeParameters": null,
               "returns": "PageContext",
               "params": []
+            },
+            {
+              "kind": "method",
+              "name": "unpaginated",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PageContext",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": "first"
+                },
+                {
+                  "type": "boolean",
+                  "name": "last"
+                }
+              ],
+              "stability": "beta"
             },
             {
               "kind": "method",
@@ -31792,6 +31981,29 @@
               "typeParameters": null,
               "returns": "double",
               "params": []
+            },
+            {
+              "kind": "method",
+              "name": "text",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "withText",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "SvgIcon",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "text"
+                }
+              ]
             },
             {
               "kind": "method",

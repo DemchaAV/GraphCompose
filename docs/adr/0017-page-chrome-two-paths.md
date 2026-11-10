@@ -83,3 +83,16 @@ text band stays feature-frozen.
   release that is already moving rendered output for other reasons.
 - **`DocumentHeaderFooter` documents the zone** so that staying on the older type
   is a choice rather than an accident.
+
+## Amendment — 2026-09-28
+
+The last of the four consequences in Context did not hold. A Word header or
+footer paragraph expresses the text band directly: tab stops set its three
+slots, `PAGE` and `NUMPAGES` fields its page tokens, and a paragraph border its
+separator. `DocxSemanticBackend` now writes it that way (`DocxTextBands`), so the
+thirteen templates that set a band keep their footer in Word.
+
+The decision stands otherwise. The band gains no capability — it reaches one
+more backend with the three slots and tokens it has always had — and new
+capability still goes to the zone. The cost is a third renderer of the band,
+next to the two in `render-pdf` and `render-pptx`.

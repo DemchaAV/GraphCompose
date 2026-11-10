@@ -3,6 +3,9 @@ package com.demcha.compose.document.api;
 import com.demcha.compose.document.backend.fixed.BackendProviders;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderer;
 import com.demcha.compose.document.backend.fixed.SectionUnit;
+import com.demcha.compose.document.backend.semantic.SemanticBackend;
+import com.demcha.compose.document.backend.semantic.SemanticBackendProviders;
+import com.demcha.compose.document.backend.semantic.SemanticSection;
 import com.demcha.compose.document.exceptions.DocumentRenderingException;
 import com.demcha.compose.document.output.DocumentDebugOptions;
 import com.demcha.compose.document.output.DocumentOutputOptions;
@@ -18,6 +21,12 @@ import java.util.Objects;
  * A single PDF assembled from several independent {@link DocumentSession}
  * sections, each with its own page size, margins, fonts, and chrome (header /
  * footer / page numbering / watermark).
+ *
+ * <p>The same sections also export as one editable Word document, through
+ * {@link #toDocxBytes()}, {@link #writeDocx(OutputStream)}, {@link #buildDocx(Path)} or
+ * any semantic backend given to {@link #export(SemanticBackend)}: each section becomes a
+ * section of the Word document, with its own page, margins, and the header and footer its
+ * page zones describe.</p>
  *
  * <p>The sections are concatenated <em>inside the engine</em> — there is no
  * external PDF merge — so anchors, internal links, and the bookmark outline
@@ -143,6 +152,100 @@ public final class MultiSectionDocument implements AutoCloseable {
             AtomicFileOutput.write(outputFile, output -> backend.writeSections(renderUnits(), output));
             return null;
         });
+    }
+
+    /**
+     * Exports the sections as one document through a semantic backend — the
+     * multi-section counterpart of {@link DocumentSession#export(SemanticBackend)}.
+     *
+     * <p>Each section is handed over as its own graph and context, with its resolved layout
+     * when the backend asks for one, and the backend writes them into one document through
+     * {@link SemanticBackend#exportSections(List)}. A backend that cannot combine sections
+     * refuses more than one.</p>
+     *
+     * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
+     *
+     * @param backend the semantic backend to export through
+     * @param <R>     backend-specific result type
+     * @return the backend's result for the whole document
+     * @throws Exception if the export fails
+     * @since 2.5.0
+     */
+    @Beta
+    public <R> R export(SemanticBackend<R> backend) throws Exception {
+        Objects.requireNonNull(backend, "backend");
+        ensureOpen();
+        List<SemanticSection> units = new java.util.ArrayList<>(sections.size());
+        for (DocumentSession section : sections) {
+            units.add(section.toSemanticSection(backend));
+        }
+        return backend.exportSections(units);
+    }
+
+    /**
+     * Exports the sections as one editable Word document and returns the bytes: each
+     * section becomes a Word section with its own page size, margins, and the header and
+     * footer its page zones describe.
+     *
+     * <p>Requires {@code io.github.demchaav:graph-compose-render-docx} on the classpath;
+     * without it the export fails with a
+     * {@link com.demcha.compose.document.exceptions.MissingBackendException} naming the
+     * artifact.</p>
+     *
+     * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
+     *
+     * @return the exported .docx bytes
+     * @throws DocumentRenderingException if the export fails
+     * @since 2.5.0
+     */
+    @Beta
+    public byte[] toDocxBytes() throws DocumentRenderingException {
+        return render("export DOCX bytes", this::docxBytes);
+    }
+
+    /**
+     * Streams the Word export to a stream the caller owns and keeps open. The export is
+     * produced in full before anything is written, because a half-written {@code .docx} is
+     * not a shorter document but an unreadable file.
+     *
+     * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
+     *
+     * @param output destination stream that receives the exported bytes
+     * @throws DocumentRenderingException if the export fails
+     * @since 2.5.0
+     */
+    @Beta
+    public void writeDocx(OutputStream output) throws DocumentRenderingException {
+        Objects.requireNonNull(output, "output");
+        render("write DOCX to stream", () -> {
+            output.write(docxBytes());
+            output.flush();
+            return null;
+        });
+    }
+
+    /**
+     * Exports the sections into the supplied file, replacing it only once the whole export
+     * succeeded.
+     *
+     * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
+     *
+     * @param outputFile destination .docx path
+     * @throws DocumentRenderingException if the export fails
+     * @since 2.5.0
+     */
+    @Beta
+    public void buildDocx(Path outputFile) throws DocumentRenderingException {
+        Objects.requireNonNull(outputFile, "outputFile");
+        render("build DOCX at '" + outputFile + "'", () -> {
+            byte[] bytes = docxBytes();
+            AtomicFileOutput.write(outputFile, output -> output.write(bytes));
+            return null;
+        });
+    }
+
+    private byte[] docxBytes() throws Exception {
+        return export(SemanticBackendProviders.forFormat("docx").create());
     }
 
     /**

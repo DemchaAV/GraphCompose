@@ -151,14 +151,17 @@ class DocxPageZoneTest {
     }
 
     /**
-     * A page predicate is a fixed-layout capability: Word paginates the
-     * document, so there is no page to test it against when the zone is
-     * written. The worst answer would be dropping the predicate silently; the
-     * export keeps the zone on every page — content beats absence — and says
-     * what it could not honor.
+     * Word paginates the document itself and has a header and footer only for
+     * the first page, even pages and the rest, so a predicate that picks pages
+     * within those kinds — the last page here — has no Word equivalent. The
+     * worst answer would be dropping the zone silently; the export keeps it on
+     * every page — content beats absence — and says what it could not honor.
+     * (A predicate Word can state, such as every page but the first, becomes
+     * the matching header or footer part instead; {@code DocxPageZoneKindsTest}
+     * in render-docx covers those.)
      */
     @Test
-    void aPagePredicateCannotBeEvaluatedSoTheZoneLandsEverywhereAndSaysSo() throws Exception {
+    void aPagePredicateWordCannotStateLandsEverywhereAndSaysSo() throws Exception {
         ch.qos.logback.classic.Logger backendLog = (ch.qos.logback.classic.Logger)
                 org.slf4j.LoggerFactory.getLogger(DocxSemanticBackend.class);
         ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent> seen =
@@ -168,7 +171,7 @@ class DocxPageZoneTest {
         try {
             byte[] docx = export(DocumentPageZone.builder()
                     .height(32)
-                    .appliesTo(page -> !page.isFirst())
+                    .appliesTo(page -> page.isLast())
                     .content(page -> new RowBuilder()
                             .name("Conditional")
                             .addParagraph(paragraph -> paragraph.name("Note").text("Confidential"))

@@ -25,13 +25,24 @@ bullet `•` (U+2022) **is** in WinAnsi, but the larger black circle `●`
 
 Full detail and the coverage table: [font coverage and glyph fallback](font-coverage.md).
 
-## DOCX export is missing shapes, lines, ellipses, or barcodes
+## DOCX export is missing paths, polygons, or other drawing
 
 **Cause.** The DOCX backend (`DocxSemanticBackend`, Apache POI) is a
-**semantic** exporter. POI cannot express fixed-layout graphics, so
-`shape`, `line`, `ellipse`, and `barcode` nodes are **dropped silently**,
-and `ShapeContainerNode` clipping / `DocumentTransform` rotation + scale
-fall back to inline content with a one-time capability warning.
+**semantic** exporter: it writes text, lists and tables as Word's own, and draws
+rectangles, rounded bars, ellipses, lines, polygons and paths as shapes anchored to the
+page where the layout puts them, behind the text. A shape filled only with a gradient
+paint is **dropped** — logged once per kind and named in the export report — and
+`ShapeContainerNode` clipping /
+`DocumentTransform` rotation + scale fall back to inline content with a
+one-time capability warning. A `barcode` is not dropped: it is written as a
+picture of the symbol, which scans but whose data is not editable in Word. Nor
+is a horizontal line, or a box built by the DSL's divider builder (`addDivider`,
+`ModuleBuilder.divider`, `DocumentDsl.divider`) or the templates module's
+`Divider` widget, in the flow, only a fill with no stroke and no taller than
+Word's thickest border: it is written as Word's own rule, a paragraph's bottom
+border.
+Any other filled box, however thin, goes the way every drawing goes — drawn
+where the page puts it, or dropped with a note where the export cannot draw it.
 
 **Fix.** Export those documents to **PDF** (the full-fidelity backend).
 Use DOCX only for paragraph / list / table / image / section content.
@@ -66,7 +77,9 @@ classpath that has the PDF backend. The message names that artifact instead.
 
 The exception message names the exact artifact to add. Plain `graph-compose` and
 `graph-compose-bundle` both include the PDF backend out of the box — only a deliberately
-lean `graph-compose-core` needs this.
+lean `graph-compose-core` needs this. So does `graph-compose-core` +
+`graph-compose-render-docx` on 2.4.x and earlier; from 2.5.0 the DOCX module brings the
+PDF backend itself.
 
 ## `NoClassDefFoundError` at runtime
 

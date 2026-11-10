@@ -67,7 +67,8 @@ public sealed interface InlineRun
      * {@link #plainText(List)}, which concatenates a chip's text as authored.</p>
      *
      * @param runs runs in source order; {@code null} reads as empty
-     * @return the text-carrying runs, chips degraded to plain runs
+     * @return the text-carrying runs, chips reduced to their text — a caller that
+     *         can carry a chip's fill reads it from the authored run instead
      * @since 2.4.0
      */
     static List<InlineTextRun> textRuns(List<InlineRun> runs) {

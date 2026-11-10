@@ -181,6 +181,47 @@
       "docs": ["docs/recipes/tables.md#repeated-header-on-page-break"],
       "verifiedAgainst": "2.2.3-SNAPSHOT",
       "confirmedBy": "Artem Demchyshyn"
+    },
+    {
+      "task": "export.docx",
+      "intent": "Export the document as an editable Word (.docx) file.",
+      "recommended": "session-build-docx",
+      "recommendedBecause": "render-docx/README.md#usage makes it one call, as buildPdf(path) is for the PDF: with graph-compose-render-docx on the classpath, session.buildDocx(path), writeDocx(stream) or toDocxBytes() finds the backend and builds a default one for each export. buildDocx makes the bytes first and moves them over the file only on success, so a failed export leaves the old file in place. DocxSessionExportTest opens what each of the three wrote and finds the document's text in it. The three are Experimental (@Beta) in 2.5, under semantic backend discovery in docs/api-stability.md#1-stability-tiers. They hand back no report, and they stamp the export with the date it was made.",
+      "alternatives": [
+        {
+          "id": "configured-backend-export",
+          "useWhen": "the caller needs the export report (what Word could not carry as authored, docs/recipes/docx-export.md#finding-out-what-the-export-could-not-carry) or the same bytes on every run, as a byte-level test does",
+          "tradeoffs": "session.export(DocxSemanticBackend.builder().deterministic(true).reportSink(report -> ...).build(), path) — the builder and DocxExportReport are @Beta; the bytes go straight over the file, so a write that breaks part-way can truncate it, and a failure is a plain Exception; the bytes hold on one platform only (docs/recipes/docx-export.md#byte-identical-output), and a {date} token changes them daily unless -Dgraphcompose.renderDate pins it; one backend per thread"
+        },
+        {
+          "id": "stable-backend-export",
+          "useWhen": "the code may use Stable API only",
+          "tradeoffs": "session.export(new DocxSemanticBackend(), path), the path docs/api-stability.md#1-stability-tiers keeps Stable — no report (what is dropped goes to the log only), the package carries the date of the export, and it writes and throws as the configured backend does"
+        },
+        {
+          "id": "pdf",
+          "useWhen": "the recipient must see exactly the page as laid out, not edit it",
+          "tradeoffs": "session.buildPdf(path) fixes every fragment where the layout placed it, and the file is not meant to be edited; Word paginates and re-flows a DOCX itself"
+        }
+      ],
+      "constraints": [],
+      "symbols": [
+        "DocumentSession.buildDocx",
+        "DocumentSession.writeDocx",
+        "DocumentSession.toDocxBytes",
+        "DocumentSession.export",
+        "DocxSemanticBackend",
+        "DocxSemanticBackend.builder",
+        "DocxSemanticBackend.Builder.deterministic",
+        "DocxSemanticBackend.Builder.reportSink",
+        "DocxSemanticBackend.Builder.build",
+        "DocxExportReport.notes",
+        "DocumentSession.buildPdf"
+      ],
+      "surfaces": ["authoring", "backends"],
+      "docs": ["render-docx/README.md#usage"],
+      "verifiedAgainst": "2.5.0-SNAPSHOT",
+      "confirmedBy": null
     }
   ]
 }

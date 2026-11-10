@@ -44,6 +44,31 @@ class EmojiLibraryTest {
     }
 
     @Test
+    void resolvedGlyphStatesTheEmojiItDepictsAsText() {
+        assertThat(emoji.require(":rocket:").text()).isEqualTo("🚀");
+        // the index key is 2764 (the set's file names drop U+FE0F); the text puts it back
+        assertThat(emoji.require(":heart:").text()).isEqualTo("❤️");
+        assertThat(emoji.require(":woman_technologist:").text())
+                .isEqualTo("👩‍💻");
+    }
+
+    @Test
+    void glyphWhoseKeyIsNotCodepointsResolvesWithoutText(@TempDir Path classpathRoot) throws Exception {
+        // A custom set may name its glyphs anything; such a glyph still draws,
+        // it just states no text.
+        Path svgDir = Files.createDirectories(classpathRoot.resolve("emoji/svg"));
+        Files.writeString(classpathRoot.resolve("emoji/emoji-index.properties"), "logo=company-logo\n");
+        Files.writeString(svgDir.resolve("company-logo.svg"),
+                "<svg viewBox='0 0 10 10'><rect width='10' height='10'/></svg>");
+        try (URLClassLoader loader = new URLClassLoader(new URL[]{classpathRoot.toUri().toURL()}, null)) {
+            SvgIcon logo = new EmojiLibrary(loader).require(":logo:");
+
+            assertThat(logo.layers()).isNotEmpty();
+            assertThat(logo.text()).isNull();
+        }
+    }
+
+    @Test
     void unknownShortcodeResolvesEmpty() {
         assertThat(emoji.find(":definitely_not_an_emoji:")).isEmpty();
     }

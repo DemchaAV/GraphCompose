@@ -70,7 +70,7 @@ Almost all work targets **`develop`**, the ongoing 2.x line. The `1.x` branch ta
    - `Architecture and Documentation Guards` &mdash; fast canonical / engine-boundary guard tests, fail-first gate (always runs)
    - `Build and run tests (JDK 17)`, `(JDK 21)`, `(JDK 25)` &mdash; full `mvnw verify` in parallel matrix across the supported JVMs
    - `Examples Generation Smoke Test` &mdash; regenerates every runnable example and uploads the PDFs as a CI artifact
-   - `Binary Compatibility` &mdash; PR-only japicmp diff of the `graph-compose-core` and `graph-compose-templates` surfaces
+   - `Binary Compatibility` &mdash; PR-only japicmp diff of the `graph-compose-core`, `graph-compose-templates` and `graph-compose-render-docx` surfaces
    - `Performance Smoke Check` &mdash; PR-only coarse benchmark to catch performance regressions
    - `CI Gate` &mdash; single aggregate status check that is green when every job that ran passed
 
@@ -345,6 +345,297 @@ Choose the smallest tests that match the change:
   [CvV2VisualParityTest.java (CV)](qa/src/test/java/com/demcha/compose/document/templates/cv/presets/CvV2VisualParityTest.java)
   [CoverLetterV2VisualParityTest.java (cover letter)](qa/src/test/java/com/demcha/compose/document/templates/coverletter/presets/CoverLetterV2VisualParityTest.java)
   and the [per-preset smoke tests](qa/src/test/java/com/demcha/compose/document/templates/cv/presets)
+- For DOCX export (`render-docx`) changes:
+  [DocxFidelityCorpusTest.java](qa/src/test/java/com/demcha/compose/document/templates/fidelity/DocxFidelityCorpusTest.java).
+  It exports every template preset to DOCX, with documents built for shapes no preset has on
+  its own fixture, has LibreOffice set each one, and holds every
+  line of every document to the drift its baseline records, down and across, and to its width:
+  a line that moved more than 0.5pt from where the baseline holds it, nearer the page or
+  further, or runs more than 0.5pt wider or narrower than it holds it, a line
+  set at other words, a line found that the baseline does not hold, another number of pages
+  from the editor, or another number of pages from the engine, or of lines read off its pages,
+  fails it. A line is
+  read as the page's clip shows it: a glyph standing outside the clip it is drawn under is not
+  read, since a PDF keeps the text it clips — Word writes every line of a table row held to an
+  exact height its text does not fit, and the end of a line it runs past its cell, and clips
+  them away. Only a path's clip is followed: text drawn invisible, or painted over, is still
+  read. It needs LibreOffice and runs only when asked for — install first, as for any
+  standalone `qa` run:
+  `./mvnw -B -ntp test -f qa/pom.xml -Dtest=DocxFidelityCorpusTest -Dgraphcompose.docxFidelity=libreoffice`.
+  A change that moves documents, nearer the page included, rewrites the baseline with
+  `-Dgraphcompose.docxFidelity.update=true`, and commits it with the change: its diff shows
+  which documents moved, and which way. A new preset joins the corpus in its family's
+  `*DocxCorpus` class, and so does a preset on a longer fixture; a shape no preset has
+  — a page break inside a
+  panel, a break in a row's column, a shape container narrower than the block it stands in
+  or clipped short of its text, an icon a layer stack lays over a card's corner — goes in
+  `SyntheticDocxCorpus`, and a form of group the layout holds on one page goes in
+  `KeptGroupsAtThePageFoot`, which sets each form as low on a page as it fits and one line
+  lower. A corpus document's baseline holds it as the editors set it, a defect of the export
+  included, and the change fixing that rewrites its rows nearer the page.
+  CI runs it on Linux (the `DOCX Fidelity` job) against `libreoffice-linux.tsv`, and uploads
+  what it measured: LibreOffice sets text a little differently per platform, so a change that
+  moves documents takes that artifact's files as the Linux baseline, and its own run's as the
+  Windows one. Microsoft Word, the editor the export answers to, is not in CI: on
+  Windows with Word, `scripts/docx-visual/word-fidelity.ps1` (`-Update` to rewrite) exports the
+  corpus, has a private Word instance convert it, and holds it to `word-windows.tsv` — run it
+  from PowerShell (pwsh), after the install above, before a DOCX export change is opened.
+  Rewrite the baseline in the change that moves the documents, and the gate will remind you —
+  as long as you run it, which for Word means running the script above: it fails a line that has
+  moved more than 0.5pt from where the baseline holds it, nearer the page or further, or whose
+  width changed by as much, a document the editor sets on another number of pages, one the engine draws on another number of pages or
+  whose pages the gate reads another number of lines off, and one whose lines the editor finds
+  a different set of. Until the gate was made
+  two-sided it only looked for lines set further, which let a change move documents nearer, or
+  less than 0.5pt further, with the baseline left as it was: between #899 and #974 that left
+  1609 of the Word baseline's 5165 rows stale over 74 commits, 226 of them standing more than
+  half a point nearer the page across, until three documents stood 0.48pt further and the next
+  change to touch them would have failed the gate for drift it did not cause. The slack is read
+  afresh against each rewrite, so it bounds no total: what two-sidedness buys is that every move
+  past rounding is seen and written down, not that drift cannot accumulate over many changes.
+  A failure naming lines that moved nearer the page is not a defect to fix — it is the export
+  doing better, and the baseline is how it gets recorded. A rewrite keeps the `#` notes the file
+  it replaces carried, by either path, and leaves it to you to prune the ones it has made stale;
+  a note is a block under the header, not an annotation of the rows below it, and comes back
+  above them. Each baseline's header records the build it was shot on, and a
+  differing build is rarely the cause: Word 16.0.20430 and 16.0.20527 measure the corpus as
+  #899 exported it identically, row for row.
+  `libreoffice-windows.tsv` was shot whole again when the gate came to hold each line to its
+  width, the line file's shape changing with it, after going stale in 16 documents. Fourteen of
+  them were already accounted for: the seven sidebar CVs stand lower for their page
+  backgrounds being drawn from a header again, and lines of eight documents, one of them a
+  sidebar CV, had moved nearer the page. Two had moved further, and what moved them is not
+  found: `invoice-obsidian` and `proposal-indigo`, which it held on one page, LibreOffice now
+  sets on two, losing 8 lines between them and setting `proposal-indigo`'s up to 10.25pt
+  lower. The file's note records each move and the numbers it held; its history holds the
+  rows. That rewrite is the one exception to the rule here, and was made because a file of
+  the old shape no longer reads: do not rewrite a baseline over a move further from the page
+  as part of an unrelated change. Such a move wants the commit that made it found first, as the
+  Word baseline's drift was attributed before #975 rewrote it, and the file rewritten with that
+  reckoning; the two documents' move still does.
+  Each run also writes `measured-<editor>-acceptance.md`: which documents the editor sets as the
+  page does — the same pages, 95% of the lines found, a median of 1pt or less, no more than 10%
+  of the lines found more than 2pt off, above or below the page's line or left or right of it —
+  and what keeps the rest short of it, with the corpus's count of lines past 2pt down and
+  across. CI shows LibreOffice's in the job summary.
+  The same run, in either editor, feeds the gate `invoice-modern` changed after export in each
+  way it is there to fail on — a paragraph taken out, every `w:rFonts` set to Courier New, a page
+  break before the closing paragraph, the notes card's row held to exactly 25pt, the line items
+  replaced by a picture — `invoice-luma_studio` with its last card, which nothing holding
+  text follows in the body, held to exactly 22.5pt, and `synthetic-card_over_pages`, whose lines
+  are too short to break at other words, with every `w:rFonts` set to Times New Roman; and it
+  fails unless the gate, holding each to the run's own
+  measurement of the document it was changed from, fails on every one, and on lost lines,
+  another page count or lines run wider or narrower where the change costs them — a card held
+  short of its text costs the lines it clips, and a face on short lines costs their width
+  (`DocxTamper`). A copy of each document left unchanged is converted with them
+  and must stand where the corpus's conversion set it, within the gate's half-point slack.
+  They are written to `qa/target/docx-fidelity/tampered` and converted into `<editor>-tampered`
+  beside it, LibreOffice logging to `libreoffice-tampered.log`; `word-fidelity.ps1` converts
+  them too.
+  The corpus also answers for how a document edits in Word.
+  `scripts/docx-visual/edit-protocol-corpus.ps1` runs over the DOCX that
+  `-Dgraphcompose.docxFidelity=export` leaves in `qa/target/docx-fidelity/engine`. For each
+  document it saves a copy with no edit and makes thirteen edits, each on a copy that it saves and
+  reopens:
+  - lengthen the longest paragraph, and shorten it;
+  - press Enter after it and type;
+  - restyle Normal;
+  - add a table row, and delete one;
+  - continue a list;
+  - type at the end until a new page opens;
+  - lengthen the first paragraph of body text, watching the drawings;
+  - add a sentence to the longest paragraph in a table cell, and to the longest text a drawing
+    holds;
+  - put a few words at the start of the footer the first page shows;
+  - type inside the first link that the save with no edit keeps at its address.
+
+  The last four are the LibreOffice protocol's edits (below), all but its picture replacement,
+  which Word's COM cannot make. They, the save with no edit and the typing onto a new page are
+  also read from Word's own PDFs, by that protocol's verdicts: the script sets the document as
+  exported, the save and each edited copy as PDFs and hands each pair to
+  `edit-protocol-libreoffice.py --judge`, so both editors are held to one set of verdicts. A
+  copy is set as a PDF before its verification reads it: reading a footer's text gives a
+  document without a header an empty one, which Word sets the body below. The
+  drawings scenario reads how far drawings and text moved from Word's PDFs too (below). That
+  wants a Python 3.10 or later whose PyMuPDF leaves clipped text out (`-Python`, `python` on the PATH when left
+  out), whose self-check the protocol runs before it asks for Word; without one it records
+  `NOT_RUN` and exits 2, and where that self-check fails it records `FAILED` and exits 1, unless
+  only scenarios that do not read a PDF were named.
+
+  It records what it can decide alone in `edit-protocol-corpus.json`:
+  - text kept, and a paragraph grown or shrunk and still above the block after it;
+  - the body size following Normal, with room for it wherever the restyle reaches — the main
+    text, the headers and footers, the text drawings hold: no paragraph whose letters grew
+    stands on exact lines shorter than 1.1 of them, none sits in a row or frame of exact
+    height, and no drawing's text runs past it;
+  - typed text standing below everything else, outside any table, visible, in the size of the
+    text it continues (or, after an empty paragraph, on lines that fit it);
+  - each drawing beside text the lengthening moved moving with it, by as much and onto the same
+    page, and each drawing beside text the lengthening left standing staying where it was.
+    "By as much" is read within a point and a half and half a twip, and how far each moved is read
+    from the PDFs Word sets before the edit and after it (`edit-protocol-libreoffice.py
+    --places`): Word's page geometry and a range say which drawing stands beside which paragraph
+    and on which page, and the PDF says how far down that page — a drawing as the box of its own
+    size the PDF draws nearest where the geometry puts it or, where it draws none, by the text the
+    drawing holds or what it draws wholly inside the drawing's rectangle; a paragraph as the
+    baseline of the first letters of its text nearest where a range puts its first line, or as the
+    picture its line holds where it has no letter. Word's COM states a layout other than the one it
+    prints: on Word 16.0.20527.20150 a line of `cv-serif_headline` that its PDF moves
+    22.08pt reads as moving 22.6pt through a range, and the drawings beside it, which the PDF moves
+    22.1pt, read 21pt in the page geometry's whole points — so drawings that follow their text
+    were failed. The limit, and the half point and half a twip past which text counts as moved,
+    were set against those COM readings — a whole point of reading and half a point of drift,
+    held half a twip off the twip grid those readings land on because, set on it, two runs on
+    bytes that had not changed once reported five fewer followers — and they are kept where they
+    were, so that the verdict means what it meant. Read from the PDF on Word 16.0.20527.20150,
+    every drawing of the corpus that follows its text
+    does so within 0.16pt, and every one that does not is 8.04pt or more out. A
+    drawing or a paragraph the PDF does not show near where the geometry puts it, or reads one way
+    before the edit and another after it, is named, and fails the scenario where a paragraph
+    carries the drawing, as one the geometry does not give does. A drawing Word puts wholly off
+    its page after the edit is one: its PDF prints nothing of it, where COM's geometry used to
+    measure it as standing there. Which of the two sets
+    a drawing is counted in — beside text the edit moved, or beside text it left standing — is read
+    from the same PDFs: the text counts as moved past half a point and half a twip, set against
+    COM's readings as the limit was, the half point being the noise those left and the half twip
+    keeping a move of exactly ten twips off the comparison. Both thresholds are held from either
+    side, and off that grid, by `-SelfCheck`. Only
+    a drawing a paragraph carries is asked that. One nailed to the sheet — `wp:positionV
+    relativeFrom="page"` — is placed from the top of the page it is drawn on and by nothing else,
+    so the text beside it has no claim on where it stands: measured on the self-check's two alike
+    probe documents, with the paragraph above lengthened by two lines, such a drawing moved 0.00pt
+    in Word 16 and 0.00pt in LibreOffice 24.2 while its own text moved 32.04 and 52.50pt, where the
+    same drawing carried by that text's paragraph in the other document moved 31.96 and 52.50pt
+    with it. Which anchor the export chose is held by `DocxDrawingAnchorGuardTest`, which names
+    every drawing of the corpus still placed from the page and fails closed when one is added to
+    that list or taken off it. So the nailed ones are measured here as the carried ones are, named
+    in the detail with the counts for their set and by name for each one that left its text or lost
+    its place, and left out of the verdict; a drawing that ought to follow stays in it whether or
+    not nailed drawings stand beside it, since what is read is each drawing's own anchor and not
+    the document it stands in. Nothing may leave the verdict by carrying an answer the scenario has
+    no question for: a drawing placed down from anything else — neither its paragraph nor the page
+    — is named and fails, and so is a name Word gives to more than one drawing, which is read as no
+    drawing at all and is reported on a line of its own rather than among the places the page
+    geometry does not give. A drawing belongs to the paragraph nearest its top-left corner — how
+    far that corner stands from
+    where the paragraph's text begins, plus how far it stands outside the width that text runs to —
+    and a drawing standing in the space above a paragraph counts as standing no distance down the
+    page from it, the width still having its say; a page's backgrounds are left out. The corner, the
+    page, and the space above a paragraph the geometry draws a box for are read from Word's own page
+    geometry, which draws a rectangle wherever it draws a shape and lines wherever it draws text, in
+    points from the corner of the page it draws them on; the first line and the width come from a
+    range. A cell's width counts the padding it holds its text away from on both sides, so the
+    width its text runs to is read from the cell's own edges inward: read instead as the text's
+    left plus the cell's width, it reaches past where that text can run by both paddings, and a
+    cell's text is taken to run on into the column beside it — which took four of one column's
+    rail dots to be standing beside the other column's list. `Get-ParagraphPlaces` carries that
+    measurement. The space matters because a drawing placed from its
+    paragraph stands a stored offset
+    below the top of that paragraph's box, the space above the paragraph included, so a paragraph
+    read from its first letter alone stands that whole space away from its own drawing and loses it
+    to the text above wherever the space is the wider. The geometry draws a box per block and not
+    per paragraph — a whole table is one, and its lines run one to a row — so a paragraph of a row
+    has no space of its own to read and keeps that limit, and a paragraph of a row Word draws on
+    more than one page takes the page a range reports, since none of the row's lines answers that
+    one paragraph at a time. A drawing Word's page geometry does not name is reported with the
+    reason and not measured, and the scenario fails where a paragraph carries that drawing: a
+    document the instrument cannot read is not a document that passed. A nailed one is named with
+    its reason too and fails nothing, there being nothing the scenario would have asked of it.
+    A paragraph the reading cannot place before the edit is named in the
+    detail instead of failing the scenario, since a drawing beside it is held to another paragraph
+    and the naming is what makes that visible; one it cannot place after the edit is counted against
+    the drawing held to it, and fails where a paragraph carries that drawing. A drawing the reading
+    no longer finds after the save and the reopen — Word does not name it, or names it and another
+    alike so that none of them can be told from another — is counted apart from that and fails for
+    either set: a drawing gone from the document, or one that can no longer be told apart, is not a
+    question of what it was placed from, and no other scenario counts the shapes; text that cannot
+    be placed again fails for the carried set alone. A document where no drawing was both read and
+    found text to stand beside while some paragraph could not be placed is the instrument failing,
+    and that one is raised with what the reading did find of its drawings. A document whose
+    paragraphs it can place none of is raised too, as Word naming no rectangle for any drawing
+    is. `-SelfCheck` runs the protocol over probe documents it writes itself: it holds where it
+    reads a place to where Word's own PDF draws the same drawing, holds the attribution with
+    documents one wrong owner fails, and holds what is asked of whom with a document carrying a
+    nailed drawing beside one that ought to follow and fails to. It holds the page typing onto a
+    new page is read from to the saved copy's, with a document whose top margin is shorter than
+    the header Word makes when its footer is read. Two of its checks hold the two
+    thresholds the verdict is read by — each from either side, and each off the grid its readings
+    land on — and need no document at all, so they run before Word is asked for: a machine without
+    Word holds both thresholds, and exits 1 where either of them is wrong or the grid under them
+    is. The probes read their moves from Word's PDF through the same Python as the scenario, so
+    that is held next, before Word: without one `-SelfCheck` exits 2 having held the thresholds,
+    and 1 where that Python's own self-check fails. Run it after changing how a
+    place is read, how an owner is chosen, what the verdict is taken over, or either threshold it
+    is read by. What no probe reaches is
+    broken on purpose and recorded as caught by nothing rather than claimed: a drawing the reading
+    no longer finds no longer failing, on either side, since no document can make Word drop a shape
+    or give two shapes one name over an edit, and the two exclusions the nailed set carries of its
+    own, a drawing whose own text cannot be placed again and one whose place the geometry stops
+    giving after the edit. The order the names print in is unprobed as well, and changes no
+    verdict. One path out of the verdict is older than any of this and still open: a carried drawing
+    whose page holds no paragraph the reading could place is counted as standing beside no text, and
+    a document can pass with it.
+
+  A scenario a document has nothing to edit for — no table, no list, no drawing beside text —
+  is recorded `N/A` with what the document lacks, rather than left out of the JSON.
+
+  The protocol reads the letters' size and visibility from the text, without the paragraph
+  mark. Beside the lengthened copy and the new-page copy it writes PDFs, from which a person
+  judges whether a page still looks right. The six scenarios read from a PDF took 32 minutes over
+  the corpus's 82 documents in Word 16, and 58 with LibreOffice running beside it; all of them
+  take a few minutes a document; `-Scenario`
+  runs only the scenarios named, by the names the JSON records.
+
+  The corpus answers for how a document edits in LibreOffice as well.
+  `scripts/docx-visual/edit-protocol-libreoffice.py` runs over the same exported DOCX under a
+  Python that imports LibreOffice's UNO bridge and a PyMuPDF that leaves clipped text out, and
+  starts its own headless `soffice`; it is Python because the bridge that edits through
+  LibreOffice comes with `python3-uno`, where Java would need LibreOffice's own jars on the
+  classpath. On Ubuntu 24.04, the LibreOffice the fidelity job runs:
+  `apt-get install libreoffice-writer python3-uno python3-venv`, then
+  `python3 -m venv --system-site-packages /opt/lo-edit && /opt/lo-edit/bin/pip install pymupdf`
+  — Ubuntu's own `python3-fitz` 1.23.7 reads clipped text as if it showed. The script tries
+  PyMuPDF on a clipped probe before it reads anything, and does not run where the hidden text
+  comes back. For each document it saves a copy with no edit and makes six edits, each on a copy
+  that it saves as DOCX, reopens and sets as a PDF:
+  - add a sentence to the longest paragraph in a table cell, and to the longest text a drawing
+    holds;
+  - put a few words at the start of the footer the first page shows;
+  - type at the end until a new page opens, 300 lines at most;
+  - give the largest picture another image;
+  - type inside the first link that a save with no edit keeps at its address.
+
+  The save with no edit is read against the PDF LibreOffice sets from the document as exported,
+  and every edit against the PDF of that unedited save, so each scenario answers for its own edit
+  and what the save changes is reported once. The verdicts, in `edit-protocol-libreoffice.json`:
+  - the save keeps the pages, finds every line within 0.525pt down and across, and keeps every
+    link, as many times as the document links to it;
+  - an added sentence is readable whole;
+  - the edited footer shows on every page whose header or footer band showed its text, another
+    section's pages included, though LibreOffice gives each section a footer of its own when it
+    opens a file; the footer is matched word for word, in any order, anywhere in the page's
+    header and footer bands, each word as many times as the footer has it, since a footer of two
+    cells — text over two lines beside a page number — reads its lines interleaved there;
+  - the saved document has grown, the last line typed stands on its last page, typed lines stand
+    at least their size apart, and every page whose header or footer read "Page i of n" or
+    "i / n" before, and every page added, reads its own number and the new total there;
+  - the new image is drawn, every picture is drawn where it was, and no more of them;
+  - the edited link keeps its address, and every link is kept;
+  - after every edit, each line of text from before it is still found on its own page or the
+    next, whitespace and page numbers aside and every other digit kept — the link edit undone
+    first — and no two lines' letters stand on one another more often than before, each line
+    read at its letters' baseline, not at that of a blank span it opens on.
+
+  The move limit is 0.525pt rather than 0.5 because LibreOffice writes positions on a grid of
+  0.05pt, where a limit of 0.5 is a difference two readings can produce exactly. A scenario a
+  document has nothing to edit for is recorded `N/A` with what it lacks. `--self-check` needs
+  that PyMuPDF but no LibreOffice: it breaks every rule once, in a probe PDF only that rule can fail,
+  and holds the limits for a move, a crossing, the spacing of typed lines and the header and
+  footer bands each from both sides. Run it after changing how a verdict is read or a limit
+  it is read by. Like the Word protocol, this one is run by hand and is not part of the build.
+  Without the UNO bridge, a PyMuPDF that leaves clipped text out, or `soffice`, it records
+  `NOT_RUN` and exits 2.
 
 If a change affects public docs, examples, or screenshots, update those assets in the same PR so the repository stays internally consistent.
 

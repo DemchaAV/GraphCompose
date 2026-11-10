@@ -72,6 +72,54 @@ class PageMarginTest {
     }
 
     @Test
+    void theLayoutGraphCarriesTheMarginEachPageIsLaidOutAgainst() throws Exception {
+        // A semantic backend reads it to lay its own pages out alike. A page background, a
+        // zone and a timeline's rail each add their fragments to a new graph, which keeps it.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(240, 300)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            session.pageMargins(List.of(
+                    PageMarginRule.page(1, DocumentInsets.symmetric(15, 10)),
+                    PageMarginRule.from(2, DocumentInsets.symmetric(40, 70))));
+            session.pageBackground(com.demcha.compose.document.style.DocumentColor.rgb(250, 250, 250));
+            session.chrome().zone(com.demcha.compose.document.output.DocumentPageZone.header(18,
+                    page -> new com.demcha.compose.document.dsl.ParagraphBuilder().text("Header").build()));
+            com.demcha.compose.document.style.DocumentColor ink = com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148);
+            session.pageFlow()
+                    .addTimeline(timeline -> timeline.connector(ink, 1)
+                            .entry(com.demcha.compose.document.dsl.TimelineMarker.dot(6, ink), entry -> entry.title("One"))
+                            .entry(com.demcha.compose.document.dsl.TimelineMarker.dot(6, ink), entry -> entry.title("Two")))
+                    .addPageBreak(b -> { })
+                    .addParagraph(p -> p.text("Body"))
+                    .build();
+
+            LayoutGraph graph = session.layoutGraph();
+
+            assertThat(graph.fragments()).as("the passes ran")
+                    .anyMatch(fragment -> fragment.path() != null && fragment.path().startsWith("@timeline-rail"));
+            assertThat(graph.pageGeometry().marginForPage(0).left()).isCloseTo(10.0, within(0.01));
+            assertThat(graph.pageGeometry().marginForPage(1).left()).isCloseTo(70.0, within(0.01));
+            assertThat(graph.pageGeometry().marginForPage(4).left()).isCloseTo(70.0, within(0.01));
+        }
+    }
+
+    @Test
+    void aLayoutWithNoPageMarginsHasTheCanvasMarginOnEveryPage() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(240, 300)
+                .margin(new DocumentInsets(11, 12, 13, 14))
+                .create()) {
+            session.pageFlow().addParagraph(p -> p.text("Body")).build();
+
+            LayoutGraph graph = session.layoutGraph();
+
+            assertThat(graph.pageGeometry().marginForPage(0)).isEqualTo(graph.canvas().margin());
+            assertThat(graph.pageGeometry().marginForPage(3)).isEqualTo(graph.canvas().margin());
+        }
+    }
+
+    @Test
     void naturalOverflowResolvesEachBlockAtItsStartPageWidth() throws Exception {
         // Same vertical margin on both pages (so pagination is width-independent),
         // different horizontal margin — the fixed point must measure each block at

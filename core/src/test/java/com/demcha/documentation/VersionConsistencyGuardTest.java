@@ -186,9 +186,9 @@ class VersionConsistencyGuardTest {
         // The coverage agent (which writes each module's exec) and report-aggregate
         // (which reads them) must run the same JaCoCo version — a mismatch can break
         // the exec-format read. The version is pinned as a literal in each standalone
-        // module that measures coverage (engine, render-pdf, templates) plus the
-        // aggregator that the qa + coverage children inherit, so guard the four
-        // against drift.
+        // module that measures coverage (engine, render-pdf, render-docx, templates)
+        // plus the aggregator that the qa + coverage children inherit, so guard the
+        // five against drift.
         String core = pinnedVersionProperty(PROJECT_ROOT.resolve("core/pom.xml"), "jacoco.plugin.version");
 
         assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("pom.xml"), "jacoco.plugin.version"))
@@ -197,16 +197,164 @@ class VersionConsistencyGuardTest {
         assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("render-pdf/pom.xml"), "jacoco.plugin.version"))
                 .describedAs("render-pdf jacoco.plugin.version must match the engine pom's (%s)", core)
                 .isEqualTo(core);
+        assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("render-docx/pom.xml"), "jacoco.plugin.version"))
+                .describedAs("render-docx jacoco.plugin.version must match the engine pom's (%s)", core)
+                .isEqualTo(core);
         assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("templates/pom.xml"), "jacoco.plugin.version"))
                 .describedAs("templates jacoco.plugin.version must match the engine pom's (%s)", core)
                 .isEqualTo(core);
+    }
+
+    /** The modules the coverage aggregate reports on: artifact id → module directory. */
+    private static final Map<String, String> COVERAGE_MEASURED_MODULES = Map.of(
+            "graph-compose-core", "core",
+            "graph-compose-render-pdf", "render-pdf",
+            "graph-compose-render-docx", "render-docx",
+            "graph-compose-templates", "templates");
+
+    /**
+     * A module reaches the coverage aggregate through three lists in
+     * {@code coverage/pom.xml} — its dependency, the classes the check unpacks, and
+     * the exec it merges — and writes an exec only if its own pom runs the JaCoCo
+     * agent. None of these fails when it is missing: the merge skips an exec that is
+     * not there, and a module left out of every list is simply not reported, while
+     * the aggregate still clears its floors. So hold each measured module to all
+     * four, and the unpacked set to exactly the measured modules. Every list is read
+     * from the parsed pom, so a line commented out counts as missing.
+     */
+    @Test
+    void coverageAggregateReadsEveryMeasuredModule() throws Exception {
+        Path coveragePom = PROJECT_ROOT.resolve("coverage/pom.xml");
+        Element project = parse(coveragePom).getDocumentElement();
+
+        Element unpack = executionOf(project, "maven-dependency-plugin", "unpack-measured-classes");
+        Element unpackConfiguration = unpack == null ? null : directChild(unpack, "configuration");
+        Element unpackIds = unpackConfiguration == null ? null : directChild(unpackConfiguration, "includeArtifactIds");
+        if (unpackIds == null) {
+            throw new AssertionError("coverage/pom.xml's unpack-measured-classes execution must name the "
+                    + "modules whose classes it unpacks");
+        }
+        Set<String> unpackedIds = new LinkedHashSet<>();
+        for (String id : unpackIds.getTextContent().split(",")) {
+            unpackedIds.add(id.trim());
+        }
+        assertThat(unpackedIds)
+                .describedAs("coverage/pom.xml unpacks the classes of exactly the measured modules")
+                .containsExactlyInAnyOrderElementsOf(COVERAGE_MEASURED_MODULES.keySet());
+
+        Element merge = executionOf(project, "jacoco-maven-plugin", "merge-exec");
+        if (merge == null) {
+            throw new AssertionError("coverage/pom.xml must keep the jacoco merge-exec execution");
+        }
+        Set<String> merged = new LinkedHashSet<>();
+        NodeList includes = merge.getElementsByTagName("include");
+        for (int i = 0; i < includes.getLength(); i++) {
+            merged.add(includes.item(i).getTextContent().trim());
+        }
+        assertThat(merged)
+                .describedAs("coverage/pom.xml's merge-exec execution must merge the qa suites' exec, "
+                        + "which carries most of the cross-module coverage")
+                .contains("qa/target/jacoco.exec");
+
+        for (Map.Entry<String, String> module : COVERAGE_MEASURED_MODULES.entrySet()) {
+            assertThat(declaresDependencyOn(project, module.getKey()))
+                    .describedAs("coverage/pom.xml must depend on %s to report on it", module.getKey())
+                    .isTrue();
+            assertThat(dependencyScope(project, module.getKey()))
+                    .describedAs("coverage/pom.xml must depend on %s at compile scope: report-aggregate "
+                            + "does not traverse a test-scope dependency, so the published report would "
+                            + "drop the module while the check still counted it", module.getKey())
+                    .isIn("", "compile");
+            assertThat(merged)
+                    .describedAs("coverage/pom.xml's merge-exec execution must merge %s's exec", module.getKey())
+                    .contains(module.getValue() + "/target/jacoco.exec");
+            assertThat(runsJacocoAgent(PROJECT_ROOT.resolve(module.getValue()).resolve("pom.xml")))
+                    .describedAs("%s/pom.xml must run JaCoCo's prepare-agent in its build, or its tests "
+                            + "write no exec for the aggregate to merge", module.getValue())
+                    .isTrue();
+        }
+    }
+
+    /** The {@code <scope>} of the project's dependency on {@code artifactId}; empty when it declares none. */
+    private static String dependencyScope(Element project, String artifactId) {
+        Element deps = directChild(project, "dependencies");
+        NodeList children = deps == null ? null : deps.getChildNodes();
+        for (int i = 0; children != null && i < children.getLength(); i++) {
+            Node node = children.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("dependency")) {
+                Element aid = directChild((Element) node, "artifactId");
+                if (aid != null && artifactId.equals(aid.getTextContent().trim())) {
+                    Element scope = directChild((Element) node, "scope");
+                    return scope == null ? "" : scope.getTextContent().trim();
+                }
+            }
+        }
+        return "";
+    }
+
+    /** The execution {@code id} of the build plugin {@code artifactId}, or null when there is none. */
+    private static Element executionOf(Element project, String artifactId, String id) {
+        Element build = directChild(project, "build");
+        Element plugins = build == null ? null : directChild(build, "plugins");
+        if (plugins == null) {
+            return null;
+        }
+        NodeList children = plugins.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node node = children.item(i);
+            if (node.getNodeType() != Node.ELEMENT_NODE || !node.getNodeName().equals("plugin")) {
+                continue;
+            }
+            Element pluginId = directChild((Element) node, "artifactId");
+            if (pluginId == null || !artifactId.equals(pluginId.getTextContent().trim())) {
+                continue;
+            }
+            Element executions = directChild((Element) node, "executions");
+            NodeList found = executions == null ? null : executions.getChildNodes();
+            for (int e = 0; found != null && e < found.getLength(); e++) {
+                Node execution = found.item(e);
+                if (execution.getNodeType() == Node.ELEMENT_NODE) {
+                    Element executionId = directChild((Element) execution, "id");
+                    if (executionId != null && id.equals(executionId.getTextContent().trim())) {
+                        return (Element) execution;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean runsJacocoAgent(Path pom) throws Exception {
+        Element build = directChild(parse(pom).getDocumentElement(), "build");
+        Element plugins = build == null ? null : directChild(build, "plugins");
+        if (plugins == null) {
+            return false;
+        }
+        NodeList children = plugins.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node node = children.item(i);
+            if (node.getNodeType() != Node.ELEMENT_NODE || !node.getNodeName().equals("plugin")) {
+                continue;
+            }
+            Element artifactId = directChild((Element) node, "artifactId");
+            if (artifactId == null || !"jacoco-maven-plugin".equals(artifactId.getTextContent().trim())) {
+                continue;
+            }
+            NodeList goals = ((Element) node).getElementsByTagName("goal");
+            for (int g = 0; g < goals.getLength(); g++) {
+                if ("prepare-agent".equals(goals.item(g).getTextContent().trim())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
      * The binary-compatibility gate runs the same japicmp plugin in every module
      * that carries a {@code japicmp} profile — a version pinned as a literal in each
      * standalone pom. Two literals of one version drift apart silently, and a
-     * plugin skew here means the two modules are judged by different
+     * plugin skew here means the gated modules are judged by different
      * compatibility rules. Only the plugin version is held in lockstep: the
      * releases each module is diffed against are pinned per module, and
      * {@link #japicmpBaselinesTrackTheWorkingMajorAndTheLatestRelease} holds the
@@ -219,12 +367,15 @@ class VersionConsistencyGuardTest {
         assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("templates/pom.xml"), "japicmp.version"))
                 .describedAs("templates japicmp.version must match the engine pom's (%s)", core)
                 .isEqualTo(core);
+        assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("render-docx/pom.xml"), "japicmp.version"))
+                .describedAs("render-docx japicmp.version must match the engine pom's (%s)", core)
+                .isEqualTo(core);
     }
 
     /**
      * The poms whose {@code japicmp} profile diffs against two published releases: the
      * floor of the working major and the release before the working version. The
-     * engine pom still diffs against its floor alone ({@code japicmp.baseline}).
+     * engine and render-docx poms diff against their floor alone ({@code japicmp.baseline}).
      */
     private static final List<String> TWO_BASELINE_JAPICMP_POMS = List.of("templates/pom.xml");
 
@@ -293,9 +444,10 @@ class VersionConsistencyGuardTest {
         }
     }
 
-    /** Every japicmp baseline pin, per gated pom. The engine pom carries a single one. */
+    /** Every japicmp baseline pin, per gated pom. The engine and DOCX poms carry a single one. */
     private static final Map<String, List<String>> JAPICMP_BASELINE_PINS = Map.of(
             "core/pom.xml", List.of("japicmp.baseline"),
+            "render-docx/pom.xml", List.of("japicmp.baseline"),
             "templates/pom.xml", List.of("japicmp.baseline.floor", "japicmp.baseline.previous"));
 
     /**

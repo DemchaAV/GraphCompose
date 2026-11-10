@@ -57,7 +57,71 @@ matrix.
 > Geometry identity with the PDF backend is a design invariant and will not
 > change; the API shape around it may still move in a minor release.
 >
-> Six members of the otherwise-Stable **PDF backend** also carry `@Beta`. The
+> Five members of the otherwise-Stable **semantic export SPI** carry `@Beta` for the
+> resolved layout, new in 2.5.0: `SemanticBackend.requiresResolvedLayout`, the
+> `layoutGraph` and `layoutFailure` components of `SemanticExportContext`, the
+> six-argument canonical constructor that takes them, and
+> `SemanticExportContext.requireLayoutGraph`. They let a semantic backend be handed the
+> compiled layout beside the graph — geometry it reads rather than places — and, where
+> the document cannot be laid out, the reason, so the backend can say why it exported
+> without one. The seam is marked Experimental because what a semantic backend
+> should be *given* is still settling: a later minor may narrow it to the measurements
+> a backend actually needs instead of the whole graph. Backends that do not ask are
+> unaffected, and the four- and three-argument `SemanticExportContext` constructors
+> published before 2.5.0 keep working. Java does not carry a method's annotation to its
+> override, so `DocxSemanticBackend` carries the marker on its own
+> `requiresResolvedLayout` too.
+>
+> **Semantic backend discovery** is Experimental in 2.5.0: the `SemanticBackendProvider`
+> and `SemanticBackendProviders` types, the DOCX backend's own provider
+> `DocxBackendProvider`, and the DOCX convenience methods on
+> `DocumentSession` (`toDocxBytes`, `writeDocx`, `buildDocx`). They are the semantic
+> half of the `ServiceLoader` path the fixed-layout backends have had since 2.0, so an
+> artifact on the classpath is enough to export — no naming the backend in code. The
+> shape is marked Experimental because it is deliberately narrower than the
+> fixed-layout locator (no default-format lookup, no per-backend configuration through
+> the provider) and a later minor may widen it once a second semantic format exists to
+> generalise against. Constructing `DocxSemanticBackend` and calling
+> `session.export(backend, path)` stays the Stable path and is unaffected.
+>
+> The **DOCX export report** is Experimental in 2.5.0: the `DocxExportReport` type with
+> its nested `DocxExportReport.Note` and `DocxExportReport.Severity`, and the
+> `DocxSemanticBackend(Consumer<DocxExportReport>)` constructor, which hand the
+> calling program what the export dropped or approximated and the path of the node each
+> came from — the same information the export has always written to the log, where a
+> service generating documents for other people cannot read it. It is marked
+> Experimental because what a report should carry is still growing: coverage of what
+> *was* written is not in it yet, and adding that will move the shape. The no-argument
+> constructor and the log are unaffected.
+>
+> **Multi-section semantic export** is Experimental in 2.5.0: the `SemanticSection`
+> record, `SemanticBackend.exportSections`, and on `MultiSectionDocument` the
+> `export(SemanticBackend)` method with the DOCX convenience methods `toDocxBytes`,
+> `writeDocx` and `buildDocx`. They are the semantic counterpart of the fixed-layout
+> `renderSections`: each section is handed over as its own graph and context, and a
+> backend that can write a sectioned document — DOCX writes a Word section per section —
+> overrides `exportSections`, while the default exports a single section and refuses
+> several. `DocxSemanticBackend.exportSections` is that override, and carries the marker
+> too. It is marked Experimental because it takes the same shape the single-document seam
+> may still narrow, and a section can only carry what a `SemanticExportContext` carries.
+> `MultiSectionDocument`'s PDF methods are unaffected.
+>
+> The **DOCX backend builder** is Experimental in 2.5.0: `DocxSemanticBackend.builder()`
+> and `DocxSemanticBackend.Builder` — `reportSink`, and `deterministic` in both overloads,
+> which pins the package's created / modified dates and every zip entry's time so a
+> document exports byte-identically across runs. It takes the PDF and PPTX backends'
+> contract and default instant; determinism is off by default, and as there, it is the
+> shape of the opt-in that may still move rather than the behaviour. Both constructors
+> are unaffected.
+>
+> **A page zone's context for a kind of page** is Experimental in 2.5.0:
+> `PageContext.unpaginated(boolean, boolean)`, which a semantic backend builds a page zone
+> with for a kind of page rather than a page — the first, the last or one between, as Word
+> gives the first page a header and footer of its own — so `isFirst()` and `isLast()` answer
+> for that kind while the numbers stay unknown. It is marked Experimental because the kinds it names are
+> Word's: a second semantic format may need others. `unpaginated()` is unaffected.
+>
+> Seven members of the otherwise-Stable **PDF backend** also carry `@Beta`. The
 > package is not Experimental — these are:
 > `PdfFixedLayoutBackend.renderSections` / `writeSections`, the low-level seam
 > that concatenates several sections into one document, where
@@ -67,12 +131,16 @@ matrix.
 > `CreationDate` / `ModDate` and derives the `/ID` from metadata so a document
 > renders byte-identically across runs. Determinism is off by default, and what
 > reproducible builds depend on is the *behaviour* — it is the shape of the
-> opt-in that may still move; and
+> opt-in that may still move;
 > `PdfRenderEnvironment.letterSpacedFont` with its result record
 > `PdfRenderEnvironment.LetterSpacedFont`, the seam a render handler uses to
 > draw tracked text with the spacing in the glyph widths rather than in `Tc`
 > gaps. The glyph positions and text layer it produces are settled; the shape of
-> the call — a nullable result, a face bound to one size — may still move.
+> the call — a nullable result, a face bound to one size — may still move; and
+> `PdfRenderEnvironment.writeTextLayer`, the seam a render handler uses to put
+> the text a drawing stands for — an inline emoji's character — in the page's
+> text layer as an invisible glyph. The text layer it writes is settled; the
+> shape of the call may still move.
 
 ### What each tier promises
 
@@ -225,9 +293,10 @@ by the binary-compatibility gate below; none is removed before 3.0.
 
 The Stable-tier promise (§ 1 — no binary breaks outside a major release) is enforced
 mechanically by [japicmp](https://siom79.github.io/japicmp/), run in a `japicmp` Maven
-profile during `verify` on the engine module (`graph-compose-core`) and on
-`graph-compose-templates`. The render backends (`graph-compose-render-pdf`,
-`-render-docx`, `-render-pptx`) and `graph-compose-testing` are not gated yet.
+profile during `verify` on the engine module (`graph-compose-core`), on
+`graph-compose-templates` and on the Word backend (`graph-compose-render-docx`). The
+other render backends (`graph-compose-render-pdf`, `-render-pptx`) and
+`graph-compose-testing` are not gated yet.
 
 - **Baselines:** the published artifacts on Maven Central.
   - `graph-compose-core` is diffed against the `japicmp.baseline` property in
@@ -243,6 +312,17 @@ profile during `verify` on the engine module (`graph-compose-core`) and on
     -PostReleaseOnly` moves the previous pin to the release just published, and
     `VersionConsistencyGuardTest` fails the build when a pin disagrees with the working
     version and the CHANGELOG.
+  - `graph-compose-render-docx` is diffed against the `japicmp.baseline` property in
+    `render-docx/pom.xml`, the floor `2.0.0`, as the engine is. The floor holds the
+    Stable surface 2.0.0 shipped: `DocxSemanticBackend`, its no-argument constructor,
+    `name()` and `export(...)` — the Stable path of constructing the backend and calling
+    `session.export(backend, path)`. Everything the module added since is `@Beta` and
+    absent from the floor. A member that becomes Stable after 2.0.0 is **not** held by a
+    floor-only diff: guarding it, with a previous-release baseline as the templates gate
+    has, belongs to graduating the DOCX `@Beta` API to Stable, which
+    [`ROADMAP.md`](../ROADMAP.md) lists as still open after 2.5. Like the engine's
+    floor pin, this one breaks the build on every binary change, so the cut that opens
+    3.0 needs the same decision for it as for the engine.
 - **What fails the build:** any binary-incompatible change to the public surface
   against a baseline — a removed or less-accessible public method/field/type or
   constructor, a changed signature, and so on. A deprecated element stays protected like
@@ -251,27 +331,29 @@ profile during `verify` on the engine module (`graph-compose-core`) and on
   render-handoff payload records) are excluded; they carry no compatibility promise
   (§ 1). Every `templates.*` package is Stable (§ 4), so in `graph-compose-templates`
   only an element carrying the per-element `@Internal` marker is excluded — none does
-  today. Source-only incompatibilities (e.g. adding a default method to an interface)
-  are reported but do not fail, pending a finalized 2.x source-compatibility policy.
+  today. `graph-compose-render-docx` excludes the same marker and nothing else.
+  Source-only incompatibilities (e.g. adding a default method to an interface) are
+  reported but do not fail, pending a finalized 2.x source-compatibility policy.
 - **Where it runs:** the pull-request `Binary Compatibility` job, `cut-release.ps1` Step 5b
   and the publish workflow. Each ends by checking that every execution left its report: an
   execution that does not run — switched off, unbound, or not selected — writes none and
   fails nothing. A baseline japicmp cannot resolve still leaves a report, so that case is
-  caught only where the gate fails on it — `graph-compose-templates`, as the next point
-  says. `BinaryCompatibilityGateGuardTest` holds the executions, their settings, the job's
-  trigger and those checks in place.
+  caught only where the gate fails on it — `graph-compose-templates` and
+  `graph-compose-render-docx`, as the next point says. `BinaryCompatibilityGateGuardTest`
+  holds the executions, their settings, the job's trigger and those checks in place.
 - **Where a baseline comes from:** a published release, never this build. japicmp resolves
   a pin equal to the module's own version to the artifact the build just produced —
   measured on a simulated `3.0.0` cut, where it reported *"No incompatible changes found
   while checking backward compatibility of version 3.0.0 with the previous version
   3.0.0"*, from the reactor and from a local repository the release had been installed
-  into alike. So both pins are held **strictly older** than the working version
+  into alike. So every pin is held **strictly older** than the working version
   (`VersionConsistencyGuardTest`), every path drops our cached artifacts from the local
   repository before it resolves, and the publish workflow runs the gate *before* the
   `install` that seeds that repository with the release being published.
 - **Activity window:** active for every `-SNAPSHOT` cycle and every release commit of a
-  major that has a published release of its own; a `graph-compose-templates` baseline that
-  cannot be resolved fails the build rather than skipping its diff (japicmp's default,
+  major that has a published release of its own; a `graph-compose-templates` or
+  `graph-compose-render-docx` baseline that cannot be resolved fails the build rather
+  than skipping its diff (japicmp's default,
   which the engine gate still runs with, skips it with a warning).
 - **Opening a major:** while major `X` has no release of its own — the whole
   `X.0.0-SNAPSHOT` cycle *and* the `X.0.0` release commit — there is nothing in-major to

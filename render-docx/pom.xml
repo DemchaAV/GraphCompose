@@ -19,7 +19,7 @@
     -->
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-render-docx</artifactId>
-    <version>2.4.2-SNAPSHOT</version>
+    <version>2.5.0-SNAPSHOT</version>
 
     <name>GraphCompose Render — DOCX</name>
     <description>Semantic DOCX export backend for GraphCompose, backed by Apache POI.</description>
@@ -67,6 +67,9 @@
         <maven.compiler.plugin.version>3.16.0</maven.compiler.plugin.version>
         <maven.jar.plugin.version>3.5.1</maven.jar.plugin.version>
         <maven.surefire.plugin.version>3.6.1</maven.surefire.plugin.version>
+        <!-- Keep in lockstep with the engine pom's jacoco.plugin.version
+             (VersionConsistencyGuardTest enforces the equality). -->
+        <jacoco.plugin.version>0.8.16</jacoco.plugin.version>
         <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
         <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
         <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
@@ -74,6 +77,14 @@
 
         <!-- See the engine pom: opted in via -Dgpg.skip=false on the publish workflow. -->
         <gpg.skip>true</gpg.skip>
+
+        <!-- Binary-compatibility baseline for the japicmp profile below: the floor of
+             the 2.x line, as in the engine pom. It advances only at the next major and
+             must stay STRICTLY OLDER than the working version, which
+             VersionConsistencyGuardTest enforces together with japicmp.version's lockstep
+             with the engine pom's. -->
+        <japicmp.version>0.27.0</japicmp.version>
+        <japicmp.baseline>2.0.0</japicmp.baseline>
     </properties>
 
     <dependencies>
@@ -87,13 +98,18 @@
             <artifactId>poi-ooxml</artifactId>
             <version>${poi.version}</version>
         </dependency>
-        <!-- The export test builds a DocumentSession, which lays out through the
-             font-metrics seam now provided by graph-compose-render-pdf. -->
+        <!-- Not test. Opening a DocumentSession resolves a FontMetricsProvider, and
+             graph-compose-render-pdf is the only artifact that publishes one, so a
+             classpath of core + render-docx alone failed at create() before any export —
+             there is no working DOCX export without it. Compile scope, as the PPTX backend
+             carries it: a barcode is written as a picture of the same ZXing matrix the PDF
+             and PPTX backends draw, through render-pdf's BarcodeMatrices, so the three
+             cannot encode one symbol differently; and text seated off its baseline is moved
+             by render-pdf's ParagraphSeating over the same measurement fonts. -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-render-pdf</artifactId>
             <version>${project.version}</version>
-            <scope>test</scope>
         </dependency>
 
         <!-- Test dependencies -->
@@ -153,6 +169,24 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>${maven.jar.plugin.version}</version>
+            </plugin>
+            <!--
+                Coverage agent (prepare-agent only, no <argLine> here, so surefire
+                picks up the property it writes). This module's exec feeds the
+                report-aggregate in graph-compose-coverage.
+            -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -228,6 +262,72 @@
                             <publishingServerId>central</publishingServerId>
                             <autoPublish>false</autoPublish>
                             <waitUntil>validated</waitUntil>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!--
+            Binary-compatibility gate for this module. Activated with `-P japicmp`, the
+            same profile id as the engine and templates poms, so one reactor invocation
+            gates all three. Diffs the freshly-built jar against the published
+            graph-compose-render-docx pinned by japicmp.baseline, the 2.x floor, as the
+            engine gate does. The floor holds the Stable surface that 2.0.0 shipped:
+            DocxSemanticBackend, its no-argument constructor, name() and export(...).
+            Everything this module added since is @Beta and absent from the floor, so
+            only the per-element @Internal marker is excluded. A member that becomes
+            Stable after 2.0.0 is not held by a floor-only diff; docs/api-stability.md
+            leaves that to graduating the DOCX @Beta API to Stable. Fails the build on any
+            binary-incompatible modification; source-incompatible changes are reported
+            only. A baseline that cannot be resolved fails the build rather than
+            skipping its diff.
+        -->
+        <profile>
+            <id>japicmp</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.siom79.japicmp</groupId>
+                        <artifactId>japicmp-maven-plugin</artifactId>
+                        <version>${japicmp.version}</version>
+                        <executions>
+                            <execution>
+                                <id>japicmp-against-baseline</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>cmp</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <oldVersion>
+                                <dependency>
+                                    <groupId>io.github.demchaav</groupId>
+                                    <artifactId>graph-compose-render-docx</artifactId>
+                                    <version>${japicmp.baseline}</version>
+                                </dependency>
+                            </oldVersion>
+                            <newVersion>
+                                <file>
+                                    <path>${project.build.directory}/${project.build.finalName}.jar</path>
+                                </file>
+                            </newVersion>
+                            <parameter>
+                                <onlyModified>true</onlyModified>
+                                <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+                                <breakBuildOnSourceIncompatibleModifications>false</breakBuildOnSourceIncompatibleModifications>
+                                <includeSynthetic>false</includeSynthetic>
+                                <reportOnlyFilename>true</reportOnlyFilename>
+                                <skipPomModules>true</skipPomModules>
+                                <!-- japicmp defaults this to true: a baseline it cannot resolve
+                                     is skipped with a warning, and the build passes having
+                                     compared nothing. -->
+                                <ignoreMissingOldVersion>false</ignoreMissingOldVersion>
+                                <excludes>
+                                    <exclude>@com.demcha.compose.document.api.Internal</exclude>
+                                </excludes>
+                            </parameter>
                         </configuration>
                     </plugin>
                 </plugins>

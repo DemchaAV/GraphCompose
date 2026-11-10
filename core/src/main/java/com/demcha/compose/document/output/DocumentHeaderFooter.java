@@ -17,9 +17,10 @@ import lombok.Getter;
  * <p>This is the text band: three slots, three tokens, painted after the page is
  * laid out. When the band needs to hold something — a badge, a link, a logo, a
  * layout — reach for {@link DocumentPageZone} instead, whose content is a node
- * subtree the engine lays out and paints the way it does the body, and which
- * exports to DOCX as a real Word header or footer. The two coexist and neither
- * changes the other: an existing header or footer renders exactly as it did.</p>
+ * subtree the engine lays out and paints the way it does the body. Both export to
+ * DOCX as a real Word header or footer: the band as one line of text with live
+ * page fields, the zone as its content. The two coexist and neither changes the
+ * other: an existing header or footer renders exactly as it did.</p>
  *
  * @author Artem Demchyshyn
  */

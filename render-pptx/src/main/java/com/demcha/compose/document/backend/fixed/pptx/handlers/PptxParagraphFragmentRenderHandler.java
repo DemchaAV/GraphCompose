@@ -54,7 +54,8 @@ public final class PptxParagraphFragmentRenderHandler
             double baselineY = ParagraphLineGeometry.baselineY(
                     cursorTop, line.lineHeight(), line.baselineOffsetFromBottom());
             if (payload.verticalAlign() != TextVerticalAlign.DEFAULT) {
-                baselineY += verticalSeatShift(line, fonts, payload.verticalAlign());
+                baselineY += com.demcha.compose.document.backend.fixed.pdf.handlers.ParagraphSeating
+                        .shift(line, fonts, payload.verticalAlign());
             }
             double lineX = ParagraphLineGeometry.lineStartX(
                     payload.align(), innerX, innerWidth, line.width());
@@ -453,28 +454,4 @@ public final class PptxParagraphFragmentRenderHandler
         return font.verticalMetrics(span.textStyle());
     }
 
-    private static double verticalSeatShift(ParagraphLine line,
-                                            FontLibrary fonts,
-                                            TextVerticalAlign align) {
-        for (ParagraphSpan span : line.spans()) {
-            if (span instanceof ParagraphTextSpan textSpan) {
-                PdfFont font = fonts.getFont(textSpan.textStyle().fontName(), PdfFont.class).orElse(null);
-                if (font == null) {
-                    return 0;
-                }
-                double capHeight = font.getCapHeight(textSpan.textStyle());
-                double ascent = line.textAscent();
-                double descent = line.baselineOffsetFromBottom();
-                double leading = Math.max(0, line.textLineHeight() - ascent - descent);
-                double capTopToBoxTop = ascent + leading - capHeight;
-                return switch (align) {
-                    case TOP -> capTopToBoxTop;
-                    case CENTER -> (capTopToBoxTop - descent) / 2.0;
-                    case BOTTOM -> -descent;
-                    case DEFAULT -> 0;
-                };
-            }
-        }
-        return 0;
-    }
 }

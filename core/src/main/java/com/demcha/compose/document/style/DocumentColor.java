@@ -77,7 +77,10 @@ public final class DocumentColor {
      * surface: the PDF backend through a graphics-state alpha constant on
      * shape fills and strokes, text runs, lines, side borders, and table
      * paint; the PPTX backend natively in DrawingML. The DOCX backend
-     * currently renders the colour fully opaque.</p>
+     * keeps it on text, as Word's text fill, and on drawings and pictures;
+     * where Word holds an opaque colour only — a table cell's shading, a
+     * border, a rule — it flattens the colour against what the page paints
+     * under it and names it in its export report.</p>
      *
      * @param red   red channel from 0 to 255
      * @param green green channel from 0 to 255

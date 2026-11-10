@@ -5,6 +5,9 @@ on:
     branches:
       - main
       - develop
+      # The 2.5 release line, as in ci.yml: it gives the line's pull requests
+      # an analysis of their base branch. Drop it with the branch.
+      - 2.5-dev
   pull_request:
     # Run on any incoming PR regardless of the base branch so feature
     # branches targeting `develop` also get analysed.

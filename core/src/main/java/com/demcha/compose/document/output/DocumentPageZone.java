@@ -30,8 +30,11 @@ import java.util.function.Predicate;
  * }</pre>
  *
  * <p>The content function is called once per page with that page's
- * {@link PageContext}, after pagination has settled. It must return a node; a
- * zone that should be absent on some pages says so through
+ * {@link PageContext}, after pagination has settled — on a semantic export,
+ * where the format paginates, for the kinds of page it tells apart instead:
+ * the first, the last and the pages between
+ * ({@link PageContext#unpaginated(boolean, boolean)}). It must return
+ * a node; a zone that should be absent on some pages says so through
  * {@code appliesTo} instead of returning {@code null}.</p>
  *
  * <p><strong>A zone is atomic.</strong> It is laid out into its declared
@@ -91,10 +94,12 @@ public final class DocumentPageZone {
      * two are separate questions, so "no number on the cover, but keep the
      * logo" is one zone with a predicate rather than two zones.
      *
-     * <p>A predicate is a fixed-layout capability. A semantic export (DOCX)
-     * writes the zone once as a definition and the consuming format paginates,
-     * so there is no page to test it against: the zone lands on every page and
-     * the export logs a warning.</p>
+     * <p>A semantic export (DOCX) writes the zone as a definition and the
+     * consuming format paginates, so there is no page to test it against. It
+     * asks the predicate over sample pages instead: one that follows the kinds of
+     * page the format has a header or footer for — the first, even ones, the
+     * rest — lands on those, and one that picks pages within a kind (the last
+     * page) lands on every page, reported.</p>
      */
     private final Predicate<PageContext> appliesTo;
 

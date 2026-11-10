@@ -102,13 +102,22 @@ class DocxRunStyleTest {
         // means the chip's monospace face now reaches Word. Its background does not.
         List<XWPFRun> runs = paragraphRuns(flow -> flow.addParagraph(paragraph -> paragraph
                 .textStyle(BASE)
-                .inlineText("call ")
+                .inlineText("to render the document, call ")
                 .inlineCode("run()")));
 
-        assertThat(runs).hasSize(2);
-        assertThat(runs.get(0).getFontFamily()).isEqualTo("Helvetica");
-        assertThat(runs.get(1).getText(0)).isEqualTo("run()");
-        assertThat(runs.get(1).getFontFamily()).isEqualTo("Courier");
+        // The chip's padding is space after the letter before it and after its own last
+        // letter, each of those letters a run of its own.
+        assertThat(runs).extracting(XWPFRun::text)
+                .containsExactly("to render the document, call", " ", "run(", ")");
+        // The surrounding text is the document's own body style, so its face comes from
+        // Normal and the run says nothing — that is what lets a reader restyle the
+        // document. The claim this test makes is about the chip, and it is unchanged: the
+        // chip's face differs, so it is still written on the run itself.
+        assertThat(runs.get(0).getFontFamily())
+                .describedAs("plain text takes its face from the Normal style")
+                .isNull();
+        assertThat(runs.get(2).getFontFamily()).isEqualTo("Courier");
+        assertThat(runs.get(3).getFontFamily()).isEqualTo("Courier");
     }
 
     @Test

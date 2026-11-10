@@ -190,7 +190,7 @@ def read_lines(pdf):
     open on a blank span of another baseline: Word's PDF of cv-editorial_blue opens "Helix Print
     Co" on a space 0.96pt in size set 7.3pt above the letters, and the line read at the space's
     baseline crossed the line above it, which it does not on the page. Its left and right are
-    the line's box, the blank span within it; that space starts where the letters do."""
+    the line's box, the blank span within it: in that PDF the space starts where the letters do."""
     out = []
     for pno, page in enumerate(pdf):
         for block in page.get_text("dict", flags=fitz.TEXTFLAGS_DICT | clip_flag())["blocks"]:
@@ -1309,6 +1309,8 @@ def run_self_check(scratch):
                                (0, 72, 400 + gap, "Helix Print Co", 9.48)]
     check("a page added, a line opening on a blank span above its letters, clear of the line above",
           add(probe_pdf(1, body + blank_above(30)), probe_pdf(2, body + blank_above(11.2) + typed(14))), "PASS")
+    check("a page added, a line opening on a blank span above its letters, its letters over the line above",
+          add(probe_pdf(1, body + blank_above(30)), probe_pdf(2, body + blank_above(5) + typed(14))), "FAIL")
     spaced = [(1, 72, 100 + i * 14, " ".join(TYPED.format(i + 1)), 10) for i in range(3)]
     check("a page added, typed on from a letter-spaced line", add(one, probe_pdf(2, body + numbered(2, 2) + spaced)), "PASS")
 

@@ -5454,9 +5454,11 @@ follow semantic versioning; release dates are ISO 8601.
     `invoice-luma_studio_long`, whose typed lines run under the closing banner the export writes
     over the flow with no room of its own. `cv-editorial_blue` and `synthetic-card_over_pages` now
     pass; LibreOffice 24.2 already passed `cv-editorial_blue`. The four other edits read from a
-    PDF — a sentence added in a cell and in a drawing, the footer, the link — keep every verdict
-    in Word, and LibreOffice 24.2, run over the 104 with the protocol before and after this change,
-    gives every scenario the same verdict and the same detail.
+    PDF — a sentence added in a cell and in a drawing, the footer, the link — and lengthening a
+    paragraph, whose verification now runs after its PDF is set, keep every verdict in Word on the
+    84 documents an earlier run covered, and the 20 added since pass or are N/A. LibreOffice 24.2,
+    run over the 104 with the protocol before and after this change, gives every scenario the same
+    verdict and the same detail.
   - `-SelfCheck` adds a document with no header under a 28pt top margin, whose first line must
     stand in the typed copy's PDF where the save with no edit sets it, and `--self-check` a line
     opening on a blank span above its letters, which must read clear of the line above it.

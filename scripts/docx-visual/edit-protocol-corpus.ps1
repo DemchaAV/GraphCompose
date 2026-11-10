@@ -2600,12 +2600,22 @@ function Invoke-SelfCheck {
         $verdicts = ($results | ForEach-Object { "$($_.scenario) $($_.status)" }) -join ', '
         $read = "import sys, fitz; p = fitz.open(sys.argv[1])[0]; print(min(s['origin'][1] for b in p.get_text('dict')['blocks'] for l in b.get('lines', []) for s in l['spans'] if s['text'].strip()))"
         $tops = @(foreach ($pdf in $pdfs) {
-            $top = & $Python -c $read $pdf 2>$null
-            if ($LASTEXITCODE -ne 0 -or -not $top) { throw "no first line read from $pdf ($verdicts)" }
-            [double]$top
+            # Python's stderr is read as text, as in Read-PdfPlaces: Windows PowerShell 5.1 would
+            # raise a warning there under Stop.
+            $ErrorActionPreference = 'Continue'
+            $output = & $Python -c $read $pdf 2>&1
+            $ErrorActionPreference = 'Stop'
+            $top = @($output | Where-Object { "$_" -match '^[0-9.]+$' } | Select-Object -Last 1)
+            if ($LASTEXITCODE -ne 0 -or $top.Count -eq 0) { throw "no first line read from $pdf ($verdicts)" }
+            [double]"$($top[0])"
         })
+        $typed = @($results | Where-Object { $_.scenario -eq 'add-a-page' })
         if (@($results | Where-Object { $_.status -eq 'ERROR' }).Count -gt 0) {
             $failures += "${name}: typing onto a new page — a scenario came to no verdict: $verdicts"
+        } elseif ($typed.Count -ne 1 -or $typed[0].detail -notlike '*footer there*') {
+            # The probe is for a verification that reads the footer; one that no longer reaches it
+            # holds nothing here.
+            $failures += "${name}: typing onto a new page — its verification read no footer: $verdicts"
         } elseif ([Math]::Abs($tops[1] - $tops[0]) -gt 0.1) {
             $failures += "${name}: typing onto a new page — its PDF sets the first line at $($tops[1])pt, the save with no edit at $($tops[0])pt: $verdicts"
         }

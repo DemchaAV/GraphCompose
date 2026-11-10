@@ -5450,6 +5450,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **A guard holds the DOCX column of the capability matrix to the export's code.**
+  `DocxCapabilityMatrixGuardTest` reads the `render-docx` sources for every note a
+  `DocxExportReport` is given, and the subject and severity it carries — a string, a constant, a
+  local, a method's returns, a record a subject is handed through, and a node's kind as `<kind>`.
+  It fails when the matrix's *DOCX export report subjects* table lists a subject or a severity the
+  export never writes, or leaves out one it does.
+  - A subject it cannot resolve fails it — a parameter, a local assigned again, an accessor it does
+    not know — and so does a severity not written out where a note is added, so a new kind of note
+    cannot pass unread. A note in a comment is not read as one.
+  - It also fails on a capability the table's *Row* column names that the matrix has no row for,
+    and on a `Docx…` class or method the DOCX column names that no source declares.
+  - Its first run found three subjects the export writes and the table did not list:
+    `cell padding`, `list picture` and `panel width`. They are listed now. The *Transform* row
+    said a turned shape container is written upright; so are a turned shape, ellipse, line,
+    picture and barcode, each one's note naming the transform, and the row says so now.
+
 - **Word's editing protocol reads typing onto a new page from the page the saved copy shows.**
   - `edit-protocol-corpus.ps1` set each edited copy as a PDF after its verification had read the
     copy. Typing onto a new page reads the footer its last page shows, and reading a footer's text

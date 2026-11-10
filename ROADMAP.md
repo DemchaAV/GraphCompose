@@ -2,9 +2,27 @@
 
 GraphCompose is solo-maintained. This roadmap is a direction, not a contract. Dates are intentionally omitted. Concrete work is tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues) and shipped work is recorded in [CHANGELOG.md](CHANGELOG.md).
 
-## Now — after 2.4
+## Now — after 2.5
 
-The live threads are tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues): finishing the DOCX export for 2.5 &mdash; on that line the export now writes from the compiled layout the PDF and PPTX backends render (the `v2.5.0` entry in [CHANGELOG.md](CHANGELOG.md)) &mdash; growing the built-in layered template line-up, and keeping the knowledge pack current as the API moves. Vector clipping for the PPTX backend remains open.
+The live threads are tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues): graduating the Java API of the Word and PowerPoint outputs from `@Beta` to Stable, moving the office backends to Apache POI 6, growing the built-in layered template line-up, and keeping the knowledge pack current as the API moves. Vector clipping for the PPTX backend remains open.
+
+## Upcoming — 2.5
+
+**2.5.0** is the current release. From this line **PDF, PowerPoint and Word are three full
+outputs** of one document. It leads with a **DOCX export that writes the page the engine
+laid out**: the line heights, column widths and space round each block the page has, real
+Word lists, drawings anchored where the text that carries them moves them, rules, icons,
+page zones, headers, footers and backgrounds, bookmarks, links and an outline, and the faces
+the document is set in. Word still paginates the document and reflows it after an edit. A
+chart is a Word chart with its numbers in an embedded workbook, and `DocxExportReport` names
+every node the export dropped or wrote as the nearest thing Word has. The export is held to
+a corpus of 104 documents measured line by line in Word and LibreOffice. The Java API of the
+Word and PowerPoint outputs stays Experimental (`@Beta`); the formats are full outputs.
+
+The release train reaches Maven Central as **one deployment** of its eight components, and
+a line copied out of a PDF keeps its emoji.
+
+Full detail in [CHANGELOG.md](CHANGELOG.md) under `v2.5.0`.
 
 ## Current stable — 2.4
 
@@ -96,7 +114,7 @@ Committed internal direction for the post-2.0 line: refactors, scale work, and t
 
 Not committed. Reflects current thinking; priorities may shift based on user feedback and adoption signals.
 
-- **PPTX beyond beta.** Graduate the fixed-layout PPTX backend from `@Beta` to stable and close the remaining fidelity gaps &mdash; true vector clipping instead of the raster fallback ([#413](https://github.com/DemchaAV/GraphCompose/issues/413)), exact numeric dash arrays, and distinct per-corner radii.
+- **PPTX API to Stable.** Graduate the fixed-layout PPTX backend's Java API from `@Beta` to Stable and close the remaining fidelity gaps &mdash; true vector clipping instead of the raster fallback ([#413](https://github.com/DemchaAV/GraphCompose/issues/413)), exact numeric dash arrays, and distinct per-corner radii.
 - **A strict mode for DOCX.** Since 2.5, shapes, lines and ellipses are written where the layout places them &mdash; as drawings, or as Word's own rule for a plain horizontal line in the flow &mdash; and dropped only where they cannot be drawn: a fill that is only a gradient, or a document the engine could not lay out, among them. Every node the export drops or writes as the nearest thing Word has is named, with its path, in a `DocxExportReport` handed to the sink of the backend passed to `export(...)`. A caller exporting to bytes can read the report before keeping them, but an export given an output file has written it by the time the report arrives. A built-in option to refuse &mdash; a flag that fails the export instead of writing a document with content gone &mdash; is a direction, not a decision: today an export writes what it can and reports the rest.
 - **Block-level alignment for fixed-size flow children.** Paths, images, layer stacks, shape containers and barcodes currently left-align in a flow; centring one means wrapping it in a full-width `ShapeContainer` just to use its CENTER anchor. Add a per-node horizontal align (left / centre / right &mdash; the `margin: auto` / `align(center)` analogue) so a fixed box can place itself in the flow directly. Surfaced by the v1.8 SVG icon-gallery and feature-catalog work.
 - **Backend-neutral layout measurement.** Decouple measurement from PDFBox-specific resources so non-PDF backends do not pull PDFBox into the dependency graph.

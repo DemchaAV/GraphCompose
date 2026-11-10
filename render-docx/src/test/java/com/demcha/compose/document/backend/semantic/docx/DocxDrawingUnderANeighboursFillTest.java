@@ -727,8 +727,31 @@ class DocxDrawingUnderANeighboursFillTest {
 
         assertThat(pinAnchor(export)).as("the pin, with the tag drawn after it, stays behind")
                 .contains("behindDoc=\"1\"");
+        assertThat(anchorsHolding(export, "C83C3C")).singleElement().asString()
+                .as("the tag, drawn last, is lifted through the container over the band")
+                .contains("behindDoc=\"0\"");
         assertThat(anchorsHolding(export, "0AAA5A")).singleElement().asString()
                 .as("so the outline under it stays behind too")
+                .contains("behindDoc=\"1\"");
+    }
+
+    @Test
+    void aShapeUnderABarcodeTheStackDrawsOverItIsNotLifted() throws Exception {
+        // A barcode is written as a picture in the text layer, from no fragment a shape is drawn
+        // from, so a shape in front would be drawn over the bars the page draws over it.
+        Export export = export(session -> session.pageFlow(page -> page
+                .add(new LayerStackBuilder().name("Stack")
+                        .layer(new SectionBuilder().name("Band").fillColor(BAND).fixedWidth(200)
+                                .addParagraph(p -> p.name("Stage").text("Stage two")).build(), LayerAlign.TOP_LEFT, 0)
+                        .position(new ShapeBuilder().name("Pin").size(30, 14).fillColor(ACCENT).build(),
+                                150, 2, LayerAlign.TOP_LEFT, 1)
+                        .position(new com.demcha.compose.document.dsl.BarcodeBuilder().name("Code").code128()
+                                        .data("12345").size(120, 30).build(),
+                                110, 0, LayerAlign.TOP_LEFT, 2)
+                        .build())));
+
+        assertThat(pinAnchor(export))
+                .as("the page draws the barcode over the pin, so the pin stays behind it")
                 .contains("behindDoc=\"1\"");
     }
 

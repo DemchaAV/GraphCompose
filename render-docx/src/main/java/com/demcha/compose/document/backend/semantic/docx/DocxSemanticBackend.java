@@ -4989,11 +4989,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * not, and over a painted neighbour they stay behind the text and are named there
      * ({@code nameTheDrawingsAPaintedPanelCovers}). The corpus holds no instance of either.</p>
      *
-     * <p>So does a picture over that painted layer: a picture is drawn where the page puts it and
-     * is never lifted, so a shape lifted over one would cover it where the page draws it over the
-     * shape. Measured before it was counted: a badge's outline came back in front of the photo it
-     * frames, its own fill over the picture.</p>
-     *
      * <p>Where the tree does not say, it does not guess. A layer it cannot find among its
      * parent's ends the climb with a false, whatever an inner stack had granted, and a node one
      * instance of which stands at more than one place is refused outright, its box and its path
@@ -5027,14 +5022,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // its own shape.
             return false;
         }
-        // What the node holds is painted after its own shapes — a container's outline before its
-        // layers — so it is asked as a later layer is: lifting an outline under a shape it holds
-        // that stays behind would draw the outline's fill over that shape.
-        for (DocumentNode held : node.children()) {
-            if (drawnOverThatLayer(held) || textLaidOver(held, node)) {
-                return false;
-            }
-        }
         boolean over = false;
         DocumentNode child = node;
         for (DocumentNode parent = layout.parentOf(child); parent != null;
@@ -5067,12 +5054,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // never having been read.
                 return false;
             }
-            int paintedBelow = -1;
-            for (int i = 0; i < itsPlace; i++) {
-                if (paintsAFill(order.get(i))) {
-                    paintedBelow = i;
-                }
-            }
             // Alone above, or not at all: nothing of this overlay may be drawn after the node.
             // Asked at every overlay it stands in, painted or not — a sibling in an outer stack
             // is painted after the inner stack whole, and lifting a shape of that inner stack
@@ -5082,11 +5063,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     return false;
                 }
             }
-            if (paintedBelow >= 0) {
-                over = true;
+            over |= order.subList(0, itsPlace).stream().anyMatch(DocxSemanticBackend::paintsAFill);
+        }
+        if (!over) {
+            return false;
+        }
+        // What the node holds is painted after its own shapes — a container's outline before its
+        // layers — so it is asked as a later layer is: lifting an outline under a shape it holds
+        // that stays behind would draw the outline's fill over that shape.
+        for (DocumentNode held : node.children()) {
+            if (drawnOverThatLayer(held) || textLaidOver(held, node)) {
+                return false;
             }
         }
-        return over && !framesTextWithAShape(node);
+        return !framesTextWithAShape(node);
     }
 
     /**
@@ -5123,7 +5113,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * over one came back painted over the picture the page draws over it. So does a table,
      * whatever it holds: its cells' shading and rules are written in the text layer, from no
      * fragment a shape is drawn from, and a shape lifted under a table of painted cells with no
-     * text came back in front of the shading the page paints over it.</p>
+     * text came back in front of the shading the page paints over it. A barcode counts too: it is
+     * written as a picture in the text layer, and a shape lifted under one came back over its
+     * bars.</p>
+     *
+     * <p>Only the overlays the node stands in, and what it holds, are asked. A later block of a
+     * section or of the flow is not: the page sets it after the stack, not over it, unless a layer
+     * is offset past its stack's edge onto it — which this does not see.</p>
      *
      * <p>Two things it cannot see, both of which would leave a drawing behind a lifted shape. A
      * pass of the layout's own — a timeline's rail — is drawn from a fragment no node owns, so it
@@ -5135,7 +5131,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * measured.</p>
      */
     private boolean drawnOverThatLayer(DocumentNode node) {
-        if (node instanceof ImageNode || node instanceof TableNode || drawsAShape(node)) {
+        if (node instanceof ImageNode || node instanceof TableNode
+            || node instanceof com.demcha.compose.document.node.BarcodeNode || drawsAShape(node)) {
             return true;
         }
         for (DocumentNode child : node.children()) {

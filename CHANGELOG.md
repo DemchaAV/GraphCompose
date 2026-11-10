@@ -313,7 +313,8 @@ follow semantic versioning; release dates are ISO 8601.
     flow or a picture, which in front it would cover; where a line of text painted after it lies
     over part of its box; where anything is drawn after it — in any overlay it stands in, or among
     what it holds, as a container's outline is painted before its layers: a picture, a shape, a
-    table or a chart — since a shape in front would be drawn over what the page draws over it;
+    table, a barcode or a chart — since a shape in front would be drawn over what the page draws
+    over it;
     where a node kind of the caller's own holds it, at any depth, whose definition decides what it
     lays over what; and where its node stands at more than one place.
   - Unchanged: a shape *inside* a painted panel under the text it frames, as a progress track

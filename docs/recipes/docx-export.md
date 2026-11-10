@@ -1485,9 +1485,12 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   something is drawn over the shape, not whether it would have stayed
   behind — asking the second question was wrong at a picture drawn where
   the page puts it, at a badge handed over already in front, and at a shape
-  whose node stands at more than one place. A table drawn after the shape
-  counts whatever it holds, its cells' shading and rules being written in
-  the text layer. Its price is that a shape with anything drawn over it
+  whose node stands at more than one place. A table or a barcode drawn
+  after the shape counts whatever it holds, both being written in the text
+  layer from no shape. Only the overlays the shape stands in, and what it
+  holds, are asked: a later block of a section or of the flow, which the
+  page sets after the stack rather than over it, is not — so a layer offset
+  past its stack's edge onto the next block can be lifted over it. Its price is that a shape with anything drawn over it
   carries no order at all, which
   `cv-sidebar_portrait` pays: it draws thirty-seven times over its painted
   sidebar, so nothing of it is lifted. A drawing that is not a shape a node

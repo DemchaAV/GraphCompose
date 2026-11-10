@@ -557,8 +557,9 @@ class DocxNeighbourFillGuardTest {
                     unplaceable.add("panel " + panel);
                     continue;
                 }
-                if (panelAt <= drawnAt || panel.startsWith(drawing + "/")
-                    || drawing.startsWith(panel + "/")) {
+                // A panel the lifted drawing stands inside is its surface, not one painted over it;
+                // one it holds is painted after its outline and is judged like any other.
+                if (panelAt <= drawnAt || drawing.startsWith(panel + "/")) {
                     continue;
                 }
                 pairs++;
@@ -572,8 +573,8 @@ class DocxNeighbourFillGuardTest {
                     unplaceable.add("behind " + other);
                     continue;
                 }
-                if (otherAt <= drawnAt || other.startsWith(drawing + "/")
-                    || drawing.startsWith(other + "/")) {
+                // A drawing it holds is painted after its outline, so it is judged too.
+                if (otherAt <= drawnAt || drawing.startsWith(other + "/")) {
                     continue;
                 }
                 pairs++;

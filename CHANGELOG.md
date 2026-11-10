@@ -6807,7 +6807,9 @@ The same notes, grouped for an upgrade, are in
   [docs/migration/v2.5.0-docx.md](docs/migration/v2.5.0-docx.md), groups the changelog's notes
   for an upgrade. The release process says a beta tag ships only as a GitHub pre-release, lists
   the 13 poms a cut moves, and publishes the deployment before waiting on Central;
-  `CONTRIBUTING.md` says the train uploads as one deployment.
+  `CONTRIBUTING.md` says the train uploads as one deployment; and `cut-release.ps1`'s closing
+  steps no longer ask for a GitHub Release by hand — `release.yml` creates it — and name the
+  staged-bundle smoke and the one Publish click before the Central check.
 - **The knowledge pack routes a Word export.** `api-query --task export.docx` recommends
   `session.buildDocx(path)` — or `writeDocx` / `toDocxBytes` — and says when to export through
   another path instead: `DocxSemanticBackend.builder().deterministic(true).reportSink(...)` for

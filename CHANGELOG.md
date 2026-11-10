@@ -296,6 +296,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **Text typed at the end of a DOCX document starts below a block written over the flow.**
+  - A block the page gives no room — its margins take back its height — is written over the
+    flow, in drawings and text boxes, and may hang below where the flow ends.
+    `LumaStudioInvoice`'s closing banner takes 0.3pt of the flow and draws 62.7pt below it. In its
+    long invoice the paragraph closing the last table stood at the banner's top, and the first
+    eight lines typed at the end of the document ran under the banner, in Word 16 and in
+    LibreOffice 24.2.
+  - Where a section ends with a table and its last page has room for a line below such a block,
+    an empty paragraph of exact height, as tall as the block hangs below the flow's lowest
+    content, now stands before the closing paragraph. Typing begins below the banner. Where no
+    line fits under it, the closing paragraph is a point tall, as before. Space written above the
+    closing paragraph itself was not used: Word gives every line typed after it the same space.
+  - Of the 104 documents of the fidelity corpus only `invoice-luma_studio_long` changes: one
+    paragraph is added, and no other paragraph of it, and no report note, changes.
+
 - **The DOCX report's count of paragraphs written at an exact height includes those in text
   boxes.**
   - The `line height` note counted the exact paragraphs of the body, headers and footers, and left

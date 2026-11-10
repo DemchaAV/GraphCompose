@@ -5434,6 +5434,33 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **Word's editing protocol reads typing onto a new page from the page the saved copy shows.**
+  - `edit-protocol-corpus.ps1` set each edited copy as a PDF after its verification had read the
+    copy. Typing onto a new page reads the footer its last page shows, and reading a footer's text
+    gives a document without one an empty header, which Word sets the body below. In
+    `cv-editorial_blue`, whose top margin (28pt) is shorter than the distance Word gives that header
+    (36pt), the whole body ran 18.96pt lower in the PDF than in the saved file, two paragraphs moved
+    to page 2, and the scenario failed on text over text the saved file does not have. In
+    `synthetic-card_over_pages` the PDF ran to 7 pages where Word counts 4. The PDF is now set
+    before the verification reads the copy. Reading a header's drawings, or asking whether it
+    exists, moves nothing in Word.
+  - `edit-protocol-libreoffice.py` read a line's baseline from its first span, blank or not; it now
+    reads it from the letters. Word's PDF of `cv-editorial_blue` opens "Helix Print Co" on a space
+    0.96pt in size set 7.3pt above its letters, and read there, the line crossed the heading above
+    it once the two shared a page.
+  - Run over the 104 documents in Word 16.0.20527.20150, the save with no edit passes all 104, and
+    typing onto a new page passes 88 and fails 16: the 15 whose last table closes on a point-tall
+    paragraph, which their report names, so that typing goes into the table's last cell, and
+    `invoice-luma_studio_long`, whose typed lines run under the closing banner the export writes
+    over the flow with no room of its own. `cv-editorial_blue` and `synthetic-card_over_pages` now
+    pass; LibreOffice 24.2 already passed `cv-editorial_blue`. The four other edits read from a
+    PDF — a sentence added in a cell and in a drawing, the footer, the link — keep every verdict
+    in Word, and LibreOffice 24.2, run over the 104 with the protocol before and after this change,
+    gives every scenario the same verdict and the same detail.
+  - `-SelfCheck` adds a document with no header under a 28pt top margin, whose first line must
+    stand in the typed copy's PDF where the save with no edit sets it, and `--self-check` a line
+    opening on a blank span above its letters, which must read clear of the line above it.
+
 - **The DOCX fidelity corpus holds kept groups at the foot of a page.**
   - `KeptGroupsAtThePageFoot` adds twenty documents: ten forms of group the layout holds on one
     page, each as low on page 1 as it fits and one line of filler lower, where the layout moves it

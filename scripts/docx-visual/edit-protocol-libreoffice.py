@@ -185,7 +185,12 @@ def clip_honoured():
 
 
 def read_lines(pdf):
-    """Every line of text a person can see: page, baseline y, left x, right x, letter size, text."""
+    """Every line of text a person can see: page, baseline y, left x, right x, letter size, text.
+    The baseline and the size are its letters', read from the spans that hold some. A line can
+    open on a blank span of another baseline: Word's PDF of cv-editorial_blue opens "Helix Print
+    Co" on a space 0.96pt in size set 7.3pt above the letters, and the line read at the space's
+    baseline crossed the line above it, which it does not on the page. Its left and right are
+    the line's box, the blank span within it; that space starts where the letters do."""
     out = []
     for pno, page in enumerate(pdf):
         for block in page.get_text("dict", flags=fitz.TEXTFLAGS_DICT | clip_flag())["blocks"]:
@@ -195,7 +200,7 @@ def read_lines(pdf):
                     continue
                 spans = [s for s in line["spans"] if s["text"].strip()]
                 size = max(s["size"] for s in spans)
-                out.append({"page": pno, "y": line["spans"][0]["origin"][1], "x": line["bbox"][0],
+                out.append({"page": pno, "y": spans[0]["origin"][1], "x": line["bbox"][0],
                             "right": line["bbox"][2], "size": size, "text": text})
     return out
 
@@ -1297,6 +1302,13 @@ def run_self_check(scratch):
                                + [(2, 72, 100 + i * 14, TYPED.format(i + 1), 10) for i in range(3)])), "FAIL")
     check("no page added", add(one, probe_pdf(1, body + numbered(1, 1) + [(0, 72, 140, TYPED.format(1), 10)]), 1), "FAIL")
     check("a page added to a document that numbers no pages", add(probe_pdf(1, body), probe_pdf(2, body + typed(14))), "PASS")
+    # A line that opens on a blank span set above its letters, as Word's PDF does with a space under
+    # a point in size: read at the letters' baseline it stands clear of the heading above it, read
+    # at the space's it crosses it. The page before the edit set the two further apart.
+    blank_above = lambda gap: [(0, 72, 400, "Backend Engineer 2019-2021", 11), (0, 72, 400 + gap - 7.3, " ", 0.96),
+                               (0, 72, 400 + gap, "Helix Print Co", 9.48)]
+    check("a page added, a line opening on a blank span above its letters, clear of the line above",
+          add(probe_pdf(1, body + blank_above(30)), probe_pdf(2, body + blank_above(11.2) + typed(14))), "PASS")
     spaced = [(1, 72, 100 + i * 14, " ".join(TYPED.format(i + 1)), 10) for i in range(3)]
     check("a page added, typed on from a letter-spaced line", add(one, probe_pdf(2, body + numbered(2, 2) + spaced)), "PASS")
 

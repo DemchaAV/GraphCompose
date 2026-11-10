@@ -454,7 +454,9 @@ Choose the smallest tests that match the change:
   which Word's COM cannot make. They, the save with no edit and the typing onto a new page are
   also read from Word's own PDFs, by that protocol's verdicts: the script sets the document as
   exported, the save and each edited copy as PDFs and hands each pair to
-  `edit-protocol-libreoffice.py --judge`, so both editors are held to one set of verdicts. The
+  `edit-protocol-libreoffice.py --judge`, so both editors are held to one set of verdicts. A
+  copy is set as a PDF before its verification reads it: reading a footer's text gives a
+  document without a header an empty one, which Word sets the body below. The
   drawings scenario reads how far drawings and text moved from Word's PDFs too (below). That
   wants a Python 3.10 or later whose PyMuPDF leaves clipped text out (`-Python`, `python` on the PATH when left
   out), whose self-check the protocol runs before it asks for Word; without one it records
@@ -555,7 +557,9 @@ Choose the smallest tests that match the change:
     is. `-SelfCheck` runs the protocol over probe documents it writes itself: it holds where it
     reads a place to where Word's own PDF draws the same drawing, holds the attribution with
     documents one wrong owner fails, and holds what is asked of whom with a document carrying a
-    nailed drawing beside one that ought to follow and fails to. Two of its checks hold the two
+    nailed drawing beside one that ought to follow and fails to. It holds the page typing onto a
+    new page is read from to the saved copy's, with a document whose top margin is shorter than
+    the header Word makes when its footer is read. Two of its checks hold the two
     thresholds the verdict is read by — each from either side, and each off the grid its readings
     land on — and need no document at all, so they run before Word is asked for: a machine without
     Word holds both thresholds, and exits 1 where either of them is wrong or the grid under them
@@ -620,7 +624,8 @@ Choose the smallest tests that match the change:
   - the edited link keeps its address, and every link is kept;
   - after every edit, each line of text from before it is still found on its own page or the
     next, whitespace and page numbers aside and every other digit kept — the link edit undone
-    first — and no two lines' letters stand on one another more often than before.
+    first — and no two lines' letters stand on one another more often than before, each line
+    read at its letters' baseline, not at that of a blank span it opens on.
 
   The move limit is 0.525pt rather than 0.5 because LibreOffice writes positions on a grid of
   0.05pt, where a limit of 0.5 is a difference two readings can produce exactly. A scenario a

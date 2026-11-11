@@ -53,8 +53,8 @@ import java.util.List;
  *
  * <p>The palette is a warm amber accent on a deep navy field: the wordmark and
  * tagline sit over a Maven-coordinate card and capability tags, while a compact
- * "one model, two outputs" diagram on the right traces DSL code through the
- * layout engine to PDF and PPTX documents.</p>
+ * "one model, three outputs" diagram on the right traces DSL code through the
+ * layout engine to PDF, DOCX and PPTX documents.</p>
  *
  * @author Artem Demchyshyn
  * @since 2.1.0
@@ -191,8 +191,8 @@ public final class MavenBannerPptxExample {
         document.metadata(DocumentMetadata.builder()
                 .title("GraphCompose — available on Maven Central")
                 .author("GraphCompose")
-                .subject("Declarative document generation for Java — one model, PDF and PPTX outputs")
-                .keywords("graphcompose, java, maven central, pdf, pptx, document engine")
+                .subject("Declarative document generation for Java — one model, PDF, DOCX and PPTX outputs")
+                .keywords("graphcompose, java, maven central, pdf, docx, pptx, document engine")
                 .creator("GraphCompose Examples")
                 .producer("GraphCompose")
                 .build());
@@ -233,7 +233,7 @@ public final class MavenBannerPptxExample {
             stepCard(row, "1", "AUTHOR", "A fluent DSL describes intent, not geometry.");
             stepCard(row, "2", "MEASURE", "Every node measured twice, deterministically.");
             stepCard(row, "3", "PAGINATE", "The flow splits across pages row by row.");
-            stepCard(row, "4", "RENDER", "A backend writes the bytes — PDF or PPTX.");
+            stepCard(row, "4", "RENDER", "A backend writes the bytes — PDF, DOCX or PPTX.");
         });
 
         page.addRow("Guarantees", row -> {
@@ -246,9 +246,9 @@ public final class MavenBannerPptxExample {
             proofCard(row, "Regression-tested",
                     "layoutSnapshot() captures the resolved geometry, so a layout change "
                             + "fails a test instead of surfacing in a release.");
-            proofCard(row, "One model, two formats",
-                    "The same composition emits this PDF and an editable PPTX. Nothing is "
-                            + "authored twice, so the two cannot drift.");
+            proofCard(row, "One model, three formats",
+                    "The same composition renders to PDF, an editable PPTX or an editable "
+                            + "Word file. Nothing is authored twice, so they cannot drift.");
         });
     }
 
@@ -612,9 +612,10 @@ public final class MavenBannerPptxExample {
         layers.add(at(codeCard(), 520, 118));
         layers.addAll(connectors());
         layers.add(at(layoutCard(), 700, 150));
-        layers.add(at(documentIcon("PDF", ORANGE), 858, 74));
-        layers.add(at(documentIcon("PPTX", ORANGE_HI), 858, 296));
-        layers.add(at(text("OneModel", "One model. PDF and PPTX outputs.",
+        layers.add(at(documentIcon("PDF", ORANGE), 858, DOC_Y[0]));
+        layers.add(at(documentIcon("DOCX", SERIES_SLATE), 858, DOC_Y[1]));
+        layers.add(at(documentIcon("PPTX", ORANGE_HI), 858, DOC_Y[2]));
+        layers.add(at(text("OneModel", "One model. PDF, Word and PowerPoint outputs.",
                 sans(11.5, MUTED_TX), TextAlign.CENTER, PAGE_W - 380), 556, 430));
 
         return new CanvasLayerNode("MavenBanner", PAGE_W, PAGE_H, layers,
@@ -710,13 +711,15 @@ public final class MavenBannerPptxExample {
     }
 
     private static List<CanvasChild> tagRow(double x0, double y) {
-        String[] tags = {"JAVA 17+", "PDF", "PPTX", "AUTO-PAGINATION"};
-        double[] widths = {84, 54, 62, 152};
+        String[] tags = {"JAVA 17+", "PDF", "DOCX", "PPTX", "AUTO-PAGINATION"};
+        double[] widths = {84, 50, 58, 58, 148};
+        // The row spans the coordinate card above it (436pt), so it ends where the card does.
+        double gap = (436 - 84 - 50 - 58 - 58 - 148) / 4.0;
         List<CanvasChild> row = new ArrayList<>();
         double x = x0;
         for (int i = 0; i < tags.length; i++) {
             row.add(at(tagPill(tags[i], widths[i]), x, y));
-            x += widths[i] + 11;
+            x += widths[i] + gap;
         }
         return row;
     }
@@ -812,29 +815,35 @@ public final class MavenBannerPptxExample {
                 .build();
     }
 
+    /** Output icon size, and their tops: PDF, DOCX, PPTX, clear of the corner bracket and the caption. */
+    private static final double DOC_W = 84;
+    private static final double DOC_H = 100;
+    private static final double[] DOC_Y = {72, 194, 316};
+
     /**
-     * Amber connectors + arrowheads linking the code card → layout → both
+     * Amber connectors + arrowheads linking the code card → layout → the three
      * output backends. The layout box feeds a vertical distribution bus that
-     * branches into the PDF icon (top) and the PPTX icon (bottom), so the flow
-     * visibly reaches each backend.
+     * branches into the PDF, DOCX and PPTX icons, so the flow visibly reaches
+     * each backend.
      */
     private static List<CanvasChild> connectors() {
-        double pdfMidY = 132;    // PDF icon left-edge centre
-        double pptxMidY = 354;   // PPTX icon left-edge centre
         double busX = 836;       // vertical distribution bus
-        double docX = 858;       // both icons' left edge
+        double docX = 858;       // the icons' left edge
+        double firstMidY = DOC_Y[0] + DOC_H / 2;
+        double lastMidY = DOC_Y[DOC_Y.length - 1] + DOC_H / 2;
         List<CanvasChild> parts = new ArrayList<>();
         // code → layout.
         parts.add(at(rect(56, 2, ORANGE), 636, 200));
         parts.add(at(arrowHead(700, 201), 0, 0));
         // layout → distribution bus.
         parts.add(at(rect(busX - 818 + 1, 2, ORANGE), 818, 200));
-        parts.add(at(rect(2, pptxMidY - pdfMidY + 2, ORANGE), busX, pdfMidY - 1));
+        parts.add(at(rect(2, lastMidY - firstMidY + 2, ORANGE), busX, firstMidY - 1));
         // bus → each backend.
-        parts.add(at(rect(docX - busX, 2, ORANGE), busX, pdfMidY - 1));
-        parts.add(at(rect(docX - busX, 2, ORANGE), busX, pptxMidY - 1));
-        parts.add(at(arrowHead(docX, pdfMidY), 0, 0));
-        parts.add(at(arrowHead(docX, pptxMidY), 0, 0));
+        for (double top : DOC_Y) {
+            double midY = top + DOC_H / 2;
+            parts.add(at(rect(docX - busX, 2, ORANGE), busX, midY - 1));
+            parts.add(at(arrowHead(docX, midY), 0, 0));
+        }
         return parts;
     }
 
@@ -849,21 +858,21 @@ public final class MavenBannerPptxExample {
     }
 
     private static DocumentNode documentIcon(String format, DocumentColor tabColor) {
-        double w = 92, h = 116;
+        double w = DOC_W, h = DOC_H;
         ShapeContainerBuilder doc = new ShapeContainerBuilder()
                 .name("Doc_" + format)
                 .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
                 .roundedRect(w, h, 8)
                 .fillColor(PAPER)
                 .stroke(DocumentStroke.of(BORDER, 0.8))
-                .position(new ShapeBuilder().size(56, 12).fillColor(PAPER_HEAD)
+                .position(new ShapeBuilder().size(46, 12).fillColor(PAPER_HEAD)
                         .cornerRadius(DocumentCornerRadius.of(3)).build(), 14, 18, LayerAlign.TOP_LEFT)
                 .position(new ShapeBuilder().size(44, 5).fillColor(ORANGE)
-                        .cornerRadius(DocumentCornerRadius.of(2.5)).build(), 14, 40, LayerAlign.TOP_LEFT)
-                .position(rect(64, 4, PAPER_LINE), 14, 56, LayerAlign.TOP_LEFT)
-                .position(rect(64, 4, PAPER_LINE), 14, 68, LayerAlign.TOP_LEFT)
-                .position(rect(64, 4, PAPER_LINE), 14, 80, LayerAlign.TOP_LEFT)
-                .position(rect(40, 4, PAPER_LINE), 14, 92, LayerAlign.TOP_LEFT);
+                        .cornerRadius(DocumentCornerRadius.of(2.5)).build(), 14, 36, LayerAlign.TOP_LEFT)
+                .position(rect(56, 4, PAPER_LINE), 14, 50, LayerAlign.TOP_LEFT)
+                .position(rect(56, 4, PAPER_LINE), 14, 61, LayerAlign.TOP_LEFT)
+                .position(rect(56, 4, PAPER_LINE), 14, 72, LayerAlign.TOP_LEFT)
+                .position(rect(36, 4, PAPER_LINE), 14, 83, LayerAlign.TOP_LEFT);
         // Format tab, top-right.
         double tabW = format.length() >= 4 ? 38 : 32;
         doc.position(new ShapeContainerBuilder().name("Tab_" + format)
@@ -872,7 +881,7 @@ public final class MavenBannerPptxExample {
                 .fillColor(tabColor)
                 .center(new ParagraphBuilder().text(format).textStyle(monoBold(7.5, NIGHT))
                         .align(TextAlign.CENTER).margin(DocumentInsets.zero()).build())
-                .build(), w - tabW - 8, 9, LayerAlign.TOP_LEFT);
+                .build(), w - tabW - 6, 9, LayerAlign.TOP_LEFT);
         return doc.build();
     }
 

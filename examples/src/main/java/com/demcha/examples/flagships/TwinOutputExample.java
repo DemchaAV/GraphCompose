@@ -32,13 +32,14 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * The dual-output hook, stated by the artifact itself: one 16:9 page written
- * once against the canonical DSL and emitted twice from the same
- * {@link DocumentSession} — a print-ready PDF via {@code buildPdf()} and a
- * PowerPoint deck via {@code buildPptx(Path)}. Both backends consume the same
- * resolved layout graph, so the slide carries the page's exact geometry, and
- * every panel, chip, and text line on it stays a native, editable PowerPoint
- * shape.
+ * The three-output hook, stated by the artifact itself: one 16:9 page written
+ * once against the canonical DSL, advertising the three outputs one
+ * {@link DocumentSession} writes — a print-ready PDF via {@code buildPdf()}, a
+ * PowerPoint deck via {@code buildPptx(Path)}, and the Word export its code card
+ * shows. The page is a free-form canvas, whose text Word sets in reading order
+ * rather than where the canvas places it, so the example itself writes the PDF
+ * and the deck. The slide carries the page's exact geometry, and every panel,
+ * chip and text line on it stays a native, editable PowerPoint shape.
  *
  * <p>The page design reuses the {@link EngineDeckV2Example} hero language
  * (night gradient, violet accents, proof chips) so the pair slots into the
@@ -101,10 +102,11 @@ public final class TwinOutputExample {
      */
     static void compose(DocumentSession document) {
         document.metadata(DocumentMetadata.builder()
-                .title("GraphCompose - one source, two formats")
+                .title("GraphCompose - one source, three formats")
                 .author("GraphCompose")
-                .subject("The same composed page emitted as a print PDF and an editable PowerPoint slide")
-                .keywords("graphcompose, java, pdf, pptx, dual output, editable slides")
+                .subject("The same composed page emitted as a print PDF, an editable PowerPoint slide "
+                        + "and an editable Word document")
+                .keywords("graphcompose, java, pdf, pptx, docx, three outputs, editable slides, word")
                 .creator("GraphCompose Examples")
                 .producer("GraphCompose")
                 .build());
@@ -122,37 +124,39 @@ public final class TwinOutputExample {
 
         layers.add(at(logoLockup(), 42, 24));
 
-        layers.add(at(canvasText("Kicker", "GRAPHCOMPOSE / ONE SOURCE, TWO FORMATS",
+        layers.add(at(canvasText("Kicker", "GRAPHCOMPOSE / ONE SOURCE, THREE FORMATS",
                 mono(8.8, MINT, true), 430), 52, 108));
         layers.add(at(canvasText("TitleA", "Written once.", display(32, ON_DARK), 420), 52, 134));
-        layers.add(at(canvasText("TitleB", "Rendered twice.", display(32, VIOLET_LIGHT), 420), 52, 176));
+        layers.add(at(canvasText("TitleB", "Rendered three times.", display(32, VIOLET_LIGHT), 420), 52, 176));
         layers.add(at(canvasText("Lead",
-                "One Java composition, one resolved layout graph, two backends: a print-ready "
-                        + "PDF and a PowerPoint slide with the same geometry - where text, panels, "
-                        + "and vectors stay native, editable shapes.",
+                "One Java composition, one resolved layout graph, three backends: a print-ready "
+                        + "PDF, a PowerPoint slide of the same geometry and a Word document written "
+                        + "from it - text, panels and vectors stay editable.",
                 body(12.3, ON_DARK_MUTED), 450), 54, 228));
 
-        layers.add(at(codeCard(), 52, 292));
+        layers.add(at(codeCard(), 52, 284));
 
-        layers.add(at(canvasText("GraphLabel", "ONE RESOLVED LAYOUT / TWO BACKENDS",
-                mono(8.8, MINT, true), 690), 622, 118));
-        layers.add(at(layoutGraphPill(), 650, 148));
+        layers.add(at(canvasText("GraphLabel", "ONE RESOLVED LAYOUT / THREE BACKENDS",
+                mono(8.8, MINT, true), 690), GRAPH_X, 118));
+        layers.add(at(layoutGraphPill(), GRAPH_X, 148));
         layers.addAll(connectors());
         layers.add(at(formatCard("pdf-file", "twin-output.pdf",
-                "fixed layout - print-ready", MINT), 585, 288));
+                "fixed layout", "print-ready", MINT), CARD_X[0], 288));
+        layers.add(at(formatCard("docx", "twin-output.docx",
+                "layout-driven", "editable in Word", VIOLET_LIGHT), CARD_X[1], 288));
         layers.add(at(formatCard("ppt-file", "twin-output.pptx",
-                "native shapes - editable", BLUE), 785, 288));
-        layers.add(at(canvasText("ParityNote", "same coordinates - same metrics - same colours",
-                body(9.3, ON_DARK_MUTED), 690), 622, 398));
+                "native shapes", "editable slides", BLUE), CARD_X[2], 288));
+        layers.add(at(canvasText("ParityNote", "one layout graph - same metrics - same colours",
+                body(9.3, ON_DARK_MUTED), 690), CARD_X[0], 396));
 
         String[][] proof = {
                 {"one layout graph", "measured once"},
                 {"1 page = 1 slide", "identical geometry"},
-                {"shapes stay native", "edit in PowerPoint"},
-                {"render-pptx", "beta - opt-in module"}
+                {"shapes stay native", "edit in Word or PowerPoint"},
+                {"render-docx / render-pptx", "opt-in modules"}
         };
         for (int i = 0; i < proof.length; i++) {
-            layers.add(at(proofChip(proof[i][0], proof[i][1]), 48 + i * 224, 457));
+            layers.add(at(proofChip(proof[i][0], proof[i][1]), 48 + i * 224, 470));
         }
 
         return new CanvasLayerNode("TwinOutputHero", PAGE_WIDTH, PAGE_HEIGHT, layers,
@@ -223,6 +227,8 @@ public final class TwinOutputExample {
         List<CodeLine> lines = List.of(
                 new CodeLine(0, List.of(c("Path"), t(" deck = "), c("Path"), t(".of("),
                         s("\"twin-output.pptx\""), t(");")), ""),
+                new CodeLine(0, List.of(c("Path"), t(" word = "), c("Path"), t(".of("),
+                        s("\"twin-output.docx\""), t(");")), ""),
                 new CodeLine(0, List.of(k("try"), t(" ("), c("DocumentSession"), t(" doc = "),
                         c("GraphCompose")), ""),
                 new CodeLine(2, List.of(t(".document("), c("Path"), t(".of("),
@@ -233,15 +239,19 @@ public final class TwinOutputExample {
                 new CodeLine(1, List.of(t("compose(doc);")), "// one description"),
                 new CodeLine(1, List.of(t("doc."), k("buildPdf"), t("();")), "// print-ready PDF"),
                 new CodeLine(1, List.of(t("doc."), k("buildPptx"), t("(deck);")), "// editable PowerPoint"),
+                new CodeLine(1, List.of(t("doc."), k("export"), t("("), c("DocxSemanticBackend"),
+                        t(".builder()")), "// editable Word"),
+                new CodeLine(3, List.of(t(".deterministic(true).build(), word);")), ""),
                 new CodeLine(0, List.of(t("}")), ""));
+        double lineStep = 12.4;
         ShapeContainerBuilder card = new ShapeContainerBuilder()
                 .name("TwinCode")
-                .roundedRect(470, 152, 14)
+                .roundedRect(470, 24 + lines.size() * lineStep, 14)
                 .fillColor(DocumentColor.rgba(7, 10, 24, 220))
                 .stroke(DocumentStroke.of(DARK_LINE, 0.8));
         for (int i = 0; i < lines.size(); i++) {
             CodeLine line = lines.get(i);
-            double y = 12 + i * 14.6;
+            double y = 12 + i * lineStep;
             ParagraphBuilder code = new ParagraphBuilder()
                     .name("TwinCodeLine" + i)
                     .margin(DocumentInsets.zero());
@@ -255,7 +265,7 @@ public final class TwinOutputExample {
                         .text(line.note())
                         .textStyle(mono(9.5, MINT, false))
                         .margin(DocumentInsets.zero())
-                        .build(), 250, y, LayerAlign.TOP_LEFT);
+                        .build(), 296, y, LayerAlign.TOP_LEFT);
             }
         }
         return card.build();
@@ -281,42 +291,51 @@ public final class TwinOutputExample {
                 .build();
     }
 
+    /** The three format cards, left to right PDF, DOCX, PPTX, and the pill centred above them. */
+    private static final double CARD_W = 130;
+    private static final double[] CARD_X = {540, 680, 820};
+    private static final double GRAPH_X = CARD_X[1] + CARD_W / 2 - 120;
+
     private static List<CanvasChild> connectors() {
         List<CanvasChild> shapes = new ArrayList<>();
         DocumentColor connector = DocumentColor.rgba(167, 139, 250, 150);
-        shapes.add(at(rect(2, 38, connector), 769, 204));
-        shapes.add(at(rect(204, 2, connector), 668, 242));
-        shapes.add(at(rect(2, 44, connector), 668, 242));
-        shapes.add(at(rect(2, 44, connector), 870, 242));
-        shapes.add(at(dot(8, VIOLET), 766, 239));
-        shapes.add(at(dot(6, VIOLET_LIGHT), 666, 240));
-        shapes.add(at(dot(6, VIOLET_LIGHT), 868, 240));
+        double trunkX = CARD_X[1] + CARD_W / 2;
+        double firstX = CARD_X[0] + CARD_W / 2;
+        double lastX = CARD_X[2] + CARD_W / 2;
+        shapes.add(at(rect(2, 38, connector), trunkX - 1, 204));
+        shapes.add(at(rect(lastX - firstX + 2, 2, connector), firstX - 1, 242));
+        for (double x : CARD_X) {
+            double dropX = x + CARD_W / 2;
+            shapes.add(at(rect(2, 44, connector), dropX - 1, 242));
+            shapes.add(at(dot(6, VIOLET_LIGHT), dropX - 3, 240));
+        }
+        shapes.add(at(dot(8, VIOLET), trunkX - 4, 239));
         return shapes;
     }
 
     private static DocumentNode formatCard(String iconName, String fileName, String lane,
-                                           DocumentColor accent) {
+                                           String use, DocumentColor accent) {
         return new ShapeContainerBuilder()
                 .name("TwinFormat_" + fileName)
-                .roundedRect(170, 92, 14)
+                .roundedRect(CARD_W, 92, 14)
                 .fillColor(DARK_CARD)
                 .stroke(DocumentStroke.of(accent.withOpacity(0.78), 1.0))
-                .position(icon(iconName + "-light").node(22), 14, -22, LayerAlign.CENTER_LEFT)
+                .position(icon(iconName + "-light").node(20), 12, -22, LayerAlign.CENTER_LEFT)
                 .position(new ParagraphBuilder()
                         .text(fileName)
-                        .textStyle(mono(9.6, ON_DARK, false))
+                        .textStyle(mono(8.6, ON_DARK, false))
                         .margin(DocumentInsets.zero())
-                        .build(), 44, -22, LayerAlign.CENTER_LEFT)
+                        .build(), 38, -22, LayerAlign.CENTER_LEFT)
                 .position(new ParagraphBuilder()
                         .text(lane)
                         .textStyle(body(9.0, accent))
                         .margin(DocumentInsets.zero())
-                        .build(), 14, 8, LayerAlign.CENTER_LEFT)
+                        .build(), 12, 8, LayerAlign.CENTER_LEFT)
                 .position(new ParagraphBuilder()
-                        .text("from the same session")
+                        .text(use)
                         .textStyle(body(8.2, ON_DARK_MUTED))
                         .margin(DocumentInsets.zero())
-                        .build(), 14, 26, LayerAlign.CENTER_LEFT)
+                        .build(), 12, 26, LayerAlign.CENTER_LEFT)
                 .build();
     }
 

@@ -307,6 +307,25 @@ The same notes, grouped for an upgrade, are in
 
 ### Fixed
 
+- **Word no longer cuts off a date or a title beside a row's spacer when it sets the text at a
+  rounded size.**
+  - A row of a title, a spacer that grows and a date — the way a CV sets its dated entries — gives
+    the title and the date columns exactly as wide as their text. Word states a type size to the
+    half point, so text the page sets at 9.75pt is set at 10 and is 2.6% wider. Word draws
+    nothing past a cell's edge, so it cut the end off: on a CV template made outside this
+    repository, Word 16 showed "Jan 2022 – Presen", "Dec 202", "2023 – 202" and
+    "Issuing Organizatio", and the report named none of them. LibreOffice 24.2 drew them whole.
+  - Such a line now takes the room Word sets it in out of the spacer's column, which shows
+    nothing. The title widens to the right, so it starts where the page starts it. The row's last
+    child after the spacer widens to the left and is set right in its cell, so it ends where the
+    page ends it. Only a one-line, left-to-right, flush-left paragraph is changed, and only where
+    Word sets its line wider than the page. Where the spacer has less room than that, or for a
+    paragraph after the spacer that does not end the row, the report names what still runs past
+    (`right end`). A row composed in a table cell, which the layout places nowhere, is left as
+    before.
+  - The fidelity corpus holds the case from now on, as `synthetic-title_date_rows`: such rows in
+    the flow, and in a stack in each column of a two-column row, set at 9.75pt.
+
 - **A DOCX export writes its document when a registered family's classpath face cannot be
   read.**
   - A family registered with `FontFamilyDefinition.classpath(...)` whose resource is missing

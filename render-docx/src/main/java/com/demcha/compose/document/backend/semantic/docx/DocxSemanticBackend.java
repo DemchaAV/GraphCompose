@@ -311,6 +311,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // chart in both, and in the second its strokes are drawn over it as well.
     private final java.util.Set<ChartNode> chartsNotDrawn =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // A row's last paragraph the page sets against the row's end after a spacer that grows, whose
+    // column took room from that spacer leftwards: written set right in its cell, so its line
+    // ends where the page ends it (withTheSpacersRoom). By identity, as the row's children are.
+    private final java.util.Set<ParagraphNode> setRightAfterTheSpacer =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // Geometry-only node kinds already warned about this export pass.
     private final java.util.Set<String> warnedNodeKinds =
             java.util.concurrent.ConcurrentHashMap.newKeySet();
@@ -1330,6 +1335,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         rightEnds.clear();
         separatorsReported.clear();
         chartsNotDrawn.clear();
+        setRightAfterTheSpacer.clear();
         textFillsWritten = false;
         closingBlocks.clear();
         keepsUnheld.clear();
@@ -20690,6 +20696,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             cellOverhang = 0;
             try {
                 writeRowCellChild(cell, child);
+                setRightInItsCell(cell, child);
             } finally {
                 currentCellWidth = previous;
                 leftMarginInCell = previousHeld;
@@ -22363,11 +22370,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * which the report names ({@code right end}) unless the weight columns giving it hold only
      * spacers or it is under a tenth of a point. A row with no weight column gives what its gaps hold and no more. Written
      * as placed: a row with no auto column, and one with no stated columns — weights or an even
-     * split. A row cannot state columns and be laid out as flex; {@code RowNode} refuses the
-     * pair.</p>
+     * split — but for a row with a spacer that grows, whose lines beside the spacer take their room
+     * from it ({@link #withTheSpacersRoom}). A row cannot state columns and be laid out as flex;
+     * {@code RowNode} refuses the pair.</p>
      */
     private List<CellColumn> withRowEditorSlack(RowNode node, List<CellColumn> columns) {
         List<DocumentRowColumn> specs = node.columns();
+        if (specs.isEmpty() && hasGrowChild(node)) {
+            return withTheSpacersRoom(node, columns);
+        }
         if (specs.size() != columns.size()) {
             return columns;
         }
@@ -22420,6 +22431,144 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     + "between them moves up to that much off where the page sets it");
         }
         return widened;
+    }
+
+    /**
+     * Gives the line beside a row's spacer that grows the room Word sets it in, out of that
+     * spacer's column, which shows nothing.
+     *
+     * <p>The page sizes a child without a grow factor to its own text, so its column is exactly as
+     * wide as its line; Word sets a size to the half point, and a line set wider runs past its
+     * cell's edge, where Word cuts it off whatever room its right indent gives
+     * ({@link #measureAtWordsSize}). Measured on a CV whose dates and titles are set at 9.75pt,
+     * written at 10: in Word 16 "Jan 2022 – Present" lost its last letter and a certification's
+     * issuer its last, the report naming neither; LibreOffice 24.2 draws past the edge and showed
+     * them whole.</p>
+     *
+     * <p>Only a left-to-right paragraph of one line set flush left whose line Word sets wider than
+     * the page, given its line as wide as Word sets it and a few hundredths more
+     * ({@link #ONE_LINE_FACE_SLACK}), for the face. The one before the
+     * spacer takes the room to its right, so its text starts where the page starts it. The row's
+     * last child after the spacer, which the page sets against the row's end, takes it to its
+     * left and is set right in its cell, so its line ends where the page ends it
+     * ({@link #setRightAfterTheSpacer}). A paragraph after the spacer that does not end the row,
+     * which the page sets against the child after it, keeps its column. Whatever still runs past
+     * its column at Word's size — the spacer having less room, or the column kept — is named
+     * ({@code right end}). Any other child of the row keeps its column.</p>
+     */
+    private List<CellColumn> withTheSpacersRoom(RowNode node, List<CellColumn> columns) {
+        List<DocumentNode> children = node.children();
+        if (children.size() != columns.size()) {
+            return columns;
+        }
+        List<CellColumn> held = new ArrayList<>(columns);
+        int last = children.size() - 1;
+        for (int index = 0; index < children.size(); index++) {
+            if (!(children.get(index) instanceof SpacerNode spacer) || !(spacer.grow() > 0)) {
+                continue;
+            }
+            if (index > 0) {
+                takeTheSpacersRoom(node, held, index - 1, index, SpacerSide.BEFORE);
+            }
+            if (index < last) {
+                takeTheSpacersRoom(node, held, index + 1, index,
+                        index + 1 == last ? SpacerSide.AT_THE_ROWS_END : SpacerSide.AFTER);
+            }
+        }
+        return held;
+    }
+
+    /**
+     * Where a child stands by a spacer that grows: before it, widening right; after it at the
+     * row's end, widening left and set right; after it but not at the end, keeping its column.
+     */
+    private enum SpacerSide { BEFORE, AT_THE_ROWS_END, AFTER }
+
+    /**
+     * Widens one child's column beside a spacer that grows by what Word sets its line past it,
+     * out of the spacer's column, and names what still runs past; see {@link #withTheSpacersRoom}.
+     *
+     * @param node     the row
+     * @param columns  the row's columns, the child's and the spacer's rewritten
+     * @param at       the child's index
+     * @param spacerAt the spacer's index
+     * @param side     where the child stands by the spacer
+     */
+    private void takeTheSpacersRoom(RowNode node, List<CellColumn> columns, int at, int spacerAt, SpacerSide side) {
+        if (!(node.children().get(at) instanceof ParagraphNode paragraph) || paragraph.align() != TextAlign.LEFT
+            || ParagraphDirection.resolve(paragraph) == TextDirection.RTL || layout.lineCount(paragraph) != 1) {
+            return;
+        }
+        java.util.OptionalDouble placed = layout.placedWidth(paragraph);
+        if (placed.isEmpty()) {
+            return;
+        }
+        double set = 0;
+        double asked = 0;
+        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : layout.lines(paragraph)) {
+            set = Math.max(set, widthAtWordsSize(line));
+            asked = Math.max(asked, askedWidth(line));
+        }
+        // Only a line Word sets wider than the page: one at a size Word states as the page does
+        // keeps the column it has.
+        if (!(set > asked + 0.01)) {
+            return;
+        }
+        CellColumn column = columns.get(at);
+        double fits = placed.getAsDouble() - paragraph.padding().left() - paragraph.padding().right()
+                      + roomInItsColumn(paragraph, column);
+        // The room taken holds the line and a few hundredths more for the face; what is named is
+        // what Word's line alone runs past.
+        double need = set * (1 + ONE_LINE_FACE_SLACK) - fits;
+        // Less than a hundredth of a point is not seen.
+        if (!(need > 0.01)) {
+            return;
+        }
+        double given = 0;
+        if (side != SpacerSide.AFTER) {
+            CellColumn spacer = columns.get(spacerAt);
+            given = Math.min(need, textBoxOf(spacer));
+            if (given > 0) {
+                columns.set(at, new CellColumn(column.width() + given, column.leading(), column.trailing()));
+                columns.set(spacerAt, new CellColumn(spacer.width() - given, spacer.leading(), spacer.trailing()));
+                if (side == SpacerSide.AT_THE_ROWS_END) {
+                    setRightAfterTheSpacer.add(paragraph);
+                }
+            }
+        }
+        double past = set - fits - given;
+        // Less than a tenth of a point is not seen.
+        if (past >= 0.1) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, RIGHT_END, layout.pathOf(paragraph),
+                    "its line, which Word sets at its size to the half point, runs " + pointsOf(past)
+                    + "pt past its column beside the row's spacer, and Word cuts off what passes its cell's edge");
+        }
+    }
+
+    /**
+     * Sets a row's last paragraph right in its cell where its column took room from the spacer
+     * before it ({@link #withTheSpacersRoom}): its line ends at the cell's text less its own right
+     * side, where the page ends it. The room its right indent gave its line past its box
+     * ({@link #measureAtWordsSize}) goes, as it would carry the line past the cell's edge.
+     */
+    private void setRightInItsCell(XWPFTableCell cell, DocumentNode child) {
+        if (!(child instanceof ParagraphNode paragraph) || !setRightAfterTheSpacer.remove(paragraph)) {
+            return;
+        }
+        double ownRight = Math.max(0, writtenSides(paragraph, paragraph.padding().left(),
+                paragraph.margin().right() + paragraph.padding().right(), true)[1]);
+        for (XWPFParagraph para : cell.getParagraphs()) {
+            para.setAlignment(ParagraphAlignment.RIGHT);
+            CTPPr properties = para.getCTP().getPPr();
+            if (properties == null || !properties.isSetInd()) {
+                continue;
+            }
+            if (ownRight > 0) {
+                properties.getInd().setRight(BigInteger.valueOf(toTwips(ownRight)));
+            } else if (properties.getInd().isSetRight()) {
+                properties.getInd().unsetRight();
+            }
+        }
     }
 
     /**

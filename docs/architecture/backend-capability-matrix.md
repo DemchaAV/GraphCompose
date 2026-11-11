@@ -212,7 +212,7 @@ class or method no source declares.
 | `producer` | `DROPPED` | the creating application, not the producer | Metadata |
 | `protection` | `DROPPED` | no protection | Protection / encryption |
 | `right border` | `APPROXIMATED` | a panel in a cell ended short of the cell's edge, narrower than the page draws it | Rectangle shape |
-| `right end` | `APPROXIMATED` | a panel's table, or a row's or table's columns sized to their content, wider than the page draws them, by the room an editor setting the text in its own face may need | Rectangle shape, Table rows |
+| `right end` | `APPROXIMATED` | a panel's table, or a row's or table's columns sized to their content, wider than the page draws them, by the room an editor setting the text in its own face may need; or a line beside a row's spacer that grows, set wider by Word at its size to the half point than the spacer's column has room to give, which Word cuts off at its cell's edge | Rectangle shape, Table rows |
 | `row paint` | `APPROXIMATED`, `DROPPED` | a row's fill and borders drawn as a shape, or not written — in a page zone, or where the row is its columns alone | Rectangle shape, Page zones |
 | `rule link` | `APPROXIMATED` | a rule without its link | Line |
 | `shape container` | `APPROXIMATED` | a panel that grows past its outline, stands upright, or a container's layers written inline | Clip region open/close, Transform open/close, Layer stack |

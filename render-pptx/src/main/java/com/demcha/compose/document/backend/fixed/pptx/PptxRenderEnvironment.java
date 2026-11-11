@@ -447,8 +447,8 @@ public final class PptxRenderEnvironment {
      * all — a missing file, a missing classpath resource, a program the writer
      * cannot parse — degrades to a plain family-name reference: page geometry
      * is unaffected, viewers simply substitute glyphs. Neither fails the export
-     * here, however the source refuses; this answers {@code false} instead, and
-     * names the family in the log.
+     * here, however the refusal arrives; this answers {@code false} instead,
+     * and names the family in the log.
      *
      * <p>That is as far as the promise goes. A family the page had to
      * <em>measure</em> fails the render before a slide is built; a family that
@@ -488,7 +488,8 @@ public final class PptxRenderEnvironment {
      * hold for the presentation refusing a face it is handed, after the program is read and
      * parsed: that refusal happens inside the mutation, and what it
      * took stays — a part, a dataId, the embedded-font flags. Undoing all of those would
-     * cover both cases, at the price of reaching that far into the writer's own model for a
+     * cover the presentation's refusal too, at the price of reaching that far into the
+     * writer's own model for a
      * refusal it has not been seen to make; so this keeps the handling the presentation's
      * step already had, including which failures it raises rather than swallows. The cost
      * of buffering instead is that one family's programs are held twice while its facets

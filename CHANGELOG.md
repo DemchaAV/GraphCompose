@@ -26,13 +26,15 @@ follow semantic versioning; release dates are ISO 8601.
     the presentation as they were read, and the presentation is mutated both by declaring the
     family and by taking a face. So a family whose *second* face could not be read left the
     first one in the deck while the warning said the deck carried nothing of it, and a family
-    with a single unreadable face left the bare declaration. Every face is now read before any
-    is handed over. A deck whose families all embed is unchanged; one that was carrying half a
+    whose first face could not be read left the bare declaration. Every face is now read before
+    any is handed over. A deck whose families all embed is unchanged; one that was carrying half a
     family now carries none of it, as it was already being told.
-  - Where the presentation itself refuses a face already read and parsed, the family degrades
-    as before and what the presentation had already taken stays in the deck. That case has not
-    been seen, and undoing a write inside the writer's own model is more than a patch should
-    reach for.
+  - Where the presentation itself refuses a face it is handed, after the program is read and
+    parsed, nothing changes at all: that step keeps the handling it had, including which
+    failures it raises rather than degrades on, and what the presentation took before refusing
+    stays in the deck. Undoing those writes — the part, the dataId and the embedded-font flags
+    — would cover that case too, and reaches further into the writer's own model than a patch
+    should for a refusal that has not been seen.
   - A family the deck actually draws in still fails the render, and with the same message:
     the page cannot measure a face it cannot read, which happens before a slide is built.
 

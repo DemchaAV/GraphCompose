@@ -446,13 +446,15 @@ public final class PptxRenderEnvironment {
      * whose license bits forbid embedding, or whose bytes cannot be read at
      * all — a missing file, a missing classpath resource, a program the writer
      * cannot parse — degrades to a plain family-name reference: page geometry
-     * is unaffected, viewers simply substitute glyphs. This method never fails
-     * the export; it answers {@code false} instead, and names the family it
-     * could not carry in the log. That is a promise about this method and not
-     * about the export as a whole — a family the page had to <em>measure</em>
-     * fails the render before a slide is built, and a family that embeds goes
-     * on to {@link PptxViewerMetrics#load}, which reads the font again with a
-     * different parser and does throw.
+     * is unaffected, viewers simply substitute glyphs. A source that cannot be
+     * read never fails the export here, however it refuses; this answers
+     * {@code false} instead, and names the family in the log.
+     *
+     * <p>That is as far as the promise goes. A family the page had to
+     * <em>measure</em> fails the render before a slide is built; a family that
+     * embeds goes on to {@link PptxViewerMetrics#load}, which reads the font
+     * again with a different parser and can throw where this one did not; and
+     * the presentation refusing a face it is handed is its own matter, below.</p>
      */
     private static boolean embedFontFamily(XMLSlideShow show,
                                            FontFamilyDefinition family,
@@ -476,34 +478,36 @@ public final class PptxRenderEnvironment {
      * family, and adding a facet writes its part and sets the embedded-font flags — so
      * handing faces over as they were read left a family whose second face could not be
      * read with its first face in the deck, while the caller was told the deck carries
-     * nothing of it. A family with one unreadable face left the bare declaration instead.</p>
+     * nothing of it. A family whose first face could not be read left the bare
+     * declaration.</p>
      *
      * <p>That holds for the faces being unreadable, which is what a caller's source
-     * decides. It does not hold for the presentation refusing a program already read and
-     * parsed: that happens inside the mutation, and what is written stays. Rolling it back
-     * — dropping the declaration and the part again — would cover both, at the price of
-     * reaching further into the writer's own model for a case it has not been seen to
-     * produce; the cost of buffering is that one family's programs are held twice while its
-     * facets are added, since the parts keep their bytes as well.</p>
+     * decides. It does not hold for the presentation refusing a face it is handed, after
+     * the program is read and parsed: that refusal happens inside the mutation, and what it
+     * took stays — a part, a dataId, the embedded-font flags. Undoing all of those would
+     * cover both cases, at the price of reaching that far into the writer's own model for a
+     * refusal it has not been seen to make; so this keeps the handling the presentation's
+     * step already had, including which failures it raises rather than swallows. The cost
+     * of buffering instead is that one family's programs are held twice while its facets
+     * are added, since the parts keep their bytes as well.</p>
      */
     private static boolean embedFontFamily(XMLSlideShow show,
                                            FontFamilyDefinition family,
                                            FontFamilyDefinition.FontSourceSet sources,
                                            Set<Face> faces) {
-        Set<String> distinctSources = new LinkedHashSet<>();
-        List<byte[]> programs = new ArrayList<>();
+        Map<String, byte[]> programs = new LinkedHashMap<>();
         for (FontFamilyDefinition.FontBinarySource source
                 : faces.stream().map(face -> face.in(sources)).toList()) {
             // Named before it is read, so a source that cannot even say what it is still
             // warns rather than failing the render inside the warning.
-            String description = "an unnamed source";
+            String description = "<unnamed>";
             try {
                 description = source.description();
-                if (!distinctSources.add(description)) {
+                if (programs.containsKey(description)) {
                     continue;
                 }
                 try (InputStream stream = source.openStream()) {
-                    programs.add(PptxEmbeddedFont.wrap(stream));
+                    programs.put(description, PptxEmbeddedFont.wrap(stream));
                 }
             } catch (IOException | RuntimeException exception) {
                 // A source may fail unchecked: the classpath one reports a missing resource
@@ -515,21 +519,19 @@ public final class PptxRenderEnvironment {
                 return false;
             }
         }
-        try {
-            XSLFFontInfo embedded = new XSLFFontInfo(show, family.wordFamily());
-            for (byte[] program : programs) {
-                embedded.addFacet(new ByteArrayInputStream(program));
+        // From here the handling is the presentation's own, and exactly what it was before
+        // the reads were pulled forward: a refusal while taking a face degrades the family,
+        // and whatever the presentation took before it refused stays in it. Widening this
+        // catch would extend that half-written state to failures it used to raise.
+        XSLFFontInfo embedded = new XSLFFontInfo(show, family.wordFamily());
+        for (Map.Entry<String, byte[]> program : programs.entrySet()) {
+            try {
+                embedded.addFacet(new ByteArrayInputStream(program.getValue()));
+            } catch (IOException exception) {
+                LOG.warn("render.pptx.font.embed.skipped family={} source={} reason={}",
+                        family.name().name(), program.getKey(), exception.toString());
+                return false;
             }
-        } catch (IOException | RuntimeException exception) {
-            // Every program is in hand and parsed by now, so this is the presentation
-            // refusing the part rather than a source being unreadable — hence no source to
-            // name. Degrade the same way: the deck is still worth writing without the font.
-            // What the presentation took before it refused stays in it; see the class of
-            // failure this does not cover, above.
-            LOG.warn("render.pptx.font.embed.skipped family={} source={} reason={}",
-                    family.name().name(), "<none>",
-                    "the presentation refused the part (" + exception + ")");
-            return false;
         }
         return true;
     }

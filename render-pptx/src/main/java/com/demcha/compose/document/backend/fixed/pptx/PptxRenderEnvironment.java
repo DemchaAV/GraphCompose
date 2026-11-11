@@ -443,10 +443,18 @@ public final class PptxRenderEnvironment {
     /**
      * Embeds every distinct facet of one font family, returning whether the
      * family made it into the presentation. Embedding is best-effort: a font
-     * whose license bits forbid embedding (or whose bytes cannot be read)
-     * degrades to a plain family-name reference — page geometry is unaffected,
-     * viewers simply substitute glyphs — instead of failing a render that the
-     * PDF backend would complete.
+     * whose license bits forbid embedding, or whose bytes cannot be read at
+     * all — a missing file, a missing classpath resource, a program the writer
+     * cannot parse — degrades to a plain family-name reference: page geometry
+     * is unaffected, viewers simply substitute glyphs. Neither fails the export
+     * here, however the refusal arrives; this answers {@code false} instead,
+     * and names the family in the log.
+     *
+     * <p>That is as far as the promise goes. A family the page had to
+     * <em>measure</em> fails the render before a slide is built; a family that
+     * embeds goes on to {@link PptxViewerMetrics#load}, which reads the font
+     * again with a different parser and can throw where this one did not; and
+     * the presentation refusing a face it is handed is its own matter, below.</p>
      */
     private static boolean embedFontFamily(XMLSlideShow show,
                                            FontFamilyDefinition family,
@@ -462,24 +470,72 @@ public final class PptxRenderEnvironment {
      * megabytes for glyphs no slide contains. A family whose source set repeats a source
      * across faces — a regular-and-bold family asked for italic — embeds it once, since
      * the sources dedupe by description.</p>
+     *
+     * <p>Every face is <em>read</em> before any of them is handed to the presentation,
+     * because the answer is one boolean for the whole family: it decides whether the family
+     * keeps its viewer metrics and whether the reader is told to install the font. The
+     * presentation is mutated at both steps — constructing the font info declares the
+     * family, and adding a facet writes its part and sets the embedded-font flags — so
+     * handing faces over as they were read left a family whose second face could not be
+     * read with its first face in the deck, while the caller was told the deck carries
+     * nothing of it. A family whose first face could not be read left the bare
+     * declaration.</p>
+     *
+     * <p>That holds for everything that fails before the hand-over: a face that cannot be
+     * read, and a face read whole whose licence bits forbid embedding, which
+     * {@link PptxEmbeddedFont#wrap} refuses. So a family of one embeddable face and one
+     * restricted face now carries neither, where it used to carry the first. It does not
+     * hold for the presentation refusing a face it is handed, after the program is read and
+     * parsed: that refusal happens inside the mutation, and what it
+     * took stays — a part, a dataId, the embedded-font flags. Undoing all of those would
+     * cover the presentation's refusal too, at the price of reaching that far into the
+     * writer's own model for a
+     * refusal it has not been seen to make; so this keeps the handling the presentation's
+     * step already had, including which failures it raises rather than swallows. The cost
+     * of buffering instead is that one family's programs are held twice while its facets
+     * are added, since the parts keep their bytes as well.</p>
      */
     private static boolean embedFontFamily(XMLSlideShow show,
                                            FontFamilyDefinition family,
                                            FontFamilyDefinition.FontSourceSet sources,
                                            Set<Face> faces) {
-        XSLFFontInfo embedded = new XSLFFontInfo(show, family.wordFamily());
-        Set<String> embeddedSources = new LinkedHashSet<>();
+        Map<String, byte[]> programs = new LinkedHashMap<>();
         for (FontFamilyDefinition.FontBinarySource source
                 : faces.stream().map(face -> face.in(sources)).toList()) {
-            if (!embeddedSources.add(source.description())) {
-                continue;
+            // Named before it is read, so a source that cannot even say what it is still
+            // warns rather than failing the render inside the warning. No source this
+            // library ships can reach the sentinel; FontBinarySource is a caller's to
+            // implement, and this answers for theirs.
+            String description = "<unnamed>";
+            try {
+                description = source.description();
+                if (programs.containsKey(description)) {
+                    continue;
+                }
+                try (InputStream stream = source.openStream()) {
+                    programs.put(description, PptxEmbeddedFont.wrap(stream));
+                }
+            } catch (IOException | RuntimeException exception) {
+                // A source may fail unchecked: the classpath one reports a missing resource
+                // with an IllegalArgumentException. Named here and the family degrades, as
+                // for a missing file on disk — the render is not the caller's to lose.
+                // toString rather than getMessage because an unchecked failure may carry none.
+                LOG.warn("render.pptx.font.embed.skipped family={} source={} reason={}",
+                        family.name().name(), description, exception.toString());
+                return false;
             }
-            try (InputStream stream = source.openStream()) {
-                byte[] eot = PptxEmbeddedFont.wrap(stream);
-                embedded.addFacet(new ByteArrayInputStream(eot));
+        }
+        // From here the handling is the presentation's own, and exactly what it was before
+        // the reads were pulled forward: a refusal while taking a face degrades the family,
+        // and whatever the presentation took before it refused stays in it. Widening this
+        // catch would extend that half-written state to failures it used to raise.
+        XSLFFontInfo embedded = new XSLFFontInfo(show, family.wordFamily());
+        for (Map.Entry<String, byte[]> program : programs.entrySet()) {
+            try {
+                embedded.addFacet(new ByteArrayInputStream(program.getValue()));
             } catch (IOException exception) {
                 LOG.warn("render.pptx.font.embed.skipped family={} source={} reason={}",
-                        family.name().name(), source.description(), exception.getMessage());
+                        family.name().name(), program.getKey(), exception.toString());
                 return false;
             }
         }

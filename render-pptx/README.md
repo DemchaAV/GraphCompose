@@ -107,7 +107,7 @@ document, and the backend warns once per family for the two that are not exact:
 |---|---|---|
 | A standard-14 name (`FontName.HELVETICA`, `TIMES`, `COURIER`) | referenced as its metric-compatible viewer font — Arial, Times New Roman, Courier New | **widths identical, letterforms differ** |
 | A binary family whose licensing bits allow embedding | embedded in the deck | **identical everywhere** |
-| A family registered without binary sources, or one whose bits refuse embedding | referenced by name only | identical **if** the viewer has that font installed, otherwise the viewer substitutes |
+| A family registered without binary sources, or one whose bits refuse embedding | no program carried; named by the text drawn in it | identical **if** the viewer has that font installed, otherwise the viewer substitutes |
 
 So for a deck that matches the PDF glyph for glyph, use a real font program
 rather than a PDF built-in — either a bundled family from `graph-compose-fonts`,
@@ -126,7 +126,7 @@ try (DocumentSession document = GraphCompose.document()
 
 Every substitution is announced at `WARN` under the key
 `render.pptx.font.substitution`, once per family per render, naming the font the
-document asked for and what the deck will reference instead. Embedded families
+document asked for and what the deck carries, or references, for it. Embedded families
 log nothing — silence means the deck carries its own glyphs.
 
 ## When to depend on it

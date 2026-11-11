@@ -139,9 +139,17 @@ public final class PptxRenderEnvironment {
         for (FontFamilyDefinition family : customFontFamilies) {
             familyNames.put(family.name(), family.wordFamily());
             if (family.fontSourceSet().isEmpty()) {
+                // Said of the text, not of the deck: this runs before a single run is drawn,
+                // so whether anything will use the family is not known here, and a family
+                // registered this way and never drawn in is named nowhere in the package.
+                // "No program" rather than "nothing": where text is drawn, the family's name
+                // does travel, on the slide that drew it. The substitution is part of the same
+                // clause and not a second sentence, so that it too says nothing about a deck
+                // that draws no text in the family.
                 LOG.warn("render.pptx.font.substitution family={} — registered without binary "
-                                + "sources, the deck references \"{}\" by name only; viewers "
-                                + "without that font installed will substitute their own",
+                                + "sources, so no program for \"{}\" travels with the deck; any "
+                                + "text drawn with it is referenced by name only and "
+                                + "substituted by viewers that do not have the font installed",
                         family.name().name(), family.wordFamily());
             }
             family.fontSourceSet().ifPresent(sources -> {
@@ -150,9 +158,20 @@ public final class PptxRenderEnvironment {
                 } else {
                     // Same key as every other substitution so one log filter
                     // catches them all; the embed-skip warning carries the cause.
+                    // "Not carried whole" rather than "not carried" because the presentation
+                    // refusing a face it has been handed keeps what it took: a read that fails
+                    // leaves nothing of the family, that refusal can leave its declaration and
+                    // an earlier face. For the same reason this line says what the text needs
+                    // rather than what a viewer will do with it: with a face of the family in
+                    // the deck, what a viewer draws a run of a missing face from — a synthetic
+                    // face, or another family — is the viewer's to decide, and nobody here has
+                    // watched one decide it. What holds either way is that identical glyphs
+                    // need the font itself.
                     LOG.warn("render.pptx.font.substitution family={} — could not be embedded, "
-                                    + "the deck references \"{}\" by name only; viewers without "
-                                    + "that font installed will substitute their own",
+                                    + "so \"{}\" is not carried whole; text drawn in a face "
+                                    + "that did not travel is referenced by name, and needs "
+                                    + "that font installed where the deck is opened for "
+                                    + "identical glyphs",
                             family.name().name(), family.wordFamily());
                 }
             });
@@ -445,8 +464,9 @@ public final class PptxRenderEnvironment {
      * family made it into the presentation. Embedding is best-effort: a font
      * whose license bits forbid embedding, or whose bytes cannot be read at
      * all — a missing file, a missing classpath resource, a program the writer
-     * cannot parse — degrades to a plain family-name reference: page geometry
-     * is unaffected, viewers simply substitute glyphs. Neither fails the export
+     * cannot parse — costs the deck the font program rather than the render:
+     * page geometry is unaffected, and text drawn in the family needs that font
+     * on the machine the deck is opened on. Neither fails the export
      * here, however the refusal arrives; this answers {@code false} instead,
      * and names the family in the log.
      *
@@ -596,10 +616,16 @@ public final class PptxRenderEnvironment {
             if (embedFontFamily(show, family, sources.orElseThrow(), faces)) {
                 embeddedAny = true;
             } else {
+                // Reached on the same answer as the registered-family line above, and worded
+                // the same way. The family was certainly drawn in — the loop skips one that
+                // was not — so the only thing left to be careful about here is the face: a
+                // face that did travel needs nothing installed.
                 LOG.warn("render.pptx.font.substitution family={} — a bundled family that "
-                                + "could not be embedded, the deck references \"{}\" by name "
-                                + "only; viewers without that font installed will substitute "
-                                + "their own", family.name().name(), family.wordFamily());
+                                + "could not be embedded, so \"{}\" is not carried whole; text "
+                                + "drawn in a face that did not travel is referenced by name, "
+                                + "and needs that font installed where the deck is opened for "
+                                + "identical glyphs",
+                        family.name().name(), family.wordFamily());
             }
         }
         if (embeddedAny) {

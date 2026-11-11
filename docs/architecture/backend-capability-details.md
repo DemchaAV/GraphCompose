@@ -723,5 +723,11 @@ Roman, Courier → Courier New); document-local fonts use their registered
 viewer-facing `wordFamily` and should be installed on the viewer for exact glyphs.
 Every substitution is explicit: the backend logs
 `render.pptx.font.substitution` once per family per render whenever a
-font travels as a standard-14 replacement or a name-only reference
-instead of an embedded program; embedded families render silently.
+font cannot travel as an embedded program — because it has no program,
+because one could not be carried, because no family of either kind covers
+the name, because the render was asked not to carry a bundled family it
+drew with, or because it is a standard-14 name mapped to a
+metric-compatible replacement. Three of those lines say what the
+deck will not carry and leave what it does reference to the text that was
+drawn — in the family, or in the face that did not travel; embedded
+families render silently.

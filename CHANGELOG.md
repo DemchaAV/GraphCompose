@@ -9,8 +9,8 @@ follow semantic versioning; release dates are ISO 8601.
 
 - **A PPTX export writes its deck when a registered family cannot be carried at all.**
   - Embedding is best-effort by contract: a family whose licence forbids it, or whose bytes
-    cannot be read, degrades to a plain family-name reference rather than failing a render
-    the PDF backend would complete.
+    cannot be read, costs the deck the font program rather than failing a render the PDF
+    backend would complete.
   - A font source may refuse *unchecked*, though, and only the checked refusal was caught.
     A family registered with `FontFamilyDefinition.classpath(...)` reports a missing resource
     with an `IllegalArgumentException`, so a family registered on the document and never drawn with
@@ -42,6 +42,24 @@ follow semantic versioning; release dates are ISO 8601.
     should for a refusal that has not been seen.
   - A family the deck actually draws in still fails the render, and with the same message:
     the page cannot measure a face it cannot read, which happens before a slide is built.
+- **A PPTX substitution warning no longer claims a reference the deck does not make.** All four
+  lines that report a family the deck could not carry ended *the deck references "X" by name
+  only*; three of them — `registered without binary sources`, `could not be embedded`, and the
+  bundled-family one — are logged where that cannot be known. The first two are logged while the
+  render environment is built, before a single run is drawn, so neither can know whether
+  anything will use the family: a family registered
+  without binary sources and never drawn in is named in no part of the written package at all,
+  which is the case the sentence was false for. The two embed-failure lines — the registered one
+  and the bundled one — share the other half of the problem: where the presentation refuses a
+  face it has been handed, it keeps the declaration and any face taken before it, so "only" is
+  wrong there whether the family was drawn in or not.
+  Each of the three now says what is not carried — no program for the family, or not the family
+  whole — and leaves what the deck references to the text that was drawn in the family, or in
+  the face that did not travel. The two embed-failure lines say what that text needs installed
+  rather than what a viewer will do with it, since with a face of the family in the deck that is
+  the viewer's to decide. The fourth line is reached only where nothing will carry the family,
+  so what it says is true and it is unchanged. Log wording only: what a deck carries is
+  unchanged.
 
 ## v2.5.0 — 2026-11-11
 

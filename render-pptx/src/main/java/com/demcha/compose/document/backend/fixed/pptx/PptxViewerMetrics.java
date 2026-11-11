@@ -60,8 +60,47 @@ final class PptxViewerMetrics {
         return ratio * style.size();
     }
 
+    /**
+     * A face this reader cannot read, named so the caller can report it.
+     *
+     * <p>An {@link IOException}, like the refusals {@link PptxEmbeddedFont#wrap}
+     * raises, because it means the same thing to the caller: a face whose program
+     * could not be read, which costs the deck the font rather than the render.</p>
+     */
+    static final class UnreadableFaceException extends IOException {
+
+        private static final long serialVersionUID = 1L;
+
+        private final String source;
+
+        private UnreadableFaceException(String family, String source, Throwable cause) {
+            super("Unable to read PPTX font metrics for " + family + " from " + source, cause);
+            this.source = source;
+        }
+
+        /** The face's source, as it describes itself. */
+        String source() {
+            return source;
+        }
+    }
+
+    /**
+     * Reads the viewer ascent of every face of a family.
+     *
+     * <p>An independent read of the same font programs the embedder takes, through
+     * {@link Font#createFont} rather than fontbox, and the two do not accept the same
+     * files: fontbox's header parse skips a table whose directory entry runs past the
+     * end of the file and reads on, while {@code createFont} rejects the font outright
+     * for such an entry. A font truncated below its last table used to embed on the
+     * first read and then have no readable metrics, which cost the whole deck. So this
+     * throws a checked refusal the caller degrades the family on, and the caller reads
+     * the metrics <em>before</em> handing any program to the presentation.</p>
+     *
+     * @throws UnreadableFaceException naming the first face that cannot be read
+     */
     static ViewerFontMetrics load(FontFamilyDefinition family,
-                                  FontFamilyDefinition.FontSourceSet sources) {
+                                  FontFamilyDefinition.FontSourceSet sources)
+            throws UnreadableFaceException {
         return new ViewerFontMetrics(
                 ascentRatio(family, sources.regular()),
                 ascentRatio(family, sources.bold()),
@@ -70,14 +109,27 @@ final class PptxViewerMetrics {
     }
 
     private static double ascentRatio(FontFamilyDefinition family,
-                                      FontFamilyDefinition.FontBinarySource source) {
-        try (InputStream stream = source.openStream()) {
-            Font font = Font.createFont(Font.TRUETYPE_FONT, stream).deriveFont(FONT_METRICS_SIZE);
-            return font.getLineMetrics("Hg", FONT_RENDER_CONTEXT).getAscent() / FONT_METRICS_SIZE;
-        } catch (IOException | FontFormatException exception) {
-            throw new IllegalStateException(
-                    "Unable to read PPTX font metrics for " + family.name().name()
-                            + " from " + source.description(), exception);
+                                      FontFamilyDefinition.FontBinarySource source)
+            throws UnreadableFaceException {
+        // Named inside the same try, so that asking the source what it is cannot throw out
+        // of the failure path itself.
+        String description = "<unnamed>";
+        try {
+            description = source.description();
+            try (InputStream stream = source.openStream()) {
+                Font font = Font.createFont(Font.TRUETYPE_FONT, stream)
+                        .deriveFont(FONT_METRICS_SIZE);
+                return font.getLineMetrics("Hg", FONT_RENDER_CONTEXT).getAscent()
+                        / FONT_METRICS_SIZE;
+            }
+        } catch (IOException | FontFormatException | RuntimeException exception) {
+            // Unchecked as well as checked, deliberately and without a case of its own:
+            // a refusal from this reader is to cost the deck the font, and the one thing it
+            // must not cost is the export. The only refusal seen from it is
+            // FontFormatException — 1500 damaged copies of a bundled face raised nothing
+            // else — so no test reaches the other arms; they are here because the failure
+            // this catch is closing is "the export is lost", not "the font is unusual".
+            throw new UnreadableFaceException(family.name().name(), description, exception);
         }
     }
 }

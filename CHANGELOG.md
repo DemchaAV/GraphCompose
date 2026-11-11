@@ -7,6 +7,34 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A PPTX export writes its deck when a registered family's viewer metrics cannot be read.**
+  - A registered family's font program is read by two different parsers: the embedder parses
+    its table headers with fontbox, and the viewer metrics — the ascent PowerPoint seats a
+    top-anchored frame's first baseline by — read the program whole through
+    `java.awt.Font.createFont`. The two do not accept the same files. fontbox skips a table
+    whose directory entry runs past the end of the file and reads on; `createFont` validates
+    every entry against the file size and rejects the font for it. So a font truncated below
+    its last table embedded, and then had no readable metrics: the metrics read threw an
+    `IllegalStateException` that cost the whole deck, after the page had laid out, and whether
+    or not any text was drawn in the family. One byte off the end of the bundled Lato-Regular
+    is enough: its last table is `GSUB`, which fontbox does not require.
+  - The metrics are now read in the same pre-flight as the programs, before the presentation
+    is handed anything, and a refusal degrades the family exactly as an unreadable program
+    does: nothing of the family is carried, `render.pptx.font.embed.skipped` names the face
+    and the reader's own reason, `render.pptx.font.substitution` says the deck does not carry
+    it, and the deck is written. A family the deck draws in keeps its text on the slide —
+    measurement reads the font through the parser that accepts it — and loses only the program.
+  - Not carrying it, rather than carrying it without metrics, because what is left to seat
+    such a family is the PDF descriptor's ascent, and for some faces that is not the ascent
+    the viewer uses: of the 130 bundled faces, 126 agree to within 0.0001pt at 10pt text while
+    the four Alegreya Sans faces differ by a full point — 8.0pt from the viewer's own reader
+    against 9.0pt from the descriptor. Which of the two a refused font would have been cannot
+    be established, since the reader that would say is the one that refused, so a deck
+    carrying the program could have put every top-anchored frame's text a tenth of the em off
+    its measured line with nothing said.
+  - A family both readers accept is carried exactly as before: no intact font was found that
+    the embedder's reader accepts and the metrics reader refuses, so the new gate costs no
+    working font.
 - **A PPTX export writes its deck when a registered family cannot be carried at all.**
   - Embedding is best-effort by contract: a family whose licence forbids it, or whose bytes
     cannot be read, costs the deck the font program rather than failing a render the PDF

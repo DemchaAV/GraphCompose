@@ -36,7 +36,7 @@ final class ShowcaseMetadata {
     // on develop). At release time switch this to the published tag
     // (e.g. "v1.6.0") so users browsing the deployed site land on the
     // exact source that produced the artefacts.
-    private static final String GH_BASE = "https://github.com/DemchaAV/GraphCompose/blob/v2.5.0";
+    private static final String GH_BASE = "https://github.com/DemchaAV/GraphCompose/blob/develop";
     /** Where the examples live in the repository; a card carries both this and the link built on it. */
     private static final String EX_PATH = "examples/src/main/java/com/demcha/examples";
     private static final String EX_BASE = GH_BASE + "/" + EX_PATH;

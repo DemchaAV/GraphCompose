@@ -96,7 +96,8 @@ GraphCompose itself.
 - **[operations/logging.md](operations/logging.md)** — logger configuration, what each logger emits.
 
 ### Output backends
-- **[architecture/backend-capability-matrix.md](architecture/backend-capability-matrix.md)** — what each render backend supports, per capability. The source of truth for what the PDF, PPTX and DOCX outputs each carry.
+- **[architecture/backend-capability-matrix.md](architecture/backend-capability-matrix.md)** — what each render backend supports, per capability, at a glance.
+- **[architecture/backend-capability-details.md](architecture/backend-capability-details.md)** — the full entry behind each matrix cell: the implementing class and every deviation. The source of truth for what the PDF, PPTX and DOCX outputs each carry.
 - **[../render-pptx/README.md](../render-pptx/README.md)** — `graph-compose-render-pptx`: editable PowerPoint decks from the same session that prints the PDF. A full output; its Java API is Experimental (`@Beta`).
 - **[../render-docx/README.md](../render-docx/README.md)** — `graph-compose-render-docx`: editable Word documents written from the laid-out page, which Word paginates. A full output; the Java API added in 2.5 is Experimental (`@Beta`). Per-capability gaps are in the capability matrix.
 - **[api-stability.md](api-stability.md)** — stability tier per package, and what a tier promises.

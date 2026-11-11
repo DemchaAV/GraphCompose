@@ -245,8 +245,10 @@ installed on the viewing machine.
 PowerPoint is a full output. Its Java API is Experimental (`@Beta`) since
 2.1.0, so its shape may still change in a minor release.
 Per-capability fidelity — what is a native shape, what is approximated,
-and the raster fallback used for clipped regions — is documented in the
-[backend capability matrix](architecture/backend-capability-matrix.md).
+and the raster fallback used for clipped regions — is summarised in the
+[backend capability matrix](architecture/backend-capability-matrix.md) and
+documented in full in its
+[details](architecture/backend-capability-details.md).
 
 ## Templates
 

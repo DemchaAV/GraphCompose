@@ -3,32 +3,22 @@ package com.demcha.compose.document.backend.fixed.pptx;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.demcha.compose.GraphCompose;
-import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
-import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontName;
 
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFTextShape;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 /**
  * A registered font family that cannot be carried costs the deck nothing but the font.
@@ -53,21 +43,16 @@ class PptxUnreadableFontSourceTest {
     /** A resource no module on the test classpath ships. */
     private static final String ABSENT = "fonts/absent/Absent-Regular.ttf";
 
-    private ListAppender<ILoggingEvent> appender;
-    private Logger logger;
+    private RenderLogCapture log;
 
     @BeforeEach
-    void attachAppender() {
-        logger = (Logger) LoggerFactory.getLogger("com.demcha.compose.engine.render");
-        appender = new ListAppender<>();
-        appender.start();
-        logger.addAppender(appender);
+    void captureRenderLog() {
+        log = RenderLogCapture.attach();
     }
 
     @AfterEach
-    void detachAppender() {
-        logger.detachAppender(appender);
-        appender.stop();
+    void releaseRenderLog() {
+        log.close();
     }
 
     @Test
@@ -84,24 +69,32 @@ class PptxUnreadableFontSourceTest {
         assertThat(slideText(deck))
                 .as("the premise: the page laid out, and the slide carries its text")
                 .contains("Drawn in the default face");
-        assertThat(fontParts(deck))
+        assertThat(PptxDeck.fontParts(deck))
                 .as("the face that could not be read, not carried")
                 .isEmpty();
-        assertThat(part(deck, "ppt/presentation.xml"))
+        assertThat(PptxDeck.part(deck, "ppt/presentation.xml"))
                 .as("and the presentation declares no embedded font it has not got")
                 .doesNotContain("embeddedFontLst")
                 .doesNotContain("Absent");
 
-        assertThat(warnings("render.pptx.font.embed.skipped"))
+        assertThat(log.messages("render.pptx.font.embed.skipped"))
                 .as("the face it could not carry is named, with why")
                 .singleElement(InstanceOfAssertFactories.STRING)
                 .contains("family=Absent")
                 .contains(ABSENT)
                 .as("the premise: the source refused unchecked, the path this test guards")
                 .contains("IllegalArgumentException");
-        assertThat(warnings("render.pptx.font.substitution"))
-                .as("and the reader is told the deck does not carry it")
-                .anySatisfy(warning -> assertThat(warning).contains("Absent"));
+        assertThat(PptxDeck.partsNaming(deck, "Absent"))
+                .as("the premise for the line below: no part of the deck names the family")
+                .isEmpty();
+        assertThat(log.messages("render.pptx.font.substitution"))
+                .as("so the reader is told the family is not carried, not that the deck "
+                        + "references a family it never mentions")
+                .filteredOn(warning -> warning.contains("Absent"))
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .doesNotContain("the deck references")
+                .contains("\"Absent\" is not carried whole")
+                .contains("any text drawn with it is referenced by name");
     }
 
     @Test
@@ -116,7 +109,7 @@ class PptxUnreadableFontSourceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining(ABSENT);
 
-        assertThat(warnings("render.pptx.font.embed.skipped"))
+        assertThat(log.messages("render.pptx.font.embed.skipped"))
                 .as("the premise: measurement refused before a slide was built, so embedding "
                         + "never ran and the widened catch cannot be what let this through")
                 .isEmpty();
@@ -127,8 +120,8 @@ class PptxUnreadableFontSourceTest {
         // Embedding answers for the family, not the face: one boolean decides whether the
         // viewer metrics are kept and whether the reader is told to install the font. So a
         // family whose bold face cannot be read must leave nothing of itself in the deck —
-        // otherwise the warning says the deck references the family by name only while the
-        // deck is in fact carrying its regular face.
+        // otherwise the warning says the family is not carried whole while the deck is in
+        // fact carrying its regular face.
         String present = "fonts/google/lato/Lato-Regular.ttf";
         FontFamilyDefinition half = FontFamilyDefinition.classpath("Half", present)
                 .boldResource(ABSENT)
@@ -146,75 +139,33 @@ class PptxUnreadableFontSourceTest {
                     assertThat(sources.bold().description()).isEqualTo(ABSENT);
                 });
 
-        byte[] deck = renderWith(half,
+        byte[] deck = PptxDeck.registering(half,
                 page -> page.addParagraph(paragraph -> paragraph.text("Drawn in the default face")));
 
         assertThat(deck).as("the deck is written").isNotEmpty();
-        assertThat(fontParts(deck))
+        assertThat(PptxDeck.fontParts(deck))
                 .as("the readable face of a family that could not be carried whole")
                 .isEmpty();
-        assertThat(part(deck, "ppt/presentation.xml"))
+        assertThat(PptxDeck.part(deck, "ppt/presentation.xml"))
                 .as("and the presentation declares no embedded font it has not got")
                 .doesNotContain("embeddedFontLst")
                 .doesNotContain("Half");
 
-        assertThat(warnings("render.pptx.font.embed.skipped"))
+        assertThat(log.messages("render.pptx.font.embed.skipped"))
                 .as("the face it could not read is named")
                 .singleElement(InstanceOfAssertFactories.STRING)
                 .contains(ABSENT);
-        assertThat(warnings("render.pptx.font.substitution"))
-                .as("and the reader is told the deck does not carry the family")
-                .anySatisfy(warning -> assertThat(warning).contains("Half"));
+        assertThat(log.messages("render.pptx.font.substitution"))
+                .as("and the reader is told the deck does not carry the family whole")
+                .filteredOn(warning -> warning.contains("Half"))
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .contains("\"Half\" is not carried whole");
     }
 
     /** Renders a one-page deck that registers the absent family, drawn with or not. */
     private static byte[] render(Consumer<PageFlowBuilder> content) {
-        return renderWith(FontFamilyDefinition.classpath("Absent", ABSENT).build(), content);
-    }
-
-    /** Renders a one-page deck that registers the given family, drawn with or not. */
-    private static byte[] renderWith(FontFamilyDefinition family, Consumer<PageFlowBuilder> content) {
-        try (DocumentSession document = GraphCompose.document()
-                .pageSize(400, 160)
-                .margin(DocumentInsets.of(20))
-                .registerFontFamily(family)
-                .create()) {
-
-            document.pageFlow(content::accept);
-            return document.toPptxBytes();
-        }
-    }
-
-    /** One part of the written package, as text. */
-    private static String part(byte[] pptx, String name) throws Exception {
-        try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(pptx))) {
-            for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
-                if (entry.getName().equals(name)) {
-                    return new String(zip.readAllBytes(), StandardCharsets.UTF_8);
-                }
-            }
-        }
-        throw new AssertionError("the package has no " + name);
-    }
-
-    private List<String> warnings(String key) {
-        return appender.list.stream()
-                .map(ILoggingEvent::getFormattedMessage)
-                .filter(message -> message.startsWith(key))
-                .toList();
-    }
-
-    /** The presentation's embedded font parts, by name. */
-    private static List<String> fontParts(byte[] pptx) throws Exception {
-        List<String> parts = new ArrayList<>();
-        try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(pptx))) {
-            for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
-                if (entry.getName().startsWith("ppt/fonts/")) {
-                    parts.add(entry.getName());
-                }
-            }
-        }
-        return parts;
+        return PptxDeck.registering(
+                FontFamilyDefinition.classpath("Absent", ABSENT).build(), content);
     }
 
     /** Every run of text on the deck's slides. */

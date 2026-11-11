@@ -13,19 +13,10 @@ import com.demcha.compose.document.backend.fixed.SectionUnit;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.font.FontName;
 
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 /**
  * Holds a deck to carrying the bundled fonts it drew with.
@@ -46,7 +37,7 @@ class PptxBundledFontEmbeddingTest {
 
     @Test
     void aDeckDrawnWithABundledFamilyCarriesIt() throws Exception {
-        List<String> parts = fontPartsOf(render(page -> page.addParagraph(p -> p
+        List<String> parts = PptxDeck.fontParts(PptxDeck.of(page -> page.addParagraph(p -> p
                 .text("გამარჯობა")
                 .textStyle(DocumentTextStyle.builder()
                         .fontName(FontName.NOTO_SANS_GEORGIAN).size(18).build()))));
@@ -59,7 +50,7 @@ class PptxBundledFontEmbeddingTest {
 
     @Test
     void aRightToLeftDeckCarriesTheFamilyThatMakesItReadable() throws Exception {
-        assertThat(fontPartsOf(render(page -> page.addParagraph(p -> p
+        assertThat(PptxDeck.fontParts(PptxDeck.of(page -> page.addParagraph(p -> p
                 .text("مرحبا بالعالم")
                 .direction(TextDirection.RTL)
                 .textStyle(DocumentTextStyle.builder()
@@ -71,11 +62,11 @@ class PptxBundledFontEmbeddingTest {
     void aDeckCarriesOnlyTheFamiliesItDrewWith() throws Exception {
         // The bundled set runs to dozens of families and embedding is whole-font, so a deck
         // that offered all of them rather than the ones it used would be tens of megabytes.
-        byte[] one = render(page -> page.addParagraph(p -> p
+        byte[] one = PptxDeck.of(page -> page.addParagraph(p -> p
                 .text("გამარჯობა")
                 .textStyle(DocumentTextStyle.builder()
                         .fontName(FontName.NOTO_SANS_GEORGIAN).size(18).build())));
-        byte[] two = render(page -> page
+        byte[] two = PptxDeck.of(page -> page
                 .addParagraph(p -> p.text("გამარჯობა")
                         .textStyle(DocumentTextStyle.builder()
                                 .fontName(FontName.NOTO_SANS_GEORGIAN).size(18).build()))
@@ -83,16 +74,16 @@ class PptxBundledFontEmbeddingTest {
                         .textStyle(DocumentTextStyle.builder()
                                 .fontName(FontName.NOTO_SANS_ARMENIAN).size(18).build())));
 
-        assertThat(fontPartsOf(two))
+        assertThat(PptxDeck.fontParts(two))
                 .describedAs("the second family is carried because it was drawn with")
-                .hasSizeGreaterThan(fontPartsOf(one).size());
+                .hasSizeGreaterThan(PptxDeck.fontParts(one).size());
     }
 
     @Test
     void aStandardFamilyIsNamedRatherThanCarried() throws Exception {
         // Helvetica and its siblings are the viewer's by definition; carrying one would be
         // weight for nothing, and there is no binary to carry in the first place.
-        assertThat(fontPartsOf(render(page -> page.addParagraph(p -> p
+        assertThat(PptxDeck.fontParts(PptxDeck.of(page -> page.addParagraph(p -> p
                 .text("Plain Latin text")
                 .textStyle(DocumentTextStyle.builder()
                         .fontName(FontName.HELVETICA).size(18).build())))))
@@ -105,7 +96,7 @@ class PptxBundledFontEmbeddingTest {
         // The escape hatch, and the reason it exists: embedding is whole-font, so the
         // shipped five-script catalogue goes from 27 KB to 1.4 MB. A deck whose readers
         // are known to have the fonts can decline that.
-        assertThat(fontPartsOf(renderWith(PptxFixedLayoutBackend.builder()
+        assertThat(PptxDeck.fontParts(renderWith(PptxFixedLayoutBackend.builder()
                 .embedBundledFonts(false)
                 .build())))
                 .describedAs("declined, so the deck names the family and carries none")
@@ -138,20 +129,10 @@ class PptxBundledFontEmbeddingTest {
 
     /** The substitution warnings a render emits for a bundled Arabic family. */
     private static List<String> substitutionWarningsFrom(boolean carry) throws Exception {
-        Logger logger = (Logger) LoggerFactory.getLogger("com.demcha.compose.engine.render");
-        ListAppender<ILoggingEvent> appender = new ListAppender<>();
-        appender.start();
-        logger.addAppender(appender);
-        try {
+        try (RenderLogCapture log = RenderLogCapture.attach()) {
             renderWith(PptxFixedLayoutBackend.builder().embedBundledFonts(carry).build(),
                     FontName.AMIRI, "مرحبا");
-            return appender.list.stream()
-                    .map(ILoggingEvent::getFormattedMessage)
-                    .filter(message -> message.startsWith("render.pptx.font.substitution"))
-                    .toList();
-        } finally {
-            logger.detachAppender(appender);
-            appender.stop();
+            return log.messages("render.pptx.font.substitution");
         }
     }
 
@@ -198,7 +179,7 @@ class PptxBundledFontEmbeddingTest {
             byte[] combined = backend.renderSections(List.of(
                     new SectionUnit(graph, graph.canvas(), List.of(), backend)));
 
-            assertThat(fontPartsOf(combined))
+            assertThat(PptxDeck.fontParts(combined))
                     .describedAs("a sectioned deck carries what a single-document one carries")
                     .isNotEmpty();
         }
@@ -210,12 +191,12 @@ class PptxBundledFontEmbeddingTest {
         // measured, the five-script catalogue was shipping Gothic A1 Bold at 2.2 MB for
         // glyphs no slide contains. David Libre is regular-and-bold, so a deck that only
         // draws regular must carry exactly one part.
-        byte[] regularOnly = render(page -> page.addParagraph(p -> p
+        byte[] regularOnly = PptxDeck.of(page -> page.addParagraph(p -> p
                 .text("שלום עולם")
                 .textStyle(DocumentTextStyle.builder()
                         .fontName(FontName.DAVID_LIBRE).size(18).build())));
 
-        assertThat(fontPartsOf(regularOnly))
+        assertThat(PptxDeck.fontParts(regularOnly))
                 .describedAs("one face drawn, one face carried")
                 .hasSize(1);
     }
@@ -224,7 +205,7 @@ class PptxBundledFontEmbeddingTest {
     void aSecondFaceIsCarriedOnceItIsDrawn() throws Exception {
         // The other side of it: asking for bold must bring the bold program, or the
         // reader sees PowerPoint's synthetic emboldening of the regular one.
-        byte[] both = render(page -> page
+        byte[] both = PptxDeck.of(page -> page
                 .addParagraph(p -> p.text("שלום עולם")
                         .textStyle(DocumentTextStyle.builder()
                                 .fontName(FontName.DAVID_LIBRE).size(18).build()))
@@ -233,32 +214,8 @@ class PptxBundledFontEmbeddingTest {
                                 .fontName(FontName.DAVID_LIBRE).size(18)
                                 .decoration(DocumentTextDecoration.BOLD).build())));
 
-        assertThat(fontPartsOf(both))
+        assertThat(PptxDeck.fontParts(both))
                 .describedAs("regular and bold both drawn, both carried")
                 .hasSize(2);
-    }
-
-    /** The presentation's embedded font parts, by name. */
-    private static List<String> fontPartsOf(byte[] pptx) throws Exception {
-        List<String> parts = new ArrayList<>();
-        try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(pptx))) {
-            for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
-                if (entry.getName().startsWith("ppt/fonts/")) {
-                    parts.add(entry.getName());
-                }
-            }
-        }
-        return parts;
-    }
-
-    private static byte[] render(Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> content) {
-        try (DocumentSession document = GraphCompose.document()
-                .pageSize(400, 160)
-                .margin(DocumentInsets.of(20))
-                .create()) {
-
-            document.pageFlow(content::accept);
-            return document.toPptxBytes();
-        }
     }
 }

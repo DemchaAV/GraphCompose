@@ -97,10 +97,10 @@ class DocxSpacerRoomTest {
     void whatTheSpacerCannotGiveIsNamedAtWhatWordsLineRunsPast() throws Exception {
         // Laid out once on a wide page for the two lines' widths, then on a page the title and the
         // date fill but for a tenth of a point: the spacer has nothing to give.
-        Exported wide = export(ROUNDED_UP, 400, TitleDateRow.PLAIN);
+        Exported wide = export(ROUNDED_UP, 400, TITLE_DATE_ROW);
         double title = wide.placedWidth("Title");
         double date = wide.placedWidth("Date");
-        Exported full = export(ROUNDED_UP, 2 * MARGIN + title + date + 0.1, TitleDateRow.PLAIN);
+        Exported full = export(ROUNDED_UP, 2 * MARGIN + title + date + 0.1, TITLE_DATE_ROW);
 
         List<DocxExportReport.Note> notes = full.notes(RIGHT_END);
         assertThat(notes).as("one note for each line").hasSize(2);
@@ -135,13 +135,11 @@ class DocxSpacerRoomTest {
                 .isCloseTo(twoLines.placedWidth("Title"), org.assertj.core.data.Offset.offset(0.1));
     }
 
-    /** The rows the tests lay out. */
-    private interface TitleDateRow extends BiConsumer<RowBuilder, DocumentTextStyle> {
-        TitleDateRow PLAIN = (row, style) -> row
-                .addParagraph(p -> p.name("Title").text("Job Title").textStyle(style))
-                .flexSpacer()
-                .addParagraph(p -> p.name("Date").text("Jan 2022 – Present").textStyle(style));
-    }
+    /** A title, a spacer that grows and a date. */
+    private static final BiConsumer<RowBuilder, DocumentTextStyle> TITLE_DATE_ROW = (row, style) -> row
+            .addParagraph(p -> p.name("Title").text("Job Title").textStyle(style))
+            .flexSpacer()
+            .addParagraph(p -> p.name("Date").text("Jan 2022 – Present").textStyle(style));
 
     private static long rightIndentTwips(XWPFParagraph paragraph) {
         CTPPr properties = paragraph.getCTP().getPPr();

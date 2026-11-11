@@ -94,7 +94,12 @@ class PptxUnreadableFontSourceTest {
                 .singleElement(InstanceOfAssertFactories.STRING)
                 .doesNotContain("the deck references")
                 .contains("\"Absent\" is not carried whole")
-                .contains("text drawn in a face that did not travel is referenced by name");
+                // Whole, not up to "referenced by name": that much is common to this line
+                // and to the one it replaced, so a tail that goes back to predicting what a
+                // viewer does would leave this green.
+                .contains("text drawn in a face that did not travel is referenced by name, "
+                        + "and needs that font installed where the deck is opened for "
+                        + "identical glyphs");
     }
 
     @Test
@@ -157,10 +162,14 @@ class PptxUnreadableFontSourceTest {
                 .singleElement(InstanceOfAssertFactories.STRING)
                 .contains(ABSENT);
         assertThat(log.messages("render.pptx.font.substitution"))
-                .as("and the reader is told the deck does not carry the family whole")
                 .filteredOn(warning -> warning.contains("Half"))
                 .singleElement(InstanceOfAssertFactories.STRING)
-                .contains("\"Half\" is not carried whole");
+                .as("and the reader is told the deck does not carry the family whole, and "
+                        + "what the text drawn in the face that stayed behind needs")
+                .contains("\"Half\" is not carried whole")
+                .contains("text drawn in a face that did not travel is referenced by name, "
+                        + "and needs that font installed where the deck is opened for "
+                        + "identical glyphs");
     }
 
     /** Renders a one-page deck that registers the absent family, drawn with or not. */

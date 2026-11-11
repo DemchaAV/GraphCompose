@@ -16,7 +16,8 @@ follow semantic versioning; release dates are ISO 8601.
     every entry against the file size and rejects the font for it. So a font truncated below
     its last table embedded, and then had no readable metrics: the metrics read threw an
     `IllegalStateException` that cost the whole deck, after the page had laid out, and whether
-    or not any text was drawn in the family. One byte off the end of a bundled face is enough.
+    or not any text was drawn in the family. One byte off the end of the bundled Lato-Regular
+    is enough: its last table is `GSUB`, which fontbox does not require.
   - The metrics are now read in the same pre-flight as the programs, before the presentation
     is handed anything, and a refusal degrades the family exactly as an unreadable program
     does: nothing of the family is carried, `render.pptx.font.embed.skipped` names the face
@@ -26,10 +27,11 @@ follow semantic versioning; release dates are ISO 8601.
   - Not carrying it, rather than carrying it without metrics, because what is left to seat
     such a family is the PDF descriptor's ascent, and for some faces that is not the ascent
     the viewer uses: of the 130 bundled faces, 126 agree to within 0.0001pt at 10pt text while
-    the four Alegreya Sans faces differ by a full point (8.0pt against 9.0pt). Which of the
-    two a refused font would have been cannot be established — the reader that would say is
-    the one that refused — so a deck carrying the program could have put every top-anchored
-    frame's text a tenth of the em off its measured line with nothing said.
+    the four Alegreya Sans faces differ by a full point — 8.0pt from the viewer's own reader
+    against 9.0pt from the descriptor. Which of the two a refused font would have been cannot
+    be established, since the reader that would say is the one that refused, so a deck
+    carrying the program could have put every top-anchored frame's text a tenth of the em off
+    its measured line with nothing said.
   - A family both readers accept is carried exactly as before: no intact font was found that
     the embedder's reader accepts and the metrics reader refuses, so the new gate costs no
     working font.

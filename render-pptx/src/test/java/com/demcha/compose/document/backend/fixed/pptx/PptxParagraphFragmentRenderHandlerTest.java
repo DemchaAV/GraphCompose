@@ -2,6 +2,9 @@ package com.demcha.compose.document.backend.fixed.pptx;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
+import com.demcha.compose.engine.components.content.text.TextStyle;
+import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.layout.LayoutGraph;
@@ -256,6 +259,62 @@ class PptxParagraphFragmentRenderHandlerTest {
                         .map(box -> box.getTextParagraphs().get(0).getTextRuns().get(0).getFontSize()))
                         .contains(20.0, 9.0);
             }
+        }
+    }
+
+    /**
+     * A carried family is seated by the ascent its own program reports, not the PDF
+     * descriptor's.
+     *
+     * <p>The test above cannot see the difference: Lato's two ascents are the same number,
+     * which is why it can note that identical metrics need no synthetic shift. Alegreya
+     * Sans is the family in the bundled set where they differ — a tenth of the em — so it is
+     * the only one on which dropping the metrics a family embeds with is observable at all.
+     * Without this case, reading the metrics and then not keeping them would move every
+     * top-anchored frame of such a family and no test would notice.</p>
+     */
+    @Test
+    void seatsARegisteredFamilyByItsOwnViewerAscentRatherThanTheDescriptors() throws Exception {
+        FontName customName = FontName.of("AscentGap");
+        FontFamilyDefinition family = FontFamilyDefinition.classpath(
+                        customName, "fonts/google/alegreyasans/AlegreyaSans-Regular.ttf")
+                .wordFamily("Alegreya Sans")
+                .build();
+        DocumentTextStyle style = DocumentTextStyle.builder().fontName(customName).size(20).build();
+
+        // The premise, measured here rather than assumed, and hand-checkable: this family's
+        // two ascent ratios are 0.8 and 0.9, so at 20pt the seats are 2pt apart. A family
+        // whose readers agreed would make the assertion below pass whatever the backend did
+        // with the metrics.
+        try (PdfMeasurementResources measurement =
+                     PdfMeasurementResources.open(List.of(family))) {
+            PdfFont font = measurement.fontLibrary()
+                    .getFont(customName, PdfFont.class).orElseThrow();
+            TextStyle resolved = TextStyle.builder().fontName(customName).size(20).build();
+            double seated = PptxViewerMetrics.ascentPoints(resolved, font,
+                    PptxViewerMetrics.load(family, family.fontSourceSet().orElseThrow()));
+            double fromDescriptor = PptxViewerMetrics.ascentPoints(resolved, font, null);
+            assertThat(fromDescriptor - seated)
+                    .as("the premise: the viewer's ascent and the descriptor's are 2pt apart "
+                            + "for this family at 20pt")
+                    .isCloseTo(2.0, org.assertj.core.data.Offset.offset(0.01));
+        }
+
+        try (DocumentSession session = GraphCompose.document()
+                .registerFontFamily(family)
+                .pageSize(360, 180)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            session.add(new ParagraphBuilder().rich(r -> r.style("Seated", style)).build());
+
+            LayoutGraph graph = session.render(new GraphCapturingBackend());
+            byte[] pptx = session.render(new PptxFixedLayoutBackend());
+
+            // The mirror seats its expectation from the metrics the family embeds with, so
+            // this fails by the 2pt above if the backend ever seats such a family from the
+            // descriptor instead.
+            PptxGeometryAssertions.assertTextGeometryMatches(graph, pptx, List.of(family));
+            assertThat(PptxDeck.fontParts(pptx)).as("and the program travels").isNotEmpty();
         }
     }
 

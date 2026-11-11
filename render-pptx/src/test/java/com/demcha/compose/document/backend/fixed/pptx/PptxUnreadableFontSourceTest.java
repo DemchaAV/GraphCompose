@@ -40,8 +40,8 @@ import java.util.function.Consumer;
  * pins that side, so widening the catch cannot turn a loud failure into a silent one.</p>
  *
  * <p>And degrading is for the family, not the face: the third test holds a family whose
- * bold face cannot be read to leaving nothing of itself in the deck, since one boolean
- * answers for the whole family.</p>
+ * bold face cannot be read to leaving nothing of itself in the deck, since one answer
+ * covers the whole family.</p>
  *
  * <p>"Cannot be read" is two readers, not one. The embedder parses table headers with
  * fontbox and the viewer metrics read the program whole through {@link java.awt.Font},
@@ -144,7 +144,7 @@ class PptxUnreadableFontSourceTest {
 
     @Test
     void aFamilyOneOfWhoseFacesCannotBeReadIsCarriedWholeOrNotAtAll() throws Exception {
-        // Embedding answers for the family, not the face: one boolean decides whether the
+        // Embedding answers for the family, not the face: one answer decides whether the
         // viewer metrics are kept and whether the reader is told to install the font. So a
         // family whose bold face cannot be read must leave nothing of itself in the deck —
         // otherwise the reader is told to install a font whose regular face the deck is
@@ -201,9 +201,11 @@ class PptxUnreadableFontSourceTest {
         // The premise, measured rather than assumed: this font divides the two readers.
         // Without it the case would be a second copy of the first test — a font neither
         // reader takes — and the order the fix is about would go unguarded.
-        assertThat(PptxEmbeddedFont.wrap(Files.newInputStream(truncated)))
-                .as("the premise: the embedder's reader takes this program")
-                .isNotEmpty();
+        try (InputStream program = Files.newInputStream(truncated)) {
+            assertThat(PptxEmbeddedFont.wrap(program))
+                    .as("the premise: the embedder's reader takes this program")
+                    .isNotEmpty();
+        }
         assertThatThrownBy(() -> java.awt.Font.createFont(
                 java.awt.Font.TRUETYPE_FONT, truncated.toFile()))
                 .as("the premise: the reader the viewer metrics come from refuses it")
@@ -226,10 +228,13 @@ class PptxUnreadableFontSourceTest {
 
         assertThat(log.messages("render.pptx.font.embed.skipped"))
                 .as("the face it could not carry is named, under the same key as a program "
-                        + "the embedder's own reader turns down, with the reader's reason")
+                        + "the embedder's own reader turns down — and the reason says which "
+                        + "of the two reads refused, which is what tells the reader the "
+                        + "program itself was fine")
                 .singleElement(InstanceOfAssertFactories.STRING)
                 .contains("family=Truncated")
                 .contains(truncated.toString())
+                .contains("reason=viewer metrics:")
                 .contains("FontFormatException");
         assertThat(log.messages("render.pptx.font.substitution"))
                 .filteredOn(warning -> warning.contains("Truncated"))

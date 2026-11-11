@@ -488,9 +488,10 @@ public final class PptxRenderEnvironment {
         if (programs == null) {
             return null;
         }
-        // The other read of the same programs, and the last one that can refuse: a font
-        // whose tail is missing passes fontbox's header parse, which skips a table that
-        // runs past the end of the file, and is rejected outright by the reader below.
+        // The other read of the same programs, and the last one before the presentation is
+        // touched: a font whose tail is missing passes fontbox's header parse, which skips
+        // a table that runs past the end of the file, and is rejected outright by the
+        // reader below.
         //
         // It runs before the presentation is handed anything because one answer has to
         // gate both halves. What is left to seat a family whose metrics would not read is
@@ -498,7 +499,8 @@ public final class PptxRenderEnvironment {
         // non-standard family with the fallback it is given) — the same number the viewer
         // reports for most faces, but not for all: across the 130 bundled faces, 126 agree
         // to within 0.0001pt at 10pt text while the four Alegreya Sans faces differ by a
-        // full point, 8.0pt against 9.0pt. Which of the two a refused font would have been
+        // full point — 8.0pt from the viewer's reader against 9.0pt from the descriptor,
+        // a tenth of the em. Which of the two a refused font would have been
         // cannot be known here, because the reader that would say is the one that refused.
         // So carrying the program and seating it from the descriptor risks putting every
         // top-anchored frame's text a tenth of the em off its measured line with nothing
@@ -509,8 +511,12 @@ public final class PptxRenderEnvironment {
             viewerMetrics = PptxViewerMetrics.load(family, sources);
         } catch (PptxViewerMetrics.UnreadableFaceException exception) {
             // Same key and fields as the program read's refusal, so one log filter catches
-            // every face this deck could not carry, whichever read turned it down.
-            LOG.warn("render.pptx.font.embed.skipped family={} source={} reason={}",
+            // every face this deck could not carry — and the reason says which of the two
+            // reads turned it down, since a face the embedder took and the metrics reader
+            // refused is a different thing for the reader to act on than one neither could
+            // read.
+            LOG.warn("render.pptx.font.embed.skipped family={} source={} reason=viewer "
+                            + "metrics: {}",
                     family.name().name(), exception.source(),
                     String.valueOf(exception.getCause()));
             return null;
@@ -617,6 +623,8 @@ public final class PptxRenderEnvironment {
      * has not been seen to make; so this keeps the handling the presentation's step
      * already had, including which failures it raises rather than swallows. Widening this
      * catch would extend that half-written state to failures it used to raise.</p>
+     *
+     * @return whether the presentation took every program it was handed
      */
     private static boolean handOverPrograms(XMLSlideShow show,
                                             FontFamilyDefinition family,

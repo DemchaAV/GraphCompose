@@ -125,9 +125,9 @@ final class PptxViewerMetrics {
         } catch (IOException | FontFormatException | RuntimeException exception) {
             // Unchecked as well as checked, deliberately and without a case of its own:
             // a refusal from this reader is to cost the deck the font, and the one thing it
-            // must not cost is the export. The refusals seen are the two checked ones —
-            // 1500 damaged copies of a bundled face raised FontFormatException and nothing
-            // else — so no test reaches the unchecked arm; it is here because the failure
+            // must not cost is the export. The only refusal seen from it is
+            // FontFormatException — 1500 damaged copies of a bundled face raised nothing
+            // else — so no test reaches the other arms; they are here because the failure
             // this catch is closing is "the export is lost", not "the font is unusual".
             throw new UnreadableFaceException(family.name().name(), description, exception);
         }

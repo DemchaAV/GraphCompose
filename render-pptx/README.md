@@ -107,7 +107,7 @@ document, and the backend warns once per family for the two that are not exact:
 |---|---|---|
 | A standard-14 name (`FontName.HELVETICA`, `TIMES`, `COURIER`) | referenced as its metric-compatible viewer font — Arial, Times New Roman, Courier New | **widths identical, letterforms differ** |
 | A binary family whose licensing bits allow embedding | embedded in the deck | **identical everywhere** |
-| A family registered without binary sources, one whose bits refuse embedding, or one whose program cannot be read both for embedding and for seating | no program carried; named by the text drawn in it | identical **if** the viewer has that font installed, otherwise the viewer substitutes |
+| A family registered without binary sources, one whose bits refuse embedding, or one whose program only one of the backend's two font readers can read | no program carried; named by the text drawn in it | identical **if** the viewer has that font installed, otherwise the viewer substitutes |
 
 So for a deck that matches the PDF glyph for glyph, use a real font program
 rather than a PDF built-in — either a bundled family from `graph-compose-fonts`,

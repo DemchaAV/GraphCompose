@@ -76,12 +76,10 @@ public final class AssetContent {
      * around and the axis a {@code flipH} mirrors it in.</p>
      */
     public static final Map<String, Set<String>> UNSTABLE_SHAPES = Map.of(
-            "twin-output.pptx!ppt/slides/slide1.xml!Freeform 41",
-            Set.of("18dacede01e07a4408f19b8f2a6fc072887e6d3f5796064db4caf1b933a0f741",
-                    "4d126750bda49ababc68b4020984bc1295d7e94b02dd2629bc3d971d05346656"),
-            "twin-output.pptx!ppt/slides/slide1.xml!Freeform 51",
-            Set.of("c59aeb5cc0676a9dc35e01aff745d0b2d66500ab7dfca4afb24d4f4a60c15262",
-                    "33904bc4a82c84c86384832ca4b6c9cad738bcca558d756a43d25b9676e1b65e"));
+            "twin-output.pptx!ppt/slides/slide1.xml!Freeform 47",
+            Set.of("713cc3b9bbaca7871df2aba70d41690134b43ea41d18d152180a4a2946166ccb"),
+            "twin-output.pptx!ppt/slides/slide1.xml!Freeform 64",
+            Set.of("b8d0b690aa320d9d7f054d341ee7c312aab1db2fb9564ef6c85996dfce3d091c"));
 
     /** Extensions this can reduce; anything else is compared as the bytes it is. */
     private static final Set<String> PACKAGES = Set.of(".pptx", ".docx");

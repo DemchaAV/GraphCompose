@@ -123,10 +123,10 @@ class AssetContentTest {
         assertThat(collapsed)
                 .describedAs("the two measured shapes have to be recognised in the deck they were "
                         + "measured in, or the exemption describes nothing")
-                .contains("Freeform 41/>", "Freeform 51/>");
+                .contains("Freeform 47/>", "Freeform 64/>");
         assertThat(collapsed)
                 .describedAs("a shape the allowlist does not name is compared as it was written")
-                .contains("<p:cNvPr name=\"Freeform 42\"");
+                .contains("<p:cNvPr name=\"Freeform 48\"");
         assertThat(AssetContent.knownShapesCollapsed("other.pptx!ppt/slides/slide1.xml", slide))
                 .describedAs("the exemption is keyed on the deck as well as the shape")
                 .isEqualTo(slide);
@@ -148,7 +148,7 @@ class AssetContentTest {
             assertThat(AssetContent.knownShapesCollapsed(TWIN_SLIDE, slide))
                     .describedAs("%s no longer carries the shapes the allowlist was measured on",
                             deck)
-                    .contains("Freeform 41/>", "Freeform 51/>");
+                    .contains("Freeform 47/>", "Freeform 64/>");
         }
     }
 

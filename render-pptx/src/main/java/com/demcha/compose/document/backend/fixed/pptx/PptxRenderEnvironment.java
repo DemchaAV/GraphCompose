@@ -446,10 +446,13 @@ public final class PptxRenderEnvironment {
      * whose license bits forbid embedding, or whose bytes cannot be read at
      * all — a missing file, a missing classpath resource, a program the writer
      * cannot parse — degrades to a plain family-name reference: page geometry
-     * is unaffected, viewers simply substitute glyphs. The export completes
-     * either way, and the family it could not carry is named in the log. A
-     * family the page had to <em>measure</em> is a different matter: that fails
-     * the render before a slide is built, and not here.
+     * is unaffected, viewers simply substitute glyphs. This method never fails
+     * the export; it answers {@code false} instead, and names the family it
+     * could not carry in the log. That is a promise about this method and not
+     * about the export as a whole — a family the page had to <em>measure</em>
+     * fails the render before a slide is built, and a family that embeds goes
+     * on to {@link PptxViewerMetrics#load}, which reads the font again with a
+     * different parser and does throw.
      */
     private static boolean embedFontFamily(XMLSlideShow show,
                                            FontFamilyDefinition family,
@@ -466,13 +469,22 @@ public final class PptxRenderEnvironment {
      * across faces — a regular-and-bold family asked for italic — embeds it once, since
      * the sources dedupe by description.</p>
      *
-     * <p>Every face is read before any of them is handed to the presentation, because the
-     * answer is one boolean for the whole family: it decides whether the family keeps its
-     * viewer metrics and whether the reader is told to install the font. Constructing the
-     * font info declares the family, and adding a facet writes its part and sets the
-     * presentation's embedded-font flags at once — so a family whose second face could not
-     * be read would otherwise leave its first in the deck, and a declaration with no data,
-     * while the caller was told the deck carries nothing of it.</p>
+     * <p>Every face is <em>read</em> before any of them is handed to the presentation,
+     * because the answer is one boolean for the whole family: it decides whether the family
+     * keeps its viewer metrics and whether the reader is told to install the font. The
+     * presentation is mutated at both steps — constructing the font info declares the
+     * family, and adding a facet writes its part and sets the embedded-font flags — so
+     * handing faces over as they were read left a family whose second face could not be
+     * read with its first face in the deck, while the caller was told the deck carries
+     * nothing of it. A family with one unreadable face left the bare declaration instead.</p>
+     *
+     * <p>That holds for the faces being unreadable, which is what a caller's source
+     * decides. It does not hold for the presentation refusing a program already read and
+     * parsed: that happens inside the mutation, and what is written stays. Rolling it back
+     * — dropping the declaration and the part again — would cover both, at the price of
+     * reaching further into the writer's own model for a case it has not been seen to
+     * produce; the cost of buffering is that one family's programs are held twice while its
+     * facets are added, since the parts keep their bytes as well.</p>
      */
     private static boolean embedFontFamily(XMLSlideShow show,
                                            FontFamilyDefinition family,
@@ -510,10 +522,13 @@ public final class PptxRenderEnvironment {
             }
         } catch (IOException | RuntimeException exception) {
             // Every program is in hand and parsed by now, so this is the presentation
-            // refusing the part rather than the family being unreadable. Degrade the same
-            // way: the deck is still worth writing without the font.
+            // refusing the part rather than a source being unreadable — hence no source to
+            // name. Degrade the same way: the deck is still worth writing without the font.
+            // What the presentation took before it refused stays in it; see the class of
+            // failure this does not cover, above.
             LOG.warn("render.pptx.font.embed.skipped family={} source={} reason={}",
-                    family.name().name(), "the presentation", exception.toString());
+                    family.name().name(), "<none>",
+                    "the presentation refused the part (" + exception + ")");
             return false;
         }
         return true;

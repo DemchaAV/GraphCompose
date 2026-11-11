@@ -14,9 +14,9 @@ import com.demcha.compose.font.FontName;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
-import org.assertj.core.api.InstanceOfAssertFactories;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFTextShape;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -127,14 +127,26 @@ class PptxUnreadableFontSourceTest {
         // Embedding answers for the family, not the face: one boolean decides whether the
         // viewer metrics are kept and whether the reader is told to install the font. So a
         // family whose bold face cannot be read must leave nothing of itself in the deck —
-        // otherwise the warning says the deck references it by name only while the deck
-        // carries its regular face, and the presentation asks for embedded fonts it has not
-        // got.
-        byte[] deck = renderWith(
-                FontFamilyDefinition.classpath("Half", "fonts/google/lato/Lato-Regular.ttf")
-                        .boldResource(ABSENT)
-                        .wordFamily("Half")
-                        .build(),
+        // otherwise the warning says the deck references the family by name only while the
+        // deck is in fact carrying its regular face.
+        String present = "fonts/google/lato/Lato-Regular.ttf";
+        FontFamilyDefinition half = FontFamilyDefinition.classpath("Half", present)
+                .boldResource(ABSENT)
+                .wordFamily("Half")
+                .build();
+
+        // The premise, asserted rather than assumed: the regular face reads and the bold one
+        // does not, so the failure arrives with a program already in hand. Were the builder
+        // to fill every slot from one source, this test would quietly become a second copy of
+        // the first and stop guarding the order at all.
+        assertThat(FontFamilyDefinition.class.getResource("/" + present)).isNotNull();
+        assertThat(half.fontSourceSet().orElseThrow())
+                .satisfies(sources -> {
+                    assertThat(sources.regular().description()).isEqualTo(present);
+                    assertThat(sources.bold().description()).isEqualTo(ABSENT);
+                });
+
+        byte[] deck = renderWith(half,
                 page -> page.addParagraph(paragraph -> paragraph.text("Drawn in the default face")));
 
         assertThat(deck).as("the deck is written").isNotEmpty();

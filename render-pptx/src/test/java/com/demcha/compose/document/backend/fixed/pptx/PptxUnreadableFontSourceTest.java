@@ -14,9 +14,14 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -37,11 +42,28 @@ import java.util.function.Consumer;
  * <p>And degrading is for the family, not the face: the third test holds a family whose
  * bold face cannot be read to leaving nothing of itself in the deck, since one boolean
  * answers for the whole family.</p>
+ *
+ * <p>"Cannot be read" is two readers, not one. The embedder parses table headers with
+ * fontbox and the viewer metrics read the program whole through {@link java.awt.Font},
+ * and the two do not accept the same files: fontbox skips a table whose directory entry
+ * runs past the end of the file, {@code Font.createFont} rejects the font for it. A font
+ * truncated below its last table is accepted by the first and refused by the second. The
+ * fourth and fifth tests hold that pair to one answer — the family is not carried, and
+ * the deck is written — where the refusal used to arrive after the family was already in
+ * the presentation, as an {@code IllegalStateException} that cost the whole deck. The
+ * sixth is their control: a whole copy of the same face still embeds, so reading the
+ * metrics before the hand-over is not refusing fonts that work.</p>
  */
 class PptxUnreadableFontSourceTest {
 
     /** A resource no module on the test classpath ships. */
     private static final String ABSENT = "fonts/absent/Absent-Regular.ttf";
+
+    /** A face both readers take, as the control for the truncated one below. */
+    private static final String WHOLE = "fonts/google/lato/Lato-Regular.ttf";
+
+    @TempDir
+    Path directory;
 
     private RenderLogCapture log;
 
@@ -170,6 +192,131 @@ class PptxUnreadableFontSourceTest {
                 .contains("text drawn in a face that did not travel is referenced by name, "
                         + "and needs that font installed where the deck is opened for "
                         + "identical glyphs");
+    }
+
+    @Test
+    void aFamilyOnlyTheEmbeddersReaderAcceptsIsNotCarriedAndTheDeckIsWritten() throws Exception {
+        Path truncated = truncatedByOneByte();
+
+        // The premise, measured rather than assumed: this font divides the two readers.
+        // Without it the case would be a second copy of the first test — a font neither
+        // reader takes — and the order the fix is about would go unguarded.
+        assertThat(PptxEmbeddedFont.wrap(Files.newInputStream(truncated)))
+                .as("the premise: the embedder's reader takes this program")
+                .isNotEmpty();
+        assertThatThrownBy(() -> java.awt.Font.createFont(
+                java.awt.Font.TRUETYPE_FONT, truncated.toFile()))
+                .as("the premise: the reader the viewer metrics come from refuses it")
+                .isInstanceOf(java.awt.FontFormatException.class);
+
+        FontFamilyDefinition family = FontFamilyDefinition
+                .files("Truncated", truncated).wordFamily("Truncated").build();
+        byte[] deck = PptxDeck.registering(family, page -> page.addParagraph(
+                paragraph -> paragraph.text("Drawn in the default face")));
+
+        assertThat(deck).as("the deck is written").isNotEmpty();
+        assertThat(PptxDeck.fontParts(deck))
+                .as("the program the metrics reader refused, not carried")
+                .isEmpty();
+        assertThat(PptxDeck.part(deck, "ppt/presentation.xml"))
+                .as("and nothing of the family was handed over before the refusal: the "
+                        + "metrics are read while the presentation is still untouched")
+                .doesNotContain("embeddedFontLst")
+                .doesNotContain("Truncated");
+
+        assertThat(log.messages("render.pptx.font.embed.skipped"))
+                .as("the face it could not carry is named, under the same key as a program "
+                        + "the embedder's own reader turns down, with the reader's reason")
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .contains("family=Truncated")
+                .contains(truncated.toString())
+                .contains("FontFormatException");
+        assertThat(log.messages("render.pptx.font.substitution"))
+                .filteredOn(warning -> warning.contains("Truncated"))
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .as("and the reader is told the family is not carried, as for any other "
+                        + "face that could not be read")
+                .contains("\"Truncated\" is not carried whole")
+                .contains("text drawn in a face that did not travel is referenced by name, "
+                        + "and needs that font installed where the deck is opened for "
+                        + "identical glyphs");
+    }
+
+    @Test
+    void aFamilyDrawnInWhoseMetricsCannotBeReadKeepsTheTextAndLosesOnlyTheFont() throws Exception {
+        // The other half of the same font: the page can measure it, because measurement
+        // reads it through the parser that accepts it. So the run lays out, the slide keeps
+        // its text, and the only thing lost is the program — where this used to cost the
+        // whole deck after the layout had already succeeded.
+        FontFamilyDefinition family = FontFamilyDefinition
+                .files("Truncated", truncatedByOneByte()).wordFamily("Truncated").build();
+
+        byte[] deck = PptxDeck.registering(family, page -> page.addParagraph(
+                paragraph -> paragraph
+                        .text("Set in the truncated face")
+                        .textStyle(DocumentTextStyle.builder()
+                                .fontName(FontName.of("Truncated")).size(10).build())));
+
+        assertThat(deck).as("the deck is written").isNotEmpty();
+        assertThat(slideText(deck))
+                .as("the page laid out in that very family, and the slide carries its text")
+                .contains("Set in the truncated face");
+        assertThat(PptxDeck.part(deck, "ppt/slides/slide1.xml"))
+                .as("the slide names the family it drew in")
+                .contains("Truncated");
+        assertThat(PptxDeck.fontParts(deck)).as("and carries no program for it").isEmpty();
+    }
+
+    @Test
+    void aFamilyBothReadersAcceptIsCarriedWithItsProgram() throws Exception {
+        // The control for the gate above: a whole font of the same face still embeds, so
+        // reading the metrics before the hand-over cannot be refusing fonts that work.
+        Path whole = Files.write(directory.resolve("Whole-Regular.ttf"), wholeFace());
+        FontFamilyDefinition family = FontFamilyDefinition
+                .files("Whole", whole).wordFamily("Whole").build();
+
+        byte[] deck = PptxDeck.registering(family, page -> page.addParagraph(
+                paragraph -> paragraph
+                        .text("Set in a face that travels")
+                        .textStyle(DocumentTextStyle.builder()
+                                .fontName(FontName.of("Whole")).size(10).build())));
+
+        assertThat(PptxDeck.fontParts(deck)).as("the program travels").isNotEmpty();
+        assertThat(PptxDeck.part(deck, "ppt/presentation.xml"))
+                .as("and the presentation declares it embedded")
+                .contains("embeddedFontLst")
+                .contains("Whole");
+        assertThat(log.messages("render.pptx.font.embed.skipped"))
+                .as("nothing was skipped")
+                .isEmpty();
+        assertThat(log.messages("render.pptx.font.substitution"))
+                .as("and the reader is not told to install a font the deck carries")
+                .filteredOn(warning -> warning.contains("Whole"))
+                .isEmpty();
+    }
+
+    /**
+     * A real face with its last byte missing, written where a family can point at it.
+     *
+     * <p>One byte, because that is all it takes: the file's last table is
+     * {@code GSUB}, whose directory entry then runs one byte past the end. fontbox's
+     * header parse skips such a table and reads on — {@code GSUB} is not among the ones
+     * it requires — while {@code Font.createFont} validates every entry against the file
+     * size and rejects the font. Truncation rather than a hand-built font because it is
+     * the damage a partial download or copy leaves, and because it keeps every table the
+     * embedder's reader does require intact.</p>
+     */
+    private Path truncatedByOneByte() throws Exception {
+        byte[] whole = wholeFace();
+        return Files.write(directory.resolve("Truncated-Regular.ttf"),
+                Arrays.copyOf(whole, whole.length - 1));
+    }
+
+    private static byte[] wholeFace() throws Exception {
+        try (InputStream stream = FontFamilyDefinition.class.getResourceAsStream("/" + WHOLE)) {
+            assertThat(stream).as("the premise: the control face is on the classpath").isNotNull();
+            return stream.readAllBytes();
+        }
     }
 
     /** Renders a one-page deck that registers the absent family, drawn with or not. */

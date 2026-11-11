@@ -391,8 +391,19 @@ final class PptxGeometryAssertions {
         java.util.Map<com.demcha.compose.font.FontName, PptxViewerMetrics.ViewerFontMetrics> metrics =
                 new java.util.LinkedHashMap<>();
         for (FontFamilyDefinition family : customFonts) {
-            family.fontSourceSet().ifPresent(sources ->
-                    metrics.put(family.name(), PptxViewerMetrics.load(family, sources)));
+            java.util.Optional<FontFamilyDefinition.FontSourceSet> sources = family.fontSourceSet();
+            if (sources.isEmpty()) {
+                continue;
+            }
+            try {
+                metrics.put(family.name(), PptxViewerMetrics.load(family, sources.get()));
+            } catch (PptxViewerMetrics.UnreadableFaceException unreadable) {
+                // Loud rather than skipped: production degrades such a family, so a geometry
+                // expectation built from one would be asserting against a deck that carries
+                // no metrics for it at all.
+                throw new AssertionError(
+                        "a geometry test font whose viewer metrics cannot be read", unreadable);
+            }
         }
         return metrics;
     }

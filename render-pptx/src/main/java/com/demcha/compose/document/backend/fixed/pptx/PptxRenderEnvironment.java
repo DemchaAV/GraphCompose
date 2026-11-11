@@ -153,8 +153,10 @@ public final class PptxRenderEnvironment {
                         family.name().name(), family.wordFamily());
             }
             family.fontSourceSet().ifPresent(sources -> {
-                if (embedFontFamily(show, family, sources)) {
-                    metrics.put(family.name(), PptxViewerMetrics.load(family, sources));
+                PptxViewerMetrics.ViewerFontMetrics viewerMetrics =
+                        embedFontFamilyWithMetrics(show, family, sources);
+                if (viewerMetrics != null) {
+                    metrics.put(family.name(), viewerMetrics);
                 } else {
                     // Same key as every other substitution so one log filter
                     // catches them all; the embed-skip warning carries the cause.
@@ -460,30 +462,64 @@ public final class PptxRenderEnvironment {
     }
 
     /**
-     * Embeds every distinct facet of one font family, returning whether the
-     * family made it into the presentation. Embedding is best-effort: a font
-     * whose license bits forbid embedding, or whose bytes cannot be read at
-     * all — a missing file, a missing classpath resource, a program the writer
-     * cannot parse — costs the deck the font program rather than the render:
-     * page geometry is unaffected, and text drawn in the family needs that font
-     * on the machine the deck is opened on. Neither fails the export
-     * here, however the refusal arrives; this answers {@code false} instead,
-     * and names the family in the log.
+     * Carries one registered font family into the presentation, with the viewer
+     * metrics its text is seated by. Embedding is best-effort: a font whose
+     * license bits forbid embedding, or whose bytes cannot be read at all — a
+     * missing file, a missing classpath resource, a program either reader cannot
+     * parse — costs the deck the font program rather than the render: page
+     * geometry is unaffected, and text drawn in the family needs that font on the
+     * machine the deck is opened on. None of those fails the export here, however
+     * the refusal arrives; this answers {@code null} instead, and names the family
+     * in the log.
      *
-     * <p>That is as far as the promise goes. A family the page had to
-     * <em>measure</em> fails the render before a slide is built; a family that
-     * embeds goes on to {@link PptxViewerMetrics#load}, which reads the font
-     * again with a different parser and can throw where this one did not; and
-     * the presentation refusing a face it is handed is its own matter, below.</p>
+     * <p>One answer covers the program and the metrics, because a family that
+     * travels without them is seated from the PDF descriptor's ascent instead,
+     * which for some faces is not the ascent the viewer uses. A family the page
+     * had to <em>measure</em> is a different matter and fails the render before a
+     * slide is built; so is the presentation refusing a face it is handed, below.</p>
+     *
+     * @return the family's viewer metrics, or {@code null} where it is not carried
      */
-    private static boolean embedFontFamily(XMLSlideShow show,
-                                           FontFamilyDefinition family,
-                                           FontFamilyDefinition.FontSourceSet sources) {
-        return embedFontFamily(show, family, sources, EnumSet.allOf(Face.class));
+    private static PptxViewerMetrics.ViewerFontMetrics embedFontFamilyWithMetrics(
+            XMLSlideShow show,
+            FontFamilyDefinition family,
+            FontFamilyDefinition.FontSourceSet sources) {
+        Map<String, byte[]> programs = readPrograms(family, sources, EnumSet.allOf(Face.class));
+        if (programs == null) {
+            return null;
+        }
+        // The other read of the same programs, and the last one that can refuse: a font
+        // whose tail is missing passes fontbox's header parse, which skips a table that
+        // runs past the end of the file, and is rejected outright by the reader below.
+        //
+        // It runs before the presentation is handed anything because one answer has to
+        // gate both halves. What is left to seat a family whose metrics would not read is
+        // the PDF descriptor's ascent (PptxFontMapping.viewerAscentRatio answers a
+        // non-standard family with the fallback it is given) — the same number the viewer
+        // reports for most faces, but not for all: across the 130 bundled faces, 126 agree
+        // to within 0.0001pt at 10pt text while the four Alegreya Sans faces differ by a
+        // full point, 8.0pt against 9.0pt. Which of the two a refused font would have been
+        // cannot be known here, because the reader that would say is the one that refused.
+        // So carrying the program and seating it from the descriptor risks putting every
+        // top-anchored frame's text a tenth of the em off its measured line with nothing
+        // said, where not carrying it is the degradation the backend already has a warning
+        // for.
+        PptxViewerMetrics.ViewerFontMetrics viewerMetrics;
+        try {
+            viewerMetrics = PptxViewerMetrics.load(family, sources);
+        } catch (PptxViewerMetrics.UnreadableFaceException exception) {
+            // Same key and fields as the program read's refusal, so one log filter catches
+            // every face this deck could not carry, whichever read turned it down.
+            LOG.warn("render.pptx.font.embed.skipped family={} source={} reason={}",
+                    family.name().name(), exception.source(),
+                    String.valueOf(exception.getCause()));
+            return null;
+        }
+        return handOverPrograms(show, family, programs) ? viewerMetrics : null;
     }
 
     /**
-     * Embeds the named faces of a family.
+     * Embeds the named faces of a family, without viewer metrics.
      *
      * <p>Faces rather than the whole family, because embedding carries a font program
      * whole: a deck drawing one weight of a CJK family was shipping the other at over two
@@ -491,34 +527,56 @@ public final class PptxRenderEnvironment {
      * across faces — a regular-and-bold family asked for italic — embeds it once, since
      * the sources dedupe by description.</p>
      *
-     * <p>Every face is <em>read</em> before any of them is handed to the presentation,
-     * because the answer is one boolean for the whole family: it decides whether the family
-     * keeps its viewer metrics and whether the reader is told to install the font. The
-     * presentation is mutated at both steps — constructing the font info declares the
-     * family, and adding a facet writes its part and sets the embedded-font flags — so
-     * handing faces over as they were read left a family whose second face could not be
-     * read with its first face in the deck, while the caller was told the deck carries
-     * nothing of it. A family whose first face could not be read left the bare
-     * declaration.</p>
+     * <p>Embedding is best-effort here as it is for a registered family: a face whose
+     * licence bits forbid embedding, or whose bytes cannot be read, costs the deck the
+     * font program rather than the render, and this answers {@code false} with the face
+     * named in the log.</p>
      *
-     * <p>That holds for everything that fails before the hand-over: a face that cannot be
-     * read, and a face read whole whose licence bits forbid embedding, which
-     * {@link PptxEmbeddedFont#wrap} refuses. So a family of one embeddable face and one
-     * restricted face now carries neither, where it used to carry the first. It does not
-     * hold for the presentation refusing a face it is handed, after the program is read and
-     * parsed: that refusal happens inside the mutation, and what it
-     * took stays — a part, a dataId, the embedded-font flags. Undoing all of those would
-     * cover the presentation's refusal too, at the price of reaching that far into the
-     * writer's own model for a
-     * refusal it has not been seen to make; so this keeps the handling the presentation's
-     * step already had, including which failures it raises rather than swallows. The cost
-     * of buffering instead is that one family's programs are held twice while its facets
-     * are added, since the parts keep their bytes as well.</p>
+     * <p>The bundled families take this road, and deliberately get no metrics: see
+     * {@link #embedBundledFontsUsed()}. A family a caller registered goes through
+     * {@link #embedFontFamilyWithMetrics} instead, which reads its metrics in the same
+     * pre-flight.</p>
+     *
+     * @return whether the family made it into the presentation
      */
     private static boolean embedFontFamily(XMLSlideShow show,
                                            FontFamilyDefinition family,
                                            FontFamilyDefinition.FontSourceSet sources,
                                            Set<Face> faces) {
+        Map<String, byte[]> programs = readPrograms(family, sources, faces);
+        return programs != null && handOverPrograms(show, family, programs);
+    }
+
+    /**
+     * Reads and wraps the named faces' font programs, keyed by source description.
+     *
+     * <p>Every face is read before any of them is handed to the presentation, because one
+     * answer covers the whole family: it decides whether the family is carried at all and
+     * whether the reader is told to install the font. The presentation is mutated at both
+     * of the hand-over's steps — constructing the font info declares the family, and
+     * adding a facet writes its part and sets the embedded-font flags — so handing faces
+     * over as they were read left a family whose second face could not be read with its
+     * first face in the deck, while the caller was told the deck carries nothing of it. A
+     * family whose first face could not be read left the bare declaration.</p>
+     *
+     * <p>That holds for everything that fails before the hand-over: a face that cannot be
+     * read, and a face read whole whose licence bits forbid embedding, which
+     * {@link PptxEmbeddedFont#wrap} refuses. So a family of one embeddable face and one
+     * restricted face carries neither, where it used to carry the first. It does not hold
+     * for the presentation refusing a face it is handed: see {@link #handOverPrograms}.</p>
+     *
+     * <p>Nothing of the presentation is touched here, so a refusal costs the deck the
+     * family and nothing else. Answers {@code null} where a face refused, having named it
+     * in the log; the caller reports the family. The cost of buffering is that one
+     * family's programs are held twice while its facets are added, since the parts keep
+     * their bytes as well.</p>
+     *
+     * @return the wrapped programs by source description, or {@code null} where a face
+     *         refused
+     */
+    private static Map<String, byte[]> readPrograms(FontFamilyDefinition family,
+                                                    FontFamilyDefinition.FontSourceSet sources,
+                                                    Set<Face> faces) {
         Map<String, byte[]> programs = new LinkedHashMap<>();
         for (FontFamilyDefinition.FontBinarySource source
                 : faces.stream().map(face -> face.in(sources)).toList()) {
@@ -542,13 +600,27 @@ public final class PptxRenderEnvironment {
                 // toString rather than getMessage because an unchecked failure may carry none.
                 LOG.warn("render.pptx.font.embed.skipped family={} source={} reason={}",
                         family.name().name(), description, exception.toString());
-                return false;
+                return null;
             }
         }
-        // From here the handling is the presentation's own, and exactly what it was before
-        // the reads were pulled forward: a refusal while taking a face degrades the family,
-        // and whatever the presentation took before it refused stays in it. Widening this
-        // catch would extend that half-written state to failures it used to raise.
+        return programs;
+    }
+
+    /**
+     * Hands read programs to the presentation, returning whether it took them all.
+     *
+     * <p>From here the handling is the presentation's own, and exactly what it was before
+     * the reads were pulled forward: a refusal while taking a face degrades the family,
+     * and whatever the presentation took before it refused stays in it — a part, a dataId,
+     * the embedded-font flags. Undoing all of those would cover the presentation's refusal
+     * too, at the price of reaching that far into the writer's own model for a refusal it
+     * has not been seen to make; so this keeps the handling the presentation's step
+     * already had, including which failures it raises rather than swallows. Widening this
+     * catch would extend that half-written state to failures it used to raise.</p>
+     */
+    private static boolean handOverPrograms(XMLSlideShow show,
+                                            FontFamilyDefinition family,
+                                            Map<String, byte[]> programs) {
         XSLFFontInfo embedded = new XSLFFontInfo(show, family.wordFamily());
         for (Map.Entry<String, byte[]> program : programs.entrySet()) {
             try {

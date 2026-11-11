@@ -6,7 +6,7 @@ GraphCompose is solo-maintained. This roadmap is a direction, not a contract. Da
 
 The live threads are tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues): moving the office backends to Apache POI 6, growing the built-in layered template line-up, and keeping the knowledge pack current as the API moves. Vector clipping for the PPTX backend remains open.
 
-## Upcoming — 2.5
+## Current stable — 2.5
 
 **2.5.0** is the current release. From this line **PDF, PowerPoint and Word are three full
 outputs** of one document. It leads with a **DOCX export that writes the page the engine
@@ -24,7 +24,7 @@ a line copied out of a PDF keeps its emoji.
 
 Full detail in [CHANGELOG.md](CHANGELOG.md) under `v2.5.0`.
 
-## Current stable — 2.4
+## Previously — 2.4
 
 **2.4.1** is the current release. It leads with a **much larger template line-up**. Two
 families join invoice, proposal, CV and cover letter: **receipt**, for payment

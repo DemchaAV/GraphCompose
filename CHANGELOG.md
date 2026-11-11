@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v2.5.0 — Planned
+## v2.5.0 — 2026-11-11
 
 ### Highlights
 

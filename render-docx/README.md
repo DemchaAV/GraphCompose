@@ -247,8 +247,10 @@ with its own page size, orientation, margins, and the header and footer its page
 text header and footer describe — see the
 [DOCX recipe](../docs/recipes/docx-export.md#several-sections-in-one-document).
 
-Per-capability detail, with the implementing class for every supported cell:
-[backend capability matrix](../docs/architecture/backend-capability-matrix.md).
+What each capability becomes in Word, at a glance:
+[backend capability matrix](../docs/architecture/backend-capability-matrix.md). The
+implementing class for every supported cell, and each deviation in full:
+[backend capability details](../docs/architecture/backend-capability-details.md).
 
 ## Install
 

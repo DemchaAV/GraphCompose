@@ -29,10 +29,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Holds the DOCX column of the backend capability matrix to the code it describes.
  *
- * <p>{@code docs/architecture/backend-capability-matrix.md} lists every subject a
- * {@code DocxExportReport} note can carry, with its severity and the capability row it belongs to,
- * and names the class behind each DOCX cell. Both are written by hand, in the same change as the
- * code.</p>
+ * <p>{@code docs/architecture/backend-capability-matrix.md} is the one-glance table: a status and
+ * a few words per cell, each capability linked to its heading in
+ * {@code docs/architecture/backend-capability-details.md}. The details list every subject a
+ * {@code DocxExportReport} note can carry, with its severity and the capability it belongs to,
+ * and name the class behind each DOCX entry. All of it is written by hand, in the same change as
+ * the code; the matrix's rows are held to the details' headings and status marks.</p>
  *
  * <p>This reads the export's own sources. Every note is added with its severity written out
  * ({@code Severity.DROPPED} or {@code Severity.APPROXIMATED}), followed by its subject; the subject
@@ -47,6 +49,7 @@ class DocxCapabilityMatrixGuardTest {
 
     private static final Path ROOT = RepoPaths.repoRoot();
     private static final Path MATRIX = ROOT.resolve("docs/architecture/backend-capability-matrix.md");
+    private static final Path DETAILS = ROOT.resolve("docs/architecture/backend-capability-details.md");
     private static final Path EXPORT = ROOT.resolve(
             "render-docx/src/main/java/com/demcha/compose/document/backend/semantic/docx");
 
@@ -93,7 +96,7 @@ class DocxCapabilityMatrixGuardTest {
     @Test
     void everySubjectTheExportWritesIsListedWithItsSeverity() throws IOException {
         Map<String, Set<String>> written = exportWritten();
-        Map<String, Set<String>> listed = listed(Files.readString(MATRIX));
+        Map<String, Set<String>> listed = listed(Files.readString(DETAILS));
 
         assertThat(written.keySet())
                 .describedAs("found too few subjects in the export's sources: the scan is not "
@@ -101,7 +104,7 @@ class DocxCapabilityMatrixGuardTest {
                 .hasSizeGreaterThan(30);
         assertThat(missing(written, listed))
                 .describedAs("the export writes these report subjects (severity) and the "
-                        + "'DOCX export report subjects' table of backend-capability-matrix.md "
+                        + "'DOCX export report subjects' table of backend-capability-details.md "
                         + "does not list them so: add a row saying what the file holds instead")
                 .isEmpty();
     }
@@ -109,25 +112,25 @@ class DocxCapabilityMatrixGuardTest {
     @Test
     void everySubjectTheMatrixListsIsOneTheExportWrites() throws IOException {
         Map<String, Set<String>> written = exportWritten();
-        Map<String, Set<String>> listed = listed(Files.readString(MATRIX));
+        Map<String, Set<String>> listed = listed(Files.readString(DETAILS));
 
         assertThat(listed.keySet())
-                .describedAs("found too few subjects in the matrix's table: the section moved, and "
+                .describedAs("found too few subjects in the details' table: the section moved, and "
                         + "the guard would pass on nothing")
                 .hasSizeGreaterThan(30);
         assertThat(missing(listed, written))
-                .describedAs("backend-capability-matrix.md lists these report subjects (severity) "
+                .describedAs("backend-capability-details.md lists these report subjects (severity) "
                         + "and the export writes none so: the row describes a note that is never given")
                 .isEmpty();
     }
 
     @Test
     void everyRowTheSubjectsTableNamesIsARowOfTheMatrix() throws IOException {
-        String matrix = Files.readString(MATRIX);
-        List<String> capabilities = capabilityNames(matrix);
+        String details = Files.readString(DETAILS);
+        List<String> capabilities = capabilityNames(details);
         Set<String> unknown = new TreeSet<>();
         int named = 0;
-        for (List<String> row : subjectRows(matrix)) {
+        for (List<String> row : subjectRows(details)) {
             for (String segment : row.get(3).split(";")) {
                 String phrase = segment.strip();
                 if (NOT_A_ROW.contains(phrase)) {
@@ -144,19 +147,57 @@ class DocxCapabilityMatrixGuardTest {
         }
         assertThat(named).isGreaterThan(30);
         assertThat(unknown)
-                .describedAs("the Row column names capabilities the matrix has no row for")
+                .describedAs("the Row column names capabilities the details have no heading for")
+                .isEmpty();
+    }
+
+    @Test
+    void everyMatrixRowIsADetailsHeadingWithTheSameMarks() throws IOException {
+        List<Detail> details = capabilityDetails(Files.readString(DETAILS));
+        List<String> rows = new ArrayList<>();
+        Set<String> differ = new TreeSet<>();
+        for (String raw : Files.readString(MATRIX).split("\n")) {
+            if (!raw.startsWith("| [")) {
+                continue;
+            }
+            Matcher row = MATRIX_ROW.matcher(raw.strip());
+            assertThat(row.matches()).describedAs("a matrix row linked to its details: " + raw).isTrue();
+            List<String> cells = cells("|" + row.group(2) + "|");
+            // A row with another count — an escaped pipe, a fifth column — would have its cells
+            // compared with the wrong backend's entry.
+            assertThat(cells).describedAs("a matrix row of three backend cells: " + raw).hasSize(3);
+            String name = row.group(1);
+            rows.add(name);
+            details.stream().filter(detail -> detail.name().equals(name)).findFirst().ifPresent(detail -> {
+                String[][] pairs = {{"PDF", cells.get(0), detail.pdf()}, {"PPTX", cells.get(1), detail.pptx()},
+                        {"DOCX", cells.get(2), detail.docx()}};
+                for (String[] pair : pairs) {
+                    if (!mark(pair[1]).equals(mark(pair[2]))) {
+                        differ.add(name + " (" + pair[0] + ": " + mark(pair[1]) + " in the matrix, "
+                                + mark(pair[2]) + " in the details)");
+                    }
+                }
+            });
+        }
+        assertThat(rows).describedAs("found too few matrix rows: the table moved, and the guard would "
+                + "pass on nothing").hasSizeGreaterThan(50);
+        assertThat(rows)
+                .describedAs("the matrix's rows and the details' capability headings, in order")
+                .containsExactlyElementsOf(details.stream().map(Detail::name).toList());
+        assertThat(differ)
+                .describedAs("a matrix cell and its details entry give the capability a different status")
                 .isEmpty();
     }
 
     @Test
     void everyDocxClassTheMatrixNamesExists() throws IOException {
-        String matrix = Files.readString(MATRIX);
+        String details = Files.readString(DETAILS);
         Map<String, Path> types = declaredTypes();
         Map<Path, String> read = new HashMap<>();
         Pattern symbol = Pattern.compile("`(Docx\\w+)(?:\\.(\\w+))?(?:\\([^`]*\\))?`");
         Set<String> unknown = new TreeSet<>();
         int named = 0;
-        for (String cell : docxCells(matrix)) {
+        for (String cell : docxCells(details)) {
             Matcher found = symbol.matcher(cell);
             while (found.find()) {
                 named++;
@@ -179,7 +220,7 @@ class DocxCapabilityMatrixGuardTest {
         }
         assertThat(named).isGreaterThan(30);
         assertThat(unknown)
-                .describedAs("the DOCX column names classes or methods no source declares")
+                .describedAs("the DOCX entries name classes or methods no source declares")
                 .isEmpty();
     }
 
@@ -670,12 +711,12 @@ class DocxCapabilityMatrixGuardTest {
                 + source.line(Math.min(at, source.code().length())) + " gives: " + why);
     }
 
-    // Reading the matrix.
+    // Reading the matrix and its details.
 
     /** Subject to the severities the table lists it with. */
-    static Map<String, Set<String>> listed(String matrix) {
+    static Map<String, Set<String>> listed(String details) {
         Map<String, Set<String>> listed = new TreeMap<>();
-        for (List<String> row : subjectRows(matrix)) {
+        for (List<String> row : subjectRows(details)) {
             Matcher severity = Pattern.compile("`(\\w+)`").matcher(row.get(1));
             Set<String> severities = new TreeSet<>();
             while (severity.find()) {
@@ -691,11 +732,11 @@ class DocxCapabilityMatrixGuardTest {
         return listed;
     }
 
-    private static List<List<String>> subjectRows(String matrix) {
-        int start = matrix.indexOf("\n## DOCX export report subjects");
-        assertThat(start).describedAs("the matrix has no 'DOCX export report subjects' section").isPositive();
-        int end = matrix.indexOf("\n## ", start + 1);
-        String section = matrix.substring(start, end < 0 ? matrix.length() : end);
+    private static List<List<String>> subjectRows(String details) {
+        int start = details.indexOf("\n## DOCX export report subjects");
+        assertThat(start).describedAs("the details have no 'DOCX export report subjects' section").isPositive();
+        int end = details.indexOf("\n## ", start + 1);
+        String section = details.substring(start, end < 0 ? details.length() : end);
         List<List<String>> rows = new ArrayList<>();
         for (String line : section.split("\n")) {
             if (line.startsWith("| `")) {
@@ -707,35 +748,71 @@ class DocxCapabilityMatrixGuardTest {
         return rows;
     }
 
-    /** The DOCX cell of every four-column capability row, and the text above the first table. */
-    private static List<String> docxCells(String matrix) {
+    /**
+     * The DOCX entry of every capability in the details, and the text above its first section,
+     * which says what the DOCX backend reads and writes.
+     */
+    private static List<String> docxCells(String details) {
         List<String> cells = new ArrayList<>();
-        cells.add(matrix.substring(0, matrix.indexOf("\n## ")));
-        for (List<String> row : capabilityRows(matrix)) {
-            cells.add(row.get(3));
+        cells.add(details.substring(0, details.indexOf("\n## ")));
+        for (Detail detail : capabilityDetails(details)) {
+            cells.add(detail.docx());
         }
         return cells;
     }
 
-    private static List<String> capabilityNames(String matrix) {
-        return capabilityRows(matrix).stream().map(row -> row.get(0)).toList();
+    private static List<String> capabilityNames(String details) {
+        return capabilityDetails(details).stream().map(Detail::name).toList();
     }
 
-    private static List<List<String>> capabilityRows(String matrix) {
-        String tables = matrix.substring(0, matrix.indexOf("\n## DOCX export report subjects"));
-        List<List<String>> rows = new ArrayList<>();
-        for (String line : tables.split("\n")) {
-            if (line.startsWith("|") && !line.startsWith("|---")) {
-                List<String> cells = cells(line);
-                // A row with another count — an escaped pipe, a fifth column — would have its DOCX
-                // cell read wrong or not at all.
-                assertThat(cells).describedAs("a capability row of four cells: " + line).hasSize(4);
-                if (!cells.get(3).equals("DOCX (semantic)")) {
-                    rows.add(cells);
+    /** A capability as the details write it: its heading, then a PDF, a PPTX and a DOCX entry. */
+    private record Detail(String name, String pdf, String pptx, String docx) {
+    }
+
+    /** Every {@code ###} capability heading above the subjects table, with its three entries. */
+    private static List<Detail> capabilityDetails(String details) {
+        int sections = details.indexOf("\n## ");
+        int subjects = details.indexOf("\n## DOCX export report subjects");
+        assertThat(subjects).describedAs("the details have no 'DOCX export report subjects' section")
+                .isGreaterThan(sections);
+        List<Detail> found = new ArrayList<>();
+        String name = null;
+        Map<String, String> entries = new HashMap<>();
+        // A closing heading, so the last capability is added like the others.
+        for (String raw : (details.substring(sections, subjects) + "\n### end").split("\n")) {
+            String line = raw.strip();
+            if (line.startsWith("### ")) {
+                if (name != null) {
+                    // A heading missing an entry would have its DOCX text read as nothing at all.
+                    assertThat(entries.keySet()).describedAs("the entries under '### " + name + "'")
+                            .containsExactlyInAnyOrder("PDF", "PPTX", "DOCX");
+                    found.add(new Detail(name, entries.get("PDF"), entries.get("PPTX"), entries.get("DOCX")));
                 }
+                name = line.substring(4).strip();
+                entries = new HashMap<>();
+                continue;
+            }
+            Matcher entry = DETAIL_ENTRY.matcher(line);
+            if (name != null && entry.matches()) {
+                assertThat(entries.put(entry.group(1), entry.group(2)))
+                        .describedAs("a second " + entry.group(1) + " entry under '### " + name + "'").isNull();
             }
         }
-        return rows;
+        return found;
+    }
+
+    /** One backend's entry under a capability heading: {@code **DOCX.** ⚠️ …}. */
+    private static final Pattern DETAIL_ENTRY = Pattern.compile("\\*\\*(PDF|PPTX|DOCX)\\.\\*\\* (.+)");
+
+    /** A matrix row: the capability, linked to its heading in the details, and three short cells. */
+    private static final Pattern MATRIX_ROW = Pattern.compile(
+            "\\| \\[([^\\]]+)]\\(backend-capability-details\\.md#[^)]+\\) \\|(.*)\\|");
+
+    /** What a cell or an entry says before its words: supported, degraded, missing, coming or n/a. */
+    private static String mark(String cell) {
+        Matcher mark = Pattern.compile("^(✅|⚠️|❌|🚧|n/a)").matcher(cell.strip());
+        assertThat(mark.find()).describedAs("a cell that opens with ✅, ⚠️, ❌, 🚧 or n/a: " + cell).isTrue();
+        return mark.group(1);
     }
 
     /** Whether a row's capability is that name: its cell up to the dash or the bracket that explains it. */

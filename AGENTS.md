@@ -29,7 +29,9 @@ Read when the change reaches them:
   compose task wants; `backends`, `templates`, `testing` and `extension-spi`
   are opt-in.
 - [`docs/architecture/backend-capability-matrix.md`](docs/architecture/backend-capability-matrix.md)
-  — before changing what a PDF, PPTX or DOCX export can do, and to record it
+  — before changing what a PDF, PPTX or DOCX export can do, and to record it:
+  a short cell there, the full entry in
+  [`backend-capability-details.md`](docs/architecture/backend-capability-details.md)
 - [`docs/adr/`](docs/adr/) — before revisiting a decision already taken
 - [`docs/operations/benchmarks.md`](docs/operations/benchmarks.md) — for
   layout, render or performance work

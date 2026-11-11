@@ -6815,6 +6815,14 @@ The same notes, grouped for an upgrade, are in
 
 ### Documentation
 
+- **The backend capability matrix reads at a glance.** Each PDF, PPTX and DOCX cell is a status
+  and a few words, and each capability links to its entry in the new
+  [`backend-capability-details.md`](docs/architecture/backend-capability-details.md), which holds
+  the text the cells carried before — the implementing class, every deviation, the measurements —
+  with the *DOCX export report subjects* table and the PPTX fidelity notes. The DOCX column is
+  headed "DOCX". `DocxCapabilityMatrixGuardTest` reads the subjects table and the DOCX entries from
+  the details, and also fails when a matrix row and the details' headings differ in name or order,
+  or when a cell's status differs from its entry's.
 - **The README banner and the twin-output page show the Word output beside PDF and PowerPoint.**
   The banner (`MavenBannerPptxExample`, re-rendered by each release cut with its version) traced
   one model to two output icons; it now branches to three — PDF, DOCX and PPTX — with "One model.

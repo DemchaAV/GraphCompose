@@ -244,7 +244,8 @@ rail is anchored in the entry it starts in there, and a marker beside an entry's
 entry's paragraph, so both move with the entry when the text above is edited; one beside no text
 stays where the page puts it. The rail keeps the length the layout gives it on each page: the
 entries after one that grows in Word or LibreOffice run past its end. See the
-[backend capability matrix](../architecture/backend-capability-matrix.md).
+[timeline rail](../architecture/backend-capability-details.md#timeline-rail) in the backend
+capability details.
 
 ## Text styles
 

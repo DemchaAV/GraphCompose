@@ -95,6 +95,10 @@ class PptxFontSubstitutionWarningTest {
         assertThat(PptxDeck.partsNaming(deck, "NamedOnly"))
                 .as("the premise: no part of the deck names the family")
                 .isEmpty();
+        assertThat(PptxDeck.fontParts(deck))
+                .as("and no program travels under any name, which a search for the family "
+                        + "name cannot see on its own — a program names itself in UTF-16")
+                .isEmpty();
         assertThat(log.messages("render.pptx.font.substitution"))
                 .filteredOn(message -> message.contains("NamedOnly"))
                 .singleElement(InstanceOfAssertFactories.STRING)

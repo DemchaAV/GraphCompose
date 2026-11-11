@@ -161,14 +161,17 @@ public final class PptxRenderEnvironment {
                     // "Not carried whole" rather than "not carried" because the presentation
                     // refusing a face it has been handed keeps what it took: a read that fails
                     // leaves nothing of the family, that refusal can leave its declaration and
-                    // an earlier face. The substitution is said of the text drawn in a face
-                    // that did not travel, for the same reason from the other end — where a
-                    // face did travel, a viewer without the font does not substitute its text.
+                    // an earlier face. For the same reason this line says what the text needs
+                    // rather than what a viewer will do with it: with a face of the family in
+                    // the deck, what a viewer draws a run of a missing face from — a synthetic
+                    // face, or another family — is the viewer's to decide, and nobody here has
+                    // watched one decide it. What holds either way is that identical glyphs
+                    // need the font itself.
                     LOG.warn("render.pptx.font.substitution family={} — could not be embedded, "
                                     + "so \"{}\" is not carried whole; text drawn in a face "
-                                    + "that did not travel is referenced by name and "
-                                    + "substituted by viewers that do not have the font "
-                                    + "installed",
+                                    + "that did not travel is referenced by name, and needs "
+                                    + "that font installed where the deck is opened for "
+                                    + "identical glyphs",
                             family.name().name(), family.wordFamily());
                 }
             });
@@ -461,8 +464,9 @@ public final class PptxRenderEnvironment {
      * family made it into the presentation. Embedding is best-effort: a font
      * whose license bits forbid embedding, or whose bytes cannot be read at
      * all — a missing file, a missing classpath resource, a program the writer
-     * cannot parse — degrades to a plain family-name reference: page geometry
-     * is unaffected, viewers simply substitute glyphs. Neither fails the export
+     * cannot parse — costs the deck the font program rather than the render:
+     * page geometry is unaffected, and text drawn in the family needs that font
+     * on the machine the deck is opened on. Neither fails the export
      * here, however the refusal arrives; this answers {@code false} instead,
      * and names the family in the log.
      *
@@ -613,13 +617,14 @@ public final class PptxRenderEnvironment {
                 embeddedAny = true;
             } else {
                 // Reached on the same answer as the registered-family line above, and worded
-                // the same way: being drawn in makes the deck's reference to the family real,
-                // but neither that nor the substitution follows for a face that did travel.
+                // the same way. The family was certainly drawn in — the loop skips one that
+                // was not — so the only thing left to be careful about here is the face: a
+                // face that did travel needs nothing installed.
                 LOG.warn("render.pptx.font.substitution family={} — a bundled family that "
                                 + "could not be embedded, so \"{}\" is not carried whole; text "
-                                + "drawn in a face that did not travel is referenced by name "
-                                + "and substituted by viewers that do not have the font "
-                                + "installed",
+                                + "drawn in a face that did not travel is referenced by name, "
+                                + "and needs that font installed where the deck is opened for "
+                                + "identical glyphs",
                         family.name().name(), family.wordFamily());
             }
         }

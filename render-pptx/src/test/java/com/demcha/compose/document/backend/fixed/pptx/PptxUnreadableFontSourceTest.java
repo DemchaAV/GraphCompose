@@ -24,8 +24,8 @@ import java.util.function.Consumer;
  * A registered font family that cannot be carried costs the deck nothing but the font.
  *
  * <p>Embedding is best-effort by contract: a family whose licence forbids it, or whose
- * bytes cannot be read, degrades to a plain family-name reference rather than failing a
- * render the PDF backend would complete. A source may refuse <em>unchecked</em> — the
+ * bytes cannot be read, costs the deck the font program rather than failing a render the
+ * PDF backend would complete. A source may refuse <em>unchecked</em> — the
  * classpath one reports a missing resource with an {@link IllegalArgumentException} — and
  * only the checked refusal was caught, so a family registered and never drawn with was
  * enough to lose a deck that had already laid out.</p>

@@ -727,7 +727,7 @@ font cannot travel as an embedded program — because it has no program,
 because one could not be carried, because no family of either kind covers
 the name, because the render was asked not to carry a bundled family it
 drew with, or because it is a standard-14 name mapped to a
-metric-compatible replacement. Two of those lines are written
-while the render starts, so they say what the deck will not carry and leave
-the name-only reference conditional on text being drawn in the family;
-embedded families render silently.
+metric-compatible replacement. Three of those lines say what the
+deck will not carry and leave what it does reference to the text that was
+drawn — in the family, or in the face that did not travel; embedded
+families render silently.

@@ -126,7 +126,7 @@ try (DocumentSession document = GraphCompose.document()
 
 Every substitution is announced at `WARN` under the key
 `render.pptx.font.substitution`, once per family per render, naming the font the
-document asked for and what the deck will reference instead. Embedded families
+document asked for and what the deck will, or will not, carry for it. Embedded families
 log nothing — silence means the deck carries its own glyphs.
 
 ## When to depend on it

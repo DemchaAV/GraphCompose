@@ -446,9 +446,9 @@ public final class PptxRenderEnvironment {
      * whose license bits forbid embedding, or whose bytes cannot be read at
      * all — a missing file, a missing classpath resource, a program the writer
      * cannot parse — degrades to a plain family-name reference: page geometry
-     * is unaffected, viewers simply substitute glyphs. A source that cannot be
-     * read never fails the export here, however it refuses; this answers
-     * {@code false} instead, and names the family in the log.
+     * is unaffected, viewers simply substitute glyphs. Neither fails the export
+     * here, however the source refuses; this answers {@code false} instead, and
+     * names the family in the log.
      *
      * <p>That is as far as the promise goes. A family the page had to
      * <em>measure</em> fails the render before a slide is built; a family that
@@ -481,9 +481,12 @@ public final class PptxRenderEnvironment {
      * nothing of it. A family whose first face could not be read left the bare
      * declaration.</p>
      *
-     * <p>That holds for the faces being unreadable, which is what a caller's source
-     * decides. It does not hold for the presentation refusing a face it is handed, after
-     * the program is read and parsed: that refusal happens inside the mutation, and what it
+     * <p>That holds for everything that fails before the hand-over: a face that cannot be
+     * read, and a face read whole whose licence bits forbid embedding, which
+     * {@link PptxEmbeddedFont#wrap} refuses. So a family of one embeddable face and one
+     * restricted face now carries neither, where it used to carry the first. It does not
+     * hold for the presentation refusing a face it is handed, after the program is read and
+     * parsed: that refusal happens inside the mutation, and what it
      * took stays — a part, a dataId, the embedded-font flags. Undoing all of those would
      * cover both cases, at the price of reaching that far into the writer's own model for a
      * refusal it has not been seen to make; so this keeps the handling the presentation's
@@ -499,7 +502,9 @@ public final class PptxRenderEnvironment {
         for (FontFamilyDefinition.FontBinarySource source
                 : faces.stream().map(face -> face.in(sources)).toList()) {
             // Named before it is read, so a source that cannot even say what it is still
-            // warns rather than failing the render inside the warning.
+            // warns rather than failing the render inside the warning. No source this
+            // library ships can reach the sentinel; FontBinarySource is a caller's to
+            // implement, and this answers for theirs.
             String description = "<unnamed>";
             try {
                 description = source.description();

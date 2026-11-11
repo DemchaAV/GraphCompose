@@ -12,23 +12,27 @@ follow semantic versioning; release dates are ISO 8601.
     cannot be read, degrades to a plain family-name reference rather than failing a render
     the PDF backend would complete.
   - A font source may refuse *unchecked*, though, and only the checked refusal was caught.
-    `FontFamilyDefinition.classpath(...)` reports a missing resource with an
-    `IllegalArgumentException`, so a family registered on the document and never drawn with
+    A family registered with `FontFamilyDefinition.classpath(...)` reports a missing resource
+    with an `IllegalArgumentException`, so a family registered on the document and never drawn with
     was enough to lose a deck the engine had already laid out — a missing file on disk
     degraded, a missing classpath resource threw.
   - Both now end the same way: the family is not carried, the warning on
     `render.pptx.font.embed.skipped` names the family, the source and the failure, a second
     one on `render.pptx.font.substitution` says the deck does not carry it, and the deck is
     written. A family that embeds is carried as before.
-  - A family whose faces cannot all be read is now carried whole or not at all. Embedding
+  - A family one of whose faces cannot be carried is now carried whole or not at all. Embedding
     answers for the family rather than the face — one answer decides whether it keeps its
     viewer metrics and whether the reader is told to install it — but the faces were handed to
     the presentation as they were read, and the presentation is mutated both by declaring the
-    family and by taking a face. So a family whose *second* face could not be read left the
+    family and by taking a face. So a family whose *second* face could not be carried left the
     first one in the deck while the warning said the deck carried nothing of it, and a family
-    whose first face could not be read left the bare declaration. Every face is now read before
-    any is handed over. A deck whose families all embed is unchanged; one that was carrying half a
-    family now carries none of it, as it was already being told.
+    whose first face could not be carried left the bare declaration. Every face is now read
+    before any is handed over. A deck whose families all embed is unchanged; one that was
+    carrying half a family now carries none of it, as it was already being told.
+  - That covers a face whose licence bits forbid embedding as well as one that cannot be read:
+    the licence is checked while the face is read. So a family of one embeddable face and one
+    restricted face now carries neither, where it used to carry the first and say it carried
+    nothing. No bundled family is affected; this is about a font a caller registers.
   - Where the presentation itself refuses a face it is handed, after the program is read and
     parsed, nothing changes at all: that step keeps the handling it had, including which
     failures it raises rather than degrades on, and what the presentation took before refusing

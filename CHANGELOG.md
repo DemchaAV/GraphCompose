@@ -42,10 +42,10 @@ follow semantic versioning; release dates are ISO 8601.
     should for a refusal that has not been seen.
   - A family the deck actually draws in still fails the render, and with the same message:
     the page cannot measure a face it cannot read, which happens before a slide is built.
-- **A PPTX substitution warning no longer claims a reference the deck does not make.** The three
-  lines that report a family the deck could not carry — `registered without binary sources`,
-  `could not be embedded`, and the bundled-family one — all ended *the deck references "X" by
-  name only*. The first two are logged while the render environment is built, before a single run
+- **A PPTX substitution warning no longer claims a reference the deck does not make.** Three of
+  the four lines that report a family the deck could not carry — `registered without binary
+  sources`, `could not be embedded`, and the bundled-family one — ended *the deck references
+  "X" by name only*. The first two are logged while the render environment is built, before a single run
   is drawn, so neither can know whether anything will use the family: a family registered
   without binary sources and never drawn in is named in no part of the written package at all,
   which is the case the sentence was false for. The two embed-failure lines — the registered one
@@ -53,8 +53,9 @@ follow semantic versioning; release dates are ISO 8601.
   face it has been handed, it keeps the declaration and any face taken before it, so "only" is
   wrong there whether the family was drawn in or not.
   Each line now says what is not carried — no program for the family, or not the family whole —
-  and makes the name-only reference conditional on text being drawn in it. Log wording only:
-  what a deck carries is unchanged.
+  and leaves what the deck does reference, and what a viewer substitutes, to the text that was
+  drawn in it. The fourth line is reached only where nothing will carry the family, so what it
+  says is true and it is unchanged. Log wording only: what a deck carries is unchanged.
 
 ## v2.5.0 — 2026-11-11
 

@@ -94,7 +94,7 @@ class PptxUnreadableFontSourceTest {
                 .singleElement(InstanceOfAssertFactories.STRING)
                 .doesNotContain("the deck references")
                 .contains("\"Absent\" is not carried whole")
-                .contains("any text drawn with it is referenced by name");
+                .contains("text drawn in a face that did not travel is referenced by name");
     }
 
     @Test
@@ -120,8 +120,9 @@ class PptxUnreadableFontSourceTest {
         // Embedding answers for the family, not the face: one boolean decides whether the
         // viewer metrics are kept and whether the reader is told to install the font. So a
         // family whose bold face cannot be read must leave nothing of itself in the deck —
-        // otherwise the warning says the family is not carried whole while the deck is in
-        // fact carrying its regular face.
+        // otherwise the reader is told to install a font whose regular face the deck is
+        // already carrying, and the family loses its viewer metrics while a face of it
+        // travels.
         String present = "fonts/google/lato/Lato-Regular.ttf";
         FontFamilyDefinition half = FontFamilyDefinition.classpath("Half", present)
                 .boldResource(ABSENT)

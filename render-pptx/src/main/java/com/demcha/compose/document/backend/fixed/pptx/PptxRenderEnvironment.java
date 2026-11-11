@@ -158,14 +158,17 @@ public final class PptxRenderEnvironment {
                 } else {
                     // Same key as every other substitution so one log filter
                     // catches them all; the embed-skip warning carries the cause.
-                    // Conditional on text for the reason above, and "not carried whole" rather
-                    // than "not carried" because the presentation refusing a face it has been
-                    // handed keeps what it took: a read that fails leaves nothing of the
-                    // family, that refusal can leave its declaration and an earlier face.
+                    // "Not carried whole" rather than "not carried" because the presentation
+                    // refusing a face it has been handed keeps what it took: a read that fails
+                    // leaves nothing of the family, that refusal can leave its declaration and
+                    // an earlier face. The substitution is said of the text drawn in a face
+                    // that did not travel, for the same reason from the other end — where a
+                    // face did travel, a viewer without the font does not substitute its text.
                     LOG.warn("render.pptx.font.substitution family={} — could not be embedded, "
-                                    + "so \"{}\" is not carried whole; any text drawn with it "
-                                    + "is referenced by name and substituted by viewers that "
-                                    + "do not have the font installed",
+                                    + "so \"{}\" is not carried whole; text drawn in a face "
+                                    + "that did not travel is referenced by name and "
+                                    + "substituted by viewers that do not have the font "
+                                    + "installed",
                             family.name().name(), family.wordFamily());
                 }
             });
@@ -609,13 +612,14 @@ public final class PptxRenderEnvironment {
             if (embedFontFamily(show, family, sources.orElseThrow(), faces)) {
                 embeddedAny = true;
             } else {
-                // Reached on the same answer as the registered-family line above, so worded
+                // Reached on the same answer as the registered-family line above, and worded
                 // the same way: being drawn in makes the deck's reference to the family real,
-                // but not its being the only thing of it the deck has.
+                // but neither that nor the substitution follows for a face that did travel.
                 LOG.warn("render.pptx.font.substitution family={} — a bundled family that "
-                                + "could not be embedded, so \"{}\" is not carried whole; the "
-                                + "text drawn with it is referenced by name and substituted "
-                                + "by viewers that do not have the font installed",
+                                + "could not be embedded, so \"{}\" is not carried whole; text "
+                                + "drawn in a face that did not travel is referenced by name "
+                                + "and substituted by viewers that do not have the font "
+                                + "installed",
                         family.name().name(), family.wordFamily());
             }
         }

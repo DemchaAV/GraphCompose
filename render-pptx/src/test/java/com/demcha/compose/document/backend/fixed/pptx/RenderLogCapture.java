@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.fixed.pptx;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
@@ -18,8 +19,14 @@ import java.util.List;
  * pair, and a try/finally inside a helper).</p>
  *
  * <p>Attach it in a {@code @BeforeEach} and close it in an {@code @AfterEach}, or wrap
- * one render in try-with-resources; both shapes are in use. Closing detaches, so a
- * test that fails mid-render cannot leak the appender into the next one.</p>
+ * one render in try-with-resources; both shapes are in use. Closing detaches and puts
+ * the level back, so a test that fails mid-render cannot leak either into the next
+ * one.</p>
+ *
+ * <p>It pins the logger to {@code DEBUG} while it is attached. Some of these tests
+ * assert that a line was <em>not</em> logged, and a configuration that raised this
+ * logger's level would make every one of those pass without proving anything. Pinning
+ * it is what keeps them failing closed.</p>
  */
 final class RenderLogCapture implements AutoCloseable {
 
@@ -28,19 +35,24 @@ final class RenderLogCapture implements AutoCloseable {
 
     private final Logger logger;
     private final ListAppender<ILoggingEvent> appender;
+    private final Level restoreLevel;
 
-    private RenderLogCapture(Logger logger, ListAppender<ILoggingEvent> appender) {
+    private RenderLogCapture(Logger logger, ListAppender<ILoggingEvent> appender,
+                             Level restoreLevel) {
         this.logger = logger;
         this.appender = appender;
+        this.restoreLevel = restoreLevel;
     }
 
     /** Starts collecting the render log, until this capture is closed. */
     static RenderLogCapture attach() {
         Logger logger = (Logger) LoggerFactory.getLogger(RENDER_LOGGER);
+        Level restoreLevel = logger.getLevel();
+        logger.setLevel(Level.DEBUG);
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
         logger.addAppender(appender);
-        return new RenderLogCapture(logger, appender);
+        return new RenderLogCapture(logger, appender, restoreLevel);
     }
 
     /**
@@ -59,5 +71,6 @@ final class RenderLogCapture implements AutoCloseable {
     public void close() {
         logger.detachAppender(appender);
         appender.stop();
+        logger.setLevel(restoreLevel);
     }
 }

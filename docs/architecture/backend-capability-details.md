@@ -724,7 +724,8 @@ viewer-facing `wordFamily` and should be installed on the viewer for exact glyph
 Every substitution is explicit: the backend logs
 `render.pptx.font.substitution` once per family per render whenever a
 font cannot travel as an embedded program — because it has no program,
-because one could not be carried, or because it is a standard-14 name
+because one could not be carried, because the render was asked not to
+carry a bundled family it drew with, or because it is a standard-14 name
 mapped to a metric-compatible replacement. Two of those lines are written
 while the render starts, so they say what the deck will not carry and leave
 the name-only reference conditional on text being drawn in the family;

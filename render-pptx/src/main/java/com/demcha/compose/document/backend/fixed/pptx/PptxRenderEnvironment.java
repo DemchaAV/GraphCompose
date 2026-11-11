@@ -143,11 +143,13 @@ public final class PptxRenderEnvironment {
                 // so whether anything will use the family is not known here, and a family
                 // registered this way and never drawn in is named nowhere in the package.
                 // "No program" rather than "nothing": where text is drawn, the family's name
-                // does travel, on the slide that drew it.
+                // does travel, on the slide that drew it. The substitution is part of the same
+                // clause and not a second sentence, so that it too says nothing about a deck
+                // that draws no text in the family.
                 LOG.warn("render.pptx.font.substitution family={} — registered without binary "
                                 + "sources, so no program for \"{}\" travels with the deck; any "
-                                + "text drawn with it is referenced by name only, and viewers "
-                                + "without that font installed will substitute their own",
+                                + "text drawn with it is referenced by name only and "
+                                + "substituted by viewers that do not have the font installed",
                         family.name().name(), family.wordFamily());
             }
             family.fontSourceSet().ifPresent(sources -> {
@@ -162,8 +164,8 @@ public final class PptxRenderEnvironment {
                     // family, that refusal can leave its declaration and an earlier face.
                     LOG.warn("render.pptx.font.substitution family={} — could not be embedded, "
                                     + "so \"{}\" is not carried whole; any text drawn with it "
-                                    + "is referenced by name, and viewers without that font "
-                                    + "installed will substitute their own",
+                                    + "is referenced by name and substituted by viewers that "
+                                    + "do not have the font installed",
                             family.name().name(), family.wordFamily());
                 }
             });
@@ -612,8 +614,8 @@ public final class PptxRenderEnvironment {
                 // but not its being the only thing of it the deck has.
                 LOG.warn("render.pptx.font.substitution family={} — a bundled family that "
                                 + "could not be embedded, so \"{}\" is not carried whole; the "
-                                + "text drawn with it is referenced by name, and viewers "
-                                + "without that font installed will substitute their own",
+                                + "text drawn with it is referenced by name and substituted "
+                                + "by viewers that do not have the font installed",
                         family.name().name(), family.wordFamily());
             }
         }

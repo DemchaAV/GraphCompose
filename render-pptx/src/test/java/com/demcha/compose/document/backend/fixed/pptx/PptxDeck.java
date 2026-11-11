@@ -30,21 +30,20 @@ final class PptxDeck {
 
     /** A one-page deck of the given content. */
     static byte[] of(Consumer<PageFlowBuilder> content) {
-        return write(null, content);
+        return write(List.of(), content);
     }
 
     /** A one-page deck that registers the given family, drawn with or not. */
     static byte[] registering(FontFamilyDefinition family, Consumer<PageFlowBuilder> content) {
-        return write(family, content);
+        return write(List.of(family), content);
     }
 
-    private static byte[] write(FontFamilyDefinition family, Consumer<PageFlowBuilder> content) {
+    private static byte[] write(List<FontFamilyDefinition> families,
+                                Consumer<PageFlowBuilder> content) {
         GraphCompose.DocumentBuilder builder = GraphCompose.document()
                 .pageSize(400, 160)
                 .margin(DocumentInsets.of(20));
-        if (family != null) {
-            builder.registerFontFamily(family);
-        }
+        families.forEach(builder::registerFontFamily);
         try (DocumentSession document = builder.create()) {
             document.pageFlow(content::accept);
             return document.toPptxBytes();

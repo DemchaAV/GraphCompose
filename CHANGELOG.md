@@ -46,11 +46,12 @@ follow semantic versioning; release dates are ISO 8601.
   lines that report a family the deck could not carry — `registered without binary sources`,
   `could not be embedded`, and the bundled-family one — all ended *the deck references "X" by
   name only*. The first two are logged while the render environment is built, before a single run
-  is drawn, so neither can know whether anything will use the family: a family whose program
-  cannot be carried and that nothing is drawn in is named in no part of the written package at
-  all, which is the case the sentence was false for. The third reports a family that was drawn
-  in, but shares the other half of the problem — where the presentation refuses a face it has
-  been handed, it keeps the declaration and any face taken before it, so "only" is wrong there.
+  is drawn, so neither can know whether anything will use the family: a family registered
+  without binary sources and never drawn in is named in no part of the written package at all,
+  which is the case the sentence was false for. The two embed-failure lines — the registered one
+  and the bundled one — share the other half of the problem: where the presentation refuses a
+  face it has been handed, it keeps the declaration and any face taken before it, so "only" is
+  wrong there whether the family was drawn in or not.
   Each line now says what is not carried — no program for the family, or not the family whole —
   and makes the name-only reference conditional on text being drawn in it. Log wording only:
   what a deck carries is unchanged.

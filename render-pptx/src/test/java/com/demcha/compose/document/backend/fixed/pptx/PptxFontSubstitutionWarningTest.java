@@ -98,10 +98,12 @@ class PptxFontSubstitutionWarningTest {
         assertThat(log.messages("render.pptx.font.substitution"))
                 .filteredOn(message -> message.contains("NamedOnly"))
                 .singleElement(InstanceOfAssertFactories.STRING)
-                .as("so the line may not claim a reference the deck does not make")
+                .as("so the line may not claim a reference the deck does not make, nor "
+                        + "predict a substitution for text that is not there")
                 .doesNotContain("the deck references")
                 .contains("no program for \"NamedOnly\" travels with the deck")
-                .contains("any text drawn with it is referenced by name only");
+                .contains("any text drawn with it is referenced by name only and "
+                        + "substituted by viewers");
     }
 
     @Test
@@ -120,9 +122,10 @@ class PptxFontSubstitutionWarningTest {
                 .as("and the deck still carries no program for it")
                 .isEmpty();
         assertThat(log.messages("render.pptx.font.substitution"))
-                .as("the same line, which is why its claim is conditional")
                 .filteredOn(message -> message.contains("NamedOnly"))
                 .singleElement(InstanceOfAssertFactories.STRING)
-                .contains("any text drawn with it is referenced by name only");
+                .as("the same line, which is why its claim is conditional")
+                .contains("any text drawn with it is referenced by name only and "
+                        + "substituted by viewers");
     }
 }

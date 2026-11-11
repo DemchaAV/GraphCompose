@@ -443,10 +443,13 @@ public final class PptxRenderEnvironment {
     /**
      * Embeds every distinct facet of one font family, returning whether the
      * family made it into the presentation. Embedding is best-effort: a font
-     * whose license bits forbid embedding (or whose bytes cannot be read)
-     * degrades to a plain family-name reference — page geometry is unaffected,
-     * viewers simply substitute glyphs — instead of failing a render that the
-     * PDF backend would complete.
+     * whose license bits forbid embedding, or whose bytes cannot be read at
+     * all — a missing file, a missing classpath resource, a program the writer
+     * cannot parse — degrades to a plain family-name reference: page geometry
+     * is unaffected, viewers simply substitute glyphs. The export completes
+     * either way, and the family it could not carry is named in the log. A
+     * family the page had to <em>measure</em> is a different matter: that fails
+     * the render before a slide is built, and not here.
      */
     private static boolean embedFontFamily(XMLSlideShow show,
                                            FontFamilyDefinition family,
@@ -462,26 +465,56 @@ public final class PptxRenderEnvironment {
      * megabytes for glyphs no slide contains. A family whose source set repeats a source
      * across faces — a regular-and-bold family asked for italic — embeds it once, since
      * the sources dedupe by description.</p>
+     *
+     * <p>Every face is read before any of them is handed to the presentation, because the
+     * answer is one boolean for the whole family: it decides whether the family keeps its
+     * viewer metrics and whether the reader is told to install the font. Constructing the
+     * font info declares the family, and adding a facet writes its part and sets the
+     * presentation's embedded-font flags at once — so a family whose second face could not
+     * be read would otherwise leave its first in the deck, and a declaration with no data,
+     * while the caller was told the deck carries nothing of it.</p>
      */
     private static boolean embedFontFamily(XMLSlideShow show,
                                            FontFamilyDefinition family,
                                            FontFamilyDefinition.FontSourceSet sources,
                                            Set<Face> faces) {
-        XSLFFontInfo embedded = new XSLFFontInfo(show, family.wordFamily());
-        Set<String> embeddedSources = new LinkedHashSet<>();
+        Set<String> distinctSources = new LinkedHashSet<>();
+        List<byte[]> programs = new ArrayList<>();
         for (FontFamilyDefinition.FontBinarySource source
                 : faces.stream().map(face -> face.in(sources)).toList()) {
-            if (!embeddedSources.add(source.description())) {
-                continue;
-            }
-            try (InputStream stream = source.openStream()) {
-                byte[] eot = PptxEmbeddedFont.wrap(stream);
-                embedded.addFacet(new ByteArrayInputStream(eot));
-            } catch (IOException exception) {
+            // Named before it is read, so a source that cannot even say what it is still
+            // warns rather than failing the render inside the warning.
+            String description = "an unnamed source";
+            try {
+                description = source.description();
+                if (!distinctSources.add(description)) {
+                    continue;
+                }
+                try (InputStream stream = source.openStream()) {
+                    programs.add(PptxEmbeddedFont.wrap(stream));
+                }
+            } catch (IOException | RuntimeException exception) {
+                // A source may fail unchecked: the classpath one reports a missing resource
+                // with an IllegalArgumentException. Named here and the family degrades, as
+                // for a missing file on disk — the render is not the caller's to lose.
+                // toString rather than getMessage because an unchecked failure may carry none.
                 LOG.warn("render.pptx.font.embed.skipped family={} source={} reason={}",
-                        family.name().name(), source.description(), exception.getMessage());
+                        family.name().name(), description, exception.toString());
                 return false;
             }
+        }
+        try {
+            XSLFFontInfo embedded = new XSLFFontInfo(show, family.wordFamily());
+            for (byte[] program : programs) {
+                embedded.addFacet(new ByteArrayInputStream(program));
+            }
+        } catch (IOException | RuntimeException exception) {
+            // Every program is in hand and parsed by now, so this is the presentation
+            // refusing the part rather than the family being unreadable. Degrade the same
+            // way: the deck is still worth writing without the font.
+            LOG.warn("render.pptx.font.embed.skipped family={} source={} reason={}",
+                    family.name().name(), "the presentation", exception.toString());
+            return false;
         }
         return true;
     }

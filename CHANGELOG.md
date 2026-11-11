@@ -3,6 +3,34 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v2.5.1 — Planned
+
+### Fixed
+
+- **A PPTX export writes its deck when a registered family cannot be carried at all.**
+  - Embedding is best-effort by contract: a family whose licence forbids it, or whose bytes
+    cannot be read, degrades to a plain family-name reference rather than failing a render
+    the PDF backend would complete.
+  - A font source may refuse *unchecked*, though, and only the checked refusal was caught.
+    `FontFamilyDefinition.classpath(...)` reports a missing resource with an
+    `IllegalArgumentException`, so a family registered on the document and never drawn with
+    was enough to lose a deck the engine had already laid out — a missing file on disk
+    degraded, a missing classpath resource threw.
+  - Both now end the same way: the family is not carried, the warning on
+    `render.pptx.font.embed.skipped` names the family, the source and the failure, a second
+    one on `render.pptx.font.substitution` says the deck does not carry it, and the deck is
+    written. A family that embeds is carried as before.
+  - A family is now carried whole or not at all. Embedding answers for the family rather than
+    the face — one answer decides whether it keeps its viewer metrics and whether the reader
+    is told to install it — but the faces were handed to the presentation as they were read,
+    so a family whose *second* face could not be read left the first one in the deck, and a
+    declaration with no data behind it, while the warning said the deck carried nothing of it.
+    Every face is now read before any is handed over. A deck whose families all embed is
+    unchanged; one that was carrying half a family now carries none of it, as it was already
+    being told.
+  - A family the deck actually draws in still fails the render, and with the same message:
+    the page cannot measure a face it cannot read, which happens before a slide is built.
+
 ## v2.5.0 — 2026-11-11
 
 ### Highlights

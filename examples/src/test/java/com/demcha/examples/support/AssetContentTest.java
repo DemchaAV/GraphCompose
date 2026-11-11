@@ -109,10 +109,10 @@ class AssetContentTest {
     }
 
     /**
-     * The two shapes the allowlist names collapse; a shape it does not name is untouched.
+     * The three shapes the allowlist names collapse; a shape it does not name is untouched.
      *
-     * <p>What was measured is two freeforms in one deck, so two freeforms in one deck are what is
-     * exempted. A shape reaching this with any other name — or either of these two after somebody
+     * <p>What was measured is three freeforms in one deck, so three freeforms in one deck are what
+     * is exempted. A shape reaching this with any other name — or any of these three after somebody
      * changed it — comes out of the comparison exactly as it went in.</p>
      */
     @Test
@@ -121,9 +121,9 @@ class AssetContentTest {
         String collapsed = AssetContent.knownShapesCollapsed(TWIN_SLIDE, slide);
 
         assertThat(collapsed)
-                .describedAs("the two measured shapes have to be recognised in the deck they were "
+                .describedAs("the three measured shapes have to be recognised in the deck they were "
                         + "measured in, or the exemption describes nothing")
-                .contains("Freeform 47/>", "Freeform 64/>");
+                .contains("Freeform 47/>", "Freeform 54/>", "Freeform 64/>");
         assertThat(collapsed)
                 .describedAs("a shape the allowlist does not name is compared as it was written")
                 .contains("<p:cNvPr name=\"Freeform 48\"");
@@ -148,7 +148,7 @@ class AssetContentTest {
             assertThat(AssetContent.knownShapesCollapsed(TWIN_SLIDE, slide))
                     .describedAs("%s no longer carries the shapes the allowlist was measured on",
                             deck)
-                    .contains("Freeform 47/>", "Freeform 64/>");
+                    .contains("Freeform 47/>", "Freeform 54/>", "Freeform 64/>");
         }
     }
 

@@ -63,11 +63,11 @@ public final class AssetContent {
     /**
      * The shapes a machine is allowed to disagree about, as {@code document!part!shape}.
      *
-     * <p>Two, and both in one deck: the box a freeform declares, and the origin its points are
-     * measured from, came out differently on the two machines — one icon with every point shifted
-     * by a constant 272 EMU across and 489 down and its extent smaller by exactly as much, so the
-     * path landed on the same place on the slide to the unit. Comparing all six committed decks
-     * shape by shape found these two and nothing else.</p>
+     * <p>Three, all in one deck: the box a freeform declares, and the origin its points are
+     * measured from, came out differently on the two machines — in the twin-output page's PDF,
+     * DOCX and PPT icons, each with its extent and, for one, its origin off by up to 715 EMU,
+     * while every point landed on the same place on the slide to the unit. Comparing the committed
+     * decks shape by shape against a Linux render found these three and nothing else.</p>
      *
      * <p>Like {@link #UNSTABLE_PARTS}, the value is the digest of each machine's version, so the
      * exemption is for the pair of renders rather than for the shape: change either one and it
@@ -77,9 +77,14 @@ public final class AssetContent {
      */
     public static final Map<String, Set<String>> UNSTABLE_SHAPES = Map.of(
             "twin-output.pptx!ppt/slides/slide1.xml!Freeform 47",
-            Set.of("713cc3b9bbaca7871df2aba70d41690134b43ea41d18d152180a4a2946166ccb"),
+            Set.of("713cc3b9bbaca7871df2aba70d41690134b43ea41d18d152180a4a2946166ccb",
+                    "680df63bb82e2e50a305729f60189098e3d67b0503b5a253aa10fa4ad9bfd130"),
+            "twin-output.pptx!ppt/slides/slide1.xml!Freeform 54",
+            Set.of("f0912be2a637d6e6a32c02452968a1f77b9910b553477db4612ee3890e31e308",
+                    "04ab552b7e4b3a30150614dcdf63d62fde5a3a5b11efd466a975c2a54e55fc4e"),
             "twin-output.pptx!ppt/slides/slide1.xml!Freeform 64",
-            Set.of("b8d0b690aa320d9d7f054d341ee7c312aab1db2fb9564ef6c85996dfce3d091c"));
+            Set.of("b8d0b690aa320d9d7f054d341ee7c312aab1db2fb9564ef6c85996dfce3d091c",
+                    "6348e2cf4cfc5789ff21621143da881897777905b83aa161fc1d2eab72127b44"));
 
     /** Extensions this can reduce; anything else is compared as the bytes it is. */
     private static final Set<String> PACKAGES = Set.of(".pptx", ".docx");

@@ -160,15 +160,19 @@ public final class PptxRenderEnvironment {
                 } else {
                     // Same key as every other substitution so one log filter
                     // catches them all; the embed-skip warning carries the cause.
-                    // "Not carried whole" rather than "not carried" because the presentation
-                    // refusing a face it has been handed keeps what it took: a read that fails
-                    // leaves nothing of the family, that refusal can leave its declaration and
-                    // an earlier face. For the same reason this line says what the text needs
-                    // rather than what a viewer will do with it: with a face of the family in
-                    // the deck, what a viewer draws a run of a missing face from — a synthetic
-                    // face, or another family — is the viewer's to decide, and nobody here has
-                    // watched one decide it. What holds either way is that identical glyphs
-                    // need the font itself.
+                    // "Not carried whole" rather than "not carried" because this answers for
+                    // the family and not the face: what the reader has to act on is that some
+                    // face of it did not travel, which is true whether none did or only one
+                    // did. Every refusal there is a public path to today leaves nothing of the
+                    // family — the reads and the metrics all run while the presentation is
+                    // still untouched (see handOverPrograms) — so "whole" is the weaker of the
+                    // two claims and the one that stays true if that ever changes.
+                    // For the same reason this line says what the text needs rather than what
+                    // a viewer will do with it: where a face of the family is in the deck, what
+                    // a viewer draws a run of a missing face from — a synthetic face, or
+                    // another family — is the viewer's to decide, and nobody here has watched
+                    // one decide it. What holds either way is that identical glyphs need the
+                    // font itself.
                     LOG.warn("render.pptx.font.substitution family={} — could not be embedded, "
                                     + "so \"{}\" is not carried whole; text drawn in a face "
                                     + "that did not travel is referenced by name, and needs "
@@ -179,6 +183,15 @@ public final class PptxRenderEnvironment {
             });
         }
         if (!metrics.isEmpty()) {
+            // Cleared, never set: POI's blank template already carries this flag set, and
+            // addFacet sets it again for every face it takes, so a standing instruction to
+            // subset on save is what a deck says by default. Nothing here subsets a face —
+            // a program travels with every glyph it has — so a deck that carries one says
+            // the opposite. The Word counterpart of that instruction was measured cutting
+            // an embedded face down on a save (docs/recipes/docx-export.md), which is why
+            // a document never writes it; PowerPoint's own handling of the pair has not
+            // been measured. A deck that carries nothing leaves the template's value alone,
+            // where embedding is off and it decides nothing.
             show.getCTPresentation().setSaveSubsetFonts(false);
         }
         this.customFontFamilies = Map.copyOf(familyNames);
@@ -476,7 +489,9 @@ public final class PptxRenderEnvironment {
      * travels without them is seated from the PDF descriptor's ascent instead,
      * which for some faces is not the ascent the viewer uses. A family the page
      * had to <em>measure</em> is a different matter and fails the render before a
-     * slide is built; so is the presentation refusing a face it is handed, below.</p>
+     * slide is built. The presentation refusing a face it is handed is a third,
+     * and what is left of it after the name check in {@link PptxEmbeddedFont} is
+     * POI's part store — see {@link #handOverPrograms}.</p>
      *
      * @return the family's viewer metrics, or {@code null} where it is not carried
      */
@@ -617,12 +632,24 @@ public final class PptxRenderEnvironment {
      *
      * <p>From here the handling is the presentation's own, and exactly what it was before
      * the reads were pulled forward: a refusal while taking a face degrades the family,
-     * and whatever the presentation took before it refused stays in it — a part, a dataId,
-     * the embedded-font flags. Undoing all of those would cover the presentation's refusal
-     * too, at the price of reaching that far into the writer's own model for a refusal it
-     * has not been seen to make; so this keeps the handling the presentation's step
-     * already had, including which failures it raises rather than swallows. Widening this
-     * catch would extend that half-written state to failures it used to raise.</p>
+     * and this does not undo what it took. What it took depends on where it refused.
+     * {@code addFacet} reads the EOT header before it writes anything, so a refusal over
+     * the container leaves only the declaration the {@code XSLFFontInfo} constructor makes
+     * on every call — one entry, not a part, a dataId and the embedded-font flags. Those
+     * come after, and a refusal among them is POI's own part store failing, which no font
+     * can provoke.</p>
+     *
+     * <p>The refusal over the container is the one that mattered — it arrived
+     * <em>unchecked</em>, straight past this catch, and cost the whole deck after the page
+     * had laid out — and it is now spent before this: {@link PptxEmbeddedFont} measures the
+     * header against what a presentation reads, where a refusal is the checked one
+     * {@link #readPrograms} degrades a family on, on this path and on the bundled one,
+     * which has no metrics pre-flight at all. What the limit is and what it does not
+     * promise is written down once, beside the constant there.</p>
+     *
+     * <p>Widening this catch instead would have swallowed the part store's failures with
+     * it and left a deck in exactly the half-written state above, which is why the guard
+     * sits where the container is built rather than here.</p>
      *
      * @return whether the presentation took every program it was handed
      */
@@ -698,8 +725,12 @@ public final class PptxRenderEnvironment {
             } else {
                 // Reached on the same answer as the registered-family line above, and worded
                 // the same way. The family was certainly drawn in — the loop skips one that
-                // was not — so the only thing left to be careful about here is the face: a
-                // face that did travel needs nothing installed.
+                // was not — so unlike the registered line this one does know the deck sets
+                // text in the family. What it still does not say is that the deck references
+                // it by name only: that was argued from a face of the family travelling, and
+                // every refusal there is a public path to leaves nothing of the family (see
+                // handOverPrograms). So the line says what is not carried and what the text
+                // needs, which holds whether a face travelled or none did.
                 LOG.warn("render.pptx.font.substitution family={} — a bundled family that "
                                 + "could not be embedded, so \"{}\" is not carried whole; text "
                                 + "drawn in a face that did not travel is referenced by name, "
@@ -709,6 +740,9 @@ public final class PptxRenderEnvironment {
             }
         }
         if (embeddedAny) {
+            // The bundled half of the same clear the constructor makes for a registered
+            // family — on its own for a deck that registered none, and needed again after
+            // one that did, because addFacet set the flag back while taking these faces.
             show.getCTPresentation().setSaveSubsetFonts(false);
         }
     }

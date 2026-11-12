@@ -22,6 +22,56 @@ final class PptxEmbeddedFont {
     private static final int MAC_STYLE_ITALIC_BIT = 0x0002;
     private static final int RESTRICTED_LICENSE_EMBEDDING = 0x0002;
     private static final int BITMAP_EMBEDDING_ONLY = 0x0200;
+    /**
+     * The most of a container's header, in bytes, a presentation will read.
+     *
+     * <p>This is the one account of the limit; everything else that needs it points here.
+     * PowerPoint's font part begins with a header carrying four names — the family, the
+     * style, a version and a full name joined from the family and the style — and the
+     * presentation reads that header twice, each time out of a thousand bytes, under
+     * different rules. Taking the face reads <em>each name</em> through
+     * {@code IOUtils.safelyAllocate(nameSize, 1000)}, and a longer one costs the render: an
+     * unchecked {@code RecordFormatException} from inside {@code XSLFFontInfo.addFacet},
+     * past the point where a refusal still costs only the font. Reading the written part
+     * back later takes the first thousand bytes of the part and parses the whole header out
+     * of those, so {@link #READER_FIXED_HEADER_BYTES} and all four names together have to
+     * fit, or the part comes back as {@code Buffer overrun, having 1000 bytes in the
+     * stream}. The second rule is the stricter — it bounds the four together where the
+     * first bounds them one at a time — so it is the one measured here, where a refusal is
+     * the checked one {@code readPrograms} already degrades a family on.</p>
+     *
+     * <p>It has to be measured here rather than left to the readers in front of this one.
+     * {@code java.awt.Font.createFont}, which the viewer metrics are read through, rejects
+     * an over-long family or full <em>name record</em> but never reads the style record at
+     * all, and the full name is the family and the style joined. A face whose subfamily
+     * name is long therefore passes every read before the writer: Lato-Regular rewritten
+     * with a 496-character subfamily makes a 1,002-byte full name, and cost the whole
+     * deck.</p>
+     *
+     * <p>A header moves in steps of four bytes, because the family is written twice — alone
+     * and inside the full name — while the version name is always empty. So no face can
+     * express a header of exactly a thousand: 998 is the largest one there is, and 1,002
+     * the smallest that is too big, and any limit from 998 to 1,001 is the same limit as
+     * far as a font is concerned. The heaviest of the 130 bundled faces is 250 bytes, so
+     * this bears only on a face a caller registers.</p>
+     *
+     * <p>Two things it does not promise. The thousand is POI's default, which a host can
+     * lower with {@code IOUtils.setByteArrayMaxOverride}, so this is a floor rather than a
+     * guarantee. And the read of the part wants a thousand bytes to be <em>there</em>: a
+     * container shorter than that comes back as an {@code EOFException} instead, which a
+     * font of a few hundred bytes would reach and nothing a caller would ship does.</p>
+     */
+    private static final int MAX_READABLE_HEADER_BYTES = 1000;
+    /**
+     * What the presentation's reader consumes before the names: 80 bytes of fixed fields,
+     * then a 2-byte padding and a 2-byte length for each of the four.
+     *
+     * <p>Four less than {@link #EOT_FIXED_HEADER_SIZE}, which is what this container
+     * <em>writes</em>: the reader stops after the full name and never takes its trailing
+     * padding or the root string's length. Derived from it rather than written out, so a
+     * change to the layout cannot move one without the other.</p>
+     */
+    private static final int READER_FIXED_HEADER_BYTES = EOT_FIXED_HEADER_SIZE - 4;
 
     private PptxEmbeddedFont() {
     }
@@ -35,6 +85,7 @@ final class PptxEmbeddedFont {
         byte[] style = utf16(metadata.styleName());
         byte[] version = utf16(metadata.versionName());
         byte[] full = utf16(metadata.fullName());
+        validateReadableHeader(family, style, version, full);
         int eotSize = Math.addExact(
                 Math.addExact(EOT_FIXED_HEADER_SIZE, fontData.length),
                 Math.addExact(Math.addExact(family.length, style.length),
@@ -138,12 +189,37 @@ final class PptxEmbeddedFont {
         return normalized;
     }
 
-    private static byte[] utf16(String value) throws IOException {
-        byte[] encoded = value.getBytes(StandardCharsets.UTF_16LE);
-        if (encoded.length > 0xFFFF) {
-            throw new IOException("PPTX embedded-font metadata exceeds the EOT name limit");
+    private static byte[] utf16(String value) {
+        return value.getBytes(StandardCharsets.UTF_16LE);
+    }
+
+    /**
+     * Refuses a header the presentation would not read back whole.
+     *
+     * <p>Refused rather than shortened: what a viewer matches an embedded program to its
+     * declared typeface by is not something this backend has measured, so trimming a name
+     * the deck would then carry risks a program no viewer uses, where not carrying it is
+     * the degradation the embedder already warns about.</p>
+     *
+     * <p>The names are named one by one in the message, not only totalled, because the one
+     * that overflows is usually the full name — which no record of the font carries, being
+     * joined here from the other two — so a total on its own matches nothing a caller can
+     * look for in their font. The version is left out of the message, not out of the sum:
+     * this container always writes it empty.</p>
+     *
+     * @see #MAX_READABLE_HEADER_BYTES for what the limit is and what it does not promise
+     */
+    private static void validateReadableHeader(byte[] family, byte[] style, byte[] version,
+                                               byte[] full) throws IOException {
+        int header = READER_FIXED_HEADER_BYTES
+                + family.length + style.length + version.length + full.length;
+        if (header > MAX_READABLE_HEADER_BYTES) {
+            throw new IOException("PPTX embedded-font header is " + header
+                    + " bytes, past the " + MAX_READABLE_HEADER_BYTES
+                    + " a presentation reads: family " + family.length + ", style "
+                    + style.length + ", full name " + full.length
+                    + " (the full name is the family and the style joined)");
         }
-        return encoded;
     }
 
     private static void putName(ByteBuffer target, byte[] encoded) {

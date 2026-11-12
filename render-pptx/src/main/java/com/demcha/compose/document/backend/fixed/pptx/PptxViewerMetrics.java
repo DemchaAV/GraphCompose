@@ -89,12 +89,21 @@ final class PptxViewerMetrics {
      *
      * <p>An independent read of the same font programs the embedder takes, through
      * {@link Font#createFont} rather than fontbox, and the two do not accept the same
-     * files: fontbox's header parse skips a table whose directory entry runs past the
-     * end of the file and reads on, while {@code createFont} rejects the font outright
-     * for such an entry. A font truncated below its last table used to embed on the
-     * first read and then have no readable metrics, which cost the whole deck. So this
-     * throws a checked refusal the caller degrades the family on, and the caller reads
-     * the metrics <em>before</em> handing any program to the presentation.</p>
+     * files. They disagree both ways. fontbox's header parse skips a table whose
+     * directory entry runs past the end of the file and reads on, while
+     * {@code createFont} rejects the font outright for such an entry — a font truncated
+     * below its last table used to embed on the first read and then have no readable
+     * metrics, which cost the whole deck. The other way round, {@code createFont} reads
+     * no name record over 256 bytes while fontbox has no opinion about a name's length,
+     * so a face whose family name runs from 129 characters to the limit
+     * {@link PptxEmbeddedFont} enforces is embeddable and has no readable metrics. Either
+     * way this throws a checked refusal the caller degrades the family on, and the caller
+     * reads the metrics <em>before</em> handing any program to the presentation.</p>
+     *
+     * <p>What neither disagreement covers is the name a record does not carry: the
+     * container's full name is joined from the family and the style, and
+     * {@code createFont} never reads the style record at all. That one is
+     * {@link PptxEmbeddedFont}'s to catch.</p>
      *
      * @throws UnreadableFaceException naming the first face that cannot be read
      */

@@ -9,14 +9,18 @@ import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontName;
 
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
+import org.apache.poi.xslf.usermodel.XSLFFontInfo;
 import org.apache.poi.xslf.usermodel.XSLFTextShape;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,6 +57,27 @@ import java.util.function.Consumer;
  * the presentation, as an {@code IllegalStateException} that cost the whole deck. The
  * sixth is their control: a whole copy of the same face still embeds, so reading the
  * metrics before the hand-over is not refusing fonts that work.</p>
+ *
+ * <p>The last three go one reader further, to the presentation itself. It reads the
+ * container's header through two thousand-byte windows — each name on its own when it
+ * takes the face, and the whole header when it reads the written part back — and a header
+ * past the first cost the render, <em>unchecked</em>, past the hand-over's catch, after
+ * the page had laid out. The readers in front of the writer do not close it, because they
+ * do not read the same names: {@code Font.createFont} rejects an over-long family and
+ * never looks at the subfamily, while the container's full name is the two joined. A long
+ * subfamily therefore passed every read — Lato-Regular rewritten with a 496-character one
+ * makes a 1,002-byte full name — and that is the case a measurement varying only the
+ * family name missed. The embedder now measures the header where it builds it, so such a
+ * face ends as every other unreadable one does: nothing of the family carried, the face
+ * named, the deck written, and the text kept where the page drew in it.</p>
+ *
+ * <p>The long-name case and its control each run at both name IDs, since one of the two is
+ * the gap, and the control travels <em>and</em> reads back: a header the hand-over accepts
+ * can still be one the presentation cannot read out of the part it wrote, and a control
+ * that wrote such a deck would have called the guard sound while the deck was not. A
+ * fourth case holds the band between the two readers, where the embedder takes a face the
+ * metrics reader refuses for the same reason — a name's length — and the family degrades
+ * just the same.</p>
  */
 class PptxUnreadableFontSourceTest {
 
@@ -300,6 +325,171 @@ class PptxUnreadableFontSourceTest {
                 .isEmpty();
     }
 
+    @ParameterizedTest
+    @CsvSource({"1, 2110", "2, 2098"})
+    void aFaceWhoseNameThePresentationCannotReadBackCostsTheFontAndNotTheDeck(
+            int nameId, int headerBytes) throws Exception {
+        // Taking a face, the presentation reads each of the container's four names through
+        // IOUtils.safelyAllocate(nameSize, 1000) and refuses a longer one unchecked — so
+        // the refusal used to arrive past the hand-over's catch and cost the whole deck.
+        // Both name IDs are here because the readers in front of the writer do not read the
+        // same names: Font.createFont, which the viewer metrics come from, rejects an
+        // over-long family (1) and never looks at the subfamily (2). A long subfamily
+        // therefore passed every read, and what the writer choked on was the full name the
+        // container joins from the two — "Lato" plus 496 characters is 1,002 bytes.
+        //
+        // 496 rather than something plainly over, because it is the measured case and the
+        // one that pins the join: at 496 the record the font itself carries is 992 bytes,
+        // inside the per-name limit at either ID, and only the joined name is past it. A
+        // fixture at 520 would be caught by a check on the font's own names alone and
+        // would leave the join unguarded.
+        //
+        // The number in the message is the whole header, which is what the embedder
+        // measures, and it differs with which name is long — the other half of the join is
+        // then "Regular" — so it is a parameter rather than a constant in the assertion.
+        byte[] font = FontNameTable.with(wholeFace(), nameId, "N".repeat(496));
+        Path file = Files.write(directory.resolve("Overlong-Regular.ttf"), font);
+
+        // The premise, asserted against the reader whose limit the embedder now measures
+        // against: this face is one the presentation could not read a name of. Without it
+        // the case would be a copy of the truncated-font test.
+        assertThatThrownBy(() -> {
+            try (InputStream program = Files.newInputStream(file)) {
+                PptxEmbeddedFont.wrap(program);
+            }
+        })
+                .as("the embedder refuses the face, with the limit named")
+                .isInstanceOf(IOException.class)
+                .hasMessageContaining("1000");
+
+        FontFamilyDefinition family = FontFamilyDefinition
+                .files("Overlong", file).wordFamily("Overlong").build();
+        byte[] deck = PptxDeck.registering(family, page -> page.addParagraph(
+                paragraph -> paragraph.text("Drawn in the default face")));
+
+        assertThat(deck).as("the deck is written").isNotEmpty();
+        assertThat(PptxDeck.fontParts(deck))
+                .as("the face whose name could not be read back, not carried")
+                .isEmpty();
+        assertThat(PptxDeck.part(deck, "ppt/presentation.xml"))
+                .as("and the presentation was never handed the face, so it holds no "
+                        + "declaration anything would have to take back")
+                .doesNotContain("embeddedFontLst")
+                .doesNotContain("Overlong");
+        assertThat(log.messages("render.pptx.font.embed.skipped"))
+                .as("the face it could not carry is named, with the reason")
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .contains("family=Overlong")
+                .contains(file.toString())
+                .contains(String.valueOf(headerBytes))
+                .contains("past the 1000");
+    }
+
+    @ParameterizedTest
+    @CsvSource({"1, 120", "2, 221"})
+    void aFaceWithALongButReadableNameTravelsAndReadsBack(int nameId, int characters)
+            throws Exception {
+        // The control, and what keeps the test above honest at both name IDs: the same
+        // rewritten table at a length every reader does take. Without it a refusal would
+        // prove only that rewriting a name table breaks a font, and the limit — the thing
+        // under test — would go unmeasured.
+        //
+        // The two lengths are not a tidiness: each name's binding limit belongs to a
+        // different reader. A family name has to clear Font.createFont's 256-byte record
+        // first, so it stops at 128 characters and this stays short of that cliff; a
+        // subfamily that reader never reads, so what binds it is the header the
+        // presentation reads back, and 221 characters is the longest subfamily that fits —
+        // 902 bytes of names, 998 with the fixed fields, against a thousand.
+        Path file = Files.write(directory.resolve("Long-Regular.ttf"),
+                FontNameTable.with(wholeFace(), nameId, "N".repeat(characters)));
+        FontFamilyDefinition family = FontFamilyDefinition
+                .files("Long", file).wordFamily("Long").build();
+
+        byte[] deck = PptxDeck.registering(family, page -> page.addParagraph(
+                paragraph -> paragraph.text("Drawn in the default face")));
+
+        assertThat(PptxDeck.fontParts(deck)).as("the program travels").isNotEmpty();
+        assertThat(log.messages("render.pptx.font.embed.skipped"))
+                .as("and nothing was skipped: the rebuilt name table is sound")
+                .isEmpty();
+        // Travelling is not enough for a control here. A header the hand-over accepts can
+        // still be one the presentation cannot read back out of the part it wrote, and a
+        // control that wrote such a deck would have called the guard sound while the deck
+        // it produced was not.
+        try (XMLSlideShow written = new XMLSlideShow(new ByteArrayInputStream(deck))) {
+            assertThat(XSLFFontInfo.getFonts(written))
+                    .as("and the deck's own font declaration reads back")
+                    .singleElement()
+                    .satisfies(font -> assertThat(font.getFacets())
+                            .singleElement()
+                            .satisfies(facet ->
+                                    assertThat(facet.getWeight()).isEqualTo(400)));
+        }
+    }
+
+    @Test
+    void aFamilyWhoseNameOnlyTheMetricsReaderRefusesIsNotCarriedEither() throws Exception {
+        // The band between the two readers, and the other direction of their disagreement.
+        // A 129-character family name is 258 bytes, past the 256 Font.createFont reads a
+        // name record into, and makes a 642-byte header, well inside what the presentation
+        // reads — so the embedder takes this face and the metrics reader turns it down.
+        // The outcome is the same as every other refusal, which is the point; without this
+        // the band would be reasoned about rather than measured, and the control at the
+        // family stops at 120 characters precisely to stay clear of it.
+        Path file = Files.write(directory.resolve("MetricsOnly-Regular.ttf"),
+                FontNameTable.with(wholeFace(), 1, "N".repeat(129)));
+
+        try (InputStream program = Files.newInputStream(file)) {
+            assertThat(PptxEmbeddedFont.wrap(program))
+                    .as("the premise: the embedder's own reader takes this face")
+                    .isNotEmpty();
+        }
+        assertThatThrownBy(() -> java.awt.Font.createFont(
+                java.awt.Font.TRUETYPE_FONT, file.toFile()))
+                .as("the premise: the reader the viewer metrics come from does not")
+                .isInstanceOf(java.awt.FontFormatException.class);
+
+        FontFamilyDefinition family = FontFamilyDefinition
+                .files("MetricsOnly", file).wordFamily("MetricsOnly").build();
+        byte[] deck = PptxDeck.registering(family, page -> page.addParagraph(
+                paragraph -> paragraph.text("Drawn in the default face")));
+
+        assertThat(deck).as("the deck is written").isNotEmpty();
+        assertThat(PptxDeck.fontParts(deck)).as("and carries no program").isEmpty();
+        assertThat(log.messages("render.pptx.font.embed.skipped"))
+                .as("the face is named, and the reason says which read turned it down")
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .contains("family=MetricsOnly")
+                .contains("reason=viewer metrics:");
+    }
+
+    @Test
+    void aFamilyDrawnInWhoseNameIsTooLongKeepsTheTextAndLosesOnlyTheFont() throws Exception {
+        // The user-visible half, and the same contract the metrics-refusal case has: the
+        // page can measure this face — measurement reads it through fontbox, which has no
+        // opinion about a name's length — so the run lays out, the slide keeps its text,
+        // and the only thing lost is the program.
+        Path file = Files.write(directory.resolve("Overlong-Drawn-Regular.ttf"),
+                FontNameTable.with(wholeFace(), 2, "N".repeat(496)));
+        FontFamilyDefinition family = FontFamilyDefinition
+                .files("Overlong", file).wordFamily("Overlong").build();
+
+        byte[] deck = PptxDeck.registering(family, page -> page.addParagraph(
+                paragraph -> paragraph
+                        .text("Set in the overlong-named face")
+                        .textStyle(DocumentTextStyle.builder()
+                                .fontName(FontName.of("Overlong")).size(10).build())));
+
+        assertThat(deck).as("the deck is written").isNotEmpty();
+        assertThat(slideText(deck))
+                .as("the page laid out in that very family, and the slide carries its text")
+                .contains("Set in the overlong-named face");
+        assertThat(PptxDeck.part(deck, "ppt/slides/slide1.xml"))
+                .as("the slide names the family it drew in")
+                .contains("Overlong");
+        assertThat(PptxDeck.fontParts(deck)).as("and carries no program for it").isEmpty();
+    }
+
     /**
      * A real face with its last byte missing, written where a family can point at it.
      *
@@ -318,10 +508,7 @@ class PptxUnreadableFontSourceTest {
     }
 
     private static byte[] wholeFace() throws Exception {
-        try (InputStream stream = FontFamilyDefinition.class.getResourceAsStream("/" + WHOLE)) {
-            assertThat(stream).as("the premise: the control face is on the classpath").isNotNull();
-            return stream.readAllBytes();
-        }
+        return PptxDeck.face(WHOLE);
     }
 
     /** Renders a one-page deck that registers the absent family, drawn with or not. */

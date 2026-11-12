@@ -8,6 +8,7 @@ import com.demcha.compose.font.FontFamilyDefinition;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,17 @@ import java.util.zip.ZipInputStream;
 final class PptxDeck {
 
     private PptxDeck() {
+    }
+
+    /** A bundled face's bytes, by its resource path, for a test that needs a real font. */
+    static byte[] face(String resource) throws IOException {
+        try (InputStream stream =
+                     FontFamilyDefinition.class.getResourceAsStream("/" + resource)) {
+            if (stream == null) {
+                throw new AssertionError("not on the classpath: " + resource);
+            }
+            return stream.readAllBytes();
+        }
     }
 
     /** A one-page deck of the given content. */

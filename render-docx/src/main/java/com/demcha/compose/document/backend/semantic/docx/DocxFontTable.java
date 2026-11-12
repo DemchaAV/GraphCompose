@@ -56,8 +56,9 @@ import java.util.Set;
  * family rather than a silent omission.</p>
  *
  * <p>One face set per name an editor reads. A document can ask two families to travel under one
- * name — {@link FontFamilyDefinition#wordFamily()} is set apart from the name a family is
- * registered under — and an editor then draws both families' text from one of them: measured in
+ * name — {@link FontFamilyDefinition#wordFamily()} defaults to the name a family is registered
+ * under and can be set apart from it — and an editor then draws both families' text from one of
+ * them: measured in
  * Word 16 and LibreOffice 24.2, a document declaring two face sets under one name, and one
  * declaring two whose names differ only in case, had both paragraphs set in the face declared
  * first, the second program ignored. So the family that comes to a name already shipped under is
@@ -172,9 +173,11 @@ final class DocxFontTable {
      *
      * <p>A family given up for a name another one declares keeps no line of its own here, by
      * either route: where the two spellings are the same its runs read the key the holder filled,
-     * and where they differ in case the key their spelling makes is not in the map at all. What
-     * its paragraphs are written with is pinned in both pairings by {@code DocxFontTableTest},
-     * because the two reach this map differently and the writer is what decides from there.</p>
+     * and where they differ in case the key their spelling makes is not in the map at all. The two
+     * are not the same answer — a line read from the holder is one the writer can hold a paragraph
+     * to, and no line at all is not — so which of them a document gets turns on how its author
+     * spelled a name that an editor reads one way either way. Recorded as a limit in the backend
+     * capability details, and pinned by a test per route.</p>
      */
     static final class ShippedLines {
         /** No face shipped: an export written without a font table. */
@@ -365,7 +368,9 @@ final class DocxFontTable {
      *
      * <p>One face set per name the editor reads. Two families can declare one name — the same
      * name, or one differing only in case — because the families are kept by the name they were
-     * registered under, which is a different name from the one they declare. The first to ship a
+     * registered under, while the name they declare defaults to that one and may be set apart
+     * from it. One of the two set apart is enough, which is what a family declaring a bundled
+     * family's name does. The first to ship a
      * face keeps the name and the rest are given up ({@link #refuseForASharedName}). Which is
      * first is decided by the document: the faces are read in the order the document's tree names
      * them, then the page zones', then the header and footer bands', so a family registered
@@ -476,6 +481,9 @@ final class DocxFontTable {
                 family.name().name(),
                 family.wordFamily(), holder.registered().name(), holder.wordFamily(),
                 family.name().name());
+        // Both families by the name they were registered under, where the other notes on an
+        // embedded font name a family by the name it declares: these two declare one name, and it
+        // is the registered one that tells them apart.
         report.add(DocxExportReport.Severity.DROPPED, "embedded font", null,
                 "'" + family.name().name() + "' is set in the Word name '" + family.wordFamily()
                 + "', which '" + holder.registered().name() + "' already ships as '"

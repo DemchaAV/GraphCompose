@@ -372,11 +372,12 @@ class DocxFontTableTest {
                 .as("the premise the holder's line rests on: the other face's line is the taller of "
                     + "the two, so standing in for this one is what wrote an exact height")
                 .isGreaterThan(latoLine.ascent() + latoLine.descent());
-        assertThat(Math.abs(monoLine.descent() - latoLine.descent()) * 14)
-                .as("and the premise the given-up family's own line rests on, which is a different "
-                    + "one: the two faces seat their text far enough apart that a least line would "
-                    + "stand it off the page's baseline, which is what keeps that paragraph exact")
-                .isGreaterThan(0.25);
+        // And the premise the given-up family's own line rests on, which is a different one: the
+        // two faces seat their text far enough apart that a least line would stand it off the
+        // page's baseline, and the writer holds such a line to an exact height instead
+        // (DocxSemanticBackend's least-grown-line shift, a quarter point). Read off the faces'
+        // descents, which is the part of that shift this test can reach.
+        assertThat(Math.abs(monoLine.descent() - latoLine.descent()) * 14).isGreaterThan(0.25);
 
         try (Shipped alone = exportSetIn(List.of(latoAs("SoloLato")), List.of(lato));
              Shipped shared = exportSetIn(List.of(latoAs("ExactShared"), monoAs("ExactShared")),
@@ -409,6 +410,12 @@ class DocxFontTableTest {
         try (Shipped shared = exportSetIn(List.of(latoAs("CaseShared"), monoAs("CASESHARED")),
                 List.of(lato, mono))) {
 
+            // The route, read off the document: the table declares the holder's spelling alone,
+            // and the given-up family's runs carry theirs, so the line kept under the declared
+            // spelling is not a line those runs can read.
+            assertThat(families(shared.document())).containsExactly("CaseShared");
+            assertThat(asciiOf(shared.document(), 1)).isEqualTo("CASESHARED");
+
             assertThat(lineOf(shared.document(), 0))
                     .as("the family that keeps the name is unaffected")
                     .isEqualTo("336 atLeast");
@@ -419,7 +426,10 @@ class DocxFontTableTest {
     @Test
     void aFamilyThatShipsNoFaceKeepsNoName(@TempDir Path folder) throws Exception {
         // The name is taken where a face is shipped under it, not where one is asked for: a
-        // family that writes no w:font leaves the name free for the family behind it.
+        // family that writes no w:font leaves the name free for the family behind it. The export
+        // before this rule existed wrote the same document, because a family with no face to ship
+        // never reached the list either — what this holds is where the claim sits now that there
+        // is one, against an implementation that claimed the name at the face's read instead.
         byte[] font = latoRegular();
         int os2 = DocxFontEmbedding.tableOffset(font, "OS/2", 10);
         font[os2 + 8] = 0x00;
@@ -502,6 +512,11 @@ class DocxFontTableTest {
         assertThat(java.util.Arrays.copyOfRange(part, 32, part.length))
                 .as("the face shipped is this font, past the scrambled header")
                 .isEqualTo(java.util.Arrays.copyOfRange(source, 32, source.length));
+    }
+
+    /** The family a paragraph's one run names, as the document carries it. */
+    private static String asciiOf(XWPFDocument document, int paragraph) {
+        return document.getParagraphs().get(paragraph).getRuns().get(0).getFontFamily();
     }
 
     /** The line a paragraph is written with: its height in twips and the rule it is held to. */

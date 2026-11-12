@@ -29,6 +29,17 @@ final class PptxDeck {
     private PptxDeck() {
     }
 
+    /** A bundled face's bytes, by its resource path, for a test that needs a real font. */
+    static byte[] face(String resource) throws IOException {
+        try (java.io.InputStream stream =
+                     FontFamilyDefinition.class.getResourceAsStream("/" + resource)) {
+            if (stream == null) {
+                throw new AssertionError("not on the classpath: " + resource);
+            }
+            return stream.readAllBytes();
+        }
+    }
+
     /** A one-page deck of the given content. */
     static byte[] of(Consumer<PageFlowBuilder> content) {
         return write(List.of(), content);

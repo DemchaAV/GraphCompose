@@ -9,6 +9,7 @@ import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontName;
 
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
+import org.apache.poi.xslf.usermodel.XSLFFontInfo;
 import org.apache.poi.xslf.usermodel.XSLFTextShape;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
@@ -18,6 +19,9 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -53,6 +57,18 @@ import java.util.function.Consumer;
  * the presentation, as an {@code IllegalStateException} that cost the whole deck. The
  * sixth is their control: a whole copy of the same face still embeds, so reading the
  * metrics before the hand-over is not refusing fonts that work.</p>
+ *
+ * <p>The seventh goes one reader further, to the writer itself. A face is handed to the
+ * presentation after both reads pass, and from there a refusal is the presentation's,
+ * which the hand-over does not undo. The one program this backend can produce that the
+ * writer refuses is a face whose name needs more than POI's thousand bytes; the viewer
+ * metrics' reader turns such a font down four times earlier, at 256 bytes, so the family
+ * never reaches the writer at all. So the seventh test asserts the writer's refusal
+ * against the writer, in isolation, and then holds the public path to what it does today:
+ * the deck is written, the font is the only thing lost, and the presentation is left
+ * holding nothing of the family. The eighth is its control — the same rewritten name
+ * table at a length both readers take still travels — without which the seventh would
+ * prove nothing about the length.</p>
  */
 class PptxUnreadableFontSourceTest {
 
@@ -300,6 +316,153 @@ class PptxUnreadableFontSourceTest {
                 .isEmpty();
     }
 
+    @Test
+    void aFaceTheWriterWouldRefuseIsTurnedDownBeforeTheHandOver() throws Exception {
+        // The one refusal the presentation makes over a program this backend hands it. POI
+        // reads each of the EOT's names through IOUtils.safelyAllocate(nameSize, 1000), so a
+        // family name of 520 characters — 1,040 bytes of UTF-16 — is past its limit.
+        byte[] font = withFamilyName(wholeFace(), "N".repeat(520));
+        Path file = Files.write(directory.resolve("Overlong-Regular.ttf"), font);
+
+        // The premise, asserted against the writer this backend hands faces to rather than
+        // reasoned about: it refuses this program, and it refuses it *unchecked*, so the
+        // hand-over's catch would not cover it and the render would die on a font. That is
+        // what the pre-flight below has to prevent, and it is the whole reason this test is
+        // not a second copy of the truncated-font one.
+        assertThatThrownBy(() -> {
+            try (XMLSlideShow show = new XMLSlideShow();
+                    InputStream program = Files.newInputStream(file)) {
+                new XSLFFontInfo(show, "Overlong")
+                        .addFacet(new ByteArrayInputStream(PptxEmbeddedFont.wrap(program)));
+            }
+        })
+                .as("the premise: the presentation refuses the program the embedder wrapped")
+                .isInstanceOf(org.apache.poi.util.RecordFormatException.class)
+                .as("unchecked, which is what the hand-over does not catch")
+                .isNotInstanceOf(java.io.IOException.class);
+
+        FontFamilyDefinition family = FontFamilyDefinition
+                .files("Overlong", file).wordFamily("Overlong").build();
+        byte[] deck = PptxDeck.registering(family, page -> page.addParagraph(
+                paragraph -> paragraph.text("Drawn in the default face")));
+
+        assertThat(deck).as("the deck is written").isNotEmpty();
+        assertThat(PptxDeck.fontParts(deck))
+                .as("the program the readers turned down, not carried")
+                .isEmpty();
+        assertThat(PptxDeck.part(deck, "ppt/presentation.xml"))
+                .as("and the presentation was never handed the face, so it holds no "
+                        + "declaration the hand-over would have to take back")
+                .doesNotContain("embeddedFontLst")
+                .doesNotContain("Overlong");
+        assertThat(log.messages("render.pptx.font.embed.skipped"))
+                .as("the face it could not carry is named")
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .contains("family=Overlong")
+                .contains(file.toString());
+        // Which reader refuses is deliberately not asserted. Today it is the viewer metrics'
+        // — java.awt.Font.createFont reads no name record over 256 bytes, so it turns the
+        // font down at 129 characters, four times before POI's own limit — and the family
+        // never reaches the presentation, which is why the assertions above are about the
+        // deck and not about the writer. Were that door ever to open wider, the program
+        // would reach the hand-over, which refuses it unchecked, and this test would fail on
+        // the deck rather than on the reason, which is the thing worth holding.
+    }
+
+    @Test
+    void aFaceWithALongButReadableNameStillTravels() throws Exception {
+        // The control for the test above, and the one that keeps it honest: the same surgery
+        // at a length both readers take. Without it a refusal would prove only that
+        // rewriting a name table breaks a font, and the length — the thing under test —
+        // would go unmeasured.
+        Path file = Files.write(directory.resolve("Long-Regular.ttf"),
+                withFamilyName(wholeFace(), "N".repeat(128)));
+        FontFamilyDefinition family = FontFamilyDefinition
+                .files("Long", file).wordFamily("Long").build();
+
+        byte[] deck = PptxDeck.registering(family, page -> page.addParagraph(
+                paragraph -> paragraph.text("Drawn in the default face")));
+
+        assertThat(PptxDeck.fontParts(deck)).as("the program travels").isNotEmpty();
+        assertThat(log.messages("render.pptx.font.embed.skipped"))
+                .as("and nothing was skipped: the rebuilt name table is sound")
+                .isEmpty();
+    }
+
+    /**
+     * The same face with a family name of the given length, and nothing else changed.
+     *
+     * <p>The name table is rebuilt record for record — the Mac platform entries, the full
+     * name, the PostScript name all carried over — and only the string of each name ID 1
+     * is replaced, so the single thing that differs from the shipped face is how long its
+     * family name is. The rebuilt table is appended at the end of the file and the table
+     * directory's entry for it re-pointed, which is how a name longer than the original
+     * slot can be written without moving every other table.</p>
+     */
+    private static byte[] withFamilyName(byte[] font, String familyName) {
+        ByteBuffer sfnt = ByteBuffer.wrap(font).order(ByteOrder.BIG_ENDIAN);
+        int directoryEntry = -1;
+        for (int index = 0, tables = Short.toUnsignedInt(sfnt.getShort(4));
+                index < tables; index++) {
+            if (sfnt.getInt(12 + index * 16) == 0x6e616d65) { // 'name'
+                directoryEntry = 12 + index * 16;
+                break;
+            }
+        }
+        assertThat(directoryEntry).as("the premise: the face has a name table").isNotNegative();
+
+        int table = sfnt.getInt(directoryEntry + 8);
+        assertThat(Short.toUnsignedInt(sfnt.getShort(table)))
+                .as("the premise: a format 0 name table, which is what this rebuilds — a "
+                        + "format 1 source would lose its language-tag records here, and "
+                        + "the face would then differ in more than the name's length")
+                .isZero();
+        int storage = table + Short.toUnsignedInt(sfnt.getShort(table + 4));
+        List<int[]> records = new ArrayList<>();
+        List<byte[]> strings = new ArrayList<>();
+        for (int index = 0, count = Short.toUnsignedInt(sfnt.getShort(table + 2));
+                index < count; index++) {
+            int at = table + 6 + index * 12;
+            int platform = Short.toUnsignedInt(sfnt.getShort(at));
+            int nameId = Short.toUnsignedInt(sfnt.getShort(at + 6));
+            int offset = storage + Short.toUnsignedInt(sfnt.getShort(at + 10));
+            records.add(new int[] {platform, Short.toUnsignedInt(sfnt.getShort(at + 2)),
+                    Short.toUnsignedInt(sfnt.getShort(at + 4)), nameId});
+            strings.add(nameId == 1
+                    // Platform 1 stores a name byte per character, platform 3 in UTF-16.
+                    ? familyName.getBytes(platform == 1
+                            ? StandardCharsets.ISO_8859_1 : StandardCharsets.UTF_16BE)
+                    : Arrays.copyOfRange(font, offset,
+                            offset + Short.toUnsignedInt(sfnt.getShort(at + 8))));
+        }
+
+        int stringBytes = strings.stream().mapToInt(string -> string.length).sum();
+        ByteBuffer rebuilt = ByteBuffer
+                .allocate(6 + 12 * records.size() + stringBytes).order(ByteOrder.BIG_ENDIAN);
+        rebuilt.putShort((short) 0); // format 0
+        rebuilt.putShort((short) records.size());
+        rebuilt.putShort((short) (6 + 12 * records.size()));
+        for (int index = 0, offset = 0; index < records.size(); index++) {
+            int[] record = records.get(index);
+            rebuilt.putShort((short) record[0]);
+            rebuilt.putShort((short) record[1]);
+            rebuilt.putShort((short) record[2]);
+            rebuilt.putShort((short) record[3]);
+            rebuilt.putShort((short) strings.get(index).length);
+            rebuilt.putShort((short) offset);
+            offset += strings.get(index).length;
+        }
+        strings.forEach(rebuilt::put);
+
+        int appendAt = (font.length + 3) & ~3; // tables start on a four-byte boundary
+        byte[] patched = Arrays.copyOf(font, appendAt + rebuilt.capacity());
+        System.arraycopy(rebuilt.array(), 0, patched, appendAt, rebuilt.capacity());
+        ByteBuffer repointed = ByteBuffer.wrap(patched).order(ByteOrder.BIG_ENDIAN);
+        repointed.putInt(directoryEntry + 8, appendAt);
+        repointed.putInt(directoryEntry + 12, rebuilt.capacity());
+        return patched;
+    }
+
     /**
      * A real face with its last byte missing, written where a family can point at it.
      *
@@ -318,10 +481,7 @@ class PptxUnreadableFontSourceTest {
     }
 
     private static byte[] wholeFace() throws Exception {
-        try (InputStream stream = FontFamilyDefinition.class.getResourceAsStream("/" + WHOLE)) {
-            assertThat(stream).as("the premise: the control face is on the classpath").isNotNull();
-            return stream.readAllBytes();
-        }
+        return PptxDeck.face(WHOLE);
     }
 
     /** Renders a one-page deck that registers the absent family, drawn with or not. */

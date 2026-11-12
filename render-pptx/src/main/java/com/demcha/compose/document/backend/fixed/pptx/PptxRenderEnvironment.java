@@ -226,8 +226,8 @@ public final class PptxRenderEnvironment {
         }
 
         /**
-         * Whether the sharing of that declared name is still to be reported — once for the
-         * name, however many families join it.
+         * Whether the sharing of that declared name is still to be reported, marking it
+         * reported if so — once for the name, however many families join it.
          *
          * <p>Only ever asked of a name an entry already exists for, the caller having found
          * another family in it first, so the flag can live on the entry.</p>
@@ -663,10 +663,14 @@ public final class PptxRenderEnvironment {
      *
      * <p>A fourth answers {@code null} here and is the one the caller has to tell apart: a
      * face arriving into a style slot another family already holds under the same declared
-     * name. Every other refusal leaves nothing in the deck under that name, so the family's
+     * name. Every other refusal leaves nothing <em>of the family</em> in the deck, so its
      * text needs the font installed; this one leaves another family's program under the very
      * name the text carries, so the caller reports it with
-     * {@link #warnDrawnFromAnotherFamilysProgram} instead.</p>
+     * {@link #warnDrawnFromAnotherFamilysProgram} instead. Only this refusal, and not any
+     * other way of sharing a name: a family that shares one in a <em>free</em> slot and is
+     * then given up by the metrics read gets the ordinary line, with a program under that
+     * name all the same — true but weaker there, since what its own text needs is still the
+     * font itself.</p>
      *
      * @return the family's viewer metrics, or {@code null} where it is not carried
      */
@@ -793,8 +797,11 @@ public final class PptxRenderEnvironment {
      * and so into one set of four slots. The family whose face arrives into a slot another
      * family already holds is refused whole, as a family with an unreadable face is — not
      * only the colliding face, so a face of it that would have landed in a free slot does
-     * not travel either; the family holding the slot keeps its program and its viewer
-     * metrics, having been handed over already. Measured: two definitions under one
+     * not travel either; the family holding the slot keeps its program, and its viewer
+     * metrics where it has any — the holder is always a registration, the registered pass
+     * running before a slide is drawn and no two bundled families declaring one name, so the
+     * bundled path's deliberate lack of metrics never comes up here. Measured: two
+     * definitions under one
      * {@code wordFamily}, each with a single regular face, left one part holding the
      * second's bytes with nothing said, and PowerPoint 16.0 drew both families' text from
      * it.</p>
@@ -974,17 +981,17 @@ public final class PptxRenderEnvironment {
     /**
      * A family's wrapped font programs and the style slots they would be seated in.
      *
-     * <p>{@code slots} is copied on the way in, so the caller's claim cannot be changed by
-     * whatever built it — a record of mutable maps is a value only as far as that.</p>
+     * <p>Neither map is copied on the way in, and neither needs to be: both are built by
+     * {@link #readPrograms} and go out of its scope when it returns, so the only holder
+     * afterwards is the caller — which reads {@code programs} once to hand the faces over
+     * and copies {@code slots} into the ledger. Copying {@code slots} here would also drop
+     * the order it was read in, which the ledger does not care about but which
+     * {@code programs} is kept in deliberately.</p>
      *
      * @param programs the containers by source description, in the order they were read
      * @param slots    the face taking each style slot, for the ledger the caller claims in
      */
     private record FamilyPrograms(Map<String, byte[]> programs, Map<String, Seated> slots) {
-        private FamilyPrograms(Map<String, byte[]> programs, Map<String, Seated> slots) {
-            this.programs = programs;
-            this.slots = Map.copyOf(slots);
-        }
     }
 
     /**

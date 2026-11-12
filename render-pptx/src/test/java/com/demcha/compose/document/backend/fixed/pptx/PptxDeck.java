@@ -19,8 +19,9 @@ import java.util.zip.ZipInputStream;
 /**
  * Writes a one-page deck through the public session and reads its package back.
  *
- * <p>The font tests ask the same two questions — what did this deck end up carrying, and
- * does any part of it name the family. The walk over the zip entries was written out
+ * <p>The font tests ask the same few questions — what did this deck end up carrying, does any
+ * part of it name the family, and which style element would a face be declared under. The
+ * walk over the zip entries was written out
  * twice, and so was this render: the two other builds of the same page drive a
  * configured backend rather than {@code toPptxBytes}, so they stay where they are. The
  * tests added beside this class would have made a third copy.</p>

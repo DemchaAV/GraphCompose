@@ -209,8 +209,7 @@ class PptxSharedViewerFamilyTest {
 
         assertThat(PptxDeck.fontParts(deck)).hasSize(1);
         assertThat(carriedBy(deck, "ppt/fonts/font1.fntdata"))
-                .as("the deck carries the family nothing was drawn in, and the bundled "
-                        + "family's text is drawn from it")
+                .as("the deck carries the family nothing was drawn in")
                 .isEqualTo(POPPINS);
         assertThat(log.messages("render.pptx.font.embed.skipped"))
                 .as("and the bundled family is the refused one, named with the holder")
@@ -236,15 +235,19 @@ class PptxSharedViewerFamilyTest {
                 .as("the premise: this walked the catalogue rather than an empty list")
                 .hasSizeGreaterThan(30);
         List<String> declared = bundled.stream().map(FontFamilyDefinition::wordFamily).toList();
-        assertThat(declared)
-                .as("pairwise distinct ignoring case, which is how an entry is looked up")
-                .doesNotHaveDuplicates();
-        assertThat(declared.stream()
-                .map(name -> name.toLowerCase(java.util.Locale.ROOT))
-                .distinct()
-                .count())
-                .as("and distinct once folded, too")
-                .isEqualTo(declared.size());
+        // Compared with equalsIgnoreCase and not by folding the names to a key, because that
+        // is the operator the entry lookup uses — the same reason the ledger walks a list
+        // instead of keying a map, and a folded key here would be the substitution the
+        // ledger's own javadoc refuses.
+        for (int first = 0; first < declared.size(); first++) {
+            for (int second = first + 1; second < declared.size(); second++) {
+                assertThat(declared.get(first).equalsIgnoreCase(declared.get(second)))
+                        .as("two bundled families declare one viewer family: \""
+                                + declared.get(first) + "\" and \"" + declared.get(second)
+                                + "\"")
+                        .isFalse();
+            }
+        }
     }
 
     @Test

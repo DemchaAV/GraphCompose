@@ -36,7 +36,7 @@ follow semantic versioning; release dates are ISO 8601.
     explicitly registered family is the holder in the form above and keeps its own font. The
     limit of that order: a registered family is carried before anything is drawn, so one declared
     under a bundled family's name and *never drawn in* still takes the element, and the bundled
-    family's own text is then drawn from its program — where before this change the bundled face
+    family's own text is then drawn from that program — where before this change the bundled face
     wrote over that part and that text was right. Both arrangements are wrong for one of the two
     families; this one says which, in the log.
   - What refusing cannot fix, and what the log says rather than the ordinary "needs that font
@@ -56,10 +56,10 @@ follow semantic versioning; release dates are ISO 8601.
     keeps the *last* factory registered under a name, so the later program is the one the page
     measured with, and refusing it would leave the deck carrying a face no text was laid out in.
     An identical definition registered twice therefore stays harmless too.
-  - The slots are claimed where the faces are handed to the presentation, not where they are
+  - The elements are claimed where the faces are handed to the presentation, not where they are
     read: a registered family's viewer metrics are read in between, and a family given up there
     has had nothing written for it — no entry, no part. Claiming at the read would have let such
-    a family hold a slot it never filled, cost the next family declaring that name its own
+    a family hold an element it never filled, cost the next family declaring that name its own
     program, and tell it its text is drawn from one that travelled when none did.
   - None of the 38 bundled family definitions shares a declared typeface with another, measured
     across the catalogue, and no template or example in the repository declares one twice.
@@ -99,7 +99,7 @@ follow semantic versioning; release dates are ISO 8601.
     four faces and so reach the dedupe rather than the comparison.
   - This answers for one family definition. The element's capacity belongs to a declared
     typeface, so two definitions registered under the same `wordFamily` share one font-list
-    entry and reach it from outside this guard; that is the entry above.
+    entry and reach it from outside this guard; that is the changelog entry above.
 - **A PPTX export writes its deck when a face's name is longer than the presentation can read.**
   - The embedder wraps a font program in the container PowerPoint wants, whose header carries
     four names: the family, the style, a version and a full name it joins from the family and

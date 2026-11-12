@@ -7,6 +7,44 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A PPTX export no longer ships one face of a registered family under another face's name.**
+  - A deck declares an embedded face under one of four style elements — `p:regular`, `p:bold`,
+    `p:italic`, `p:boldItalic` — and holds one face in each. Which element a face lands under is
+    not the slot the family registered it in: `XSLFFontInfo.addFacet` reads the weight and the
+    italic flag out of the container and picks from those, so a face a caller put in the bold
+    slot whose own `usWeightClass` is 400 or less reads back as the regular one, and lands where
+    the regular face already is. Seating a second face in a taken element does not add a part —
+    it writes over the part the first face wrote and keeps the declaration the first one made.
+  - So a family like `files(regular).boldPath(light)` came out as a deck carrying **one** program
+    that was the *bold-slot* face's bytes, declared `p:regular`, with nothing in the log. The
+    loss was not of a face but of the right one: PowerPoint 16.0 reported the family as embedded
+    and drew every run of it, the regular ones included, from the one program that survived. In
+    a PDF exported from such a deck the font subset carried the `glyf`, `hmtx`, `cmap` and `loca`
+    tables of the face from the bold slot, byte for byte, where a correctly seated family
+    exported two subsets an order of magnitude larger. Both public paths reached it —
+    `FontFamilyDefinition.files(…)` and `.classpath(…)` alike.
+  - Two faces of a family that read back as the same element are now refused, as an unreadable
+    face is: nothing of the family is carried, `render.pptx.font.embed.skipped` names both faces,
+    the element they agreed on and the weight and italic flag it was read from,
+    `render.pptx.font.substitution` says the deck does not carry the family, and the deck is
+    written — with its text, where the page drew in that family.
+  - Refused rather than reseated, because the element is the presentation's answer and not this
+    backend's to pick: there is no fifth one, and two faces that collide agree on the only two
+    fields it is read from. Refused for the family rather than the face: on the registered path
+    because keeping the first would leave the family its viewer metrics while a face of it did
+    not travel, which is what every other refusal there is held away from, and on the bundled
+    path, which keeps no metrics, because embedding already answers whole-or-nothing for a
+    family and a deck carrying part of one is what the substitution warning cannot describe.
+  - A family seated as its faces read back is carried exactly as before. The sources dedupe by
+    description before the elements are compared, and the builder fills an unset slot from a
+    source already given, so neither a family of one file nor a partially named one can collide
+    with itself. None of the bundled families collides: their faces read back 1:1 onto the four
+    elements, measured across the catalogue.
+  - This answers for one family definition. The element's capacity belongs to a declared
+    typeface, so two definitions registered under the same `wordFamily` still share one
+    font-list entry and the second still writes over the first's part — measured, with nothing
+    logged. Which of two families a refusal should cost is a separate question and is not
+    decided here.
 - **A PPTX export writes its deck when a face's name is longer than the presentation can read.**
   - The embedder wraps a font program in the container PowerPoint wants, whose header carries
     four names: the family, the style, a version and a full name it joins from the family and

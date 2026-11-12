@@ -639,14 +639,13 @@ public final class PptxRenderEnvironment {
      * come after, and a refusal among them is POI's own part store failing, which no font
      * can provoke.</p>
      *
-     * <p>The refusal over the container is the one that mattered, and it is now spent
-     * before this: POI reads each of the container's names into a thousand bytes and
-     * refuses a longer one <em>unchecked</em>, straight past this catch, so it cost the
-     * whole deck after the page had laid out. {@link PptxEmbeddedFont} measures the header
-     * where it writes it, which is where the limit is known and where a refusal is the
-     * checked one {@link #readPrograms} degrades a family on; so the writer is not handed
-     * a container it cannot read, on this path or the bundled one, which has no metrics
-     * pre-flight at all.</p>
+     * <p>The refusal over the container is the one that mattered — it arrived
+     * <em>unchecked</em>, straight past this catch, and cost the whole deck after the page
+     * had laid out — and it is now spent before this: {@link PptxEmbeddedFont} measures the
+     * header against what a presentation reads, where a refusal is the checked one
+     * {@link #readPrograms} degrades a family on, on this path and on the bundled one,
+     * which has no metrics pre-flight at all. What the limit is and what it does not
+     * promise is written down once, beside the constant there.</p>
      *
      * <p>Widening this catch instead would have swallowed the part store's failures with
      * it and left a deck in exactly the half-written state above, which is why the guard

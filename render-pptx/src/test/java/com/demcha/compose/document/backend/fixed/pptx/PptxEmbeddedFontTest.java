@@ -42,12 +42,13 @@ class PptxEmbeddedFontTest {
 
     @Test
     void aHeaderThePresentationCannotReadBackIsRefusedHere() throws Exception {
-        // The header is measured where it is written, against the tighter of the two
-        // thousand-byte windows the presentation reads it through: taking the face reads
-        // each name on its own, and reading the written part back takes the first thousand
-        // bytes of it and parses the whole header out of those. Both sides of that limit
-        // are asserted against POI itself, so the number here cannot be tighter than what
-        // the presentation accepts nor looser than what it reads.
+        // The header is measured where it is written, against the stricter of the two
+        // thousand-byte rules the presentation reads it under: taking the face reads each
+        // name on its own, and reading the written part back parses the whole header out of
+        // the part's first thousand bytes. Both sides of that limit are asserted against
+        // POI's own reader — the largest header a face can express is read back, and four
+        // bytes more overruns — so the number here can be neither tighter than what the
+        // presentation accepts nor looser than what it reads.
         //
         // A header moves in fours — the family is written twice, alone and inside the full
         // name — so 998 is the largest one a face can express and 1,002 the smallest that
@@ -80,15 +81,55 @@ class PptxEmbeddedFontTest {
                     .satisfies(facet -> assertThat(facet.getWeight()).isEqualTo(400));
         }
 
+        // The other side, against POI rather than against this code's own arithmetic: four
+        // bytes more than the container above and the part POI writes cannot be read back.
+        // It has to be built by hand, because the whole point is that the embedder will not
+        // write one — growing the accepted container's family record is the smallest
+        // mutation that makes the header 1,002 while leaving every field POI reads before
+        // it where it was.
+        try (XMLSlideShow show = new XMLSlideShow()) {
+            XSLFFontInfo embedded = new XSLFFontInfo(show, "Overrun");
+            embedded.addFacet(new ByteArrayInputStream(grownBy(largestReadable, 4)));
+            assertThatThrownBy(() -> embedded.getFacets().get(0).getWeight())
+                    .as("the reader that takes the face accepts it — its rule is per name "
+                            + "— and the read of the written part is the one that breaks")
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Buffer overrun")
+                    .hasMessageContaining("1000");
+        }
+
         assertThatThrownBy(() -> PptxEmbeddedFont.wrap(new ByteArrayInputStream(
                 FontNameTable.with(face, 1, "N".repeat(219)))))
-                .as("four bytes more is refused here, checked, with the header and the "
-                        + "limit named")
+                .as("so the embedder refuses it, checked, with the header and the limit "
+                        + "named")
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining("1002")
                 .hasMessageContaining("1000")
                 .as("and with each name's own length, since the one that overflows is the "
                         + "joined full name, which no record of the font carries")
                 .hasMessageContaining("full name 454");
+    }
+
+    /**
+     * The same container with its family record longer by the given bytes.
+     *
+     * <p>The family's length field sits where the fixed fields end — 80 bytes in, after a
+     * 2-byte padding — so this grows that field, inserts the bytes it now claims, and
+     * carries the container's own size along. Every field the presentation reads before the
+     * names is untouched, so the only thing that differs is how far the header reaches.</p>
+     */
+    private static byte[] grownBy(byte[] container, int bytes) {
+        ByteBuffer header = ByteBuffer.wrap(container).order(ByteOrder.LITTLE_ENDIAN);
+        int familyLengthAt = 82;
+        int familyLength = Short.toUnsignedInt(header.getShort(familyLengthAt));
+        int familyEnd = familyLengthAt + 2 + familyLength;
+        byte[] grown = new byte[container.length + bytes];
+        System.arraycopy(container, 0, grown, 0, familyEnd);
+        System.arraycopy(container, familyEnd, grown, familyEnd + bytes,
+                container.length - familyEnd);
+        ByteBuffer patched = ByteBuffer.wrap(grown).order(ByteOrder.LITTLE_ENDIAN);
+        patched.putShort(familyLengthAt, (short) (familyLength + bytes));
+        patched.putInt(0, grown.length);
+        return grown;
     }
 }

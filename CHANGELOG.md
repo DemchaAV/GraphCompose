@@ -134,20 +134,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
-- `PptxUnreadableFontSourceTest` now reaches the writer itself, at two name IDs rather than one.
-  Varying only the family name measures the two readers agreeing — both read that one — where the
-  gap between them is the subfamily, which only the presentation reads. So the long-name case and
-  its control each run over the family and the subfamily, and the control's length differs per
-  name because their binding limits belong to different readers: a family has to clear
-  `Font.createFont`'s 256-byte record first, so its control stays short of that cliff, while a
-  subfamily is bound only by the header the presentation reads back, where 221 characters is the
-  longest that fits. The control also reads the written deck's font declaration back, since
-  travelling is not enough: the header the hand-over accepts can still be one the presentation
-  cannot read out of the part it wrote, and that was true of the first version of this control.
-  A third case holds the user-visible half, a family the page draws in keeping its text and
-  losing only the program. `PptxEmbeddedFontTest` holds both sides of the limit against POI's own
-  readers — the largest header a face can express is written, handed over and read back out of
-  the part, and four bytes more is refused — and `FontNameTable` carries the name-table rewriting
+- `PptxUnreadableFontSourceTest` reaches the writer at both of the name IDs that matter, since
+  varying only the family name measures the two readers agreeing rather than the gap between
+  them. Its control travels *and* reads the written deck's font declaration back, which the
+  first version of that control did not — it wrote a deck whose font part POI could not read.
+  Two further cases hold the user-visible half, a family the page draws in keeping its text and
+  losing only the program, and the band where the embedder takes a face the metrics reader
+  refuses. `PptxEmbeddedFontTest` pins the limit on both sides against POI's own readers: the
+  largest header a face can express is written, handed over and read back out of the part, and a
+  header four bytes longer overruns POI's read. `FontNameTable` carries the name-table rewriting
   they share.
 - `PptxEmbeddedFontDeclarationTest` holds what a deck says about the programs it carries. POI's
   blank presentation asks for subsetting and every face it takes asks again, so a deck that

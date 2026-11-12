@@ -71,10 +71,13 @@ import java.util.function.Consumer;
  * face ends as every other unreadable one does: nothing of the family carried, the face
  * named, the deck written, and the text kept where the page drew in it.</p>
  *
- * <p>Each of the first two runs at both name IDs, since one of them is the gap. Their
- * control travels <em>and</em> reads back: a header the hand-over accepts can still be one
- * the presentation cannot read out of the part it wrote, and a control that wrote such a
- * deck would have called the guard sound while the deck was not.</p>
+ * <p>The long-name case and its control each run at both name IDs, since one of the two is
+ * the gap, and the control travels <em>and</em> reads back: a header the hand-over accepts
+ * can still be one the presentation cannot read out of the part it wrote, and a control
+ * that wrote such a deck would have called the guard sound while the deck was not. A
+ * fourth case holds the band between the two readers, where the embedder takes a face the
+ * metrics reader refuses for the same reason — a name's length — and the family degrades
+ * just the same.</p>
  */
 class PptxUnreadableFontSourceTest {
 
@@ -422,6 +425,42 @@ class PptxUnreadableFontSourceTest {
                             .satisfies(facet ->
                                     assertThat(facet.getWeight()).isEqualTo(400)));
         }
+    }
+
+    @Test
+    void aFamilyWhoseNameOnlyTheMetricsReaderRefusesIsNotCarriedEither() throws Exception {
+        // The band between the two readers, and the other direction of their disagreement.
+        // A 129-character family name is 258 bytes, past the 256 Font.createFont reads a
+        // name record into, and makes a 642-byte header, well inside what the presentation
+        // reads — so the embedder takes this face and the metrics reader turns it down.
+        // The outcome is the same as every other refusal, which is the point; without this
+        // the band would be reasoned about rather than measured, and the control at the
+        // family stops at 120 characters precisely to stay clear of it.
+        Path file = Files.write(directory.resolve("MetricsOnly-Regular.ttf"),
+                FontNameTable.with(wholeFace(), 1, "N".repeat(129)));
+
+        try (InputStream program = Files.newInputStream(file)) {
+            assertThat(PptxEmbeddedFont.wrap(program))
+                    .as("the premise: the embedder's own reader takes this face")
+                    .isNotEmpty();
+        }
+        assertThatThrownBy(() -> java.awt.Font.createFont(
+                java.awt.Font.TRUETYPE_FONT, file.toFile()))
+                .as("the premise: the reader the viewer metrics come from does not")
+                .isInstanceOf(java.awt.FontFormatException.class);
+
+        FontFamilyDefinition family = FontFamilyDefinition
+                .files("MetricsOnly", file).wordFamily("MetricsOnly").build();
+        byte[] deck = PptxDeck.registering(family, page -> page.addParagraph(
+                paragraph -> paragraph.text("Drawn in the default face")));
+
+        assertThat(deck).as("the deck is written").isNotEmpty();
+        assertThat(PptxDeck.fontParts(deck)).as("and carries no program").isEmpty();
+        assertThat(log.messages("render.pptx.font.embed.skipped"))
+                .as("the face is named, and the reason says which read turned it down")
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .contains("family=MetricsOnly")
+                .contains("reason=viewer metrics:");
     }
 
     @Test

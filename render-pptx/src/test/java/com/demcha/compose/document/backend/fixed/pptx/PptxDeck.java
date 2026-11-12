@@ -43,16 +43,17 @@ final class PptxDeck {
 
     /** A one-page deck of the given content. */
     static byte[] of(Consumer<PageFlowBuilder> content) {
-        return write(List.of(), content);
+        return registering(List.of(), content);
     }
 
     /** A one-page deck that registers the given family, drawn with or not. */
     static byte[] registering(FontFamilyDefinition family, Consumer<PageFlowBuilder> content) {
-        return write(List.of(family), content);
+        return registering(List.of(family), content);
     }
 
-    private static byte[] write(List<FontFamilyDefinition> families,
-                                Consumer<PageFlowBuilder> content) {
+    /** A one-page deck that registers the given families, in the order given. */
+    static byte[] registering(List<FontFamilyDefinition> families,
+                              Consumer<PageFlowBuilder> content) {
         GraphCompose.DocumentBuilder builder = GraphCompose.document()
                 .pageSize(400, 160)
                 .margin(DocumentInsets.of(20));
@@ -78,14 +79,30 @@ final class PptxDeck {
 
     /** One part of the written package, as text. */
     static String part(byte[] pptx, String name) throws IOException {
+        return new String(partBytes(pptx, name), StandardCharsets.UTF_8);
+    }
+
+    /** One part of the written package, as it was written — for a part that is not text. */
+    static byte[] partBytes(byte[] pptx, String name) throws IOException {
         try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(pptx))) {
             for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
                 if (entry.getName().equals(name)) {
-                    return new String(zip.readAllBytes(), StandardCharsets.UTF_8);
+                    return zip.readAllBytes();
                 }
             }
         }
         throw new AssertionError("the package has no " + name);
+    }
+
+    /**
+     * The style element a deck would declare this face under, read as the backend reads it.
+     *
+     * <p>Shared rather than written out per test class: it is the backend's own answer, and a
+     * second spelling of it here could drift from the one the guard asks.</p>
+     */
+    static String slotOf(byte[] face) throws IOException {
+        return PptxEmbeddedFont.styleOf(
+                PptxEmbeddedFont.wrap(new ByteArrayInputStream(face))).slot();
     }
 
     /**

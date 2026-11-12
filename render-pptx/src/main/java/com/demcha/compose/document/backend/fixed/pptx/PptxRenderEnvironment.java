@@ -89,6 +89,8 @@ public final class PptxRenderEnvironment {
     private final Map<FontName, Set<Face>> usedFaces = new LinkedHashMap<>();
     /** Bundled families already noted as carried, so the note is one line per family. */
     private final Set<String> bundledCarryNoted = new LinkedHashSet<>();
+    /** Which face holds each style slot of each declared family name, for this render. */
+    private final SlotLedger slotLedger = new SlotLedger();
 
     /** A family's four faces, as the source set names them. */
     private enum Face {
@@ -125,10 +127,130 @@ public final class PptxRenderEnvironment {
      * slot a refusal is about is the one the container reads back as, and the whole of what
      * is guarded is that the two need not agree.</p>
      *
+     * @param family      the family the face was registered under, for a refusal that
+     *                    crosses two of them. A {@link FontName}, so that two registrations
+     *                    the rest of the engine treats as one family — the name being
+     *                    case-insensitive — are one family here too
      * @param description the source the face was read from, as it names itself
      * @param weight      that face's own weight, as the presentation reads it
      */
-    private record Seated(String description, int weight) {
+    private record Seated(FontName family, String description, int weight) {
+    }
+
+    /**
+     * Which face holds each style slot of each declared family name, for this render.
+     *
+     * <p>A style slot's capacity belongs to the <em>declared</em> family name rather than to
+     * a definition: {@code XSLFFontInfo} looks an entry up by typeface, ignoring case, so two
+     * definitions whose {@link FontFamilyDefinition#wordFamily()} matches that way write into
+     * one entry and one set of four slots. Keyed the way that lookup is, and shared across
+     * the whole render rather than built per definition, because the two halves of it are far
+     * apart: a registered family is carried while the environment is being constructed, and a
+     * bundled one after the last slide is drawn.</p>
+     *
+     * <p>Nothing here is claimed until the caller is about to hand a family's faces over, so
+     * a family whose read or whose viewer metrics refuse claims nothing: a claim is what
+     * stops a later family writing over a part, and it has to stand for a part that is about
+     * to exist. It is made before the hand-over rather than after, because a hand-over that
+     * fails part way through has still written what it took. What that leaves is a family the
+     * presentation refuses the <em>first</em> of its faces, which holds claimed slots with
+     * only a declaration written — and the one refusal still possible there is POI's part
+     * store, which no font can provoke (see {@link #handOverPrograms}).</p>
+     */
+    private static final class SlotLedger {
+
+        /**
+         * One declared family name, as the first family to declare it spelled it, the face
+         * holding each of its four style slots, and whether the sharing of it has been
+         * reported.
+         *
+         * <p>Held in a list walked with {@link String#equalsIgnoreCase}, not in a map on a
+         * case-folded key: that operator is the one {@code XSLFFontInfo} matches an entry
+         * with, and a key derived here instead could disagree with it for a name where
+         * folding and {@code equalsIgnoreCase} part company — which would be a collision the
+         * deck makes and this does not see. A render declares a handful of families, so the
+         * walk is the cheaper half of that trade as well.</p>
+         */
+        private static final class Declared {
+            private final String typeface;
+            private final Map<String, Seated> bySlot = new LinkedHashMap<>();
+            private boolean sharingReported;
+
+            private Declared(String typeface) {
+                this.typeface = typeface;
+            }
+        }
+
+        private final List<Declared> declared = new ArrayList<>();
+        /**
+         * Families refused because another one already held a slot of their declared name.
+         *
+         * <p>Kept so the caller can say what such a family's text will be drawn from. Every
+         * other refusal leaves nothing of the family in the deck and the text needs the font
+         * installed; this one leaves a program under the very name the text carries, so the
+         * ordinary line would tell the reader the opposite of what a viewer does.</p>
+         */
+        private final Set<FontName> refusedForASharedName = new LinkedHashSet<>();
+
+        /** The face holding that slot of that declared name, or {@code null}. */
+        Seated holderOf(String typeface, String slot) {
+            return entry(typeface).map(found -> found.bySlot.get(slot)).orElse(null);
+        }
+
+        /** Records that these faces hold these slots of that declared name. */
+        void claim(String typeface, Map<String, Seated> bySlot) {
+            entry(typeface).orElseGet(() -> {
+                Declared fresh = new Declared(typeface);
+                declared.add(fresh);
+                return fresh;
+            }).bySlot.putAll(bySlot);
+        }
+
+        /**
+         * That name as the deck declares it: the spelling of the family that declared it
+         * first, which is the one {@code XSLFFontInfo} writes into the entry and keeps.
+         *
+         * <p>What a line about the <em>entry</em> has to name, since a later family's own
+         * spelling appears nowhere in the package and would send a reader looking for a
+         * declaration the deck does not contain.</p>
+         */
+        String asDeclared(String typeface) {
+            return entry(typeface).map(found -> found.typeface).orElse(typeface);
+        }
+
+        /** Whether that declared name already carries a face of another family. */
+        boolean alreadyDeclaredByAnother(String typeface, FontName family) {
+            return entry(typeface).stream()
+                    .flatMap(found -> found.bySlot.values().stream())
+                    .anyMatch(seated -> !seated.family().equals(family));
+        }
+
+        /**
+         * Whether the sharing of that declared name is still to be reported — once for the
+         * name, however many families join it.
+         *
+         * <p>Only ever asked of a name an entry already exists for, the caller having found
+         * another family in it first, so the flag can live on the entry.</p>
+         */
+        boolean reportSharingOnce(String typeface) {
+            Optional<Declared> owed = entry(typeface).filter(found -> !found.sharingReported);
+            owed.ifPresent(found -> found.sharingReported = true);
+            return owed.isPresent();
+        }
+
+        void recordRefusalForASharedName(FontName family) {
+            refusedForASharedName.add(family);
+        }
+
+        boolean wasRefusedForASharedName(FontName family) {
+            return refusedForASharedName.contains(family);
+        }
+
+        private Optional<Declared> entry(String typeface) {
+            return declared.stream()
+                    .filter(found -> typeface.equalsIgnoreCase(found.typeface))
+                    .findFirst();
+        }
     }
     /** Bundled families that carry a binary, i.e. the ones the embedder can take. */
     private static final Map<FontName, FontFamilyDefinition> EMBEDDABLE_BUNDLED =
@@ -174,9 +296,11 @@ public final class PptxRenderEnvironment {
             }
             family.fontSourceSet().ifPresent(sources -> {
                 PptxViewerMetrics.ViewerFontMetrics viewerMetrics =
-                        embedFontFamilyWithMetrics(show, family, sources);
+                        embedFontFamilyWithMetrics(show, family, sources, slotLedger);
                 if (viewerMetrics != null) {
                     metrics.put(family.name(), viewerMetrics);
+                } else if (slotLedger.wasRefusedForASharedName(family.name())) {
+                    warnDrawnFromAnotherFamilysProgram(family);
                 } else {
                     // Same key as every other substitution so one log filter
                     // catches them all; the embed-skip warning carries the cause.
@@ -495,6 +619,30 @@ public final class PptxRenderEnvironment {
     }
 
     /**
+     * Reports a family refused because another one already held a slot of its declared name.
+     *
+     * <p>Its own line rather than the substitution warning the other refusals share, because
+     * that one tells the reader to install the font and here that would be the opposite of
+     * what a viewer does: a program <em>is</em> in the deck under the very name this
+     * family's text carries, and the text is drawn from it. The only thing the reader can
+     * act on is the declaration — two families asking for one viewer name is a choice they
+     * made and can unmake, and nothing short of unmaking it lets both programs travel.</p>
+     *
+     * <p>Said for the registered path and the bundled one alike, and worded for both: which
+     * of the two the refused family came from changes nothing about what its text is drawn
+     * from, and the family is named either way.</p>
+     */
+    private static void warnDrawnFromAnotherFamilysProgram(FontFamilyDefinition family) {
+        LOG.warn("render.pptx.font.substitution family={} — another registered family already "
+                        + "carries a face under the viewer family \"{}\" this one declares, so "
+                        + "no program of this family travels under that name; its text is "
+                        + "referenced by that shared name and a viewer draws it from the "
+                        + "program that did travel, not from this family's own font. Declare "
+                        + "the two under different viewer families for each to carry its own",
+                family.name().name(), family.wordFamily());
+    }
+
+    /**
      * Carries one registered font family into the presentation, with the viewer
      * metrics its text is seated by. Embedding is best-effort: a font whose
      * license bits forbid embedding, or whose bytes cannot be read at all — a
@@ -513,14 +661,22 @@ public final class PptxRenderEnvironment {
      * and what is left of it after the name check in {@link PptxEmbeddedFont} is
      * POI's part store — see {@link #handOverPrograms}.</p>
      *
+     * <p>A fourth answers {@code null} here and is the one the caller has to tell apart: a
+     * face arriving into a style slot another family already holds under the same declared
+     * name. Every other refusal leaves nothing in the deck under that name, so the family's
+     * text needs the font installed; this one leaves another family's program under the very
+     * name the text carries, so the caller reports it with
+     * {@link #warnDrawnFromAnotherFamilysProgram} instead.</p>
+     *
      * @return the family's viewer metrics, or {@code null} where it is not carried
      */
     private static PptxViewerMetrics.ViewerFontMetrics embedFontFamilyWithMetrics(
             XMLSlideShow show,
             FontFamilyDefinition family,
-            FontFamilyDefinition.FontSourceSet sources) {
-        Map<String, byte[]> programs = readPrograms(family, sources, EnumSet.allOf(Face.class));
-        if (programs == null) {
+            FontFamilyDefinition.FontSourceSet sources,
+            SlotLedger ledger) {
+        FamilyPrograms read = readPrograms(family, sources, EnumSet.allOf(Face.class), ledger);
+        if (read == null) {
             return null;
         }
         // The other read of the same programs, and the last one before the presentation is
@@ -556,7 +712,8 @@ public final class PptxRenderEnvironment {
                     String.valueOf(exception.getCause()));
             return null;
         }
-        return handOverPrograms(show, family, programs) ? viewerMetrics : null;
+        claimSlotsAndReportSharing(ledger, family, read.slots());
+        return handOverPrograms(show, family, read.programs()) ? viewerMetrics : null;
     }
 
     /**
@@ -583,9 +740,14 @@ public final class PptxRenderEnvironment {
     private static boolean embedFontFamily(XMLSlideShow show,
                                            FontFamilyDefinition family,
                                            FontFamilyDefinition.FontSourceSet sources,
-                                           Set<Face> faces) {
-        Map<String, byte[]> programs = readPrograms(family, sources, faces);
-        return programs != null && handOverPrograms(show, family, programs);
+                                           Set<Face> faces,
+                                           SlotLedger ledger) {
+        FamilyPrograms read = readPrograms(family, sources, faces, ledger);
+        if (read == null) {
+            return false;
+        }
+        claimSlotsAndReportSharing(ledger, family, read.slots());
+        return handOverPrograms(show, family, read.programs());
     }
 
     /**
@@ -624,28 +786,65 @@ public final class PptxRenderEnvironment {
      * family either way and a deck that carries some of one is what the caller's
      * substitution warning cannot describe.</p>
      *
-     * <p>What this does <em>not</em> cover: the slot's capacity belongs to a declared
-     * typeface, and this answers for one definition's faces. Two definitions whose
-     * {@link FontFamilyDefinition#wordFamily()} is the same share one font-list entry —
-     * {@code XSLFFontInfo} matches an existing one by typeface, ignoring case — so each
-     * passes its own slots here and the second still writes over the first's part.
-     * Measured: two definitions registered under one {@code wordFamily}, each with a single
-     * regular face, leave one part holding the second face's bytes with nothing said. That
-     * is a different question — which of two families a refusal should cost — and is not
-     * decided here.</p>
+     * <p>The slot's capacity belongs to the <em>declared</em> family name rather than to a
+     * definition, so the same refusal answers for two definitions that share one. Two
+     * definitions whose {@link FontFamilyDefinition#wordFamily()} matches, ignoring case,
+     * write into one font-list entry — that is how {@code XSLFFontInfo} looks an entry up —
+     * and so into one set of four slots. The family whose face arrives into a slot another
+     * family already holds is refused whole, as a family with an unreadable face is — not
+     * only the colliding face, so a face of it that would have landed in a free slot does
+     * not travel either; the family holding the slot keeps its program and its viewer
+     * metrics, having been handed over already. Measured: two definitions under one
+     * {@code wordFamily}, each with a single regular face, left one part holding the
+     * second's bytes with nothing said, and PowerPoint 16.0 drew both families' text from
+     * it.</p>
      *
-     * <p>Nothing of the presentation is touched here, so a refusal costs the deck the
-     * family and nothing else. Answers {@code null} where a face refused, having named it
-     * in the log; the caller reports the family. The cost of buffering is that one
+     * <p>Which way round the refusal falls is a decision rather than a property of the
+     * format, and it leaves an explicitly registered family carrying its own font where a
+     * bundled one of the same name would otherwise have written over it. Its limit is that
+     * the registered pass runs before a run is drawn, so it cannot prefer the family the
+     * deck actually sets text in: a family registered under a bundled one's name and never
+     * drawn in still takes the slot, and the bundled family's own text is then drawn from
+     * that program — where before this guard the bundled face wrote over it and that text
+     * was right. Both arrangements are wrong for one of the two families, this one says
+     * which, and the alternative — holding a registered family's hand-over back until the
+     * faces the deck drew with are known — would decide it by what is on the slides rather
+     * than by registration order.</p>
+     *
+     * <p>What refusing does <em>not</em> fix, and what the message therefore says: the
+     * refused family's text carries the shared declared name too, so a viewer draws it from
+     * the program that did travel. A run names a family and nothing else, so no deck can
+     * hold two programs for one name and one style. What the refusal buys is the other
+     * family's text, which was being drawn from the wrong program before.</p>
+     *
+     * <p>What this does <em>not</em> cover: the refusal keys on the family a face was
+     * registered under, and on it as a {@link FontName}, which is case-insensitive. So two
+     * registrations the rest of the engine treats as one family are one family here, and the
+     * second is not refused: its faces take the slots as the first's would, and where the two
+     * name different files the later program still writes over the earlier one. Deliberate on
+     * both counts. An identical definition registered twice has to stay harmless; and for two
+     * registrations of one {@code FontName} the later program is the one the page
+     * <em>measured</em> with, because the font library keeps the last factory registered under
+     * a name — so refusing it would leave the deck carrying a face no text was laid out in,
+     * which is the defect this guard exists to stop rather than a milder form of it.</p>
+     *
+     * <p>Nothing of the presentation is touched here, so a refusal costs the deck the family
+     * and nothing else. The only thing written to the ledger is the refusal itself, for the
+     * caller's choice of line; the slots are answered to the caller, which claims them when
+     * it is about to hand the faces over. Answers {@code null} where a face refused, having
+     * named it in the log; the caller reports the family. The cost of buffering is that one
      * family's programs are held twice while its facets are added, since the parts keep
      * their bytes as well.</p>
      *
-     * @return the wrapped programs by source description, or {@code null} where a face
-     *         refused
+     * @return the wrapped programs and the slots they would take, or {@code null} where a
+     *         face refused
      */
-    private static Map<String, byte[]> readPrograms(FontFamilyDefinition family,
-                                                    FontFamilyDefinition.FontSourceSet sources,
-                                                    Set<Face> faces) {
+    private static FamilyPrograms readPrograms(FontFamilyDefinition family,
+                                               FontFamilyDefinition.FontSourceSet sources,
+                                               Set<Face> faces,
+                                               SlotLedger ledger) {
+        String typeface = family.wordFamily();
+        FontName familyName = family.name();
         Map<String, byte[]> programs = new LinkedHashMap<>();
         Map<String, Seated> bySlot = new LinkedHashMap<>();
         for (FontFamilyDefinition.FontBinarySource source
@@ -687,7 +886,34 @@ public final class PptxRenderEnvironment {
                             + ", so a deck carrying both would hold only the second, under "
                             + "the declaration the first made");
                 }
-                bySlot.put(style.slot(), new Seated(description, style.weight()));
+                // The same slot, one step wider: this family's own faces are above, and a
+                // family that shares its declared name is here. Checked while the
+                // presentation is still untouched, as every refusal on this path is, and
+                // against the ledger rather than the entry's own XML, which records a dataId
+                // per element and nothing of the family that registered it or the source it
+                // came from, and which a reader would have to pair with the written part's
+                // own header to recover a weight from at all.
+                Seated holder = ledger.holderOf(typeface, style.slot());
+                if (holder != null && !holder.family().equals(familyName)) {
+                    ledger.recordRefusalForASharedName(familyName);
+                    throw new IOException("a presentation seats one face per style, and the "
+                            + "style belongs to the declared family rather than to a "
+                            + "registration: this family declares \"" + typeface
+                            + "\", which the deck holds as the one font-list entry \""
+                            + ledger.asDeclared(typeface) + "\" — the lookup ignores case — "
+                            + "and the family \"" + holder.family().name() + "\" already "
+                            + "carries a face there: \"" + holder.description() + "\" (weight "
+                            + holder.weight() + ") holds " + style.slot() + ", and \""
+                            + description + "\" (weight " + style.weight() + ") reads back as "
+                            + "that same one, italic " + style.italic() + ", so a deck "
+                            + "carrying both would hold only this one, under the declaration "
+                            + "the other made. This family is the one refused, the other "
+                            + "having travelled already. What that does not fix is this "
+                            + "family's own text: it carries the same declared name, so a "
+                            + "viewer draws it from the program that travelled — a run names "
+                            + "a family and no more, and one name holds one program per style");
+                }
+                bySlot.put(style.slot(), new Seated(familyName, description, style.weight()));
                 programs.put(description, container);
             } catch (IOException | RuntimeException exception) {
                 // A source may fail unchecked: the classpath one reports a missing resource
@@ -699,7 +925,66 @@ public final class PptxRenderEnvironment {
                 return null;
             }
         }
-        return programs;
+        return new FamilyPrograms(programs, bySlot);
+    }
+
+    /**
+     * Claims a family's style slots, about to hand its faces to the presentation.
+     *
+     * <p>Called from the hand-over's doorstep rather than from the read, which is why it is a
+     * method of its own rather than the tail of one: a claim is what stops a later family writing
+     * over a part, so it must stand for a part that is about to exist. Between the read and
+     * here, the registered path also reads the family's viewer metrics and gives the family
+     * up if that read refuses — and such a family has had nothing written for it, no entry
+     * and no part, so claiming at the read would have let it hold slots it never filled.
+     * The next family declaring that name would then be refused in favour of a face that is
+     * not in the deck, lose its own program, and be told its text is drawn from one that
+     * travelled when none did.</p>
+     *
+     * <p>Before the hand-over and not after, because a hand-over that fails part way through
+     * has still written what it took.</p>
+     */
+    private static void claimSlotsAndReportSharing(SlotLedger ledger,
+                                                   FontFamilyDefinition family,
+                                                   Map<String, Seated> bySlot) {
+        String typeface = family.wordFamily();
+        if (ledger.alreadyDeclaredByAnother(typeface, family.name())
+                && ledger.reportSharingOnce(typeface)) {
+            // Said even though nothing collided, and said once for the declared name rather
+            // than per face or per family: the sharing itself is the hazard the slots cannot
+            // show. The page measured each family with its own program, while the deck has
+            // one name for both, and a run names a family and no more — so every style this
+            // family does not itself hold under that name is drawn from whatever the other
+            // one put there. Two names shared in one render are two different facts about
+            // the deck, so the line is per name; a third family joining one of them adds
+            // nothing a reader can act on. "Font family" rather than "registered family":
+            // the other half of such a pair can be a bundled family, which joins a name a
+            // caller declared when the face it draws with lands in a slot still free.
+            LOG.warn("render.pptx.font.shared.family typeface=\"{}\" — more than one font "
+                            + "family declares this viewer family, so the deck has one "
+                            + "font-list entry and one program per style for all of them; "
+                            + "text measured in one of those families is drawn from whichever "
+                            + "one carries the style it uses, which for a face it does not "
+                            + "carry itself is not its own font",
+                    ledger.asDeclared(typeface));
+        }
+        ledger.claim(typeface, bySlot);
+    }
+
+    /**
+     * A family's wrapped font programs and the style slots they would be seated in.
+     *
+     * <p>{@code slots} is copied on the way in, so the caller's claim cannot be changed by
+     * whatever built it — a record of mutable maps is a value only as far as that.</p>
+     *
+     * @param programs the containers by source description, in the order they were read
+     * @param slots    the face taking each style slot, for the ledger the caller claims in
+     */
+    private record FamilyPrograms(Map<String, byte[]> programs, Map<String, Seated> slots) {
+        private FamilyPrograms(Map<String, byte[]> programs, Map<String, Seated> slots) {
+            this.programs = programs;
+            this.slots = Map.copyOf(slots);
+        }
     }
 
     /**
@@ -729,10 +1014,14 @@ public final class PptxRenderEnvironment {
      * <p>One thing the writer does not refuse at all: a second face seated in a style slot
      * a face already holds. It takes the {@code dataId} the first one wrote and writes over
      * that part, so nothing arrives here to catch and the deck comes out carrying the later
-     * face under the earlier one's declaration. For the faces of one definition that is
-     * spent before the hand-over, in {@link #readPrograms}, which is where a definition's
-     * faces are read together. Across definitions sharing one {@code wordFamily} it is not:
-     * see the note there.</p>
+     * face under the earlier one's declaration. That is spent before the hand-over, in
+     * {@link #readPrograms} — for the faces of one definition, which are read together
+     * there, and for two definitions sharing a declared name, which the slot ledger carries
+     * between them. What can still arrive here is two registrations of one family naming
+     * different files: those are one family to the guard, deliberately (see
+     * {@link #readPrograms}), so the later {@code addFacet} takes the first's {@code dataId}
+     * and writes over that part — which is what the page measured with, the font library
+     * keeping the last factory registered under a name.</p>
      *
      * @return whether the presentation took every program it was handed
      */
@@ -803,8 +1092,15 @@ public final class PptxRenderEnvironment {
                 continue;
             }
             Optional<FontFamilyDefinition.FontSourceSet> sources = family.fontSourceSet();
-            if (embedFontFamily(show, family, sources.orElseThrow(), faces)) {
+            if (embedFontFamily(show, family, sources.orElseThrow(), faces, slotLedger)) {
                 embeddedAny = true;
+            } else if (slotLedger.wasRefusedForASharedName(family.name())) {
+                // The reachable half of this: a caller registers their own family under a
+                // bundled one's viewer name. The bundled pass runs after the last slide, so
+                // the caller's family holds the slot by now and this one is the refused one
+                // — which is the way round the decision wants it, an explicit registration
+                // keeping its own font.
+                warnDrawnFromAnotherFamilysProgram(family);
             } else {
                 // Reached on the same answer as the registered-family line above, and worded
                 // the same way. The family was certainly drawn in — the loop skips one that

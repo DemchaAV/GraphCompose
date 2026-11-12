@@ -7,6 +7,62 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A PPTX export no longer lets one font family write over another that shares its viewer name.**
+  - A deck holds one font-list entry per declared typeface, with one program in each of its four
+    style elements, and `XSLFFontInfo` looks that entry up **ignoring case**. So two registered
+    families whose `FontFamilyDefinition.wordFamily()` matches that way — two that differ only in
+    case included — write into the same entry and the same four elements. The guard in the entry
+    below answers for one definition's faces, so each of the two passed its own elements and the
+    later one still wrote over the earlier one's part.
+  - Measured on both public paths, `files(…)` and `.classpath(…)`: two definitions under one
+    `wordFamily`, each with a single regular face, left **one** entry declaring `p:regular` and
+    **one** part holding the later face's bytes, with nothing in the log. PowerPoint 16.0 reported
+    the family embedded and drew *both* families' text from that one program — a PDF exported from
+    such a deck had a single font subset of 1,060 glyphs, the later face's glyph count, where the
+    two declared under names of their own export two subsets of 3,023 and 1,060.
+  - The reachable form needs only one registration: a caller's own family declared under a
+    **bundled** family's viewer name — `files("Corporate", …).wordFamily("Lato")` — collides with
+    the bundled program, because the bundled pass skips only a family whose `FontName` the caller
+    registered, not one that merely shares a declared name. That deck carried the bundled Lato and
+    nothing of the caller's font, and drew the caller's text in Lato.
+  - The family whose face arrives into an element another family already holds is now refused
+    whole, as a family with an unreadable face is — a face of it bound for a free element does not
+    travel either — and the family holding the element keeps its program and its viewer metrics.
+    `render.pptx.font.embed.skipped` names
+    both faces with their own weights, the family each was registered under, the element they
+    agreed on and the entry the deck carries them under — which is the first declaration's
+    spelling, so a reader hunting a later family's own spelling in the package is not sent after a
+    declaration that is not there. Because the bundled pass runs after the last slide, an
+    explicitly registered family is the holder in the form above and keeps its own font. The
+    limit of that order: a registered family is carried before anything is drawn, so one declared
+    under a bundled family's name and *never drawn in* still takes the element, and the bundled
+    family's own text is then drawn from its program — where before this change the bundled face
+    wrote over that part and that text was right. Both arrangements are wrong for one of the two
+    families; this one says which, in the log.
+  - What refusing cannot fix, and what the log says rather than the ordinary "needs that font
+    installed": the refused family's text carries the shared declared name too, so a viewer draws
+    it from the program that did travel. A run names a family and no more, so no deck can hold two
+    programs for one name and one element. What the refusal buys is the *other* family's text,
+    which was being drawn from the wrong program before.
+  - Two definitions that share a name without sharing an element — one holding `p:regular`, the
+    other `p:bold` — still both travel, two parts under the one entry. That gets a warning and not
+    a refusal: `render.pptx.font.shared.family`, once for the declared name however many families
+    join it, because sharing the name is a hazard the elements cannot show — the page measured each
+    family with its own program while the deck has one name for all of them, so a style a family
+    does not itself hold under that name is drawn from whatever another put there.
+  - The guard's boundary is what `FontName` counts as one family, which is case-insensitive: two
+    registrations of one name are one family to it, and the later program travels rather than
+    being refused. That is not a softer form of the defect but the opposite of it — `FontLibrary`
+    keeps the *last* factory registered under a name, so the later program is the one the page
+    measured with, and refusing it would leave the deck carrying a face no text was laid out in.
+    An identical definition registered twice therefore stays harmless too.
+  - The slots are claimed where the faces are handed to the presentation, not where they are
+    read: a registered family's viewer metrics are read in between, and a family given up there
+    has had nothing written for it — no entry, no part. Claiming at the read would have let such
+    a family hold a slot it never filled, cost the next family declaring that name its own
+    program, and tell it its text is drawn from one that travelled when none did.
+  - None of the 38 bundled family definitions shares a declared typeface with another, measured
+    across the catalogue, and no template or example in the repository declares one twice.
 - **A PPTX export no longer ships one face of a font family under another face's name.**
   - A deck declares an embedded face under one of four style elements — `p:regular`, `p:bold`,
     `p:italic`, `p:boldItalic` — and holds one face in each. Which element a face lands under is
@@ -42,10 +98,8 @@ follow semantic versioning; release dates are ISO 8601.
     distinct elements, measured across the catalogue — including the four that ship fewer than
     four faces and so reach the dedupe rather than the comparison.
   - This answers for one family definition. The element's capacity belongs to a declared
-    typeface, so two definitions registered under the same `wordFamily` still share one
-    font-list entry and the second still writes over the first's part — measured, with nothing
-    logged. Which of two families a refusal should cost is a separate question and is not
-    decided here.
+    typeface, so two definitions registered under the same `wordFamily` share one font-list
+    entry and reach it from outside this guard; that is the entry above.
 - **A PPTX export writes its deck when a face's name is longer than the presentation can read.**
   - The embedder wraps a font program in the container PowerPoint wants, whose header carries
     four names: the family, the style, a version and a full name it joins from the family and

@@ -640,12 +640,12 @@ public final class PptxRenderEnvironment {
      * can provoke.</p>
      *
      * <p>The refusal over the container is the one that mattered, and it is now spent
-     * before this: POI reads the EOT's names back into a thousand bytes and refuses a
-     * longer one <em>unchecked</em>, straight past this catch, so it cost the whole deck
-     * after the page had laid out. {@link PptxEmbeddedFont} measures the names where it
-     * writes them, which is where the limit is known and where a refusal is the checked
-     * one {@link #readPrograms} degrades a family on; so the writer is not handed a
-     * container it cannot read, on this path or the bundled one, which has no metrics
+     * before this: POI reads each of the container's names into a thousand bytes and
+     * refuses a longer one <em>unchecked</em>, straight past this catch, so it cost the
+     * whole deck after the page had laid out. {@link PptxEmbeddedFont} measures the header
+     * where it writes it, which is where the limit is known and where a refusal is the
+     * checked one {@link #readPrograms} degrades a family on; so the writer is not handed
+     * a container it cannot read, on this path or the bundled one, which has no metrics
      * pre-flight at all.</p>
      *
      * <p>Widening this catch instead would have swallowed the part store's failures with

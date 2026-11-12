@@ -38,7 +38,9 @@ final class FontNameTable {
      * @param font   a face with a format 0 name table
      * @param nameId the name ID to rewrite — 1 is the family, 2 the subfamily, 4 the full
      *               name
-     * @param value  the replacement string
+     * @param value  the replacement string. A platform 1 record stores a byte per
+     *               character, so anything outside Latin-1 becomes {@code ?} there — fine
+     *               for a length fixture, a trap for a test about the characters
      * @return the rewritten face
      */
     static byte[] with(byte[] font, int nameId, String value) {

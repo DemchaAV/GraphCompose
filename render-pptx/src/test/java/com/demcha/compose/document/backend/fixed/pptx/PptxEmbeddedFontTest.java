@@ -1,6 +1,8 @@
 package com.demcha.compose.document.backend.fixed.pptx;
 
 import org.apache.poi.common.usermodel.fonts.FontHeader;
+import org.apache.poi.xslf.usermodel.XMLSlideShow;
+import org.apache.poi.xslf.usermodel.XSLFFontInfo;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -39,38 +41,54 @@ class PptxEmbeddedFontTest {
     }
 
     @Test
-    void aNameThePresentationCannotReadBackIsRefusedHere() throws Exception {
-        // The container's names are measured where they are written, because the reader
-        // they have to clear refuses unchecked and from inside the hand-over, where a
-        // refusal no longer costs only the font. Both sides of the limit are asserted
-        // against that reader itself, so the number here cannot drift from the one POI
-        // actually applies.
+    void aHeaderThePresentationCannotReadBackIsRefusedHere() throws Exception {
+        // The header is measured where it is written, against the tighter of the two
+        // thousand-byte windows the presentation reads it through: taking the face reads
+        // each name on its own, and reading the written part back takes the first thousand
+        // bytes of it and parses the whole header out of those. Both sides of that limit
+        // are asserted against POI itself, so the number here cannot be tighter than what
+        // the presentation accepts nor looser than what it reads.
+        //
+        // A header moves in fours — the family is written twice, alone and inside the full
+        // name — so 998 is the largest one a face can express and 1,002 the smallest that
+        // is too big. These are that pair, at the family: 218 characters make a 436-byte
+        // record and, with "Regular", a 452-byte full name, so 96 + 436 + 14 + 452 = 998;
+        // 219 make 438 and 454, so 1,002.
         byte[] face = PptxDeck.face("fonts/google/lato/Lato-Regular.ttf");
 
-        // Just inside: a 490-character family makes a 980-byte name record and, with
-        // "Regular", a 996-byte full name. Reading it back through POI's own reader is the
-        // premise for the number — a limit tighter than POI's would fail here, and the
-        // embedder would be refusing faces the presentation can carry.
-        byte[] insideTheLimit = PptxEmbeddedFont.wrap(new ByteArrayInputStream(
-                FontNameTable.with(face, 1, "N".repeat(490))));
+        byte[] largestReadable = PptxEmbeddedFont.wrap(new ByteArrayInputStream(
+                FontNameTable.with(face, 1, "N".repeat(218))));
         FontHeader header = new FontHeader();
         try (InputStream parsed = header.bufferInit(
-                new ByteArrayInputStream(insideTheLimit))) {
-            assertThat(parsed).isNotNull();
+                new ByteArrayInputStream(largestReadable))) {
             assertThat(header.getFamilyName())
-                    .as("the presentation's reader takes the longest name the embedder "
-                            + "will write, and reads it back whole")
-                    .hasSize(490);
+                    .as("the hand-over's reader takes it")
+                    .hasSize(218);
+            assertThat(parsed.readNBytes(4))
+                    .as("and the container it was read from is the one written")
+                    .containsExactly(largestReadable[0], largestReadable[1],
+                            largestReadable[2], largestReadable[3]);
+        }
+        try (XMLSlideShow show = new XMLSlideShow()) {
+            XSLFFontInfo embedded = new XSLFFontInfo(show, "Largest");
+            embedded.addFacet(new ByteArrayInputStream(largestReadable));
+            assertThat(embedded.getFacets())
+                    .as("and the part it writes reads back, which the per-name limit alone "
+                            + "did not give: a header of 1,002 is inside that limit and "
+                            + "still overruns the thousand bytes this read takes")
+                    .singleElement()
+                    .satisfies(facet -> assertThat(facet.getWeight()).isEqualTo(400));
         }
 
-        // Just outside, and outside on the *derived* name: the family's own record is 994
-        // bytes, inside the limit, while the full name the container joins from the family
-        // and the style is 1,010 — which is the shape of the face that used to cost a deck.
         assertThatThrownBy(() -> PptxEmbeddedFont.wrap(new ByteArrayInputStream(
-                FontNameTable.with(face, 1, "N".repeat(497)))))
-                .as("a name past it is refused here, checked, with both numbers named")
+                FontNameTable.with(face, 1, "N".repeat(219)))))
+                .as("four bytes more is refused here, checked, with the header and the "
+                        + "limit named")
                 .isInstanceOf(IOException.class)
-                .hasMessageContaining("1010")
-                .hasMessageContaining("1000");
+                .hasMessageContaining("1002")
+                .hasMessageContaining("1000")
+                .as("and with each name's own length, since the one that overflows is the "
+                        + "joined full name, which no record of the font carries")
+                .hasMessageContaining("full name 454");
     }
 }

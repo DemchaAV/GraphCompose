@@ -23,28 +23,45 @@ final class PptxEmbeddedFont {
     private static final int RESTRICTED_LICENSE_EMBEDDING = 0x0002;
     private static final int BITMAP_EMBEDDING_ONLY = 0x0200;
     /**
-     * The longest name, in bytes, the presentation writer will read back out of an EOT.
+     * The most of a container's header, in bytes, a presentation will read.
      *
-     * <p>POI reads each of the container's names through
-     * {@code IOUtils.safelyAllocate(nameSize, 1000)} and refuses a longer one — with an
-     * unchecked {@code RecordFormatException}, raised inside {@code XSLFFontInfo.addFacet},
-     * which is past the point where a refusal still costs only the font. So the names are
-     * measured here, where a refusal is the checked one {@code readPrograms} already
-     * degrades a family on, and the writer is never handed a container it cannot read.</p>
+     * <p>PowerPoint's font part begins with a header carrying four names — the family, the
+     * style, a version and a full name joined from the family and the style — and the
+     * presentation reads them back through two windows of a thousand bytes each, the
+     * tighter of which this is. Taking the face reads <em>each</em> name through
+     * {@code IOUtils.safelyAllocate(nameSize, 1000)}; reading the written part back later
+     * takes the first thousand bytes of it and parses the header out of those, so the
+     * fixed 96 bytes and all four names together have to fit. A header past the first
+     * limit costs the render — an unchecked {@code RecordFormatException} from inside
+     * {@code XSLFFontInfo.addFacet}, past the point where a refusal still costs only the
+     * font — and one past the second writes a part that reads back as
+     * {@code Buffer overrun, having 1000 bytes in the stream}. Both are measured here,
+     * where a refusal is the checked one {@code readPrograms} already degrades a family on,
+     * against the stricter of the two.</p>
      *
-     * <p>It has to be measured here rather than left to the readers before it: the full
-     * name below is the family and the style joined, and {@code java.awt.Font.createFont},
-     * which the viewer metrics are read through and which does reject an over-long family
-     * or full <em>name record</em>, never reads the style record at all. A face whose
-     * subfamily name is long therefore passes every read and refused in the writer — the
-     * shipped Lato-Regular with a 496-character subfamily makes a 1,002-byte full name,
-     * and cost the whole deck.</p>
+     * <p>It has to be measured here rather than left to the readers in front of this one.
+     * {@code java.awt.Font.createFont}, which the viewer metrics are read through, rejects
+     * an over-long family or full <em>name record</em> but never reads the style record at
+     * all, and the full name is the family and the style joined. A face whose subfamily
+     * name is long therefore passes every read before the writer: Lato-Regular rewritten
+     * with a 496-character subfamily makes a 1,002-byte full name, and cost the whole
+     * deck.</p>
      *
-     * <p>POI's limit is a default: a host that lowers it with
-     * {@code IOUtils.setByteArrayMaxOverride} lowers what the writer reads back, so this is
-     * a floor rather than a guarantee.</p>
+     * <p>A header moves in steps of four bytes, since the family is written twice — alone
+     * and inside the full name — so no face can express a header of exactly a thousand:
+     * 998 is the largest one there is, and 1,002 the smallest that is too big. Any limit
+     * from 998 to 1,001 is the same limit as far as a font is concerned.</p>
+     *
+     * <p>The thousand is POI's default, which a host can lower with
+     * {@code IOUtils.setByteArrayMaxOverride}, so this is a floor rather than a
+     * guarantee.</p>
      */
-    private static final int MAX_NAME_BYTES = 1000;
+    private static final int MAX_READABLE_HEADER_BYTES = 1000;
+    /**
+     * What the presentation's reader consumes before the names: 80 bytes of fixed fields,
+     * then a 2-byte padding and a 2-byte length for each of the four.
+     */
+    private static final int READER_FIXED_HEADER_BYTES = 96;
 
     private PptxEmbeddedFont() {
     }
@@ -58,6 +75,7 @@ final class PptxEmbeddedFont {
         byte[] style = utf16(metadata.styleName());
         byte[] version = utf16(metadata.versionName());
         byte[] full = utf16(metadata.fullName());
+        validateReadableHeader(family, style, version, full);
         int eotSize = Math.addExact(
                 Math.addExact(EOT_FIXED_HEADER_SIZE, fontData.length),
                 Math.addExact(Math.addExact(family.length, style.length),
@@ -161,18 +179,34 @@ final class PptxEmbeddedFont {
         return normalized;
     }
 
-    private static byte[] utf16(String value) throws IOException {
-        byte[] encoded = value.getBytes(StandardCharsets.UTF_16LE);
-        if (encoded.length > MAX_NAME_BYTES) {
-            // Refused rather than shortened: what a viewer matches an embedded program to
-            // its declared typeface by is not something this backend has measured, so
-            // trimming a name the deck would then carry risks a program no viewer uses,
-            // where not carrying it is the degradation the embedder already warns about.
-            throw new IOException("PPTX embedded-font name is " + encoded.length
-                    + " bytes, past the " + MAX_NAME_BYTES
-                    + " a presentation reads back for one");
+    private static byte[] utf16(String value) {
+        return value.getBytes(StandardCharsets.UTF_16LE);
+    }
+
+    /**
+     * Refuses a header the presentation would not read back whole.
+     *
+     * <p>Refused rather than shortened: what a viewer matches an embedded program to its
+     * declared typeface by is not something this backend has measured, so trimming a name
+     * the deck would then carry risks a program no viewer uses, where not carrying it is
+     * the degradation the embedder already warns about.</p>
+     *
+     * <p>Each name's own length is named in the message, not only the total, because the
+     * one that overflows is usually the full name — which no record of the font carries,
+     * being joined here from the other two — so a total on its own matches nothing a
+     * caller can look for in their font.</p>
+     */
+    private static void validateReadableHeader(byte[] family, byte[] style, byte[] version,
+                                               byte[] full) throws IOException {
+        int header = READER_FIXED_HEADER_BYTES
+                + family.length + style.length + version.length + full.length;
+        if (header > MAX_READABLE_HEADER_BYTES) {
+            throw new IOException("PPTX embedded-font header is " + header
+                    + " bytes, past the " + MAX_READABLE_HEADER_BYTES
+                    + " a presentation reads: family " + family.length + ", style "
+                    + style.length + ", version " + version.length + ", full name "
+                    + full.length + " (the full name is the family and the style joined)");
         }
-        return encoded;
     }
 
     private static void putName(ByteBuffer target, byte[] encoded) {

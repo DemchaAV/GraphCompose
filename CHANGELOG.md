@@ -7,32 +7,36 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
-- **A PPTX export writes its deck when a face's name is longer than the presentation can read
-  back.**
-  - The embedder wraps a font program in the container PowerPoint wants, which carries four
-    names: the family, the style, a version and a full name it joins from the family and the
-    style. The presentation reads all four back when it takes the face, each into a thousand
-    bytes, and refuses a longer one with an unchecked `RecordFormatException` — raised inside
-    `XSLFFontInfo.addFacet`, past the point where a refusal still costs only the font. So a
-    registered family with a long name cost the whole deck, after the page had laid out, and
-    whether or not any text was drawn in it.
-  - The readers in front of the writer did not close it, because they do not read the same
+- **A PPTX export writes its deck when a face's name is longer than the presentation can read.**
+  - The embedder wraps a font program in the container PowerPoint wants, whose header carries
+    four names: the family, the style, a version and a full name it joins from the family and
+    the style. The presentation reads that header through two windows of a thousand bytes each.
+    Taking the face reads *each name* on its own, and refuses a longer one with an unchecked
+    `RecordFormatException` — raised inside `XSLFFontInfo.addFacet`, past the point where a
+    refusal still costs only the font, so a registered family with a long name cost the whole
+    deck, after the page had laid out and whether or not any text was drawn in it. Reading the
+    written part back later takes the first thousand bytes of it and parses the header out of
+    those, so a header past 1,000 — the fixed 96 bytes and the four names together — wrote a
+    deck whose font part came back as `Buffer overrun, having 1000 bytes in the stream`.
+  - The readers in front of the writer did not close either, because they do not read the same
     names. `java.awt.Font.createFont`, which the viewer metrics are read through, rejects a
     family or full-name *record* over 256 bytes — but it never reads the style record at all.
-    A face whose subfamily name is long therefore passed every read: the shipped Lato-Regular
-    with a 496-character subfamily makes a 1,002-byte full name, and lost the deck. 495 renders.
-  - The names are now measured where the container is built, so a face the presentation could
-    not read a name of degrades the family exactly as an unreadable program does: nothing of the
-    family is carried, `render.pptx.font.embed.skipped` names the face and the two lengths,
-    `render.pptx.font.substitution` says the deck does not carry it, and the deck is written.
-    That covers the bundled path too, which has no metrics pre-flight. A face whose names fit is
-    carried exactly as before — the limit is the presentation's own, and a name of exactly it is
-    still written and read back whole.
+    A face whose subfamily name is long therefore passed every read: Lato-Regular rewritten with
+    a 496-character subfamily makes a 1,002-byte full name and lost the deck, and from a
+    222-character one the deck was written with a part POI could not read back.
+  - The header is now measured where the container is built, against the stricter of the two
+    windows, so such a face degrades the family exactly as an unreadable program does: nothing
+    of the family is carried, `render.pptx.font.embed.skipped` names the face, the header and
+    each of the four names, `render.pptx.font.substitution` says the deck does not carry it, and
+    the deck is written — with its text, where the page drew in that family. That covers the
+    bundled path too, which has no metrics pre-flight. A face whose header fits is carried
+    exactly as before: a header moves in steps of four, since the family is written twice, so
+    998 bytes is the largest any face can express and that one is still written and read back
+    whole. No bundled face comes near it — the heaviest header among the 130 is 250 bytes.
   - Refused rather than shortened, because what a viewer matches an embedded program to its
     declared typeface by has not been measured here, so trimming a name would risk a deck
-    carrying a program no viewer uses. The limit is POI's default: a host that lowers it with
-    `IOUtils.setByteArrayMaxOverride` lowers what the presentation reads back, so the check is a
-    floor rather than a guarantee.
+    carrying a program no viewer uses. The thousand is POI's default, which a host can lower
+    with `IOUtils.setByteArrayMaxOverride`, so the check is a floor rather than a guarantee.
   - Rolling the hand-over back instead would not have helped: at that refusal the writer throws
     in its first statement, before the part, the dataId and the embedded-font flags, so there is
     one declaration behind it and nothing to undo. Widening the catch there would have swallowed
@@ -99,7 +103,7 @@ follow semantic versioning; release dates are ISO 8601.
     the declaration the `XSLFFontInfo` constructor makes on every call, while the part, the
     dataId and the embedded-font flags come after and a refusal among those is POI's own part
     store failing. The refusal over the container is handled before it now — see the entry
-    below — so what is left here is the part store, which no font can provoke.
+    above — so what is left here is the part store, which no font can provoke.
   - A family the deck actually draws in still fails the render, and with the same message:
     the page cannot measure a face it cannot read, which happens before a slide is built.
 - **A PPTX substitution warning no longer claims a reference the deck does not make.** All four
@@ -131,16 +135,20 @@ follow semantic versioning; release dates are ISO 8601.
 ### Tests
 
 - `PptxUnreadableFontSourceTest` now reaches the writer itself, at two name IDs rather than one.
-  Varying only the family name measures the two readers agreeing — both read that one — where
-  the gap between them is the subfamily, which only the presentation reads. So the long-name case
-  and its control each run over the family and the subfamily, and the control's length differs
-  per name because each name's binding limit belongs to a different reader: a family has to clear
-  `Font.createFont`'s 256-byte record first, at 128 characters, while a subfamily is bound only
-  by the presentation's thousand bytes over the joined full name, at 400. Without the control a
-  refusal would prove only that rewriting a name table breaks a font. `PptxEmbeddedFontTest`
-  holds both sides of the limit against POI's own reader, so the number in the embedder cannot
-  drift from the one POI applies, and `FontNameTable` carries the name-table rewriting the two
-  share.
+  Varying only the family name measures the two readers agreeing — both read that one — where the
+  gap between them is the subfamily, which only the presentation reads. So the long-name case and
+  its control each run over the family and the subfamily, and the control's length differs per
+  name because their binding limits belong to different readers: a family has to clear
+  `Font.createFont`'s 256-byte record first, so its control stays short of that cliff, while a
+  subfamily is bound only by the header the presentation reads back, where 221 characters is the
+  longest that fits. The control also reads the written deck's font declaration back, since
+  travelling is not enough: the header the hand-over accepts can still be one the presentation
+  cannot read out of the part it wrote, and that was true of the first version of this control.
+  A third case holds the user-visible half, a family the page draws in keeping its text and
+  losing only the program. `PptxEmbeddedFontTest` holds both sides of the limit against POI's own
+  readers — the largest header a face can express is written, handed over and read back out of
+  the part, and four bytes more is refused — and `FontNameTable` carries the name-table rewriting
+  they share.
 - `PptxEmbeddedFontDeclarationTest` holds what a deck says about the programs it carries. POI's
   blank presentation asks for subsetting and every face it takes asks again, so a deck that
   carries a program — registered, bundled, or both — has to say the opposite, since nothing here

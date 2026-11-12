@@ -432,6 +432,11 @@ class DocxFontTableTest {
             assertThat(lineOf(shared.document(), 0))
                     .as("the family that keeps the name is unaffected")
                     .isEqualTo("336 atLeast");
+            // Where the written height comes from, so the figure below is not a bare one: the
+            // page's own measurement of the face those runs are set in, which is the whole of
+            // what the paragraph can say once no line is read for it.
+            DocxNaturalLine monoLine = DocxNaturalLine.of(monoRegular());
+            assertThat(Math.round((monoLine.ascent() + monoLine.descent()) * 14 * 20)).isEqualTo(364);
             assertThat(lineOf(shared.document(), 1)).isEqualTo("364 exact");
         }
     }

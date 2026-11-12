@@ -110,6 +110,26 @@ public final class PptxRenderEnvironment {
             };
         }
     }
+
+    /**
+     * A face already seated in a style slot, as a refusal over that slot has to name it.
+     *
+     * <p>Its own weight, not the colliding face's: the two differ — a bold slot holding a
+     * 300-weight face collides with a 400-weight regular — and the weight is what a caller
+     * can go and look for in their font, so naming one of the two for both would send them
+     * after the wrong face. The italic flag is not here because the two always agree on it:
+     * the slot is read from the weight's side of 400 and that flag, so faces that share a
+     * slot share the flag.</p>
+     *
+     * <p>Not a {@link Face}, which is the slot a family <em>registers</em> a face under. The
+     * slot a refusal is about is the one the container reads back as, and the whole of what
+     * is guarded is that the two need not agree.</p>
+     *
+     * @param description the source the face was read from, as it names itself
+     * @param weight      that face's own weight, as the presentation reads it
+     */
+    private record Seated(String description, int weight) {
+    }
     /** Bundled families that carry a binary, i.e. the ones the embedder can take. */
     private static final Map<FontName, FontFamilyDefinition> EMBEDDABLE_BUNDLED =
             DefaultFonts.bundledFamilies().stream()
@@ -586,6 +606,34 @@ public final class PptxRenderEnvironment {
      * restricted face carries neither, where it used to carry the first. It does not hold
      * for the presentation refusing a face it is handed: see {@link #handOverPrograms}.</p>
      *
+     * <p>One refusal is the family's rather than a face's, and belongs here for that
+     * reason: a presentation seats a face in one of four style slots, chosen off the
+     * container, and holds one face in each. Two faces of a family that read back as the
+     * same slot cannot both travel, and the slot a face lands in is not the slot it was
+     * registered under — a face in the bold slot whose own weight is 400 or less reads
+     * back as the regular one. That used to end with the deck carrying the later face's
+     * program under the earlier face's declaration, and nothing said: the presentation
+     * reports the family as embedded, and every run of it, the regular ones included, is
+     * drawn from the one program that survived. Refused rather than resolved, because the
+     * slot is the presentation's answer and not a choice this backend has: there is no
+     * fifth slot to move a face to, and the two that collide agree on the fields the slot
+     * is read from. Refused for the family rather than the face for the reason the other
+     * refusals here have on the registered path — keeping the first would leave the family
+     * its viewer metrics while a face of it did not travel — and, on the bundled path,
+     * which has no metrics to keep, because this method answers whole-or-nothing for a
+     * family either way and a deck that carries some of one is what the caller's
+     * substitution warning cannot describe.</p>
+     *
+     * <p>What this does <em>not</em> cover: the slot's capacity belongs to a declared
+     * typeface, and this answers for one definition's faces. Two definitions whose
+     * {@link FontFamilyDefinition#wordFamily()} is the same share one font-list entry —
+     * {@code XSLFFontInfo} matches an existing one by typeface, ignoring case — so each
+     * passes its own slots here and the second still writes over the first's part.
+     * Measured: two definitions registered under one {@code wordFamily}, each with a single
+     * regular face, leave one part holding the second face's bytes with nothing said. That
+     * is a different question — which of two families a refusal should cost — and is not
+     * decided here.</p>
+     *
      * <p>Nothing of the presentation is touched here, so a refusal costs the deck the
      * family and nothing else. Answers {@code null} where a face refused, having named it
      * in the log; the caller reports the family. The cost of buffering is that one
@@ -599,6 +647,7 @@ public final class PptxRenderEnvironment {
                                                     FontFamilyDefinition.FontSourceSet sources,
                                                     Set<Face> faces) {
         Map<String, byte[]> programs = new LinkedHashMap<>();
+        Map<String, Seated> bySlot = new LinkedHashMap<>();
         for (FontFamilyDefinition.FontBinarySource source
                 : faces.stream().map(face -> face.in(sources)).toList()) {
             // Named before it is read, so a source that cannot even say what it is still
@@ -611,9 +660,35 @@ public final class PptxRenderEnvironment {
                 if (programs.containsKey(description)) {
                     continue;
                 }
+                byte[] container;
                 try (InputStream stream = source.openStream()) {
-                    programs.put(description, PptxEmbeddedFont.wrap(stream));
+                    container = PptxEmbeddedFont.wrap(stream);
                 }
+                // Which slot the face is seated in is not the slot it was registered under:
+                // a presentation reads it off the container, so a face put in one slot of
+                // the family travels in whichever one its own weight and italic flag name.
+                // Two faces naming the same slot cannot both be carried — there are four and
+                // the second overwrites the first's part — so this answers for the family
+                // the way every other refusal here does, rather than letting the deck keep
+                // the last one under the first one's declaration.
+                PptxEmbeddedFont.Style style = PptxEmbeddedFont.styleOf(container);
+                // containsKey, so the branch reads as "this slot is taken" rather than as
+                // something about the face in it. putIfAbsent would do the same here, since
+                // what is stored is a record this method builds and so is never null; the
+                // two part company only for a map whose value could be, which this one's was
+                // before the seated face's own weight had to be kept.
+                if (bySlot.containsKey(style.slot())) {
+                    Seated seated = bySlot.get(style.slot());
+                    throw new IOException("a presentation seats one face per style and reads "
+                            + "the style off the face: \"" + seated.description()
+                            + "\" (weight " + seated.weight() + ") and \"" + description
+                            + "\" (weight " + style.weight() + ") both read back as "
+                            + style.slot() + ", italic " + style.italic()
+                            + ", so a deck carrying both would hold only the second, under "
+                            + "the declaration the first made");
+                }
+                bySlot.put(style.slot(), new Seated(description, style.weight()));
+                programs.put(description, container);
             } catch (IOException | RuntimeException exception) {
                 // A source may fail unchecked: the classpath one reports a missing resource
                 // with an IllegalArgumentException. Named here and the family degrades, as
@@ -650,6 +725,14 @@ public final class PptxRenderEnvironment {
      * <p>Widening this catch instead would have swallowed the part store's failures with
      * it and left a deck in exactly the half-written state above, which is why the guard
      * sits where the container is built rather than here.</p>
+     *
+     * <p>One thing the writer does not refuse at all: a second face seated in a style slot
+     * a face already holds. It takes the {@code dataId} the first one wrote and writes over
+     * that part, so nothing arrives here to catch and the deck comes out carrying the later
+     * face under the earlier one's declaration. For the faces of one definition that is
+     * spent before the hand-over, in {@link #readPrograms}, which is where a definition's
+     * faces are read together. Across definitions sharing one {@code wordFamily} it is not:
+     * see the note there.</p>
      *
      * @return whether the presentation took every program it was handed
      */

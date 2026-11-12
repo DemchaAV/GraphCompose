@@ -4,6 +4,7 @@ import org.apache.fontbox.ttf.FontHeaders;
 import org.apache.fontbox.ttf.OS2WindowsMetricsTable;
 import org.apache.fontbox.ttf.OTFParser;
 import org.apache.pdfbox.io.RandomAccessReadBuffer;
+import org.apache.poi.common.usermodel.fonts.FontHeader;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -121,6 +122,56 @@ final class PptxEmbeddedFont {
         eot.putShort((short) 0); // empty root string (EOT 0x00020001)
         eot.put(fontData);
         return eot.array();
+    }
+
+    /**
+     * How a presentation will seat a container this class built.
+     *
+     * <p>{@code slot} is the element the font list declares the face under —
+     * {@code regular}, {@code bold}, {@code italic} or {@code boldItalic} — and the other
+     * two are the fields that decide it, carried so a refusal can say what made two faces
+     * collide rather than only that they did.</p>
+     *
+     * @param slot   the font list element the face would be declared under
+     * @param weight the container's weight, as the presentation reads it
+     * @param italic the container's italic flag, as the presentation reads it
+     */
+    record Style(String slot, int weight, boolean italic) {
+    }
+
+    /**
+     * Reads back the style a presentation will seat this container in.
+     *
+     * <p>Read through POI's own {@link FontHeader}, the reader
+     * {@code XSLFFontInfo.addFacet} decides the slot with, rather than from the fields
+     * this class put in the buffer: the slot is that reader's answer, and a second
+     * derivation of it here could drift from it without either side being wrong on its own
+     * terms. The four-way split below is the same one {@code addFacet} switches on, where
+     * {@link FontHeader#isBold()} is {@code getWeight() > 400} written as a predicate.</p>
+     *
+     * <p>There are four slots and no more, and a presentation holds one face in each: a
+     * second face seated in a slot overwrites the part the first one wrote, keeping the
+     * declaration the first made. So the slot is not a label but a capacity, which is why
+     * the caller treats two faces reading back the same one as a refusal.</p>
+     *
+     * <p>A {@code String} naming the font-list element rather than the caller's own
+     * four-valued {@code Face}, and not a duplicate of it: {@code Face} is the slot a
+     * family <em>registers</em> a face under, this is the element the presentation
+     * <em>declares</em> it under, and the whole of what is guarded here is that the two
+     * need not agree. Spelling it as the element keeps the refusal's wording and the
+     * written {@code p:} tag the same string.</p>
+     *
+     * @param container a container {@link #wrap} built
+     * @return the slot it would be seated in, and the two fields that decide it
+     */
+    static Style styleOf(byte[] container) {
+        FontHeader header = new FontHeader();
+        header.init(container, 0, container.length);
+        boolean bold = header.isBold();
+        boolean italic = header.isItalic();
+        String slot = bold && italic ? "boldItalic"
+                : bold ? "bold" : italic ? "italic" : "regular";
+        return new Style(slot, header.getWeight(), italic);
     }
 
     private static Metadata metadata(byte[] fontData) throws IOException {

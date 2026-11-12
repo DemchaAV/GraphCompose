@@ -516,6 +516,20 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
   format distinguishes embedding for reading and printing from embedding in a document
   someone will edit. A face that allows only the first is named but not shipped, with one
   warning naming the family.
+- **One face set per name.** A family declares itself in the font table by its
+  `wordFamily()`, which is not the name it was registered under, so two families can ask to
+  travel under one name — the same spelling, or one differing only in case. An editor reads
+  one of them: measured in Word 16 and LibreOffice 24.2, both set every run naming that
+  family in the face declared first, and ignored the later program, a slot the holder had
+  left empty included. The family that asks for a name another one already ships under is
+  therefore given up whole, and the report names both of them. Its runs still carry the
+  name, so its text is set in whatever that name resolves to where the document is read —
+  the face the other family shipped, or, where the editor knows the name itself, its own:
+  Word 16 drew its own Lato for a document declaring `Lato` with another family's program.
+  Which family keeps the name is decided by the document, not by the registration: the
+  faces are read in the order the document's tree names them, then the page zones', then
+  the header and footer bands', so a family set only in a zone or a band gives way to any
+  family the body is set in.
 
 Each face is stored the way Word stores one: the font with its first 32 bytes scrambled
 against a key the font table states beside it.

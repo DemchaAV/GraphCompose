@@ -55,6 +55,14 @@ import java.util.Set;
  * into" — this writes the second and refuses the first, with a line in the log naming the
  * family rather than a silent omission.</p>
  *
+ * <p>One face set per name an editor reads. A document can ask two families to travel under one
+ * name — {@link FontFamilyDefinition#wordFamily()} is set apart from the name a family is
+ * registered under — and an editor then draws both families' text from one of them: measured in
+ * Word 16 and LibreOffice 24.2, a document declaring two face sets under one name, and one
+ * declaring two whose names differ only in case, had both paragraphs set in the face declared
+ * first, the second program ignored. So the second family is given up here instead, and named
+ * ({@link #refuseForASharedName}).</p>
+ *
  * <p>The standard PDF faces are never written, and not because of their terms: they are
  * names, not files. Nothing ships Helvetica, and a reader opening the document has Word's
  * own substitution for it, which is what a PDF viewer does with the same document.</p>
@@ -158,6 +166,15 @@ final class DocxFontTable {
      * The line an editor sets each face the document ships in where nothing fixes the line's
      * height ({@link DocxNaturalLine}). A face it does not ship — a standard PDF name, one that
      * may not travel — is set in whatever the reader's machine substitutes, so it has none.
+     *
+     * <p>Kept under the declared name exactly as the runs spell it. One family is written per name
+     * ({@link #resolve}), so no two faces can meet over one of these keys.</p>
+     *
+     * <p>A family given up for a name another one declares keeps no line of its own here, by
+     * either route: where the two spellings are the same its runs read the key the holder filled,
+     * and where they differ in case the key their spelling makes is not in the map at all. What
+     * its paragraphs are written with is pinned in both pairings by {@code DocxFontTableTest},
+     * because the two reach this map differently and the writer is what decides from there.</p>
      */
     static final class ShippedLines {
         /** No face shipped: an export written without a font table. */
@@ -284,8 +301,16 @@ final class DocxFontTable {
         return families;
     }
 
-    /** One family that will be written, and the faces of it that may be. */
-    private record Embedded(String wordFamily, List<Face> faces) {
+    /**
+     * One family that will be written, and the faces of it that may be.
+     *
+     * @param registered the name the family was registered under, which a refusal crossing two
+     *                   families needs: the two agree on {@code wordFamily} and this is what
+     *                   tells them apart
+     * @param wordFamily the name the font table declares the family under
+     * @param faces      the faces of it the document ships
+     */
+    private record Embedded(FontName registered, String wordFamily, List<Face> faces) {
     }
 
     /**
@@ -337,6 +362,21 @@ final class DocxFontTable {
      * <p>A face name resolves to its family first: a style naming {@code Helvetica-Bold}
      * asks for the Helvetica family, which is a name rather than a file and ships
      * nothing.</p>
+     *
+     * <p>One face set per name the editor reads. Two families can declare one name — the same
+     * name, or one differing only in case — because the families are kept by the name they were
+     * registered under, which is a different name from the one they declare. The first to ship a
+     * face keeps the name and the rest are given up ({@link #refuseForASharedName}). Which is
+     * first is decided by the document: the faces are read in the order the document's tree names
+     * them, then the page zones', then the header and footer bands', so a family registered
+     * earlier and set in text later gives way to one set in text before it, and a family set only
+     * in a page zone or a band gives way to any family the body is set in. That is the opposite of
+     * the PPTX backend, where a registered family is carried before anything is drawn and so holds
+     * the name whether its text is on a slide or not.</p>
+     *
+     * <p>A family whose every face is given up — one that may not travel, one that cannot be read
+     * — writes no {@code w:font} and so keeps no name: the name is taken where a face is
+     * actually shipped under it, not where one was asked for.</p>
      */
     private static List<Embedded> resolve(DocumentGraph graph,
                                           List<DocumentNode> zones,
@@ -355,19 +395,91 @@ final class DocxFontTable {
             return List.of();
         }
 
+        // Read by family and not by the name a style used: a style can name a face of a family
+        // and the family itself, and both ask for that one family. Folded first, the family is
+        // read once with every slot asked of it anywhere, so it writes one element holding them
+        // all; read per name it wrote one element per name, which is the collision below with a
+        // family on both sides of it.
+        Map<FontName, Set<Slot>> byFamily = new LinkedHashMap<>();
+        used.forEach((named, slots) -> byFamily
+                .computeIfAbsent(FontLibrary.resolveFamily(named), key -> java.util.EnumSet.noneOf(Slot.class))
+                .addAll(slots));
+
         List<Embedded> embedded = new ArrayList<>();
-        for (Map.Entry<FontName, Set<Slot>> entry : used.entrySet()) {
-            FontFamilyDefinition family = families.get(FontLibrary.resolveFamily(entry.getKey()));
+        for (Map.Entry<FontName, Set<Slot>> entry : byFamily.entrySet()) {
+            FontFamilyDefinition family = families.get(entry.getKey());
             if (family == null || family.fontSourceSet().isEmpty()) {
                 // A standard-14 name, or one nothing registered: there is no file to ship.
                 continue;
             }
+            Embedded holder = declaring(embedded, family.wordFamily());
+            if (holder != null) {
+                refuseForASharedName(family, holder, report);
+                continue;
+            }
             List<Face> faces = facesOf(family, entry.getValue(), report);
             if (!faces.isEmpty()) {
-                embedded.add(new Embedded(family.wordFamily(), faces));
+                embedded.add(new Embedded(family.name(), family.wordFamily(), faces));
             }
         }
         return embedded;
+    }
+
+    /**
+     * The family already written under that name, or null where the name is free.
+     *
+     * <p>A list walked with {@link String#equalsIgnoreCase}, not a map on a case-folded key:
+     * the comparison has to be case-insensitive, because both editors were measured to draw a
+     * run from a face set declared under the name in another case, and it has to fold the same
+     * way wherever the export runs. {@code FontName}'s own equality, which this would otherwise
+     * reuse, does not: it normalizes with {@code toLowerCase()} and so follows the default locale,
+     * which would fold two names together on one machine and not on another. A document declares
+     * a handful of families, so the walk costs nothing worth saving.</p>
+     */
+    private static Embedded declaring(List<Embedded> embedded, String wordFamily) {
+        for (Embedded written : embedded) {
+            if (written.wordFamily().equalsIgnoreCase(wordFamily)) {
+                return written;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Gives up a family whose name another one already declares, and says so.
+     *
+     * <p>Whole, as a family with an unreadable face is given up whole: a face of it bound for a
+     * slot the holder leaves empty does not travel either, because a second {@code w:font} under
+     * the name is not read at all — measured, a family declaring only {@code embedBold} beside a
+     * holder declaring only {@code embedRegular} had its bold program ignored by both editors.</p>
+     *
+     * <p>Its runs still name it, so they are set in whatever that name resolves to where the
+     * document is read, which is the holder's face in both editors measured, except where the
+     * editor knows the name itself: Word 16 drew its own Lato for a document declaring Lato over
+     * another family's program. What this does not do is make the given-up family's text right —
+     * it is still set in a face it was not laid out in. It makes the export say so.</p>
+     *
+     * <p>This comes before the family's faces are read, so a family given up for its name is
+     * reported for that and not for the terms or the readability of faces that are never opened:
+     * one line about a family, naming what stopped it first.</p>
+     */
+    private static void refuseForASharedName(FontFamilyDefinition family,
+                                             Embedded holder,
+                                             DocxExportReport.Builder report) {
+        LOG.warn("DocxSemanticBackend: '{}' is set in the Word name '{}', which '{}' already ships "
+                 + "as '{}'; a document ships one face set per name, matched without case, so '{}' "
+                 + "travels with nothing and its text is set in whatever that name resolves to",
+                family.name().name(),
+                family.wordFamily(), holder.registered().name(), holder.wordFamily(),
+                family.name().name());
+        report.add(DocxExportReport.Severity.DROPPED, "embedded font", null,
+                "'" + family.name().name() + "' is set in the Word name '" + family.wordFamily()
+                + "', which '" + holder.registered().name() + "' already ships as '"
+                + holder.wordFamily() + "'; a document ships one face set per name, matched "
+                + "without case, so '" + family.name().name() + "' travels with nothing and its "
+                + "runs, which carry its own name, are set in whatever that name resolves to — the "
+                + "face '" + holder.registered().name() + "' ships under it, or, where the editor "
+                + "knows the name itself, its own");
     }
 
     /** Which of a family's four faces a document asked for. */

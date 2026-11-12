@@ -15,6 +15,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
+import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontName;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -47,6 +48,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Artem Demchyshyn
  */
 class DocxFontTableTest {
+
+    private static final String LATO_REGULAR = "fonts/google/lato/Lato-Regular.ttf";
+    private static final String MONO_REGULAR = "fonts/google/ibmplexmono/IBMPlexMono-Regular.ttf";
+    private static final String MONO_BOLD = "fonts/google/ibmplexmono/IBMPlexMono-Bold.ttf";
+    /**
+     * The names two families are registered under in the tests of one declared name. Two faces of
+     * plainly different widths, so which of them a part holds is read off the file and not off a
+     * length alone: Lato is proportional, IBM Plex Mono is not.
+     */
+    private static final FontName SHIPPED_LATO = FontName.of("shipped-lato");
+    private static final FontName SHIPPED_MONO = FontName.of("shipped-mono");
 
     @Test
     void aBundledFamilyTravelsWithTheDocument() throws Exception {
@@ -237,6 +249,288 @@ class DocxFontTableTest {
                 .anySatisfy(paragraph -> assertThat(paragraph.getText()).contains("Set in a face that stays home"));
     }
 
+    @Test
+    void twoFamiliesUnderOneNameShipOneFaceSet() throws Exception {
+        // Measured in Word 16 and LibreOffice 24.2: a document declaring two face sets under one
+        // name had both paragraphs set in the face declared first, the later program ignored. So
+        // the later family travels with nothing rather than with a face no editor reads.
+        try (Shipped shipped = exportSetIn(List.of(latoAs("ExactShared"), monoAs("ExactShared")),
+                List.of(face(SHIPPED_LATO), face(SHIPPED_MONO)))) {
+
+            assertThat(families(shipped.document())).containsExactly("ExactShared");
+            assertShipsOneFace(shipped.document(), latoRegular());
+        }
+    }
+
+    @Test
+    void aNameDifferingOnlyInCaseIsTheSameName() throws Exception {
+        // Measured in both editors: a run naming the second spelling was set in the face declared
+        // under the first, so the two spellings are one name and not two.
+        try (Shipped shipped = exportSetIn(List.of(latoAs("CaseShared"), monoAs("CASESHARED")),
+                List.of(face(SHIPPED_LATO), face(SHIPPED_MONO)))) {
+
+            assertThat(families(shipped.document()))
+                    .as("declared once, spelled as the family that keeps the name spells it")
+                    .containsExactly("CaseShared");
+            assertShipsOneFace(shipped.document(), latoRegular());
+        }
+    }
+
+    @Test
+    void aFamilyReachedByBothItsFamilyNameAndAFaceNameOfItWritesOneElement() throws Exception {
+        // A style can name a face of a family and the family itself, and both ask for that one
+        // family: the standard-14 face names resolve to theirs, so a family registered under one
+        // of those names is reached twice. Read per name it declared itself twice and so met
+        // itself over its own name; read by family it writes one element holding both slots.
+        FontFamilyDefinition ownHelvetica = FontFamilyDefinition.classpath(FontName.HELVETICA, LATO_REGULAR)
+                .boldResource(MONO_REGULAR).build();
+        try (Shipped shipped = exportSetIn(List.of(ownHelvetica),
+                List.of(face(FontName.HELVETICA), bold(FontName.HELVETICA_BOLD)))) {
+
+            assertThat(families(shipped.document()))
+                    .as("one element, not one per name a style used")
+                    .containsExactly("Helvetica");
+            assertThat(fontTable(shipped.document()))
+                    .as("holding every slot asked of the family, wherever it was asked for")
+                    .contains("<w:embedRegular")
+                    .contains("<w:embedBold");
+            assertThat(fontParts(shipped.document())).hasSize(2);
+            assertThat(shipped.report().notes())
+                    .as("a family does not give its own name up to itself")
+                    .noneMatch(note -> note.subject().equals("embedded font"));
+        }
+    }
+
+    @Test
+    void theDocumentAndNotTheRegistrationDecidesWhichFamilyKeepsTheName() throws Exception {
+        // Registered first and set in text second: the faces are read in the order the tree names
+        // them, so the family the first paragraph is set in keeps the name. The PPTX backend
+        // decides it the other way, by the registration, because it carries a registered family
+        // before anything is drawn.
+        try (Shipped shipped = exportSetIn(List.of(latoAs("ReverseShared"), monoAs("ReverseShared")),
+                List.of(face(SHIPPED_MONO), face(SHIPPED_LATO)))) {
+
+            assertThat(families(shipped.document())).containsExactly("ReverseShared");
+            assertShipsOneFace(shipped.document(), monoRegular());
+        }
+    }
+
+    @Test
+    void aGivenUpFamilysFreeSlotDoesNotTravelEither() throws Exception {
+        // Measured in both editors: a family declaring only embedBold, beside one declaring only
+        // embedRegular under the same name, had its bold program ignored — Word synthesised bold
+        // from the other family's regular face and LibreOffice drew it unemboldened. So a second
+        // entry under the name buys nothing even where the two families' slots do not meet.
+        FontFamilyDefinition mono = FontFamilyDefinition.classpath(SHIPPED_MONO, MONO_REGULAR)
+                .boldResource(MONO_BOLD).wordFamily("SlotsShared").build();
+        try (Shipped shipped = exportSetIn(List.of(latoAs("SlotsShared"), mono),
+                List.of(face(SHIPPED_LATO), bold(SHIPPED_MONO)))) {
+
+            assertThat(families(shipped.document())).containsExactly("SlotsShared");
+            assertThat(fontTable(shipped.document()))
+                    .contains("<w:embedRegular")
+                    .as("the bold face of the family given up does not travel either")
+                    .doesNotContain("<w:embedBold");
+            assertShipsOneFace(shipped.document(), latoRegular());
+        }
+    }
+
+    @Test
+    void aFamilyGivenUpForASharedNameIsNamedInTheReport() throws Exception {
+        try (Shipped shipped = exportSetIn(List.of(latoAs("ExactShared"), monoAs("ExactShared")),
+                List.of(face(SHIPPED_LATO), face(SHIPPED_MONO)))) {
+
+            assertShipsOneFace(shipped.document(), latoRegular());
+            assertThat(shipped.report().notes())
+                    .filteredOn(note -> note.subject().equals("embedded font"))
+                    .singleElement()
+                    .satisfies(note -> {
+                        assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.DROPPED);
+                        assertThat(note.detail())
+                                .as("both families, the name they both declare, and what a reader sees")
+                                .contains("'shipped-mono' is set in the Word name 'ExactShared'")
+                                .contains("'shipped-lato' already ships as 'ExactShared'")
+                                .contains("travels with nothing")
+                                .contains("its runs, which carry its own name")
+                                .contains("the face 'shipped-lato' ships under it");
+                    });
+        }
+    }
+
+    @Test
+    void theFamilyThatKeepsTheNameKeepsTheLineItsParagraphsMayGrowTo() throws Exception {
+        // The line each shipped face is set in is kept under the name the runs spell. With two
+        // face sets under one name, the later family's line stood under the same key and the
+        // holder's paragraph was written at an exact height instead of a least one: measured, the
+        // text then stood 0.36pt higher in Word 16 and 0.40pt higher in LibreOffice 24.2.
+        // At the size those two were measured at, so the line read here is the line measured.
+        DocumentTextStyle lato = DocumentTextStyle.builder().fontName(SHIPPED_LATO).size(14).build();
+        DocumentTextStyle mono = DocumentTextStyle.builder().fontName(SHIPPED_MONO).size(14).build();
+        DocxNaturalLine latoLine = DocxNaturalLine.of(latoRegular());
+        DocxNaturalLine monoLine = DocxNaturalLine.of(monoRegular());
+        assertThat(monoLine.ascent() + monoLine.descent())
+                .as("the premise the fixture rests on: the other face's line is the taller of the "
+                    + "two, so standing in for this one is what wrote an exact height")
+                .isGreaterThan(latoLine.ascent() + latoLine.descent());
+
+        try (Shipped alone = exportSetIn(List.of(latoAs("SoloLato")), List.of(lato));
+             Shipped shared = exportSetIn(List.of(latoAs("ExactShared"), monoAs("ExactShared")),
+                     List.of(lato, mono))) {
+
+            assertThat(lineOf(alone.document(), 0))
+                    .as("the premise: a face that travels alone sets a line its paragraph may grow to")
+                    .isEqualTo("336 atLeast");
+            assertThat(lineOf(shared.document(), 0))
+                    .as("the family that keeps the name is written as it is when it travels alone")
+                    .isEqualTo(lineOf(alone.document(), 0));
+            // The given-up family's runs spell the same name, so they read the key the holder
+            // filled rather than a line of their own, and their paragraph is written at the height
+            // the page measured with no least-height claim. The sibling test below reaches this
+            // map the other way — a spelling it does not hold — and lands on the same line.
+            assertThat(lineOf(shared.document(), 1)).isEqualTo("364 exact");
+        }
+    }
+
+    @Test
+    void aGivenUpFamilySpelledAnotherWayClaimsNoLineOfItsOwn() throws Exception {
+        // The other pairing of the same collision, which reaches the line map differently: the
+        // runs of the family given up spell the name their own way, and that spelling is not a key
+        // in it at all. The paragraph lands where the sibling test's does — at the height the page
+        // measured, with no least-height claim — and both are pinned because the two routes into
+        // that map are not the same route.
+        DocumentTextStyle lato = DocumentTextStyle.builder().fontName(SHIPPED_LATO).size(14).build();
+        DocumentTextStyle mono = DocumentTextStyle.builder().fontName(SHIPPED_MONO).size(14).build();
+        try (Shipped shared = exportSetIn(List.of(latoAs("CaseShared"), monoAs("CASESHARED")),
+                List.of(lato, mono))) {
+
+            assertThat(lineOf(shared.document(), 0))
+                    .as("the family that keeps the name is unaffected")
+                    .isEqualTo("336 atLeast");
+            assertThat(lineOf(shared.document(), 1)).isEqualTo("364 exact");
+        }
+    }
+
+    @Test
+    void aFamilyThatShipsNoFaceKeepsNoName(@TempDir Path folder) throws Exception {
+        // The name is taken where a face is shipped under it, not where one is asked for: a
+        // family that writes no w:font leaves the name free for the family behind it.
+        byte[] font = latoRegular();
+        int os2 = DocxFontEmbedding.tableOffset(font, "OS/2", 10);
+        font[os2 + 8] = 0x00;
+        font[os2 + 9] = 0x04;
+        assertThat(DocxFontEmbedding.permissionOf(font))
+                .as("the premise: the first family's only face is one that stays home")
+                .isEqualTo(DocxFontEmbedding.Permission.PREVIEW_ONLY);
+        FontName staysHome = FontName.of("preview-only");
+        try (Shipped shipped = exportSetIn(
+                List.of(FontFamilyDefinition
+                                .files(staysHome, Files.write(folder.resolve("PreviewOnly.ttf"), font))
+                                .wordFamily("SharedByBoth").build(),
+                        monoAs("SharedByBoth")),
+                List.of(face(staysHome), face(SHIPPED_MONO)))) {
+
+            assertThat(families(shipped.document())).containsExactly("SharedByBoth");
+            assertShipsOneFace(shipped.document(), monoRegular());
+            assertThat(shipped.report().notes())
+                    .filteredOn(note -> note.subject().equals("embedded font"))
+                    .singleElement()
+                    .satisfies(note -> assertThat(note.detail())
+                            .as("the one note is about that face's terms, not about a shared name")
+                            .contains("reading and printing only"));
+        }
+    }
+
+    @Test
+    void aRegisteredFamilyClaimingABundledFamilysNameGivesWayToIt() throws Exception {
+        // The form this is reachable in with one registration: a caller's own family declared
+        // under a bundled family's Word name. Families are kept by the name they were registered
+        // under, so both reach the font table, and the bundled one, set in text first, keeps the
+        // name.
+        FontFamilyDefinition mine = monoAs("Lato");
+        try (Shipped shipped = exportSetIn(List.of(mine), List.of(face(FontName.LATO), face(SHIPPED_MONO)))) {
+
+            assertThat(families(shipped.document())).containsExactly("Lato");
+            assertShipsOneFace(shipped.document(), latoRegular());
+            assertThat(shipped.report().notes())
+                    .filteredOn(note -> note.subject().equals("embedded font"))
+                    .singleElement()
+                    .satisfies(note -> assertThat(note.detail())
+                            .contains("'shipped-mono' is set in the Word name 'Lato'"));
+        }
+    }
+
+    /** A document and what the export said about it. */
+    private record Shipped(XWPFDocument document, DocxExportReport report) implements AutoCloseable {
+        @Override
+        public void close() throws java.io.IOException {
+            document.close();
+        }
+    }
+
+    /**
+     * Exports a document that registers these families and holds one paragraph per style, in the
+     * order given: the order the styles are in is the order the font table reads the faces in.
+     */
+    private static Shipped exportSetIn(List<FontFamilyDefinition> registered,
+                                       List<DocumentTextStyle> styles) throws Exception {
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        byte[] docx;
+        GraphCompose.DocumentBuilder builder = GraphCompose.document().pageSize(400, 600)
+                .margin(DocumentInsets.of(20));
+        for (FontFamilyDefinition family : registered) {
+            builder = builder.registerFontFamily(family);
+        }
+        try (DocumentSession session = builder.create()) {
+            session.pageFlow(page -> styles.forEach(style -> page.addParagraph("Set in a shared name", style)));
+            docx = session.export(new DocxSemanticBackend(report::set));
+        }
+        return new Shipped(new XWPFDocument(new ByteArrayInputStream(docx)), report.get());
+    }
+
+    /** The one face the document ships, as the font it was read from. */
+    private static void assertShipsOneFace(XWPFDocument document, byte[] source) throws Exception {
+        List<byte[]> parts = fontParts(document);
+        assertThat(parts).as("one name declared, one face shipped under it").hasSize(1);
+        byte[] part = parts.get(0);
+        assertThat(part).hasSameSizeAs(source);
+        assertThat(java.util.Arrays.copyOfRange(part, 32, part.length))
+                .as("the face shipped is this font, past the scrambled header")
+                .isEqualTo(java.util.Arrays.copyOfRange(source, 32, source.length));
+    }
+
+    /** The line a paragraph is written with: its height in twips and the rule it is held to. */
+    private static String lineOf(XWPFDocument document, int paragraph) {
+        var properties = document.getParagraphs().get(paragraph).getCTP().getPPr();
+        if (properties == null || !properties.isSetSpacing()) {
+            return "(no spacing)";
+        }
+        return properties.getSpacing().getLine() + " " + properties.getSpacing().getLineRule();
+    }
+
+    private static FontFamilyDefinition latoAs(String wordFamily) {
+        return FontFamilyDefinition.classpath(SHIPPED_LATO, LATO_REGULAR).wordFamily(wordFamily).build();
+    }
+
+    private static FontFamilyDefinition monoAs(String wordFamily) {
+        return FontFamilyDefinition.classpath(SHIPPED_MONO, MONO_REGULAR).wordFamily(wordFamily).build();
+    }
+
+    private static byte[] monoRegular() throws Exception {
+        return resource(MONO_REGULAR);
+    }
+
+    private static byte[] resource(String path) throws Exception {
+        try (InputStream in = DocxFontTableTest.class.getClassLoader().getResourceAsStream(path)) {
+            assertThat(in).as("the bundled font artifact is on the test classpath").isNotNull();
+            return in.readAllBytes();
+        }
+    }
+
+    private static DocumentTextStyle bold(FontName name) {
+        return DocumentTextStyle.builder().fontName(name).size(10)
+                .decoration(DocumentTextDecoration.BOLD).build();
+    }
+
     /**
      * A paragraph set in one face, exported: the document, the report's one note on the embedded
      * font, and the layout's failure where the page could not lay the face out, or empty.
@@ -371,11 +665,7 @@ class DocxFontTableTest {
     }
 
     private static byte[] latoRegular() throws Exception {
-        try (InputStream in = DocxFontTableTest.class.getClassLoader()
-                .getResourceAsStream("fonts/google/lato/Lato-Regular.ttf")) {
-            assertThat(in).as("the bundled font artifact is on the test classpath").isNotNull();
-            return in.readAllBytes();
-        }
+        return resource(LATO_REGULAR);
     }
 
     private static String fontTable(XWPFDocument document) throws Exception {

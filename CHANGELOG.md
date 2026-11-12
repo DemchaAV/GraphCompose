@@ -7,6 +7,58 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A DOCX export no longer ships two face sets under one font name, where an editor reads only
+  one of them.**
+  - A document's font table declares a family by its `FontFamilyDefinition.wordFamily()`, while
+    the families an export knows are kept by the name they were *registered* under. Those are two
+    different names, so two families can declare one — the same spelling, or one differing only in
+    case — and the export wrote a `w:font` element and an obfuscated part for each.
+  - Measured in Word 16.0.20527 and LibreOffice 24.2, eight configurations, each document
+    converted on its own: both editors set **both** paragraphs in the face declared **first** and
+    ignored the later program. A run naming the second spelling of a case-only pair was set in the
+    face declared under the first, so the two spellings are one name and not two. The text of the
+    later family was therefore set in a face it was not laid out in: on a 45-character line at
+    14pt, 68.6pt wider in Word and 64.0pt wider in LibreOffice than the face the page measured, so
+    every line break past it is somewhere else. The export said nothing about it.
+  - One registration reaches it: a caller's own family declared under a bundled family's Word name
+    — `classpath("Corporate", …).wordFamily("Lato")` — meets the bundled program in a document set
+    in both of them, because families are set apart by the name they were registered under and
+    these two differ there.
+  - Declaring only a slot the other family leaves empty does not help: a family declaring only
+    `w:embedBold` beside one declaring only `w:embedRegular` had its bold program ignored in both
+    editors — Word synthesised bold from the other family's regular face, LibreOffice drew the
+    text unemboldened. A second element under the name is not read at all.
+  - The family that declares a name another one already ships under is now given up whole — no
+    part, no element — and the report names both families, the name they both declare, and that
+    the given-up family's runs still carry that name and are set in whatever it resolves to
+    (`embedded font`, `DROPPED`). The names are compared with `String.equalsIgnoreCase`: the
+    comparison has to ignore case, which is what was measured, and fold the same way wherever the
+    export runs, which `FontName`'s own equality does not — it normalizes with `toLowerCase()` and
+    so follows the default locale.
+  - A family is now read once, by family rather than by the name a style used. A style can name a
+    face of a family — `Helvetica-Bold` — and the family itself, and both ask for that one family,
+    so a family registered under one of the standard-14 names was read twice and declared itself
+    twice. It now writes one element holding every slot asked of it anywhere, instead of one
+    element per name a style used.
+  - Which family keeps the name is decided by the **document**: faces are read in the order the
+    document's tree names them, then the page zones', then the header and footer bands', so a
+    family registered earlier and set in text later gives way to one set in text before it, and a
+    family set only in a page zone or a band gives way to any family the body is set in. That is
+    the opposite of the PPTX backend below, where a registered family is carried before anything
+    is drawn and holds the name whether its text is on a slide or not. A family whose every face
+    is given up for its own terms keeps no name either, since it writes no element.
+  - The measured limit of all of it: where the declared name is one the editor knows itself, the
+    editor's own font wins regardless. Word 16 drew its own Lato for a document that declared
+    `Lato` with another family's program in the first element; LibreOffice 24.2, with no Lato
+    installed, drew that program.
+  - A side effect of the same collision is gone with it. Each shipped face's natural line was kept
+    under its declared name and slot, so two face sets under one name left the later one's line
+    standing for both, and the holder's paragraphs were written at an exact height instead of a
+    least one — measured, the text then stood 0.36pt higher in Word and 0.40pt higher in
+    LibreOffice 24.2. With one face set per name those keys cannot meet, and a given-up family
+    keeps no line of its own under either spelling, so its paragraphs are written at the height
+    the page measured without a least-height claim.
+
 - **A PPTX export no longer lets one font family write over another that shares its viewer name.**
   - A deck holds one font-list entry per declared typeface, with one program in each of its four
     style elements, and `XSLFFontInfo` looks that entry up **ignoring case**. So two registered

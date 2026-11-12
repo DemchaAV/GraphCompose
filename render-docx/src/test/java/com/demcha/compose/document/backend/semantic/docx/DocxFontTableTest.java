@@ -332,6 +332,12 @@ class DocxFontTableTest {
                     .as("the bold face of the family given up does not travel either")
                     .doesNotContain("<w:embedBold");
             assertShipsOneFace(shipped.document(), latoRegular());
+            // The third answer the line map gives, which only this arrangement reaches: the two
+            // families spell the name the same way, so the given-up family's runs would read the
+            // key the holder filled — but their slot is one the holder left empty, so there is no
+            // such key and they read no line. Written at the height the page measured for their
+            // own face, which is the 10pt these styles set.
+            assertThat(lineOf(shipped.document(), 1)).isEqualTo("260 exact");
         }
     }
 

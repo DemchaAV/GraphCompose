@@ -171,13 +171,13 @@ final class DocxFontTable {
      * <p>Kept under the declared name exactly as the runs spell it. One family is written per name
      * ({@link #resolve}), so no two faces can meet over one of these keys.</p>
      *
-     * <p>A family given up for a name another one declares keeps no line of its own here, by
-     * either route: where the two spellings are the same its runs read the key the holder filled,
-     * and where they differ in case the key their spelling makes is not in the map at all. The two
-     * are not the same answer — a line read from the holder is one the writer can hold a paragraph
-     * to, and no line at all is not — so which of them a document gets turns on how its author
-     * spelled a name that an editor reads one way either way. Recorded as a limit in the backend
-     * capability details, and pinned by a test per route.</p>
+     * <p>A family given up for a name another one declares keeps no line of its own here. Its runs
+     * read the key their own spelling and slot make, so they read the line of a face the holder
+     * shipped where both of those match one the holder filled, and no line at all where either
+     * does not — a spelling differing in case, or a slot the holder left empty. The two answers
+     * are not the same to the writer, which can hold a paragraph to a line it has and cannot to
+     * one it has not. Recorded as a limit in the backend capability details, with a test for each
+     * answer.</p>
      */
     static final class ShippedLines {
         /** No face shipped: an export written without a font table. */
@@ -453,14 +453,20 @@ final class DocxFontTable {
     /**
      * Gives up a family whose name another one already declares, and says so.
      *
-     * <p>Whole, as a family with an unreadable face is given up whole: a face of it bound for a
-     * slot the holder leaves empty does not travel either, because a second {@code w:font} under
-     * the name is not read at all — measured, a family declaring only {@code embedBold} beside a
-     * holder declaring only {@code embedRegular} had its bold program ignored by both editors.
-     * The PPTX sibling ({@code PptxRenderEnvironment.SlotLedger}) is finer than this and lets two
-     * families sharing a name both travel where their slots do not clash, because a deck holds one
-     * entry with four elements in it and a second family can fill an element the first left empty.
-     * A document holds no such shared element to fill.</p>
+     * <p>Whole, and not face by face the way a face's own terms or an unreadable file are:
+     * {@link #addFace} gives up that one face and the family ships the rest under its name. Here a
+     * face bound for a slot the holder left empty does not travel either, because a second
+     * {@code w:font} element under the name is not read at all — measured, a family declaring only
+     * {@code embedBold} beside a holder declaring only {@code embedRegular} had its bold program
+     * ignored by both editors.</p>
+     *
+     * <p>The PPTX sibling ({@code PptxRenderEnvironment.SlotLedger}) is finer: it lets two families
+     * sharing a name both travel where their slots do not clash. The format would allow that here
+     * too — a {@code w:font} holds one child per face ({@link #toXml}), so a second family's face
+     * could be written as another child of the holder's element — and that arrangement is the one
+     * thing in this corner nobody has measured. What was measured is a second element under the
+     * name, which is not read. So the coarse rule rests on a measurement and the fine one would
+     * not.</p>
      *
      * <p>Its runs still name it, so they are set in whatever that name resolves to where the
      * document is read, which is the holder's face in both editors measured, except where the

@@ -30,8 +30,8 @@ follow semantic versioning; release dates are ISO 8601.
     editors — Word synthesised bold from the other family's regular face, LibreOffice drew the
     text unemboldened. A second element under the name is not read at all.
   - The family that declares a name another one already ships under is now given up whole — no
-    part, no element — and the report names both families, the name they both declare, and that
-    the given-up family's runs still carry that name and are set in whatever it resolves to
+    part, no element — and the report names both families, each by the name it declares, and that
+    the given-up family's runs still carry its own name and are set in whatever it resolves to
     (`embedded font`, `DROPPED`). The names are compared with `String.equalsIgnoreCase`: the
     comparison has to ignore case, which is what was measured, and fold the same way wherever the
     export runs, which `FontName`'s own equality does not — it normalizes with `toLowerCase()` and
@@ -57,10 +57,11 @@ follow semantic versioning; release dates are ISO 8601.
     standing for both, and the holder's paragraphs were written at an exact height instead of a
     least one — measured, the text then stood 0.36pt higher in Word and 0.40pt higher in
     LibreOffice 24.2. With one face set per name those keys cannot meet. A given-up family keeps
-    no line of its own under either spelling — where the spellings are equal its runs read the key
-    the holder filled, and where they differ in case their spelling is not a key at all — and what
-    its paragraphs are then written with is pinned by a test for each of those two routes rather
-    than asserted as a rule.
+    no line of its own: its runs read the key their own spelling and slot make, so they read the
+    line of a face the holder shipped only where both of those match one the holder filled, and
+    none where the spelling differs in case or the slot is one the holder left empty. Whether that
+    reaches the written line depends on the two faces, so it is pinned by a test per answer rather
+    than asserted as a rule, and recorded in the capability details.
 
 - **A PPTX export no longer lets one font family write over another that shares its viewer name.**
   - A deck holds one font-list entry per declared typeface, with one program in each of its four

@@ -332,11 +332,15 @@ class DocxFontTableTest {
                     .as("the bold face of the family given up does not travel either")
                     .doesNotContain("<w:embedBold");
             assertShipsOneFace(shipped.document(), latoRegular());
-            // The third answer the line map gives, which only this arrangement reaches: the two
+            // The third route into the line map, which only this arrangement reaches: the two
             // families spell the name the same way, so the given-up family's runs would read the
             // key the holder filled — but their slot is one the holder left empty, so there is no
-            // such key and they read no line. Written at the height the page measured for their
-            // own face, which is the 10pt these styles set.
+            // such key and they read no line, which is the answer a spelling the map does not hold
+            // gives as well. The paragraph is then written at its own face's line.
+            DocxNaturalLine monoBold = DocxNaturalLine.of(resource(MONO_BOLD));
+            assertThat(Math.round((monoBold.ascent() + monoBold.descent()) * 10 * 20))
+                    .as("the premise the written height rests on, as the sibling test pins its own")
+                    .isEqualTo(260);
             assertThat(lineOf(shipped.document(), 1)).isEqualTo("260 exact");
         }
     }
@@ -353,7 +357,8 @@ class DocxFontTableTest {
                     .satisfies(note -> {
                         assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.DROPPED);
                         assertThat(note.detail())
-                                .as("both families, the name they both declare, and what a reader sees")
+                                .as("both families by the names they were registered under, the name "
+                                    + "each declares, and what a reader sees")
                                 .contains("'shipped-mono' is set in the Word name 'ExactShared'")
                                 .contains("'shipped-lato' already ships as 'ExactShared'")
                                 .contains("travels with nothing")

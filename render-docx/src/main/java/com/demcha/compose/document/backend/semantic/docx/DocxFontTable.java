@@ -174,10 +174,10 @@ final class DocxFontTable {
      * <p>A family given up for a name another one declares keeps no line of its own here. Its runs
      * read the key their own spelling and slot make, so they read the line of a face the holder
      * shipped where both of those match one the holder filled, and no line at all where either
-     * does not — a spelling differing in case, or a slot the holder left empty. The two answers
-     * are not the same to the writer, which can hold a paragraph to a line it has and cannot to
-     * one it has not. Recorded as a limit in the backend capability details, with a test for each
-     * answer.</p>
+     * does not — a spelling differing in case, or a slot the holder left empty. So there are two
+     * answers, a line or none, by three routes, and the two answers are not the same to the
+     * writer, which can hold a paragraph to a line it has and cannot to one it has not. Recorded
+     * as a limit in the backend capability details, with a test per route.</p>
      */
     static final class ShippedLines {
         /** No face shipped: an export written without a font table. */
@@ -463,8 +463,8 @@ final class DocxFontTable {
      * <p>The PPTX sibling ({@code PptxRenderEnvironment.SlotLedger}) is finer: it lets two families
      * sharing a name both travel where their slots do not clash. The format would allow that here
      * too — a {@code w:font} holds one child per face ({@link #toXml}), so a second family's face
-     * could be written as another child of the holder's element — and that arrangement is the one
-     * thing in this corner nobody has measured. What was measured is a second element under the
+     * could be written as another child of the holder's element — and that arrangement is what the
+     * fine rule would have to be measured in. What was measured is a second element under the
      * name, which is not read. So the coarse rule rests on a measurement and the fine one would
      * not.</p>
      *

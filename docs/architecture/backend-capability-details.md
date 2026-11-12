@@ -679,7 +679,7 @@ class or method no source declares.
 | `corner radius` | `APPROXIMATED` | a panel with square corners | Rectangle shape |
 | `dash pattern` | `APPROXIMATED` | a rule in Word's own dash for a border | Line |
 | `drawing` | `APPROXIMATED`, `DROPPED` | shapes anchored in a table cell, the page having no other paragraph; shapes no node owns on a page no paragraph is written on, not in the file | Rectangle shape, Ellipse, Line, Polygon, Free path |
-| `embedded font` | `DROPPED` | a face not shipped: one that cannot be read, one whose `fsType` forbids embedding or allows it for reading and printing only, or a family declaring a Word name another family already ships under | Font portability |
+| `embedded font` | `DROPPED` | something not shipped: a face that cannot be read, a face whose `fsType` forbids embedding or allows it for reading and printing only, or a whole family — its faces bound for free slots included — that declares a Word name another family already ships under | Font portability |
 | `inline <run kind>` | `DROPPED` | the paragraph's text without an inline run of a kind with no Word analogue — not reached by any of the five built-in run kinds, which `InlineRun` is sealed to | Paragraph |
 | `inline chip` | `APPROXIMATED` | the chip's fill as run shading, how each side's padding is written or lost, and that LibreOffice does not draw its spaces closing a paragraph | Inline code/badge chips |
 | `inline icon` | `APPROXIMATED` | the icon as a picture, its text the picture's description, a gradient flat | Inline SVG, Text an inline icon stands for |

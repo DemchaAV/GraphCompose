@@ -30,7 +30,8 @@ follow semantic versioning; release dates are ISO 8601.
     editors — Word synthesised bold from the other family's regular face, LibreOffice drew the
     text unemboldened. A second element under the name is not read at all.
   - The family that declares a name another one already ships under is now given up whole — no
-    part, no element — and the report names both families, each by the name it declares, and that
+    part, no element — and the report names both families by the names they were registered under,
+    with the Word name each of them declares, and says that
     the given-up family's runs still carry its own name and are set in whatever it resolves to
     (`embedded font`, `DROPPED`). The names are compared with `String.equalsIgnoreCase`: the
     comparison has to ignore case, which is what was measured, and fold the same way wherever the

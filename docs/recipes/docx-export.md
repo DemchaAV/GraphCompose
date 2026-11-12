@@ -523,8 +523,8 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
   LibreOffice 24.2, both set every run naming that
   family in the face declared first, and ignored the later program, a slot the holder had
   left empty included. The family that asks for a name another one already ships under is
-  therefore given up whole, and the report names both of them. Its runs still carry the
-  name, so its text is set in whatever that name resolves to where the document is read —
+  therefore given up whole, and the report names both of them. Its runs still carry its
+  own name, so its text is set in whatever that name resolves to where the document is read —
   the face the other family shipped, or, where the editor knows the name itself, its own:
   Word 16 drew its own Lato for a document declaring `Lato` with another family's program.
   Which family keeps the name is decided by the document, not by the registration: the

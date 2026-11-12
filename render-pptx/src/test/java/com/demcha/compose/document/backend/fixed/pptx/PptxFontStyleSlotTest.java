@@ -77,11 +77,10 @@ import java.util.Set;
  * carrying a face.</p>
  *
  * <p>What none of these covers: the slot's capacity belongs to a declared typeface, while
- * the guard answers for one definition's faces. Two definitions registered under the same
- * {@code wordFamily} share one font-list entry, so each is measured on its own slots and
- * the second still writes over the first's part — measured, with nothing logged. That is a
- * different question, which of two families a refusal should cost, and nothing here
- * decides it.</p>
+ * these cases are all one definition's faces. Two definitions registered under the same
+ * {@code wordFamily} share one font-list entry and so one set of four slots, which the
+ * render-wide ledger carries between them — {@code PptxSharedViewerFamilyTest} is where
+ * that half is measured, including which of the two a refusal costs.</p>
  */
 class PptxFontStyleSlotTest {
 
@@ -428,8 +427,7 @@ class PptxFontStyleSlotTest {
 
     /** The element a deck would declare this face under, read as the backend reads it. */
     private static String slotOf(byte[] face) throws Exception {
-        return PptxEmbeddedFont.styleOf(
-                PptxEmbeddedFont.wrap(new ByteArrayInputStream(face))).slot();
+        return PptxDeck.slotOf(face);
     }
 
     /** Every run of text on the deck's slides. */

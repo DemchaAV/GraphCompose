@@ -7,7 +7,7 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
-- **A PPTX export no longer ships one face of a registered family under another face's name.**
+- **A PPTX export no longer ships one face of a font family under another face's name.**
   - A deck declares an embedded face under one of four style elements — `p:regular`, `p:bold`,
     `p:italic`, `p:boldItalic` — and holds one face in each. Which element a face lands under is
     not the slot the family registered it in: `XSLFFontInfo.addFacet` reads the weight and the
@@ -38,8 +38,9 @@ follow semantic versioning; release dates are ISO 8601.
   - A family seated as its faces read back is carried exactly as before. The sources dedupe by
     description before the elements are compared, and the builder fills an unset slot from a
     source already given, so neither a family of one file nor a partially named one can collide
-    with itself. None of the bundled families collides: their faces read back 1:1 onto the four
-    elements, measured across the catalogue.
+    with itself. None of the bundled families collides: each one's distinct faces read back onto
+    distinct elements, measured across the catalogue — including the four that ship fewer than
+    four faces and so reach the dedupe rather than the comparison.
   - This answers for one family definition. The element's capacity belongs to a declared
     typeface, so two definitions registered under the same `wordFamily` still share one
     font-list entry and the second still writes over the first's part — measured, with nothing

@@ -91,22 +91,6 @@ public final class PptxRenderEnvironment {
     private final Set<String> bundledCarryNoted = new LinkedHashSet<>();
 
     /** A family's four faces, as the source set names them. */
-    /**
-     * A face already seated in a style slot, as a refusal over that slot has to name it.
-     *
-     * <p>Its own weight, not the colliding face's: the two differ — a bold slot holding a
-     * 300-weight face collides with a 400-weight regular — and the weight is what a caller
-     * can go and look for in their font, so naming one of the two for both would send them
-     * after the wrong face. The italic flag is not here because the two always agree on it:
-     * the slot is read from the weight's side of 400 and that flag, so faces that share a
-     * slot share the flag.</p>
-     *
-     * @param description the source the face was read from, as it names itself
-     * @param weight      that face's own weight, as the presentation reads it
-     */
-    private record Seated(String description, int weight) {
-    }
-
     private enum Face {
         REGULAR, BOLD, ITALIC, BOLD_ITALIC;
 
@@ -125,6 +109,26 @@ public final class PptxRenderEnvironment {
                 case REGULAR -> sources.regular();
             };
         }
+    }
+
+    /**
+     * A face already seated in a style slot, as a refusal over that slot has to name it.
+     *
+     * <p>Its own weight, not the colliding face's: the two differ — a bold slot holding a
+     * 300-weight face collides with a 400-weight regular — and the weight is what a caller
+     * can go and look for in their font, so naming one of the two for both would send them
+     * after the wrong face. The italic flag is not here because the two always agree on it:
+     * the slot is read from the weight's side of 400 and that flag, so faces that share a
+     * slot share the flag.</p>
+     *
+     * <p>Not a {@link Face}, which is the slot a family <em>registers</em> a face under. The
+     * slot a refusal is about is the one the container reads back as, and the whole of what
+     * is guarded is that the two need not agree.</p>
+     *
+     * @param description the source the face was read from, as it names itself
+     * @param weight      that face's own weight, as the presentation reads it
+     */
+    private record Seated(String description, int weight) {
     }
     /** Bundled families that carry a binary, i.e. the ones the embedder can take. */
     private static final Map<FontName, FontFamilyDefinition> EMBEDDABLE_BUNDLED =
@@ -668,14 +672,11 @@ public final class PptxRenderEnvironment {
                 // the way every other refusal here does, rather than letting the deck keep
                 // the last one under the first one's declaration.
                 PptxEmbeddedFont.Style style = PptxEmbeddedFont.styleOf(container);
-                // containsKey rather than putIfAbsent, so the guard keys on the slot being
-                // taken and not on what is in it: putIfAbsent reads a slot mapped to null as
-                // free, and a source that described itself as null would have filled one
-                // with null and let the next colliding face through to the overwrite. No
-                // public path supplies a custom source — a family's faces come from a file
-                // or a classpath resource, and both describe themselves — so that is not a
-                // reachable case but a value this cannot depend on, as with the sentinel
-                // above.
+                // containsKey, so the branch reads as "this slot is taken" rather than as
+                // something about the face in it. putIfAbsent would do the same here, since
+                // what is stored is a record this method builds and so is never null; the
+                // two part company only for a map whose value could be, which this one's was
+                // before the seated face's own weight had to be kept.
                 if (bySlot.containsKey(style.slot())) {
                     Seated seated = bySlot.get(style.slot());
                     throw new IOException("a presentation seats one face per style and reads "

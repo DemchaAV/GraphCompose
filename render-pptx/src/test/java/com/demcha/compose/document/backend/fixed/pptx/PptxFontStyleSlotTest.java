@@ -65,9 +65,10 @@ import java.util.Set;
  * sources were deduped by description would refuse every single-face family there is;
  * {@code aFamilyWhoseOneFaceFillsEverySlotIsCarried} pins that order, and
  * {@code aFamilyThatNamesTwoOfItsFourSlotsIsCarriedUnderBoth} pins it at the fallback
- * positions the {@code OrangeOps} preset's own source set resolves to — a regular and a
- * heavier cut named as bold, the other two filled from those rather than from a face that
- * could collide. A correctly seated
+ * positions a regular-and-bold family resolves to — the other two slots filled from those
+ * two rather than from a face that could collide. That arrangement is the one most of the
+ * per-slot registrations here use: the {@code OrangeOps} preset, and the bundled David
+ * Libre and Gothic A1. A correctly seated
  * four-face family still carries four programs under four elements, which is at once the
  * control for the guard and the check that the reader this backend asks agrees with the
  * one that writes the declarations. And {@code noBundledFamilySeatsTwoFacesInOneStyle}
@@ -162,6 +163,44 @@ class PptxFontStyleSlotTest {
                 .filteredOn(warning -> warning.contains("Airy"))
                 .singleElement(InstanceOfAssertFactories.STRING)
                 .contains("\"Airy\" is not carried whole");
+    }
+
+    @Test
+    void facesCollidingInTheItalicSlotAreRefusedAndNamedByThatSlot() throws Exception {
+        // The other side of the element, and the only case that drives the guard off the
+        // regular key: two upright-flag-set faces of different weights, both below the
+        // threshold, land in italic together. Without it every refusal here would read
+        // "both read back as regular", the three other keys would go unexercised, and the
+        // message's rendering of a set italic flag would never be seen — nor would the
+        // claim that two faces sharing a slot share that flag.
+        byte[] italic = PptxDeck.face(ITALIC);
+        byte[] lightItalic = FontWeightClass.with(italic, 300);
+        Path italicFile = Files.write(directory.resolve("Slanted-Italic.ttf"), italic);
+        Path lightFile = Files.write(directory.resolve("Slanted-LightItalic.ttf"), lightItalic);
+
+        assertThat(slotOf(italic))
+                .as("the premise: the face registered as the family's own reads back italic")
+                .isEqualTo("italic");
+        assertThat(slotOf(lightItalic))
+                .as("and so does the lighter one put in the italic slot")
+                .isEqualTo("italic");
+
+        FontFamilyDefinition family = FontFamilyDefinition.files("Slanted", italicFile)
+                .italicPath(lightFile).wordFamily("Slanted").build();
+        byte[] deck = PptxDeck.registering(family, page -> page.addParagraph(
+                paragraph -> paragraph.text("Drawn in the default face")));
+
+        assertThat(deck).as("the deck is written").isNotEmpty();
+        assertThat(PptxDeck.fontParts(deck)).as("and carries neither face").isEmpty();
+        assertThat(log.messages("render.pptx.font.embed.skipped"))
+                .as("named by the element they actually agreed on, with the flag that put "
+                        + "them there rather than the one the regular cases show")
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .contains("family=Slanted")
+                .contains("\"" + italicFile + "\" (weight 400)")
+                .contains("\"" + lightFile + "\" (weight 300)")
+                .contains("both read back as italic")
+                .contains("italic true");
     }
 
     @Test
@@ -306,14 +345,15 @@ class PptxFontStyleSlotTest {
 
     @Test
     void aFamilyThatNamesTwoOfItsFourSlotsIsCarriedUnderBoth() throws Exception {
-        // The shape this repository ships in the OrangeOps preset, slot for slot: a regular
-        // and a heavier cut named as bold, the other two left to the builder, which fills
-        // them from the sources already given. So every face after the first two repeats a
-        // description and never reaches the slot comparison — which is why the fallback
+        // A regular and a heavier cut named as bold, the other two left to the builder,
+        // which fills them from the sources already given — the arrangement most of the
+        // per-slot registrations in this repository use (the OrangeOps preset, and the
+        // bundled David Libre and Gothic A1). So every face after the first two repeats a
+        // description and never reaches the slot comparison, which is why the fallback
         // cannot manufacture a collision. The one-file family above pins the dedupe where
         // all four descriptions are equal; this pins it where two are, and at the fallback
-        // positions a preset actually uses (italic from the regular, bold-italic from the
-        // bold), which are not the ones a regular-plus-italic family would exercise.
+        // positions that arrangement actually reaches (italic from the regular, bold-italic
+        // from the bold), which are not the ones a regular-plus-italic family would use.
         FontFamilyDefinition family = FontFamilyDefinition.classpath("Partial", REGULAR)
                 .boldResource(BOLD)
                 .wordFamily("Partial")

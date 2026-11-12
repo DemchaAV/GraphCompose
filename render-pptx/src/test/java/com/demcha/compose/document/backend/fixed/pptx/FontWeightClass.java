@@ -9,9 +9,13 @@ import java.nio.ByteOrder;
  * <p>A real face rewritten rather than one built here, so that everything else about the
  * font — the tables both readers require, the names, the outlines — is a shipped face's
  * and only the field under test differs. The field is two bytes at a fixed place in the
- * table, so the rewrite needs no other table touched: nothing in the file is keyed on the
- * weight, and neither reader in front of the embedder validates a table's checksum
- * against its content.</p>
+ * table, so the rewrite needs no other table touched: nothing the style element is read
+ * from is keyed on this field, and neither reader in front of the embedder validates a
+ * table's checksum against its content. Other weight-ish fields are left as the face had
+ * them — the PANOSE weight digit, which the container copies across verbatim, and
+ * {@code head.macStyle}'s bold bit — so a rewritten face carries a weight its PANOSE does
+ * not agree with. That is deliberate and harmless here, because the element is read from
+ * the container's weight and italic fields and from nothing else.</p>
  *
  * <p>Separate from {@link FontNameTable}, which rebuilds a whole table and has to move
  * everything after it. This one writes in place.</p>

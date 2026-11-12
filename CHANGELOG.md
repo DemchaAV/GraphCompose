@@ -7,6 +7,36 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A PPTX export writes its deck when a face's name is longer than the presentation can read
+  back.**
+  - The embedder wraps a font program in the container PowerPoint wants, which carries four
+    names: the family, the style, a version and a full name it joins from the family and the
+    style. The presentation reads all four back when it takes the face, each into a thousand
+    bytes, and refuses a longer one with an unchecked `RecordFormatException` — raised inside
+    `XSLFFontInfo.addFacet`, past the point where a refusal still costs only the font. So a
+    registered family with a long name cost the whole deck, after the page had laid out, and
+    whether or not any text was drawn in it.
+  - The readers in front of the writer did not close it, because they do not read the same
+    names. `java.awt.Font.createFont`, which the viewer metrics are read through, rejects a
+    family or full-name *record* over 256 bytes — but it never reads the style record at all.
+    A face whose subfamily name is long therefore passed every read: the shipped Lato-Regular
+    with a 496-character subfamily makes a 1,002-byte full name, and lost the deck. 495 renders.
+  - The names are now measured where the container is built, so a face the presentation could
+    not read a name of degrades the family exactly as an unreadable program does: nothing of the
+    family is carried, `render.pptx.font.embed.skipped` names the face and the two lengths,
+    `render.pptx.font.substitution` says the deck does not carry it, and the deck is written.
+    That covers the bundled path too, which has no metrics pre-flight. A face whose names fit is
+    carried exactly as before — the limit is the presentation's own, and a name of exactly it is
+    still written and read back whole.
+  - Refused rather than shortened, because what a viewer matches an embedded program to its
+    declared typeface by has not been measured here, so trimming a name would risk a deck
+    carrying a program no viewer uses. The limit is POI's default: a host that lowers it with
+    `IOUtils.setByteArrayMaxOverride` lowers what the presentation reads back, so the check is a
+    floor rather than a guarantee.
+  - Rolling the hand-over back instead would not have helped: at that refusal the writer throws
+    in its first statement, before the part, the dataId and the embedded-font flags, so there is
+    one declaration behind it and nothing to undo. Widening the catch there would have swallowed
+    POI's part-store failures with it.
 - **A PPTX export writes its deck when a registered family's viewer metrics cannot be read.**
   - A registered family's font program is read by two different parsers: the embedder parses
     its table headers with fontbox, and the viewer metrics — the ascent PowerPoint seats a
@@ -63,23 +93,13 @@ follow semantic versioning; release dates are ISO 8601.
     restricted face now carries neither, where it used to carry the first and say it carried
     nothing. No bundled family is affected; this is about a font a caller registers.
   - Where the presentation itself refuses a face it is handed, after the program is read and
-    parsed, nothing changes at all: that step keeps the handling it had, including which
-    failures it raises rather than degrades on, and what the presentation took before refusing
-    stays in the deck. What that is depends on where it refused. `addFacet` reads the EOT header
-    before it writes anything, so a refusal over the program leaves only the declaration the
-    `XSLFFontInfo` constructor makes on every call; the part, the dataId and the embedded-font
-    flags come after, and a refusal among those is POI's own part store failing, which no font
-    can provoke. Neither has a public path. Over the program POI refuses one thing, the length
-    of a name: it reads each of the EOT's four names into a thousand bytes — the longest being
-    the full name, the family and the style together — so a family name of 520 characters is
-    past it, and it refuses *unchecked*, past the catch there. Such a font never reaches the
-    writer, because the viewer metrics' reader turns it down four times earlier:
-    `Font.createFont` reads no name record over 256 bytes, so it refuses the face at 129
-    characters while the pre-flight still holds the presentation untouched. The bundled faces
-    are the only ones handed over without that pre-flight, and all 130 of them are taken. Both
-    numbers are defaults, and POI's is a global a host can lower
-    (`IOUtils.setByteArrayMaxOverride`), far enough to put a plainly-named face past it — which
-    is the case for a length guard where the EOT is built, rather than for a rollback.
+    parsed, that step keeps the handling it had, including which failures it raises rather than
+    degrades on. What it leaves behind depends on where it refused: `addFacet` reads the
+    container's header before it writes anything, so a refusal over the container leaves only
+    the declaration the `XSLFFontInfo` constructor makes on every call, while the part, the
+    dataId and the embedded-font flags come after and a refusal among those is POI's own part
+    store failing. The refusal over the container is handled before it now — see the entry
+    below — so what is left here is the part store, which no font can provoke.
   - A family the deck actually draws in still fails the render, and with the same message:
     the page cannot measure a face it cannot read, which happens before a slide is built.
 - **A PPTX substitution warning no longer claims a reference the deck does not make.** All four
@@ -91,13 +111,15 @@ follow semantic versioning; release dates are ISO 8601.
   without binary sources and never drawn in is named in no part of the written package at all,
   which is the case the sentence was false for, and it covers the `could not be embedded` line
   as well. The second reason given, that the presentation refusing a face it has been handed
-  keeps the declaration and any face taken before it, is withdrawn: no public path arrives at
-  that refusal, as above, so wherever either embed-failure line is logged nothing of the family
-  is in the deck. For the bundled line that was the only reason, and the bundled line is logged
-  after the last run is drawn, over a family the loop has already established was drawn in — so
-  *by name only* was not false there. What it was, and remains, is a prediction the line is in no
-  position to make: with no program for the family carried, what a viewer draws its text from is
-  the viewer's to decide.
+  keeps the declaration and any face taken before it, is withdrawn: every refusal either
+  embed-failure line is reached by leaves nothing of the family in the deck, since the reads,
+  the licence check and the name check all run while the presentation is still untouched, and
+  the one refusal that did get past them killed the render rather than logging anything. For
+  the bundled line that was the only reason, and the bundled line is logged after the last run
+  is drawn, over a family the loop has already established was drawn in — so *by name only* was
+  not false there. What it was, and remains, is a prediction the line is in no position to make:
+  with no program for the family carried, what a viewer draws its text from is the viewer's to
+  decide.
   Each of the three now says what is not carried — no program for the family, or not the family
   whole — and leaves what the deck references to the text that was drawn in the family, or in
   the face that did not travel. The two embed-failure lines say what that text needs installed
@@ -108,26 +130,26 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
-- `PptxUnreadableFontSourceTest` now reaches the writer itself. The one program this backend
-  can produce that the writer refuses is a face whose name needs more than POI's thousand bytes,
-  and the metrics reader turns such a font down four times earlier, so the family never reaches
-  the writer at all. The test asserts the writer's refusal against the writer, in isolation —
-  which is also what keeps it from quietly becoming a copy of the truncated-font one — and then
-  holds the public path to what it does today: the deck is written, the font is the only thing
-  lost, and the presentation is left holding nothing of the family. Its control is the same
-  rewritten name table at a length both readers take, which still travels; without it a refusal
-  would prove only that rewriting a name table breaks a font. Which reader refuses is
-  deliberately not asserted, so that the test fails on the deck rather than on the reason if
-  that ever changes.
+- `PptxUnreadableFontSourceTest` now reaches the writer itself, at two name IDs rather than one.
+  Varying only the family name measures the two readers agreeing — both read that one — where
+  the gap between them is the subfamily, which only the presentation reads. So the long-name case
+  and its control each run over the family and the subfamily, and the control's length differs
+  per name because each name's binding limit belongs to a different reader: a family has to clear
+  `Font.createFont`'s 256-byte record first, at 128 characters, while a subfamily is bound only
+  by the presentation's thousand bytes over the joined full name, at 400. Without the control a
+  refusal would prove only that rewriting a name table breaks a font. `PptxEmbeddedFontTest`
+  holds both sides of the limit against POI's own reader, so the number in the embedder cannot
+  drift from the one POI applies, and `FontNameTable` carries the name-table rewriting the two
+  share.
 - `PptxEmbeddedFontDeclarationTest` holds what a deck says about the programs it carries. POI's
   blank presentation asks for subsetting and every face it takes asks again, so a deck that
   carries a program — registered, bundled, or both — has to say the opposite, since nothing here
   subsets a face and the flag is a standing instruction to subset on save. The Word counterpart
   of it was measured doing exactly that, cutting an embedded face from 110 KB to 28 KB, which is
   why a document never writes it; what PowerPoint does with the pair was not measured here. A
-  deck that carries none leaves embedding off, where the flag decides nothing. A third test
-  pins the template value itself, since everything the other two hold rests on the flag arriving
-  set. The backend-capability details record it.
+  deck that carries none leaves embedding off, where the flag decides nothing. A third test pins
+  the template value itself, since the carries-a-program case rests on the flag arriving set.
+  The backend-capability details record it.
 
 ## v2.5.0 — 2026-11-11
 

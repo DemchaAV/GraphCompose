@@ -184,16 +184,14 @@ public final class PptxRenderEnvironment {
         }
         if (!metrics.isEmpty()) {
             // Cleared, never set: POI's blank template already carries this flag set, and
-            // addFacet sets it again for every face it takes, so asking the reader to keep
-            // only the characters the slides use is what a deck says by default. Nothing
-            // here subsets a face — a program travels with every glyph it has — so a deck
-            // that carries one says the opposite. The flag is a standing instruction to
-            // subset on save, which is the one thing a face embedded whole must not invite:
-            // the Word counterpart of it was measured doing exactly that, cutting an
-            // embedded face from 110 KB to 28 KB, which is why nothing writes it there.
-            // What PowerPoint itself does with the pair has not been measured here.
-            // A deck that carries nothing leaves the template's value alone, where
-            // embedding is off and it decides nothing.
+            // addFacet sets it again for every face it takes, so a standing instruction to
+            // subset on save is what a deck says by default. Nothing here subsets a face —
+            // a program travels with every glyph it has — so a deck that carries one says
+            // the opposite. The Word counterpart of that instruction was measured cutting
+            // an embedded face down on a save (docs/recipes/docx-export.md), which is why
+            // a document never writes it; PowerPoint's own handling of the pair has not
+            // been measured. A deck that carries nothing leaves the template's value alone,
+            // where embedding is off and it decides nothing.
             show.getCTPresentation().setSaveSubsetFonts(false);
         }
         this.customFontFamilies = Map.copyOf(familyNames);
@@ -491,10 +489,9 @@ public final class PptxRenderEnvironment {
      * travels without them is seated from the PDF descriptor's ascent instead,
      * which for some faces is not the ascent the viewer uses. A family the page
      * had to <em>measure</em> is a different matter and fails the render before a
-     * slide is built. The presentation refusing a face it is handed is a third:
-     * the checked refusal {@link #handOverPrograms} catches degrades the family
-     * like the rest, and the unchecked one it does not catch has no public path
-     * to arrive by — see there.</p>
+     * slide is built. The presentation refusing a face it is handed is a third,
+     * and what is left of it after the name check in {@link PptxEmbeddedFont} is
+     * POI's part store — see {@link #handOverPrograms}.</p>
      *
      * @return the family's viewer metrics, or {@code null} where it is not carried
      */
@@ -635,34 +632,25 @@ public final class PptxRenderEnvironment {
      *
      * <p>From here the handling is the presentation's own, and exactly what it was before
      * the reads were pulled forward: a refusal while taking a face degrades the family,
-     * and this does not undo what it took. What it took depends on where it refused, and
-     * the two places are not alike. {@code addFacet} reads the EOT header before it writes
-     * anything, so a refusal over the program leaves only the declaration the
-     * {@code XSLFFontInfo} constructor makes on every call — one entry to drop, not a
-     * rollback. The part, the dataId and the embedded-font flags come after, and a refusal
-     * among those is POI's own part store failing, which no font can provoke.</p>
+     * and this does not undo what it took. What it took depends on where it refused.
+     * {@code addFacet} reads the EOT header before it writes anything, so a refusal over
+     * the container leaves only the declaration the {@code XSLFFontInfo} constructor makes
+     * on every call — one entry, not a part, a dataId and the embedded-font flags. Those
+     * come after, and a refusal among them is POI's own part store failing, which no font
+     * can provoke.</p>
      *
-     * <p>Neither has a public path. Over the program POI refuses one thing, the length of
-     * a name: it reads each of the EOT's four names into a thousand bytes — the longest is
-     * the full name, the family and the style together — so a family name of 520
-     * characters is past it, and the refusal arrives <em>unchecked</em>, past this catch.
-     * The viewer metrics' reader turns such a font down four times earlier:
-     * {@code Font.createFont} reads no name record over 256 bytes, so it refuses the face
-     * at 129 characters while the pre-flight still holds the presentation untouched. The
-     * bundled faces are the only ones handed over without that pre-flight, and all 130 of
-     * them are taken; a caller cannot put a program of their own in a bundled family's
-     * place, since a family registered under a bundled name takes the registered road
-     * instead. Both numbers are defaults, and POI's is a global a host can lower
-     * ({@code IOUtils.setByteArrayMaxOverride}), far enough to put a plainly-named face
-     * past it.</p>
+     * <p>The refusal over the container is the one that mattered, and it is now spent
+     * before this: POI reads the EOT's names back into a thousand bytes and refuses a
+     * longer one <em>unchecked</em>, straight past this catch, so it cost the whole deck
+     * after the page had laid out. {@link PptxEmbeddedFont} measures the names where it
+     * writes them, which is where the limit is known and where a refusal is the checked
+     * one {@link #readPrograms} degrades a family on; so the writer is not handed a
+     * container it cannot read, on this path or the bundled one, which has no metrics
+     * pre-flight at all.</p>
      *
-     * <p>So widening this catch would trade a loud failure for a deck in that state and
-     * buy nothing, while the narrower guard — refusing an over-long name where the EOT is
-     * built, beside the licence check that already degrades there — would close it in the
-     * one place that knows the limit, the bundled path included.
-     * {@code PptxUnreadableFontSourceTest} holds what this arrangement does promise: a
-     * face POI would refuse is turned down before the hand-over, and the deck is
-     * written.</p>
+     * <p>Widening this catch instead would have swallowed the part store's failures with
+     * it and left a deck in exactly the half-written state above, which is why the guard
+     * sits where the container is built rather than here.</p>
      *
      * @return whether the presentation took every program it was handed
      */
@@ -754,8 +742,8 @@ public final class PptxRenderEnvironment {
         }
         if (embeddedAny) {
             // The bundled half of the same clear the constructor makes for a registered
-            // family, and needed again because addFacet set the flag back while taking
-            // these faces.
+            // family — on its own for a deck that registered none, and needed again after
+            // one that did, because addFacet set the flag back while taking these faces.
             show.getCTPresentation().setSaveSubsetFonts(false);
         }
     }

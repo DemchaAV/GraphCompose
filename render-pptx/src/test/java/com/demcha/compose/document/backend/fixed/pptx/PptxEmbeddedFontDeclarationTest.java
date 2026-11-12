@@ -29,15 +29,16 @@ import java.util.function.Consumer;
  *
  * <p>The pairing that would misdescribe a deck is therefore a program in the package with
  * the flag left as it came: a reader asked to keep only the characters the slides use,
- * holding a face that was embedded whole. The first test holds every shape that carries a
- * program to the opposite of that, so a path that carries one without clearing the flag
- * fails here rather than in a viewer.</p>
+ * holding a face that was embedded whole. {@code aDeckThatCarriesAProgramAsksForEveryCharacterOfIt}
+ * holds every shape that carries a program to the opposite of that, so a path that carries
+ * one without clearing the flag fails here rather than in a viewer. That test is the one
+ * resting on the template's value, which {@code poisBlankPresentationAlreadyAsksForSubsetting}
+ * pins.</p>
  *
- * <p>The last holds the other side. A deck that carries nothing says so by leaving
- * embedding off, which is what makes the subset flag inert — whatever POI's template left
- * in it. The first test pins that template value, since everything here rests on the flag
- * arriving set. Reading the flags back through POI rather than out of the XML keeps the
- * tests off how the writer spells a boolean.</p>
+ * <p>{@code aDeckThatCarriesNoProgramLeavesEmbeddingOff} holds the other side: a deck that
+ * carries nothing says so by leaving embedding off, which is what makes the subset flag
+ * inert, whatever POI's template left in it. Reading the flags back through POI rather than
+ * out of the XML keeps the tests off how the writer spells a boolean.</p>
  */
 class PptxEmbeddedFontDeclarationTest {
 
@@ -49,9 +50,9 @@ class PptxEmbeddedFontDeclarationTest {
 
     @Test
     void poisBlankPresentationAlreadyAsksForSubsetting() throws Exception {
-        // The premise both tests below rest on, and the reason this backend only ever clears
-        // the flag. A POI release that stopped setting it in the template would leave the
-        // clear doing nothing visible and the two tests passing for the wrong reason.
+        // The premise the carries-a-program test rests on, and the reason this backend only
+        // ever clears the flag. A POI release that stopped setting it in the template would
+        // leave the clear doing nothing visible and that test passing for the wrong reason.
         try (XMLSlideShow blank = new XMLSlideShow()) {
             assertThat(blank.getCTPresentation().isSetSaveSubsetFonts())
                     .as("the blank template carries the subset flag")

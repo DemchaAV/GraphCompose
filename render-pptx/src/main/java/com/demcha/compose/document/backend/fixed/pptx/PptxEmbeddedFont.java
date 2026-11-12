@@ -22,6 +22,29 @@ final class PptxEmbeddedFont {
     private static final int MAC_STYLE_ITALIC_BIT = 0x0002;
     private static final int RESTRICTED_LICENSE_EMBEDDING = 0x0002;
     private static final int BITMAP_EMBEDDING_ONLY = 0x0200;
+    /**
+     * The longest name, in bytes, the presentation writer will read back out of an EOT.
+     *
+     * <p>POI reads each of the container's names through
+     * {@code IOUtils.safelyAllocate(nameSize, 1000)} and refuses a longer one — with an
+     * unchecked {@code RecordFormatException}, raised inside {@code XSLFFontInfo.addFacet},
+     * which is past the point where a refusal still costs only the font. So the names are
+     * measured here, where a refusal is the checked one {@code readPrograms} already
+     * degrades a family on, and the writer is never handed a container it cannot read.</p>
+     *
+     * <p>It has to be measured here rather than left to the readers before it: the full
+     * name below is the family and the style joined, and {@code java.awt.Font.createFont},
+     * which the viewer metrics are read through and which does reject an over-long family
+     * or full <em>name record</em>, never reads the style record at all. A face whose
+     * subfamily name is long therefore passes every read and refused in the writer — the
+     * shipped Lato-Regular with a 496-character subfamily makes a 1,002-byte full name,
+     * and cost the whole deck.</p>
+     *
+     * <p>POI's limit is a default: a host that lowers it with
+     * {@code IOUtils.setByteArrayMaxOverride} lowers what the writer reads back, so this is
+     * a floor rather than a guarantee.</p>
+     */
+    private static final int MAX_NAME_BYTES = 1000;
 
     private PptxEmbeddedFont() {
     }
@@ -140,8 +163,14 @@ final class PptxEmbeddedFont {
 
     private static byte[] utf16(String value) throws IOException {
         byte[] encoded = value.getBytes(StandardCharsets.UTF_16LE);
-        if (encoded.length > 0xFFFF) {
-            throw new IOException("PPTX embedded-font metadata exceeds the EOT name limit");
+        if (encoded.length > MAX_NAME_BYTES) {
+            // Refused rather than shortened: what a viewer matches an embedded program to
+            // its declared typeface by is not something this backend has measured, so
+            // trimming a name the deck would then carry risks a program no viewer uses,
+            // where not carrying it is the degradation the embedder already warns about.
+            throw new IOException("PPTX embedded-font name is " + encoded.length
+                    + " bytes, past the " + MAX_NAME_BYTES
+                    + " a presentation reads back for one");
         }
         return encoded;
     }

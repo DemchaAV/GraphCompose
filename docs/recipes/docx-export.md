@@ -517,7 +517,8 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
   someone will edit. A face that allows only the first is named but not shipped, with one
   warning naming the family.
 - **One face set per name.** A family declares itself in the font table by its
-  `wordFamily()`, which is not the name it was registered under, so two families can ask to
+  `wordFamily()`, which defaults to the name it was registered under and can be set apart
+  from it, so two families can ask to
   travel under one name — the same spelling, or one differing only in case. An editor reads
   one of them: measured in Word 16 and LibreOffice 24.2, both set every run naming that
   family in the face declared first, and ignored the later program, a slot the holder had

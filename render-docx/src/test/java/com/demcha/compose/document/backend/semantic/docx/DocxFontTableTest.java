@@ -369,9 +369,14 @@ class DocxFontTableTest {
         DocxNaturalLine latoLine = DocxNaturalLine.of(latoRegular());
         DocxNaturalLine monoLine = DocxNaturalLine.of(monoRegular());
         assertThat(monoLine.ascent() + monoLine.descent())
-                .as("the premise the fixture rests on: the other face's line is the taller of the "
-                    + "two, so standing in for this one is what wrote an exact height")
+                .as("the premise the holder's line rests on: the other face's line is the taller of "
+                    + "the two, so standing in for this one is what wrote an exact height")
                 .isGreaterThan(latoLine.ascent() + latoLine.descent());
+        assertThat(Math.abs(monoLine.descent() - latoLine.descent()) * 14)
+                .as("and the premise the given-up family's own line rests on, which is a different "
+                    + "one: the two faces seat their text far enough apart that a least line would "
+                    + "stand it off the page's baseline, which is what keeps that paragraph exact")
+                .isGreaterThan(0.25);
 
         try (Shipped alone = exportSetIn(List.of(latoAs("SoloLato")), List.of(lato));
              Shipped shared = exportSetIn(List.of(latoAs("ExactShared"), monoAs("ExactShared")),
@@ -384,9 +389,10 @@ class DocxFontTableTest {
                     .as("the family that keeps the name is written as it is when it travels alone")
                     .isEqualTo(lineOf(alone.document(), 0));
             // The given-up family's runs spell the same name, so they read the key the holder
-            // filled rather than a line of their own, and their paragraph is written at the height
-            // the page measured with no least-height claim. The sibling test below reaches this
-            // map the other way — a spelling it does not hold — and lands on the same line.
+            // filled rather than a line of their own. Where that stands their text more than a
+            // quarter point off the page's baseline — the premise above — the written line stays
+            // exact. The sibling test below reaches this map the other way, by a spelling it does
+            // not hold at all, and lands on the same line for a reason of its own.
             assertThat(lineOf(shared.document(), 1)).isEqualTo("364 exact");
         }
     }

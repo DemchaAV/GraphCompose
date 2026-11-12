@@ -10,16 +10,17 @@ follow semantic versioning; release dates are ISO 8601.
 - **A DOCX export no longer ships two face sets under one font name, where an editor reads only
   one of them.**
   - A document's font table declares a family by its `FontFamilyDefinition.wordFamily()`, while
-    the families an export knows are kept by the name they were *registered* under. Those are two
-    different names, so two families can declare one — the same spelling, or one differing only in
-    case — and the export wrote a `w:font` element and an obfuscated part for each.
+    the families an export knows are kept by the name they were *registered* under. That name
+    defaults to the registered one and can be set apart from it, so two families can declare one —
+    the same spelling, or one differing only in case — and the export wrote a `w:font` element and
+    an obfuscated part for each.
   - Measured in Word 16.0.20527 and LibreOffice 24.2, eight configurations, each document
     converted on its own: both editors set **both** paragraphs in the face declared **first** and
     ignored the later program. A run naming the second spelling of a case-only pair was set in the
     face declared under the first, so the two spellings are one name and not two. The text of the
     later family was therefore set in a face it was not laid out in: on a 45-character line at
-    14pt, 68.6pt wider in Word and 64.0pt wider in LibreOffice than the face the page measured, so
-    every line break past it is somewhere else. The export said nothing about it.
+    14pt the two faces end 68.6pt apart in Word and 64.0pt apart in LibreOffice, so every line
+    break past it is somewhere else. The export said nothing about it.
   - One registration reaches it: a caller's own family declared under a bundled family's Word name
     — `classpath("Corporate", …).wordFamily("Lato")` — meets the bundled program in a document set
     in both of them, because families are set apart by the name they were registered under and
@@ -55,9 +56,11 @@ follow semantic versioning; release dates are ISO 8601.
     under its declared name and slot, so two face sets under one name left the later one's line
     standing for both, and the holder's paragraphs were written at an exact height instead of a
     least one — measured, the text then stood 0.36pt higher in Word and 0.40pt higher in
-    LibreOffice 24.2. With one face set per name those keys cannot meet, and a given-up family
-    keeps no line of its own under either spelling, so its paragraphs are written at the height
-    the page measured without a least-height claim.
+    LibreOffice 24.2. With one face set per name those keys cannot meet. A given-up family keeps
+    no line of its own under either spelling — where the spellings are equal its runs read the key
+    the holder filled, and where they differ in case their spelling is not a key at all — and what
+    its paragraphs are then written with is pinned by a test for each of those two routes rather
+    than asserted as a rule.
 
 - **A PPTX export no longer lets one font family write over another that shares its viewer name.**
   - A deck holds one font-list entry per declared typeface, with one program in each of its four

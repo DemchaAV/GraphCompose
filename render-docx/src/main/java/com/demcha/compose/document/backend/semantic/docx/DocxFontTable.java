@@ -60,8 +60,8 @@ import java.util.Set;
  * registered under — and an editor then draws both families' text from one of them: measured in
  * Word 16 and LibreOffice 24.2, a document declaring two face sets under one name, and one
  * declaring two whose names differ only in case, had both paragraphs set in the face declared
- * first, the second program ignored. So the second family is given up here instead, and named
- * ({@link #refuseForASharedName}).</p>
+ * first, the second program ignored. So the family that comes to a name already shipped under is
+ * given up here instead, and named ({@link #refuseForASharedName}).</p>
  *
  * <p>The standard PDF faces are never written, and not because of their terms: they are
  * names, not files. Nothing ships Helvetica, and a reader opening the document has Word's
@@ -451,7 +451,11 @@ final class DocxFontTable {
      * <p>Whole, as a family with an unreadable face is given up whole: a face of it bound for a
      * slot the holder leaves empty does not travel either, because a second {@code w:font} under
      * the name is not read at all — measured, a family declaring only {@code embedBold} beside a
-     * holder declaring only {@code embedRegular} had its bold program ignored by both editors.</p>
+     * holder declaring only {@code embedRegular} had its bold program ignored by both editors.
+     * The PPTX sibling ({@code PptxRenderEnvironment.SlotLedger}) is finer than this and lets two
+     * families sharing a name both travel where their slots do not clash, because a deck holds one
+     * entry with four elements in it and a second family can fill an element the first left empty.
+     * A document holds no such shared element to fill.</p>
      *
      * <p>Its runs still name it, so they are set in whatever that name resolves to where the
      * document is read, which is the holder's face in both editors measured, except where the

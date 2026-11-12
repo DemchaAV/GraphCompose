@@ -520,9 +520,10 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
   `wordFamily()`, which defaults to the name it was registered under and can be set apart
   from it, so two families can ask to travel under one name — the same spelling, or one
   differing only in case. An editor reads only one of them: measured in Word 16 and
-  LibreOffice 24.2, both set every run naming that
-  family in the face declared first, and ignored the later program, a slot the holder had
-  left empty included. The family that asks for a name another one already ships under is
+  LibreOffice 24.2, both set every run naming either family in the face declared first and
+  ignored the later program, including where it was the only face declared for a slot the
+  first left empty — Word synthesised bold from the first family's regular face there, and
+  LibreOffice drew the text unemboldened. The family that asks for a name another one already ships under is
   therefore given up whole, and the report names both of them. Its runs still carry its
   own name, so its text is set in whatever that name resolves to where the document is read —
   the face the other family shipped, or, where the editor knows the name itself, its own:

@@ -332,9 +332,10 @@ class DocxFontTableTest {
                     .as("the bold face of the family given up does not travel either")
                     .doesNotContain("<w:embedBold");
             assertShipsOneFace(shipped.document(), latoRegular());
-            // The third route into the line map, which only this arrangement reaches: the two
-            // families spell the name the same way, so the given-up family's runs would read the
-            // key the holder filled — but their slot is one the holder left empty, so there is no
+            // The route into the line map where the spelling matches and the slot does not, which
+            // only this arrangement reaches: the two families spell the name the same way, so the
+            // given-up family's runs would read the key the holder filled — but their slot is one
+            // the holder left empty, so there is no
             // such key and they read no line, which is the answer a spelling the map does not hold
             // gives as well. The paragraph is then written at its own face's line.
             DocxNaturalLine monoBold = DocxNaturalLine.of(resource(MONO_BOLD));
@@ -359,7 +360,7 @@ class DocxFontTableTest {
                         assertThat(note.detail())
                                 .as("both families by the names they were registered under, the name "
                                     + "each declares, and what a reader sees")
-                                .contains("'shipped-mono' is set in the Word name 'ExactShared'")
+                                .contains("'shipped-mono' travels under the Word name 'ExactShared'")
                                 .contains("'shipped-lato' already ships as 'ExactShared'")
                                 .contains("travels with nothing")
                                 .contains("its runs, which carry its own name")
@@ -411,11 +412,12 @@ class DocxFontTableTest {
 
     @Test
     void aGivenUpFamilySpelledAnotherWayClaimsNoLineOfItsOwn() throws Exception {
-        // The other pairing of the same collision, which reaches the line map differently: the
-        // runs of the family given up spell the name their own way, and that spelling is not a key
-        // in it at all. The paragraph lands where the sibling test's does — at the height the page
-        // measured, with no least-height claim — and both are pinned because the two routes into
-        // that map are not the same route.
+        // The route into the line map where the spelling itself does not match: the runs of the
+        // family given up spell the name their own way, and that spelling is not a key in it at
+        // all. The paragraph lands
+        // at the height the page measured with no least-height claim, which is where the free-slot
+        // route lands too — each route is pinned because reaching that answer one way says nothing
+        // about reaching it another.
         DocumentTextStyle lato = DocumentTextStyle.builder().fontName(SHIPPED_LATO).size(14).build();
         DocumentTextStyle mono = DocumentTextStyle.builder().fontName(SHIPPED_MONO).size(14).build();
         try (Shipped shared = exportSetIn(List.of(latoAs("CaseShared"), monoAs("CASESHARED")),
@@ -482,7 +484,7 @@ class DocxFontTableTest {
                     .filteredOn(note -> note.subject().equals("embedded font"))
                     .singleElement()
                     .satisfies(note -> assertThat(note.detail())
-                            .contains("'shipped-mono' is set in the Word name 'Lato'"));
+                            .contains("'shipped-mono' travels under the Word name 'Lato'"));
         }
     }
 

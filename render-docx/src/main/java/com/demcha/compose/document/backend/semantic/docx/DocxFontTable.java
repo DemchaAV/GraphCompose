@@ -308,8 +308,9 @@ final class DocxFontTable {
      * One family that will be written, and the faces of it that may be.
      *
      * @param registered the name the family was registered under, which a refusal crossing two
-     *                   families needs: the two agree on {@code wordFamily} and this is what
-     *                   tells them apart
+     *                   families needs: their {@code wordFamily} may be the same string, since
+     *                   the names are compared ignoring case, and then this is the only thing
+     *                   that tells them apart
      * @param wordFamily the name the font table declares the family under
      * @param faces      the faces of it the document ships
      */
@@ -481,17 +482,18 @@ final class DocxFontTable {
     private static void refuseForASharedName(FontFamilyDefinition family,
                                              Embedded holder,
                                              DocxExportReport.Builder report) {
-        LOG.warn("DocxSemanticBackend: '{}' is set in the Word name '{}', which '{}' already ships "
-                 + "as '{}'; a document ships one face set per name, matched without case, so '{}' "
+        LOG.warn("DocxSemanticBackend: '{}' travels under the Word name '{}', which '{}' already "
+                 + "ships as '{}'; a document ships one face set per name, matched without case, so '{}' "
                  + "travels with nothing and its text is set in whatever that name resolves to",
                 family.name().name(),
                 family.wordFamily(), holder.registered().name(), holder.wordFamily(),
                 family.name().name());
         // Both families by the name they were registered under, where the other notes on an
-        // embedded font name a family by the name it declares: these two declare one name, and it
-        // is the registered one that tells them apart.
+        // embedded font name a family by the name it declares: these two may declare the same
+        // string, since the names are compared ignoring case, and then the registered one is the
+        // only thing that tells them apart.
         report.add(DocxExportReport.Severity.DROPPED, "embedded font", null,
-                "'" + family.name().name() + "' is set in the Word name '" + family.wordFamily()
+                "'" + family.name().name() + "' travels under the Word name '" + family.wordFamily()
                 + "', which '" + holder.registered().name() + "' already ships as '"
                 + holder.wordFamily() + "'; a document ships one face set per name, matched "
                 + "without case, so '" + family.name().name() + "' travels with nothing and its "

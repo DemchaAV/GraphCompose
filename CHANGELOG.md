@@ -61,7 +61,7 @@ follow semantic versioning; release dates are ISO 8601.
     no line of its own: its runs read the key their own spelling and slot make, so they read the
     line of a face the holder shipped only where both of those match one the holder filled, and
     none where the spelling differs in case or the slot is one the holder left empty. Whether that
-    reaches the written line depends on the two faces, so it is pinned by a test per answer rather
+    reaches the written line depends on the two faces, so it is pinned by a test per route rather
     than asserted as a rule, and recorded in the capability details.
 
 - **A PPTX export no longer lets one font family write over another that shares its viewer name.**

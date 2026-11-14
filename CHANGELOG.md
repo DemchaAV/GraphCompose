@@ -7,8 +7,7 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
-- **A DOCX export no longer ships two face sets under one font name, where an editor reads only
-  one of them.**
+- **A DOCX export no longer ships two face sets under one font name.**
   - A document's font table declares a family by its `FontFamilyDefinition.wordFamily()`, while
     the families an export knows are kept by the name they were *registered* under. That name
     defaults to the registered one and can be set apart from it, so two families can declare one —
@@ -25,10 +24,35 @@ follow semantic versioning; release dates are ISO 8601.
     — `classpath("Corporate", …).wordFamily("Lato")` — meets the bundled program in a document set
     in both of them, because families are set apart by the name they were registered under and
     these two differ there.
-  - Declaring only a slot the other family leaves empty does not help: a family declaring only
-    `w:embedBold` beside one declaring only `w:embedRegular` had its bold program ignored in both
-    editors — Word synthesised bold from the other family's regular face, LibreOffice drew the
-    text unemboldened. A second element under the name is not read at all.
+  - Declaring only a slot the other family leaves empty does not help where the two programs are
+    faces of different typefaces: a family declaring only `w:embedBold` beside one declaring only
+    `w:embedRegular` had its bold program ignored in both editors — Word synthesised bold from the
+    other family's regular face, LibreOffice drew the text unemboldened.
+  - A free slot is the only place where the second program could have been read at all: where the
+    two families are set in text in the same slot, a `w:font` has one child for that slot and an
+    editor has one program to draw from whatever the two are. For a free slot, what the editors go
+    by is not the shape of the declaration but the pair of typefaces. A second program under one
+    name can be written as an element of its own — which is what the measurements above did — or as
+    another child of the holder's element, which is the shape the PPTX backend's per-slot rule
+    would need; the second shape is not one two registrations can write, since this refusal comes
+    first, so it was written by one registration whose two slots hold programs of two typefaces, a
+    document an editor cannot tell from the other. Both shapes were measured in Word 16.0.20527 and
+    LibreOffice 24.2, on a 45-character line at 14pt with a regular and a bold paragraph, and gave
+    the same answer twice. With Lato regular in
+    `w:embedRegular` and IBM Plex Mono bold in `w:embedBold`, both paragraphs were drawn from the
+    Lato program and the Plex Mono one was used by neither — as two elements and as two children
+    of one element alike, and whichever of the two children was written first. With Lato regular
+    and Lato bold, the ordinary case of one family filling two slots, both programs were read in
+    either shape, each paragraph drawn from its own.
+  - So giving the family up whole, rather than only the slot it clashes on, costs nothing more
+    except in one case: the given-up face is bound for a slot the holder left empty **and** is a
+    face of the same typeface as the holder's program. There it gives up a program both editors
+    would have read. What the editors read the sameness off — the programs' own `name` table, or
+    something else — was not measured. Which program sat in `w:embedRegular` was never swapped
+    either, so for two elements "survived because its element came first" and "survived because it
+    is the regular face" stay unseparated; within one element the two children's order was swapped
+    and did not decide. The backend-capability details and the DOCX recipe carry the measurement,
+    with the limit it leaves.
   - The family that declares a name another one already ships under is now given up whole — no
     part, no element — and the report names both families by the names they were registered under,
     with the Word name each of them declares, and says that
@@ -284,6 +308,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- `DocxFontTableTest` pins that a `w:font` element declares only the faces of the family it is
+  named for, reading each child's program through the relationship that child itself states
+  rather than inferring it from the order the parts were written, and with a second element
+  beside the contended name so that a face bound into the wrong element fails as well as an
+  extra child in the right one. The family under its own name is built from a third typeface, so
+  that a child's program says which family shipped it. The case is keyed on the refusal having
+  happened at all — without that it passes on a document where the two families never contended
+  for the name. What the export writes is now pinned there, since the editors' answer does not
+  rest on it.
 - `PptxUnreadableFontSourceTest` reaches the writer at both of the name IDs that matter, since
   varying only the family name measures the two readers agreeing rather than the gap between
   them. Its control travels *and* reads the written deck's font declaration back, which the

@@ -55,14 +55,15 @@ import java.util.Set;
  * into" — this writes the second and refuses the first, with a line in the log naming the
  * family rather than a silent omission.</p>
  *
- * <p>One face set per name an editor reads. A document can ask two families to travel under one
- * name — {@link FontFamilyDefinition#wordFamily()} defaults to the name a family is registered
- * under and can be set apart from it — and an editor then draws both families' text from one of
- * them: measured in
- * Word 16 and LibreOffice 24.2, a document declaring two face sets under one name, and one
- * declaring two whose names differ only in case, had both paragraphs set in the face declared
- * first, the second program ignored. So the family that comes to a name already shipped under is
- * given up here instead, and named ({@link #refuseForASharedName}).</p>
+ * <p>One face set per name. A document can ask two families to travel under one name —
+ * {@link FontFamilyDefinition#wordFamily()} defaults to the name a family is registered under and
+ * can be set apart from it — and where their programs are faces of different typefaces an editor
+ * draws both families' text from one of them: measured in Word 16.0.20527 and LibreOffice 24.2, a
+ * document declaring two face sets under one name, and one declaring two whose names differ only
+ * in case, had both paragraphs set in the face of the element declared first and the other program
+ * used for neither. So the family that comes to a name already shipped under is given up here
+ * instead, and named ({@link #refuseForASharedName}) — which, where the two programs are faces of
+ * one typeface, gives up one both editors would have read.</p>
  *
  * <p>The standard PDF faces are never written, and not because of their terms: they are
  * names, not files. Nothing ships Helvetica, and a reader opening the document has Word's
@@ -367,12 +368,12 @@ final class DocxFontTable {
      * asks for the Helvetica family, which is a name rather than a file and ships
      * nothing.</p>
      *
-     * <p>One face set per name the editor reads. Two families can declare one name — the same
-     * name, or one differing only in case — because the families are kept by the name they were
+     * <p>One face set per name. Two families can declare one name — the same name, or one
+     * differing only in case — because the families are kept by the name they were
      * registered under, while the name they declare defaults to that one and may be set apart
      * from it. One of the two set apart is enough, which is what a family declaring a bundled
-     * family's name does. The first to ship a
-     * face keeps the name and the rest are given up ({@link #refuseForASharedName}). Which is
+     * family's name does. The first to ship a face keeps the name and the rest are given up
+     * ({@link #refuseForASharedName}). Which is
      * first is decided by the document: the faces are read in the order the document's tree names
      * them, then the page zones', then the header and footer bands', so a family registered
      * earlier and set in text later gives way to one set in text before it, and a family set only
@@ -456,18 +457,33 @@ final class DocxFontTable {
      *
      * <p>Whole, and not face by face the way a face's own terms or an unreadable file are:
      * {@link #addFace} gives up that one face and the family ships the rest under its name. Here a
-     * face bound for a slot the holder left empty does not travel either, because a second
-     * {@code w:font} element under the name is not read at all — measured, a family declaring only
-     * {@code embedBold} beside a holder declaring only {@code embedRegular} had its bold program
-     * ignored by both editors.</p>
+     * face bound for a slot the holder left empty does not travel either — measured, a family
+     * declaring only {@code embedBold} built from a different typeface, beside a holder declaring
+     * only {@code embedRegular}, had its bold program ignored by both editors. For a pair of one
+     * typeface, see below: both are read, and the refusal gives one up.</p>
      *
-     * <p>The PPTX sibling ({@code PptxRenderEnvironment.SlotLedger}) is finer: it lets two families
-     * sharing a name both travel where their slots do not clash. The format would allow that here
-     * too — a {@code w:font} holds one child per face ({@link #toXml}), so a second family's face
-     * could be written as another child of the holder's element — and that arrangement is what the
-     * fine rule would have to be measured in. What was measured is a second element under the
-     * name, which is not read. So the coarse rule rests on a measurement and the fine one would
-     * not.</p>
+     * <p>What decides whether that second program is read turns out not to be how it is written.
+     * The PPTX sibling ({@code PptxRenderEnvironment.SlotLedger}) decides the same refusal per
+     * slot, so two families sharing a name both travel there where their slots do not clash, and
+     * the format would allow the same here twice over: as a second {@code w:font} element under
+     * the name, or as another child of the holder's element, since a {@code w:font} holds one
+     * child per face ({@link #toXml}). Both shapes were measured in Word 16.0.20527 and
+     * LibreOffice 24.2, on a 45-character line at 14pt with a regular and a bold paragraph, and
+     * both gave the same answer twice. With Lato regular in {@code embedRegular} and IBM Plex Mono
+     * bold in {@code embedBold}, both paragraphs were drawn from the Lato program and the Plex
+     * Mono one was used by neither — as two elements and as two children of one element alike, and
+     * whichever of the two children was written first. With Lato regular and Lato bold, both
+     * programs were read in either shape, each paragraph drawn from its own. That pair is the
+     * ordinary case of one family filling two slots, so the format is not the limit.</p>
+     *
+     * <p>So the coarse refusal loses nothing where the two families' programs are faces of
+     * different typefaces, and gives up a program both editors would have read where they are
+     * faces of one typeface — a family declaring a bundled family's Word name and built from that
+     * same typeface's files. What the editors read that off — the programs' own {@code name}
+     * table, or something else — was not measured; only whether the two programs are faces of one
+     * typeface was varied, and in each different-typeface arrangement the program that survived
+     * was also the one in {@code embedRegular}, so which of those two facts kept it was not
+     * separated.</p>
      *
      * <p>Its runs still name it, so they are set in whatever that name resolves to where the
      * document is read, which is the holder's face in both editors measured, except where the

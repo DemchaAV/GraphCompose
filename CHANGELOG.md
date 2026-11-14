@@ -25,10 +25,29 @@ follow semantic versioning; release dates are ISO 8601.
     — `classpath("Corporate", …).wordFamily("Lato")` — meets the bundled program in a document set
     in both of them, because families are set apart by the name they were registered under and
     these two differ there.
-  - Declaring only a slot the other family leaves empty does not help: a family declaring only
-    `w:embedBold` beside one declaring only `w:embedRegular` had its bold program ignored in both
-    editors — Word synthesised bold from the other family's regular face, LibreOffice drew the
-    text unemboldened. A second element under the name is not read at all.
+  - Declaring only a slot the other family leaves empty does not help where the two programs are
+    faces of different typefaces: a family declaring only `w:embedBold` beside one declaring only
+    `w:embedRegular` had its bold program ignored in both editors — Word synthesised bold from the other family's regular face, LibreOffice drew the
+    text unemboldened.
+  - What the editors go by is not the shape of the declaration but the pair of typefaces. A
+    `w:font` holds one child per face, so a second program under one name can be written as an
+    element of its own — which is what the measurements above did — or as another child of the
+    holder's element, which is the shape the PPTX backend's per-slot rule would need. Both shapes
+    were measured in Word 16.0.20527 and LibreOffice 24.2, on a 45-character line at 14pt with a
+    regular and a bold paragraph, and gave the same answer twice. With Lato regular in
+    `w:embedRegular` and IBM Plex Mono bold in `w:embedBold`, both paragraphs were drawn from the
+    Lato program and the Plex Mono one was used by neither — as two elements and as two children
+    of one element alike, and whichever of the two children was written first. With Lato regular
+    and Lato bold, the ordinary case of one family filling two slots, both programs were read in
+    either shape, each paragraph drawn from its own.
+  - So giving up a whole family costs nothing where the two families' programs are faces of
+    different typefaces, and gives up a program both editors would have read where the two
+    families are built from one typeface's files. What the editors read that off — the programs'
+    own `name` table, or something else — was not measured; only whether the two programs are
+    faces of one typeface was varied, and in each different-typeface arrangement the program that
+    survived was also the one in `w:embedRegular`, so which of those two facts kept it was not
+    separated. The backend-capability details and the DOCX recipe carry the measurement, with the
+    limit it leaves.
   - The family that declares a name another one already ships under is now given up whole — no
     part, no element — and the report names both families by the names they were registered under,
     with the Word name each of them declares, and says that
@@ -284,6 +303,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- `DocxFontTableTest` pins that a `w:font` element declares only the faces of the family it is
+  named for, reading each child's program through the relationship that child itself states
+  rather than inferring it from the order the parts were written, and with a second element
+  beside the contended name so that a face bound into the wrong element fails as well as an
+  extra child in the right one. The family under its own name is built from a third typeface, so
+  that a child's program says which family shipped it. The case is keyed on the refusal having
+  happened at all — without that it passes on a document where the two families never contended
+  for the name. What the export writes is now pinned there, since the editors' answer does not
+  rest on it.
 - `PptxUnreadableFontSourceTest` reaches the writer at both of the name IDs that matter, since
   varying only the family name measures the two readers agreeing rather than the gap between
   them. Its control travels *and* reads the written deck's font declaration back, which the

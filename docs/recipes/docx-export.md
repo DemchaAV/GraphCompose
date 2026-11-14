@@ -519,12 +519,31 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
 - **One face set per name.** A family declares itself in the font table by its
   `wordFamily()`, which defaults to the name it was registered under and can be set apart
   from it, so two families can ask to travel under one name — the same spelling, or one
-  differing only in case. An editor reads only one of them: measured in Word 16 and
-  LibreOffice 24.2, both set every run naming either family in the face declared first and
-  ignored the later program, including where it was the only face declared for a slot the
-  first left empty — Word synthesised bold from the first family's regular face there, and
-  LibreOffice drew the text unemboldened. The family that asks for a name another one already ships under is
-  therefore given up whole, and the report names both of them. Its runs still carry its
+  differing only in case. Where their programs are faces of different typefaces an editor
+  reads only one of them: measured in Word 16.0.20527 and LibreOffice 24.2, both set every
+  run naming either family in the face of the element declared first and ignored the other
+  program, including where it was the only face declared for a slot the first left empty —
+  Word synthesised bold from the first family's regular face there, and LibreOffice drew the
+  text unemboldened. The family that asks for a name another one already ships under is
+  therefore given up whole, and the report names both of them.
+
+  What the editors go by is not the shape of the declaration but the pair of typefaces. A
+  `w:font` holds one child per face, so a second program under one name can be written as an
+  element of its own or as another child of the holder's element, and both shapes were
+  measured in both editors with the same answer twice. With Lato regular in `w:embedRegular`
+  and IBM Plex Mono bold in `w:embedBold`, both paragraphs were drawn from the Lato program
+  and the Plex Mono one was used by neither — as two elements and as two children of one
+  element alike, and whichever of the two children was written first. With Lato regular and
+  Lato bold, the ordinary case of one family filling two slots, both programs were read in
+  either shape, each paragraph drawn from its own. So giving up a whole family costs nothing
+  where the two programs are faces of different typefaces, and gives up a program both
+  editors would have read where the two families are built from one typeface's files. What
+  the editors read that off — the programs' own `name` table, or something else — was not
+  measured; only whether the two programs are faces of one typeface was varied, and in each
+  different-typeface arrangement the program that survived was also the one in
+  `w:embedRegular`, so which of those two facts kept it was not separated.
+
+  The given-up family's runs still carry its
   own name, so its text is set in whatever that name resolves to where the document is read —
   the face the other family shipped, or, where the editor knows the name itself, its own:
   Word 16 drew its own Lato for a document declaring `Lato` with another family's program.

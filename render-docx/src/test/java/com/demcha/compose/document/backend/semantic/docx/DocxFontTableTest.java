@@ -52,6 +52,8 @@ class DocxFontTableTest {
     private static final String LATO_REGULAR = "fonts/google/lato/Lato-Regular.ttf";
     private static final String MONO_REGULAR = "fonts/google/ibmplexmono/IBMPlexMono-Regular.ttf";
     private static final String MONO_BOLD = "fonts/google/ibmplexmono/IBMPlexMono-Bold.ttf";
+    private static final String PAIR_REGULAR = "fonts/google/poppins/Poppins-Regular.ttf";
+    private static final String PAIR_BOLD = "fonts/google/poppins/Poppins-Bold.ttf";
     /**
      * The names two families are registered under in the tests of one declared name. Two faces of
      * plainly different widths, so which of them a part holds is read off the file and not off a
@@ -59,6 +61,11 @@ class DocxFontTableTest {
      */
     private static final FontName SHIPPED_LATO = FontName.of("shipped-lato");
     private static final FontName SHIPPED_MONO = FontName.of("shipped-mono");
+    /**
+     * A family of two faces under a name of its own, where a document needs a second element. A
+     * third typeface, so that a child's program says which of the three families shipped it.
+     */
+    private static final FontName SHIPPED_PAIR = FontName.of("shipped-pair");
 
     @Test
     void aBundledFamilyTravelsWithTheDocument() throws Exception {
@@ -251,9 +258,10 @@ class DocxFontTableTest {
 
     @Test
     void twoFamiliesUnderOneNameShipOneFaceSet() throws Exception {
-        // Measured in Word 16 and LibreOffice 24.2: a document declaring two face sets under one
-        // name had both paragraphs set in the face declared first, the later program ignored. So
-        // the later family travels with nothing rather than with a face no editor reads.
+        // Measured in Word 16 and LibreOffice 24.2: a document declaring two face sets of
+        // different typefaces under one name had both paragraphs set in the face of the element
+        // declared first, the other program ignored. So the later family travels with nothing
+        // rather than with a face no editor reads. The two here are Lato and IBM Plex Mono.
         try (Shipped shipped = exportSetIn(List.of(latoAs("ExactShared"), monoAs("ExactShared")),
                 List.of(face(SHIPPED_LATO), face(SHIPPED_MONO)))) {
 
@@ -320,7 +328,9 @@ class DocxFontTableTest {
         // Measured in both editors: a family declaring only embedBold, beside one declaring only
         // embedRegular under the same name, had its bold program ignored — Word synthesised bold
         // from the other family's regular face and LibreOffice drew it unemboldened. So a second
-        // entry under the name buys nothing even where the two families' slots do not meet.
+        // entry under the name buys nothing where the two programs are faces of different
+        // typefaces, which is what this fixture's Lato and IBM Plex Mono are; a pair of one
+        // typeface is read, and the refusal gives one up (see the element's own case below).
         FontFamilyDefinition mono = FontFamilyDefinition.classpath(SHIPPED_MONO, MONO_REGULAR)
                 .boldResource(MONO_BOLD).wordFamily("SlotsShared").build();
         try (Shipped shipped = exportSetIn(List.of(latoAs("SlotsShared"), mono),
@@ -343,6 +353,68 @@ class DocxFontTableTest {
                     .as("the premise the written height rests on, as the sibling test pins its own")
                     .isEqualTo(260);
             assertThat(lineOf(shipped.document(), 1)).isEqualTo("260 exact");
+        }
+    }
+
+    @Test
+    void anElementDeclaresOnlyTheFacesOfTheFamilyItIsNamedFor() throws Exception {
+        // A w:font holds one child per face, so a family given up for a shared name could have
+        // had its free slot written as another child of the holder's element rather than as an
+        // element of its own. Measured in Word 16.0.20527 and LibreOffice 24.2, both shapes give
+        // the same answer twice, and the shape is not what either editor goes by: a face of a
+        // different typeface under the name was used by neither paragraph as a second element and
+        // as a second child alike, in either order of the two children, while two faces of one
+        // typeface were both read in either shape. So what the export writes is pinned here
+        // rather than argued from the editors: each element declares the faces of its own family
+        // and no others.
+        //
+        // With a second element beside the contended one, so a face bound into the wrong element
+        // fails as well as an extra child in the right one; and the own-name family is built from
+        // a third typeface, so that each child's program says which family it came from — two
+        // children holding one file would make the comparison pass on either binding. The
+        // given-up family is set in text in both of its slots, the one the holder filled and the
+        // one it left empty, so that neither of its files could reach a part by any route and
+        // both halves of the closing check can fail.
+        FontFamilyDefinition holder = latoAs("Contended");
+        FontFamilyDefinition givenUp = FontFamilyDefinition.classpath(SHIPPED_MONO, MONO_REGULAR)
+                .boldResource(MONO_BOLD).wordFamily("Contended").build();
+        FontFamilyDefinition ownName = FontFamilyDefinition.classpath(SHIPPED_PAIR, PAIR_REGULAR)
+                .boldResource(PAIR_BOLD).wordFamily("OwnName").build();
+        try (Shipped shipped = exportSetIn(List.of(holder, givenUp, ownName),
+                List.of(face(SHIPPED_LATO), bold(SHIPPED_MONO), face(SHIPPED_MONO),
+                        face(SHIPPED_PAIR), bold(SHIPPED_PAIR)))) {
+
+            // The fixture reached the collision: without this the rest passes on a document where
+            // the two families never contended for the name at all.
+            assertThat(shipped.report().notes())
+                    .filteredOn(note -> note.subject().equals("embedded font"))
+                    .singleElement()
+                    .satisfies(note -> assertThat(note.detail())
+                            .as("the family that came to the taken name was given up")
+                            .contains("'shipped-mono' travels under the Word name 'Contended'"));
+
+            List<FontElement> elements = fontElements(shipped.document());
+            assertThat(elements).extracting(FontElement::name)
+                    .as("one element per family that keeps a name")
+                    .containsExactly("Contended", "OwnName");
+            assertThat(elements.get(0).slots())
+                    .as("the holder declares the slot it filled and no other")
+                    .containsExactly("embedRegular");
+            assertCarries(elements.get(0).programs().get(0), resource(LATO_REGULAR));
+            assertThat(elements.get(1).slots())
+                    .as("the family under its own name declares both slots it filled")
+                    .containsExactly("embedRegular", "embedBold");
+            assertCarries(elements.get(1).programs().get(0), resource(PAIR_REGULAR));
+            assertCarries(elements.get(1).programs().get(1), resource(PAIR_BOLD));
+
+            // Neither file of the family given up travels anywhere in the package — not as an
+            // element of its own, and not as a child of the element that keeps the name.
+            for (byte[] part : fontParts(shipped.document())) {
+                assertThat(carries(part, resource(MONO_REGULAR)))
+                        .as("no part holds the given-up family's regular face").isFalse();
+                assertThat(carries(part, resource(MONO_BOLD)))
+                        .as("no part holds the given-up family's bold face").isFalse();
+            }
         }
     }
 
@@ -525,11 +597,7 @@ class DocxFontTableTest {
     private static void assertShipsOneFace(XWPFDocument document, byte[] source) throws Exception {
         List<byte[]> parts = fontParts(document);
         assertThat(parts).as("one name declared, one face shipped under it").hasSize(1);
-        byte[] part = parts.get(0);
-        assertThat(part).hasSameSizeAs(source);
-        assertThat(java.util.Arrays.copyOfRange(part, 32, part.length))
-                .as("the face shipped is this font, past the scrambled header")
-                .isEqualTo(java.util.Arrays.copyOfRange(source, 32, source.length));
+        assertCarries(parts.get(0), source);
     }
 
     /** The family a paragraph's one run names, as the document carries it. */
@@ -717,15 +785,58 @@ class DocxFontTableTest {
         }
     }
 
-    /** The families the font table ships faces for. */
-    private static List<String> families(XWPFDocument document) throws Exception {
-        java.util.regex.Matcher name = java.util.regex.Pattern.compile("<w:font w:name=\"([^\"]+)\"")
-                .matcher(fontTable(document));
-        List<String> families = new java.util.ArrayList<>();
-        while (name.find()) {
-            families.add(name.group(1));
+    /**
+     * One element of the font table: the name it declares, the slots it holds in the order they
+     * are written, and the part each of those children points at.
+     */
+    private record FontElement(String name, List<String> slots, List<byte[]> programs) {
+    }
+
+    /**
+     * The font table's elements, each child tied to the part its own relationship names, so the
+     * program a slot carries is read rather than inferred from the order the parts were written.
+     */
+    private static List<FontElement> fontElements(XWPFDocument document) throws Exception {
+        String xml = fontTable(document);
+        PackagePart table = document.getPackage()
+                .getPart(org.apache.poi.openxml4j.opc.PackagingURIHelper
+                        .createPartName("/word/fontTable.xml"));
+        List<FontElement> elements = new java.util.ArrayList<>();
+        java.util.regex.Matcher element = java.util.regex.Pattern
+                .compile("<w:font w:name=\"([^\"]+)\">(.*?)</w:font>", java.util.regex.Pattern.DOTALL)
+                .matcher(xml);
+        while (element.find()) {
+            List<String> slots = new java.util.ArrayList<>();
+            List<byte[]> programs = new java.util.ArrayList<>();
+            java.util.regex.Matcher child = java.util.regex.Pattern
+                    .compile("<w:(embed[A-Za-z]+) r:id=\"([^\"]+)\"")
+                    .matcher(element.group(2));
+            while (child.find()) {
+                slots.add(child.group(1));
+                PackagePart part = table.getRelatedPart(table.getRelationship(child.group(2)));
+                try (InputStream in = part.getInputStream()) {
+                    programs.add(in.readAllBytes());
+                }
+            }
+            elements.add(new FontElement(element.group(1), slots, programs));
         }
-        return families;
+        return elements;
+    }
+
+    /** Whether a part holds this font, past the scrambled header the obfuscation writes. */
+    private static boolean carries(byte[] part, byte[] source) {
+        return part.length == source.length
+               && java.util.Arrays.equals(part, 32, part.length, source, 32, source.length);
+    }
+
+    private static void assertCarries(byte[] part, byte[] source) {
+        assertThat(carries(part, source))
+                .as("the part holds this font, past the scrambled header").isTrue();
+    }
+
+    /** The families the font table ships faces for, one entry per element it declares. */
+    private static List<String> families(XWPFDocument document) throws Exception {
+        return fontElements(document).stream().map(FontElement::name).toList();
     }
 
     private static DocumentTextStyle face(FontName name) {

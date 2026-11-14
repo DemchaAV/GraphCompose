@@ -519,29 +519,36 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
 - **One face set per name.** A family declares itself in the font table by its
   `wordFamily()`, which defaults to the name it was registered under and can be set apart
   from it, so two families can ask to travel under one name — the same spelling, or one
-  differing only in case. Where their programs are faces of different typefaces an editor
-  reads only one of them: measured in Word 16.0.20527 and LibreOffice 24.2, both set every
-  run naming either family in the face of the element declared first and ignored the other
-  program, including where it was the only face declared for a slot the first left empty —
-  Word synthesised bold from the first family's regular face there, and LibreOffice drew the
-  text unemboldened. The family that asks for a name another one already ships under is
+  differing only in case. Where both are set in text in the same slot an editor reads only
+  one of them, which is all it can do — a `w:font` holds one child per slot: measured in
+  Word 16.0.20527 and LibreOffice 24.2, both set every run naming either family in the face
+  of the element declared first and ignored the other program, including where it was the
+  only face declared for a slot the first left empty — Word synthesised bold from the first
+  family's regular face there, and LibreOffice drew the text unemboldened. The family that
+  asks for a name another one already ships under is
   therefore given up whole, and the report names both of them.
 
-  What the editors go by is not the shape of the declaration but the pair of typefaces. A
-  `w:font` holds one child per face, so a second program under one name can be written as an
-  element of its own or as another child of the holder's element, and both shapes were
-  measured in both editors with the same answer twice. With Lato regular in `w:embedRegular`
+  A slot the holder left empty is the only place where the second program could have been
+  read at all, and for it the editors go not by the shape of the declaration but by the pair
+  of typefaces. Such a program can be written as an element of its own or as another child of
+  the holder's element — the second is not a document two registrations can write, since the
+  refusal comes first, so it was written by one registration whose two slots hold programs of
+  two typefaces, which an editor cannot tell from the other. Both shapes were measured in
+  both editors with the same answer twice. With Lato regular in `w:embedRegular`
   and IBM Plex Mono bold in `w:embedBold`, both paragraphs were drawn from the Lato program
   and the Plex Mono one was used by neither — as two elements and as two children of one
   element alike, and whichever of the two children was written first. With Lato regular and
   Lato bold, the ordinary case of one family filling two slots, both programs were read in
-  either shape, each paragraph drawn from its own. So giving up a whole family costs nothing
-  where the two programs are faces of different typefaces, and gives up a program both
-  editors would have read where the two families are built from one typeface's files. What
-  the editors read that off — the programs' own `name` table, or something else — was not
-  measured; only whether the two programs are faces of one typeface was varied, and in each
-  different-typeface arrangement the program that survived was also the one in
-  `w:embedRegular`, so which of those two facts kept it was not separated.
+  either shape, each paragraph drawn from its own.
+
+  So giving the family up whole, rather than only the slot it clashes on, costs nothing more
+  except in one case: the given-up face is bound for a slot the holder left empty **and** is
+  a face of the same typeface as the holder's program. There it gives up a program both
+  editors would have read. What the editors read the sameness off — the programs' own `name`
+  table, or something else — was not measured. Which program sat in `w:embedRegular` was
+  never swapped either, so for two elements "survived because its element came first" and
+  "survived because it is the regular face" stay unseparated; within one element the two
+  children's order was swapped and did not decide.
 
   The given-up family's runs still carry its
   own name, so its text is set in whatever that name resolves to where the document is read —

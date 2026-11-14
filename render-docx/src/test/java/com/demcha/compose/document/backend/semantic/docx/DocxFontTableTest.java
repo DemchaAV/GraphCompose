@@ -407,8 +407,11 @@ class DocxFontTableTest {
             assertCarries(elements.get(1).programs().get(0), resource(PAIR_REGULAR));
             assertCarries(elements.get(1).programs().get(1), resource(PAIR_BOLD));
 
-            // Neither file of the family given up travels anywhere in the package — not as an
-            // element of its own, and not as a child of the element that keeps the name.
+            // Neither file of the family given up travels in any font part — not under an element
+            // of its own, and not under the element that keeps the name. The count is pinned too,
+            // so a part no element points at would be seen.
+            assertThat(fontParts(shipped.document()))
+                    .as("one part per child the table declares, and no more").hasSize(3);
             for (byte[] part : fontParts(shipped.document())) {
                 assertThat(carries(part, resource(MONO_REGULAR)))
                         .as("no part holds the given-up family's regular face").isFalse();
@@ -820,6 +823,11 @@ class DocxFontTableTest {
             }
             elements.add(new FontElement(element.group(1), slots, programs));
         }
+        // The pattern reads an element with children; one written without any — which `resolve`
+        // does not produce, since it adds no `Embedded` without a face — would be skipped rather
+        // than reported, and `families` is built on this.
+        assertThat(elements).as("every element the part declares was read")
+                .hasSize(xml.split("<w:font ", -1).length - 1);
         return elements;
     }
 
@@ -830,6 +838,7 @@ class DocxFontTableTest {
     }
 
     private static void assertCarries(byte[] part, byte[] source) {
+        assertThat(part).as("the part is as long as the font it should hold").hasSameSizeAs(source);
         assertThat(carries(part, source))
                 .as("the part holds this font, past the scrambled header").isTrue();
     }

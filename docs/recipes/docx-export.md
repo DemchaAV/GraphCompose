@@ -512,6 +512,23 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
 - **Only the faces the document uses.** One family's four faces are about 2.5 MB, so the
   face is chosen from each style's decoration. A reader who later bolds a word gets
   whatever their machine does for a missing bold face.
+- **One typeface per family, or the report says so.** A family's slots are filled one file
+  at a time, so a caller can put a program of one typeface in the regular slot and one of
+  another in the bold slot. The export writes both faces, and the PDF backend draws each
+  paragraph in the program its slot holds — an editor does not. Measured with a bold run in
+  Word 16.0.20527 and LibreOffice 24.2 on a 45-character line at 14pt, a family holding Lato
+  regular and
+  IBM Plex Mono bold had both paragraphs drawn from the Lato program, to the hundredth of a
+  point where the same document ships no bold program at all, while that program sat in the
+  package at 137,784 bytes. Where the line is the face's own, the bold paragraph keeps the
+  one its own face measured, so it is drawn 1.4pt shorter than the line reserved for it, and
+  its line ends 13.11pt short of where Word itself draws that program, 8.79pt short of where
+  LibreOffice does. The export now names that face
+  (`embedded font`, `APPROXIMATED`), with the typeface each program states — said where the
+  family ships a regular face and both programs name their typeface, which is what was
+  measured. The document's bytes are unchanged, so what the note buys is knowing. Pair the
+  slots of one typeface, or register the second typeface as a family of its own and set the
+  text in it.
 - **Only what the face permits.** An OpenType face states its terms in `OS/2`, and the
   format distinguishes embedding for reading and printing from embedding in a document
   someone will edit. A face that allows only the first is named but not shipped, with one

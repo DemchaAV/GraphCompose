@@ -586,7 +586,121 @@ final class DocxFontTable {
                 case BOLD_ITALIC -> sources.boldItalic();
             });
         }
+        nameTheFacesAnEditorWillNotDraw(family, faces, report);
         return faces;
+    }
+
+    /**
+     * Says which of a family's faces an editor will not draw, because its program is of another
+     * typeface than the one the family's regular slot holds.
+     *
+     * <p>A family's slots are filled one file at a time, so a caller can put a program of one
+     * typeface in {@code embedRegular} and a program of another in {@code embedBold}. The export
+     * writes both, and the PDF backend draws each paragraph in the program its slot holds — but an
+     * editor reading the document draws the family from the one in {@code embedRegular} and leaves
+     * the other unread, so it travels for nothing and its runs are set in a face they were not
+     * measured in. Measured with a bold run in Word 16.0.20527 and LibreOffice 24.2; the figures
+     * and what they cost are in the backend capability details. Nothing said so; this does.</p>
+     *
+     * <p>Not a refusal, and not reported as one: both faces are written, and the family is not
+     * turned away. It is the document being the nearest thing an editor will read
+     * ({@link DocxExportReport.Severity#APPROXIMATED}), which is what the note says.</p>
+     *
+     * <p>Whether two programs are of one typeface is read off the programs themselves
+     * ({@link #typefaceOf}), compared with {@link String#equalsIgnoreCase}, which folds the same
+     * way wherever the export runs — unlike {@code toLowerCase()} and its default locale. No
+     * bundled family draws this note: read as that method reads them, all 188 pairs of faces within
+     * the 35 bundled families state one typeface.</p>
+     *
+     * <p>Said only where the family ships a regular face and both programs name their typeface:
+     * what was measured is an editor drawing a family from the face it reads for the regular slot,
+     * and a program whose name cannot be read is one this cannot compare. Silence there is a
+     * missing warning rather than a false one. Said for every other slot the family ships, though
+     * only the bold one was measured: the slot a run reaches is not what the editors were seen to
+     * go by.</p>
+     *
+     * <p>What this does not do is make the document right. The program still travels unread and the
+     * lines still fall where the page did not put them — what the export can do without writing
+     * different bytes is say so. Carrying such a family as two declared names, which both editors
+     * were measured to draw, is the alternative not taken.</p>
+     */
+    private static void nameTheFacesAnEditorWillNotDraw(FontFamilyDefinition family,
+                                                        List<Face> faces,
+                                                        DocxExportReport.Builder report) {
+        if (faces.size() < 2) {
+            return;
+        }
+        Face regular = null;
+        for (Face face : faces) {
+            if (face.element().equals(Slot.REGULAR.element())) {
+                regular = face;
+                break;
+            }
+        }
+        if (regular == null) {
+            return;
+        }
+        String drawn = typefaceOf(regular.font());
+        if (drawn == null) {
+            return;
+        }
+        for (Face face : faces) {
+            if (face == regular) {
+                continue;
+            }
+            String own = typefaceOf(face.font());
+            if (own == null || own.equalsIgnoreCase(drawn)) {
+                continue;
+            }
+            LOG.warn("DocxSemanticBackend: the '{}' face of '{}' is a face of '{}' where its "
+                     + "regular face is a face of '{}'; an editor draws the family from the regular "
+                     + "face, so this program travels in the document and is drawn by neither "
+                     + "editor", face.element(), family.wordFamily(), own, drawn);
+            report.add(DocxExportReport.Severity.APPROXIMATED, "embedded font", null,
+                    "the " + face.element() + " face of '" + family.wordFamily() + "' is a face of '"
+                    + own + "', where its embedRegular face is a face of '" + drawn + "'; measured "
+                    + "with a bold run in Word 16.0.20527 and LibreOffice 24.2, an editor draws a "
+                    + "name whose two programs are of different typefaces from the one in "
+                    + "embedRegular, so this program travels in the document unread and those runs "
+                    + "are set in the regular face — where the line is this face's own, at the "
+                    + "height it measured rather than the height of the face they are drawn in");
+        }
+    }
+
+    /**
+     * What a program calls its own typeface: the typographic family ({@code name} id 16) where it
+     * states one, the family (id 1) otherwise, or null where it states neither or cannot be read.
+     *
+     * <p>Both are read from the same record — Windows, Unicode BMP, en-US — so that two faces are
+     * never compared across two namings of one typeface. Taking whichever id 16 a file happens to
+     * state first would read a localized record on one face against an English id 1 on its sibling,
+     * which is the false note the id 16 reading is here to avoid. A face whose id 16 is stated for
+     * another platform alone is read by its id 1, as it was before any of this.</p>
+     *
+     * @param program the face's own file, as read
+     * @return the typeface's name, or null
+     */
+    static String typefaceOf(byte[] program) {
+        try (org.apache.fontbox.ttf.TrueTypeFont font = new org.apache.fontbox.ttf.TTFParser()
+                .parse(new org.apache.pdfbox.io.RandomAccessReadBuffer(program))) {
+            org.apache.fontbox.ttf.NamingTable naming = font.getNaming();
+            if (naming == null) {
+                return null;
+            }
+            String typographic = stated(naming.getName(16, 3, 1, 0x409));
+            if (typographic != null) {
+                return typographic;
+            }
+            String family = stated(naming.getName(1, 3, 1, 0x409));
+            return family != null ? family : stated(naming.getFontFamily());
+        } catch (IOException | RuntimeException unreadable) {
+            return null;
+        }
+    }
+
+    /** A name a face states, or null where it states none worth comparing. */
+    private static String stated(String name) {
+        return name == null || name.isBlank() ? null : name;
     }
 
     private static void addFace(List<Face> faces,

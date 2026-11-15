@@ -135,12 +135,33 @@ Where that record does and does not travel:
   file. It does *read* these records — id 16 first, then id 1 — to tell whether
   a family's faces are of one typeface, which is why a family of Asap Condensed
   faces draws no note about them.
-- **A PPTX** carries an embedded face in a container that names it by id 1 and
-  id 2, so a deck setting text in this face carries
-  `Asap Condensed Condensed Regular` in that container's family field while the
-  deck itself declares `Asap Condensed`. Nothing in GraphCompose reads those
-  container names back, and PowerPoint 16 was measured drawing such a deck the
-  same whichever name the container carried.
+- **A PPTX** is where it costs something. A presentation matches an embedded
+  face to the family the deck declares by the family the *program* states for
+  itself — id 1, not the container's fields and not id 16. Measured in
+  PowerPoint 16: a deck declaring `Asap Condensed` and carrying this face had
+  that paragraph drawn in **Arial Italic**, the embedded program used by
+  nothing, while the same deck's regular paragraph was drawn from its own
+  program. A face can also be mishandled rather than dropped:
+  `Oswald-SemiBold`, whose record reads `Oswald SemiBold`, came out of a deck
+  declaring `Oswald` with the viewer's own weight added on top of it. Declaring the family as this face states it instead draws this
+  program for every paragraph and leaves the regular face unused — so for a
+  family whose faces disagree in that record, no single declared name serves
+  them all. The face is still carried, and the export says so in its log
+  (`render.pptx.font.name.mismatch`) with both names.
+
+This is not only about one mis-built file. **For a PPTX deck, declare a family
+under the name its files state in `name` id 1.** The declared name is
+`wordFamily()`, which defaults to the name you register the family under, so a
+family registered as `Corporate` from a file that states `Acme Sans` meets the
+same condition — a presentation matches on the file's record, and the program
+you paid bytes for is not what draws your text. A multi-weight face registered
+beside its regular meets it too: `Oswald-SemiBold` states `Oswald SemiBold`,
+and a deck declaring `Oswald` was measured drawing it with the viewer's own
+weight added on top.
+
+One route out is to register the odd face as a family of its own, declared under
+the name that face states, and set that text in it; that was not measured, only
+reasoned from the arms above.
 
 ## See also
 

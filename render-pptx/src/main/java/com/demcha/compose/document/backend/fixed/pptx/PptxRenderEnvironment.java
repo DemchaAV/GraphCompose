@@ -866,9 +866,38 @@ public final class PptxRenderEnvironment {
                 if (programs.containsKey(description)) {
                     continue;
                 }
-                byte[] container;
+                byte[] program;
                 try (InputStream stream = source.openStream()) {
-                    container = PptxEmbeddedFont.wrap(stream);
+                    program = stream.readAllBytes();
+                }
+                byte[] container = PptxEmbeddedFont.wrap(program);
+                // A face whose program states a family of its own, said where the names are known.
+                // A presentation matches an embedded face to the declared typeface by that record
+                // and not by the names the container carries, so a face naming another family is
+                // not reached the way the page laid it out. What that costs differs, and both
+                // halves were measured in PowerPoint 16: one such face was not drawn at all and
+                // its runs came out in a substitute, another was drawn and then weighted again by
+                // the viewer. So this says what the two names are and leaves the outcome to the
+                // reader rather than promising the one it happened to measure first.
+                //
+                // Nothing is refused for it, and nothing here says the family travels: a later
+                // face of it can still collide, be unreadable, or lose its viewer metrics, and
+                // each of those says so on its own line. What this line is about is the naming.
+                //
+                // The names are compared ignoring case, which folds the same way wherever the
+                // export runs. Whether a viewer matches case-insensitively was not measured, so
+                // a pair differing only in case is left silent rather than warned about on a
+                // guess.
+                String stated = PptxEmbeddedFont.statedFamilyOf(program);
+                if (stated != null && !stated.equalsIgnoreCase(typeface)) {
+                    LOG.warn("render.pptx.font.name.mismatch family={} typeface={} face={} "
+                             + "states={} — a presentation matches an embedded face on the family "
+                             + "its program states for itself, which is not the one this deck "
+                             + "declares, so any runs laid out in this face are not reached the "
+                             + "way the page laid them out; measured in PowerPoint 16, one such "
+                             + "face was replaced by a substitute and another was drawn with the "
+                             + "viewer's own weight added",
+                            familyName.name(), typeface, description, stated);
                 }
                 // Which slot the face is seated in is not the slot it was registered under:
                 // a presentation reads it off the container, so a face put in one slot of

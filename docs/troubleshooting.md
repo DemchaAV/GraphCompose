@@ -25,6 +25,25 @@ bullet `•` (U+2022) **is** in WinAnsi, but the larger black circle `●`
 
 Full detail and the coverage table: [font coverage and glyph fallback](font-coverage.md).
 
+## PowerPoint draws Arial where the deck embeds a font
+
+A presentation matches an embedded face to the family a deck declares by the
+family the **program** states for itself — `name` id 1 — not by the name the
+deck declares or anything in the font container. Where the two differ, the face
+travels in the deck and the runs laid out in it are not reached that way:
+measured in PowerPoint 16, one such face was replaced by Arial Italic and
+another was drawn with the viewer's own weight added on top.
+
+The export says so: look for `render.pptx.font.name.mismatch` in the render log,
+which names the family the file states and the one the deck declares.
+
+Declare the family under the name its files state. The declared name is
+`wordFamily()`, which defaults to the name the family was registered under, so
+`FontFamilyDefinition.files("Corporate", path)` on a file that states
+`Acme Sans` meets this — as does a weight registered beside its regular, such as
+`Oswald-SemiBold` under `Oswald`. See
+[Font coverage](font-coverage.md#what-a-bundled-face-calls-itself).
+
 ## DOCX export is missing paths, polygons, or other drawing
 
 **Cause.** The DOCX backend (`DocxSemanticBackend`, Apache POI) is a

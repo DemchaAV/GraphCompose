@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,6 +39,7 @@ class PptxRunFlagFromTheNameTest {
 
     private static final String LATO_REGULAR = "fonts/google/lato/Lato-Regular.ttf";
     private static final String LATO_BOLD = "fonts/google/lato/Lato-Bold.ttf";
+    private static final String LATO_ITALIC = "fonts/google/lato/Lato-Italic.ttf";
 
     @TempDir
     Path directory;
@@ -110,7 +112,40 @@ class PptxRunFlagFromTheNameTest {
     void aNameWithoutATokenLeavesTheDecorationInCharge() throws Exception {
         byte[] deck = twoFaceDeck("Acme Sans");
 
-        assertThat(boldFlags(deck)).containsExactly(false, true);
+        assertThat(boldFlags(deck))
+                .as("nothing in this name can speak, so only the decoration does")
+                .containsExactly(false, true);
+    }
+
+    /**
+     * The same rule on the other axis, since the mapping reads two tokens and the cases above read
+     * one: a family of a regular and an italic face under a name that merely contains {@code
+     * Italic} leaves the plain run upright.
+     */
+    @Test
+    void theItalicAxisFollowsTheSameRule() throws Exception {
+        Path regular = Files.write(directory.resolve("regular.ttf"), PptxDeck.face(LATO_REGULAR));
+        Path italic = Files.write(directory.resolve("italic.ttf"), PptxDeck.face(LATO_ITALIC));
+        FontName kept = FontName.of("Acme Sans Italic");
+        FontName shed = FontName.of("Acme-Sans-Italic");
+
+        assertThat(italicFlags(italicDeck(kept, regular, italic)))
+                .as("a token the name keeps leaves the upright run upright")
+                .containsExactly(false, true);
+        assertThat(italicFlags(italicDeck(shed, regular, italic)))
+                .as("a name ending in the suffix asks for the italic face on both runs")
+                .containsExactly(true, true);
+    }
+
+    private byte[] italicDeck(FontName name, Path regular, Path italic) {
+        FontFamilyDefinition family = FontFamilyDefinition.files(name, regular)
+                .italicPath(italic).wordFamily("Acme Sans").build();
+        DocumentTextStyle plain = DocumentTextStyle.builder().fontName(name).size(18).build();
+        DocumentTextStyle slanted = DocumentTextStyle.builder().fontName(name).size(18)
+                .decoration(DocumentTextDecoration.ITALIC).build();
+        return PptxDeck.registering(family, page -> page
+                .addParagraph(p -> p.text("Upright").textStyle(plain))
+                .addParagraph(p -> p.text("Italic").textStyle(slanted)));
     }
 
     private byte[] twoFaceDeck(String registered) throws Exception {
@@ -132,13 +167,23 @@ class PptxRunFlagFromTheNameTest {
      * beside this one read runs — the attribute a viewer goes by, not a text match on the part.
      */
     private static List<Boolean> boldFlags(byte[] deck) throws Exception {
+        return flagsOf(deck, XSLFTextRun::isBold);
+    }
+
+    /** The same, on the italic axis. */
+    private static List<Boolean> italicFlags(byte[] deck) throws Exception {
+        return flagsOf(deck, XSLFTextRun::isItalic);
+    }
+
+    private static List<Boolean> flagsOf(byte[] deck, Function<XSLFTextRun, Boolean> flag)
+            throws Exception {
         List<Boolean> flags = new ArrayList<>();
         try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(deck))) {
             for (XSLFShape shape : show.getSlides().get(0).getShapes()) {
                 if (shape instanceof XSLFTextShape textShape) {
                     for (XSLFTextParagraph paragraph : textShape.getTextParagraphs()) {
                         for (XSLFTextRun run : paragraph.getTextRuns()) {
-                            flags.add(run.isBold());
+                            flags.add(flag.apply(run));
                         }
                     }
                 }

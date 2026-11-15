@@ -16,8 +16,10 @@ import java.util.Locale;
  * system fonts (Helvetica → Arial, Times → Times New Roman, Courier →
  * Courier New) — page geometry is safe either way because every line is
  * pre-wrapped and placed by the engine, but metric-compatible glyphs keep
- * intra-line rendering close. Binary families keep their real family name
- * with the style suffix stripped ({@code Roboto-Bold} → {@code Roboto});
+ * intra-line rendering close. Binary families keep their real family name —
+ * stripped of a style suffix ({@code Roboto-Bold} → {@code Roboto}) where no
+ * registration covers the name, while a registered family declares the
+ * {@code wordFamily()} it was given, suffix and all;
  * the bold/italic axis travels as run flags, combining the span's
  * {@link TextDecoration} with a style suffix at the <em>end</em> of the name,
  * read off the one list of suffixes this class strips names by and from no
@@ -29,17 +31,20 @@ import java.util.Locale;
 public final class PptxFontMapping {
 
     /**
-     * The style suffixes a font name can end in. No entry is a suffix of another — each begins with
-     * the hyphen — so the order they are read in does not matter.
+     * The style suffixes a font name can end in, ordered so that an entry is tried before any
+     * shorter entry it itself ends with: {@code -bold-italic} before {@code -italic}, and
+     * {@code -bold-oblique} before {@code -oblique}. Read first to last, so the order is part of
+     * the rule rather than a tidiness.
      *
      * <p>One list, read by the two places that must not disagree about what a style token is:
      * {@link #stripStyleSuffix}, which takes the suffix off a name no registration covers, and
      * {@link #nameCarriesStyle}, which turns it into a run flag. Adding a spelling here gives it to
-     * both at once; keying either of them on anything else — a substring search, say — is what this
-     * list exists to prevent.</p>
+     * both at once; searching the <em>whole name</em> for a token instead — which is what this
+     * class did until the measurements below — is what the one list exists to prevent.</p>
      */
     private static final String[] STYLE_SUFFIXES = {
-            "-bolditalic", "-boldoblique", "-bold", "-italic", "-oblique", "-regular"
+            "-bolditalic", "-bold-italic", "-boldoblique", "-bold-oblique",
+            "-bold", "-italic", "-oblique", "-regular"
     };
 
     private static final double ARIAL_ASCENT_RATIO = 1854.0 / 2048.0;
@@ -130,10 +135,12 @@ public final class PptxFontMapping {
     /**
      * Reports whether a font name's own style suffix should become a run flag.
      *
-     * <p><b>Only a style suffix at the end of the name, read off the one list
-     * {@link #STYLE_SUFFIXES} that {@link #familyFor} also reads.</b> A token anywhere else is part
-     * of the family's own name — {@code Boldoni Text} and {@code Oswald SemiBold} name families,
-     * not faces — and a flag taken off one asks the viewer for a face the layout never measured.
+     * <p><b>Only one of the suffixes {@link #STYLE_SUFFIXES} lists, at the end of the name.</b> A
+     * token the name carries any other way is part of the family's own name — {@code Boldoni Text}
+     * carries it inside a word, {@code Acme Sans Bold} and {@code Oswald SemiBold} at the end but
+     * not behind the hyphen a face name uses — and a flag taken off one of those asks the viewer
+     * for a face the layout never measured. A name beginning with a standard-14 family word is
+     * excluded before any of this (see below), whatever it ends in.
      * Measured in PowerPoint 16 on a 45-character line at 20pt: a family of two faces registered
      * under such a name had its <em>plain</em> paragraph drawn from the bold program, 12.90pt wider
      * than the frame the engine had sized for it, and a family of one regular face under the same
@@ -152,7 +159,15 @@ public final class PptxFontMapping {
      * {@code Courier-BoldOblique} and their siblings — are excluded before any of this because they
      * are <em>family aliases</em>: the engine resolves each to its regular base family and then
      * picks the real face from the span's {@link TextDecoration}, so a span that names one of them
-     * without a decoration is measured with the regular metrics.</p>
+     * without a decoration is measured with the regular metrics. That exclusion is by the name's
+     * <em>beginning</em> ({@link #standardReplacementFor}), so a caller's own
+     * {@code Courier Prime-Bold} is caught by it too and its suffix never read.</p>
+     *
+     * <p>Three things take this flag, not one: the run's {@code b} or {@code i} attribute, the
+     * record of which faces a family was drawn in — which decides what a bundled family is
+     * embedded with — and the viewer ascent that seats the frame
+     * ({@code PptxViewerMetrics.ascentPoints}). The first is what the measurements above read; the
+     * ascent arm was not demonstrated, the line top being identical in every deck measured.</p>
      *
      * <p><b>Two limits, both measured, neither reachable by a rule on the name.</b> A
      * <em>single</em> definition registered under a name ending in {@code -Bold} and holding both

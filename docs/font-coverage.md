@@ -30,9 +30,12 @@ Name the family, set the decoration.
 ### A registered family's name in a PPTX deck
 
 A deck asks the viewer for a face with a flag on the run, and that flag comes from
-the span's decoration plus a style suffix at the **end** of the name the family is
-registered under — `Acme-Sans-Bold`, not `Acme Sans Bold` and not `Boldoni Text`,
-where the word is part of the family's own name. The family the deck *declares* is
+the span's decoration plus a style suffix at the end of the name the family is
+registered under — `-Bold`, `-Italic`, `-BoldItalic`, `-BoldOblique`, `-Oblique`
+and the two spellings with an inner hyphen. What decides is that suffix, not where
+the word sits: `Acme-Sans-Bold` has it, while `Acme Sans Bold` ends in the word
+without the hyphen and `Boldoni Text` carries it inside one, and in both of those
+the word is part of the family's own name. The family the deck *declares* is
 a separate thing: for a registered family it is `wordFamily()`, which defaults to
 the registered name with the suffix left on.
 

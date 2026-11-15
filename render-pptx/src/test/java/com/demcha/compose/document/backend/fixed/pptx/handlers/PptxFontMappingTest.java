@@ -71,7 +71,7 @@ class PptxFontMappingTest {
      *
      * <p>The reachable shape of that: one registration per face under one {@code wordFamily}.
      * Measured in PowerPoint 16, the flag is what draws the second of them from the bold program —
-     * taken away, its paragraph came out 12.88pt narrower, from the regular one.</p>
+     * taken away, its paragraph came out 12.88pt short of the frame, from the regular one.</p>
      */
     @Test
     void binaryFamilySuffixStillCarriesTheFace() {
@@ -87,13 +87,14 @@ class PptxFontMappingTest {
     /**
      * A style token that is part of the family's own name is not a face.
      *
-     * <p>The flag and the declared family are two readings of one name: {@code familyFor} takes a
-     * suffix off the end and nothing else, so a token the name keeps must not become a flag.
-     * Measured in PowerPoint 16 on a 45-character line at 20pt, a family of two faces registered
-     * under such a name had its <em>plain</em> paragraph drawn from the bold program, 12.90pt wider
-     * than the frame the engine sized for it; with one regular face under the same name, the line
-     * came out 9.17pt short of it instead. The pairs below are the two shapes a caller reaches:
-     * the token at the end behind a space, and the token inside a word.</p>
+     * <p>The flag comes from the suffix list this class strips names by, and from nothing else; a
+     * token the name carries any other way is part of the family's own name. Measured in
+     * PowerPoint 16 on a 45-character line at 20pt, a family of two faces registered under such a
+     * name had its <em>plain</em> paragraph drawn from the bold program, 12.90pt wider than the
+     * frame the engine sized for it; with one regular face under the same name, the line came out
+     * 9.17pt short of it instead. The four names below are the shapes a caller reaches: the token
+     * behind a space, glued inside a word, glued at the end of one, and an italic one inside a
+     * word.</p>
      */
     @Test
     void aStyleTokenTheNameKeepsIsNotAFace() {
@@ -103,13 +104,13 @@ class PptxFontMappingTest {
                 TextDecoration.DEFAULT, Color.BLACK);
         TextStyle semi = new TextStyle(FontName.of("Oswald SemiBold"), 12,
                 TextDecoration.DEFAULT, Color.BLACK);
-        TextStyle obliqueInside = new TextStyle(FontName.of("Italica Display"), 12,
+        TextStyle italicInside = new TextStyle(FontName.of("Italica Display"), 12,
                 TextDecoration.DEFAULT, Color.BLACK);
 
         assertThat(PptxFontMapping.isBold(spaced)).isFalse();
         assertThat(PptxFontMapping.isBold(inside)).isFalse();
         assertThat(PptxFontMapping.isBold(semi)).isFalse();
-        assertThat(PptxFontMapping.isItalic(obliqueInside)).isFalse();
+        assertThat(PptxFontMapping.isItalic(italicInside)).isFalse();
         assertThat(PptxFontMapping.isBold(new TextStyle(FontName.of("Acme Sans Bold"), 12,
                 TextDecoration.BOLD, Color.BLACK)))
                 .as("the decoration still says which face such a family wants")
@@ -117,29 +118,56 @@ class PptxFontMappingTest {
     }
 
     /**
-     * The agreement between the two readings of a name, rather than the cases: a name contributes
-     * a flag exactly where this class's own stripping takes that token off it.
+     * The rule itself rather than the cases: a name contributes a flag exactly where this class's
+     * own stripping takes a style suffix off it.
      *
-     * <p>Written as the two readings side by side, so a change to either one that leaves them
-     * disagreeing fails here rather than in a deck. It cannot catch a change to the <em>list</em>
-     * they share, since both move together then — the deck cases beside it catch that.
+     * <p>Written as the two readings side by side — the flag, and what {@code familyFor} strips the
+     * name to — so that a change to either one that leaves them disagreeing fails here rather than
+     * in a deck. What a deck <em>declares</em> is not either of them: a registered family declares
+     * its {@code wordFamily()}, suffix and all. This cannot catch a change to the <em>list</em> the
+     * two share, since both move together then — the deck cases beside it catch that.
      * {@code -Regular} is the suffix that strips and carries no face, which is what keeps the rule
      * from reading "ends in something" as "is bold".</p>
      */
     @Test
-    void theFlagFollowsWhatTheDeclaredFamilySheds() {
+    void theFlagFollowsTheSuffixThisClassStripsBy() {
         for (String name : new String[]{
                 "Acme-Sans-Bold", "Acme-Sans-Italic", "Acme-Sans-BoldItalic",
-                "Acme-Sans-Oblique", "Acme-Sans-BoldOblique", "Acme-Sans-Regular",
+                "Acme-Sans-Bold-Italic", "Acme-Sans-Oblique", "Acme-Sans-BoldOblique",
+                "Acme-Sans-Bold-Oblique", "Acme-Sans-Regular",
                 "Acme Sans Bold", "Boldoni Text", "Oswald SemiBold", "Acme-Sans"}) {
             FontName fontName = FontName.of(name);
             TextStyle style = new TextStyle(fontName, 12, TextDecoration.DEFAULT, Color.BLACK);
-            boolean sheds = !PptxFontMapping.familyFor(fontName).equals(name);
+            boolean stripped = !PptxFontMapping.familyFor(fontName).equals(name);
             boolean flagged = PptxFontMapping.isBold(style) || PptxFontMapping.isItalic(style);
             assertThat(flagged)
-                    .as("%s: flagged %s, declared as \"%s\"", name, flagged,
+                    .as("%s: flagged %s, stripped to \"%s\"", name, flagged,
                             PptxFontMapping.familyFor(fontName))
-                    .isEqualTo(sheds && !name.toLowerCase(Locale.ROOT).endsWith("-regular"));
+                    .isEqualTo(stripped && !name.toLowerCase(Locale.ROOT).endsWith("-regular"));
         }
+    }
+
+    /**
+     * A spelling with the hyphen inside the pair still carries both halves of the face.
+     *
+     * <p>The suffix list holds {@code -Bold-Italic} ahead of {@code -Italic} for this: read the
+     * other way round, such a name would ask the viewer for an italic face that is not bold, on a
+     * run the page measured in the bold-italic program — a lighter face than the frame was sized
+     * for, which is the same defect in the other direction.</p>
+     */
+    @Test
+    void aHyphenInsideThePairStillCarriesBothHalves() {
+        TextStyle boldItalic = new TextStyle(FontName.of("Acme-Sans-Bold-Italic"), 12,
+                TextDecoration.DEFAULT, Color.BLACK);
+        TextStyle boldOblique = new TextStyle(FontName.of("Acme-Sans-Bold-Oblique"), 12,
+                TextDecoration.DEFAULT, Color.BLACK);
+
+        assertThat(PptxFontMapping.isBold(boldItalic)).isTrue();
+        assertThat(PptxFontMapping.isItalic(boldItalic)).isTrue();
+        assertThat(PptxFontMapping.isBold(boldOblique)).isTrue();
+        assertThat(PptxFontMapping.isItalic(boldOblique)).isTrue();
+        assertThat(PptxFontMapping.familyFor(FontName.of("Acme-Sans-Bold-Italic")))
+                .as("and the name strips to the family, not to \"Acme-Sans-Bold\"")
+                .isEqualTo("Acme-Sans");
     }
 }

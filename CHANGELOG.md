@@ -37,15 +37,18 @@ follow semantic versioning; release dates are ISO 8601.
     the frame; so does such a name over a regular file alone. The style token in the name and the
     face the file holds are never compared, and closing that means keying the flag on the
     registration rather than on the name.
-  - The flag decides two more things with the `b` attribute, and they move with it: which faces a
-    bundled family is embedded with, and — through the viewer ascent of the face — where the frame
-    is seated. The ascent arm was not demonstrated: the line top was identical in every measured
-    deck.
-  - Deck bytes change only for a family registered under a name that carries a style token away
-    from its end. No bundled family's name carries one at all — of 50 `FontName` constants the nine
-    that do are the standard-14 aliases, which were already excluded — and no preset or example
-    here registers such a name, so the corpus is byte-identical and no example can reach the
-    change.
+  - Two more things take this flag besides the `b` attribute: which faces a bundled family is
+    embedded with — unmoved here, since no bundled name carries a token at all — and, through the
+    face's viewer ascent, where the frame is seated. The ascent arm was not demonstrated: the line
+    top was identical in every measured deck.
+  - The suffix list gained `-Bold-Italic` and `-Bold-Oblique`, so that a per-face name spelling the
+    pair with an inner hyphen keeps both halves of its face instead of only the italic one.
+  - Deck bytes change for a family registered under a name that contains a style token but does not
+    end in one of the `-Bold` / `-Italic` / `-BoldItalic` / `-BoldOblique` suffixes — the position
+    is not what decides it, the hyphen is: `Acme Sans Bold` ends in the token and is affected. No
+    bundled family's name carries a token at all (of 50 `FontName` constants the nine that do are
+    the standard-14 aliases, already excluded), and no preset or example here registers such a
+    name.
 - **A PPTX export's font-name line no longer claims an outcome the measurements do not support,
   and the limit no deck can carry its way out of is written down.**
   - The line `render.pptx.font.name.mismatch` named two outcomes for a face whose program states

@@ -46,17 +46,32 @@ final class PptxViewerMetrics {
      * Resolves the viewer ascent for one style, in points — the single seat
      * formula shared by the render environment and the geometry test mirror,
      * so the two cannot drift line-by-line.
+     *
+     * <p>The face is <em>given</em> rather than read off the style here, because which face a run
+     * asks for is not the style's alone to say: it is the span's decoration plus what the family's
+     * registration leaves for its name to add, which only the environment knows
+     * ({@code PptxRenderEnvironment.runIsBold}). Passing it keeps this the one seat formula while
+     * the answer is worked out once, where the faces of the family are known; a caller that cannot
+     * know — the geometry mirror in the tests — passes what it writes on the run it is checking.
+     * </p>
+     *
+     * @param style  the span's style
+     * @param font   the PDF font the engine measured the span with
+     * @param custom the family's own viewer metrics, or {@code null} for the mapped ratio
+     * @param bold   whether the run is written bold
+     * @param italic whether the run is written italic
+     * @return the viewer ascent in points
      */
     static double ascentPoints(com.demcha.compose.engine.components.content.text.TextStyle style,
                                com.demcha.compose.engine.render.pdf.PdfFont font,
-                               ViewerFontMetrics custom) {
+                               ViewerFontMetrics custom,
+                               boolean bold,
+                               boolean italic) {
         double pdfRatio = font.verticalMetrics(style).ascent() / style.size();
         double ratio = custom == null
                 ? com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping
                         .viewerAscentRatio(style.fontName(), pdfRatio)
-                : custom.ascent(
-                        com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping.isBold(style),
-                        com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping.isItalic(style));
+                : custom.ascent(bold, italic);
         return ratio * style.size();
     }
 

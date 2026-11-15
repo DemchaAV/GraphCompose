@@ -63,22 +63,31 @@ class PptxFontSubstitutionWarningTest {
 
             assertThat(environment.fontFamily(FontName.HELVETICA)).isEqualTo("Arial");
             assertThat(environment.fontFamily(FontName.HELVETICA)).isEqualTo("Arial");
-            assertThat(environment.fontFamily(FontName.of("Roboto-Regular"))).isEqualTo("Roboto");
+            // A name no registration covers comes back as it was written. It used to come back
+            // with a style suffix taken off, which grouped these two spellings into one warning —
+            // a grouping no render could reach, since a name the font library cannot resolve fails
+            // the layout before any of this runs, and nothing bundled carries a suffix. Reached
+            // here only because the method is called directly.
+            assertThat(environment.fontFamily(FontName.of("Roboto-Regular")))
+                    .isEqualTo("Roboto-Regular");
             assertThat(environment.fontFamily(FontName.of("Roboto-Bold")))
-                    .as("facet of an already-warned family")
-                    .isEqualTo("Roboto");
+                    .as("counted apart from the spelling above, not as a facet of it")
+                    .isEqualTo("Roboto-Bold");
             assertThat(environment.fontFamily(EMBEDDED)).isEqualTo("Lato");
 
             List<String> warnings = log.messages("render.pptx.font.substitution");
             assertThat(warnings)
-                    .as("one warning per substituted family, none for the embedded one")
-                    .hasSize(2);
+                    .as("one warning per substituted name, none for the embedded family")
+                    .hasSize(3);
             assertThat(warnings.get(0))
                     .contains("Helvetica")
                     .contains("Arial")
                     .contains("metric-compatible");
             assertThat(warnings.get(1))
                     .contains("Roboto-Regular")
+                    .contains("by name");
+            assertThat(warnings.get(2))
+                    .contains("Roboto-Bold")
                     .contains("by name");
             assertThat(warnings).noneMatch(message -> message.contains("WarnLato"));
         }

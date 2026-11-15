@@ -29,41 +29,45 @@ Name the family, set the decoration.
 
 ### A registered family's name in a PPTX deck
 
-A deck asks the viewer for a face with a flag on the run, and that flag comes from
-the span's decoration plus a style suffix at the end of the name the family is
-registered under — `-Bold`, `-Italic`, `-BoldItalic`, `-BoldOblique`, `-Oblique`
-and the two spellings with an inner hyphen. What decides is that suffix, not where
-the word sits: `Acme-Sans-Bold` has it, while `Acme Sans Bold` ends in the word
-without the hyphen and `Boldoni Text` carries it inside one, and in both of those
-the word is part of the family's own name. The family the deck *declares* is
-a separate thing: for a registered family it is `wordFamily()`, which defaults to
-the registered name with the suffix left on.
+A deck asks the viewer for a face with a flag on the run. **Which face a run wants
+is the decoration's to say wherever your family can hold the answer itself** — a
+family registered with a regular file and a bold one distinguishes them by the slot
+a run asks for, and its name says nothing about faces, whatever that name reads
+like.
 
-The one arrangement that needs the name is a registration **per face**: one
-definition under `Acme-Sans` holding the regular file and one under
-`Acme-Sans-Bold` holding the bold file, both declaring the same `wordFamily`.
-Neither paragraph carries a decoration, so nothing but the name can say which face
-a run wants — measured in PowerPoint 16 on a 45-character line at 20pt, the
-paragraph set in the `-Bold` name is drawn from the bold program, and 12.88pt
-short of the frame, from the regular one, without the flag.
+A family's name is read only where the family cannot answer:
 
-Before this rule any `bold` or `italic` **anywhere** in a registered name set the
-flag on every run of that family. A family of two faces came out with its plain
-paragraph drawn from the bold program, 12.90pt wider than the frame the engine had
-sized for it; a family of one regular face under such a name had its line drawn
-9.17pt short of the frame instead.
+- **one face carried** — the name may say what that face *is*, and nothing else. A
+  definition holding a single bold file may be named `-Bold`; one holding a single
+  regular file may not, because the flag would ask for a face it has not got.
+- **no faces carried** — a family registered without sources, which travels by name
+  only, has nothing but its name.
+
+Where the name is read, it is read as a style suffix at the end of it: `-Bold`,
+`-Italic`, `-BoldItalic`, `-BoldOblique`, `-Oblique`, and the two spellings with an
+inner hyphen. Not where the word merely sits — `Acme Sans Bold` ends in it without
+the hyphen and `Boldoni Text` carries it inside a word, and in both the word is part
+of the family's own name. The family the deck *declares* is a separate thing again:
+for a registered family it is `wordFamily()`, which defaults to the registered name
+with the suffix left on.
+
+So the arrangement that uses the name is a registration **per face**: one definition
+under `Acme-Sans` holding the regular file and one under `Acme-Sans-Bold` holding the
+bold file, both declaring the same `wordFamily`. Neither paragraph carries a
+decoration, so nothing but the name can say which face a run wants — measured in
+PowerPoint 16 on a 45-character line at 20pt, the paragraph set in the `-Bold` name
+is drawn from the bold program, and 12.88pt short of the frame, from the regular one,
+without the flag.
+
+What this spares you, measured on the same line. A family of two faces under a name
+carrying the word used to have its plain paragraph drawn from the **bold** program,
+12.90pt wider than the frame the engine had sized for it; a family of one regular
+face under such a name had its line drawn 9.17pt short of the frame instead. Both now
+come out as the page laid them out.
 
 The cost is a spelling: a per-face registration written `Acme Sans Bold`, with a
-space, no longer asks for the face — write the suffix with a hyphen, as the
-family's own files name it.
-
-**The limit.** A *single* definition under a name ending in `-Bold` that holds
-both a regular and a bold file still flags every run of itself, and its plain
-paragraph is drawn from the bold program — the same 12.90pt over the frame,
-measured. So does a definition under such a name holding a regular file only. The
-style token in the name and the face the file holds are never compared; if your
-family has more than one face, let the decoration pick it and keep the token out of
-the name's end.
+space, is not read as naming a face — write the suffix with a hyphen, as the family's
+own files name it.
 
 ## WinAnsi and the base-14 fonts
 

@@ -72,6 +72,19 @@ public final class PptxRenderEnvironment {
     private final double canvasHeight;
     private final FontLibrary fonts;
     private final Map<FontName, String> customFontFamilies;
+    /**
+     * Which style elements a registered family's own programs fill, by the name it was registered
+     * under — the answer to "can this family name a face itself?", which is what decides whether
+     * its <em>name</em> may contribute a run flag (see {@link #tokensTheNameMaySpeak}).
+     *
+     * <p>Written where the faces are handed to the presentation and so recorded only for a family
+     * that travelled: a family refused or given up carries nothing, and its name is then all a run
+     * has, which is what an absent entry says. The slot a program lands in is read off the program
+     * itself ({@code PptxEmbeddedFont.styleOf}) and not off the slot a caller put it in, because
+     * those need not agree — the file a caller passes as the family's regular source may be a bold
+     * program, which is exactly the registration this permission exists to read.</p>
+     */
+    private final Map<FontName, Set<String>> carriedSlots;
     private final Map<FontName, PptxViewerMetrics.ViewerFontMetrics> viewerFontMetrics;
     private final Map<String, XSLFPictureData> pictureDataCache = new LinkedHashMap<>();
     private final Map<String, java.awt.Dimension> pictureSizeCache = new LinkedHashMap<>();
@@ -278,6 +291,7 @@ public final class PptxRenderEnvironment {
         this.fonts = fonts;
         Map<FontName, String> familyNames = new LinkedHashMap<>();
         Map<FontName, PptxViewerMetrics.ViewerFontMetrics> metrics = new LinkedHashMap<>();
+        Map<FontName, Set<String>> slotsCarried = new LinkedHashMap<>();
         for (FontFamilyDefinition family : customFontFamilies) {
             familyNames.put(family.name(), family.wordFamily());
             if (family.fontSourceSet().isEmpty()) {
@@ -296,7 +310,7 @@ public final class PptxRenderEnvironment {
             }
             family.fontSourceSet().ifPresent(sources -> {
                 PptxViewerMetrics.ViewerFontMetrics viewerMetrics =
-                        embedFontFamilyWithMetrics(show, family, sources, slotLedger);
+                        embedFontFamilyWithMetrics(show, family, sources, slotLedger, slotsCarried);
                 if (viewerMetrics != null) {
                     metrics.put(family.name(), viewerMetrics);
                 } else if (slotLedger.wasRefusedForASharedName(family.name())) {
@@ -339,6 +353,7 @@ public final class PptxRenderEnvironment {
             show.getCTPresentation().setSaveSubsetFonts(false);
         }
         this.customFontFamilies = Map.copyOf(familyNames);
+        this.carriedSlots = Map.copyOf(slotsCarried);
         this.viewerFontMetrics = Map.copyOf(metrics);
     }
 
@@ -495,6 +510,78 @@ public final class PptxRenderEnvironment {
      * @param italic   whether this run is italic
      * @return viewer-facing PPTX family name
      */
+    /**
+     * Whether this run asks a viewer for a bold face.
+     *
+     * <p>The decoration, and the family's registered name only where the family's own faces cannot
+     * name one — see {@link #tokensTheNameMaySpeak}. Every writer that needs the flag asks here, so
+     * the attribute a run carries, the face recorded as drawn and the ascent the frame is seated on
+     * are one answer rather than three readings of the same style.</p>
+     *
+     * @param style the span's style
+     * @return whether the run is written bold
+     */
+    @Internal
+    public boolean runIsBold(TextStyle style) {
+        return PptxFontMapping.isBold(style, tokensTheNameMaySpeak(style.fontName()));
+    }
+
+    /**
+     * Whether this run asks a viewer for an italic face, on the same terms as
+     * {@link #runIsBold}.
+     *
+     * @param style the span's style
+     * @return whether the run is written italic
+     */
+    @Internal
+    public boolean runIsItalic(TextStyle style) {
+        return PptxFontMapping.isItalic(style, tokensTheNameMaySpeak(style.fontName()));
+    }
+
+    /**
+     * What a family's name is allowed to say about a run's face, given the faces the family
+     * itself carries.
+     *
+     * <p>Three answers, and the middle one is the whole point:</p>
+     * <ul>
+     *   <li><b>two or more elements carried</b> — nothing. A family that carries a regular and a
+     *       bold program distinguishes its faces by the element a run asks for, and the span's
+     *       decoration is what says which. Measured in PowerPoint 16 on a 45-character line at
+     *       20pt: a single definition under {@code Acme-Sans-Bold} holding both files used to flag
+     *       every run of itself, and its plain paragraph came out of the bold program 12.90pt wider
+     *       than the frame the engine had sized for it. With the flag off that run, the same deck
+     *       drew 531.94pt against the 531.90pt the page laid out, from the regular program, and the
+     *       bold paragraph did not move.</li>
+     *   <li><b>one element carried</b> — the tokens that element's own style implies, and no
+     *       others. This is the registration a caller makes per face: one definition holding one
+     *       file, where nothing but the name can say which face its runs want. A bold program
+     *       carried alone may be named bold; a <em>regular</em> program carried alone may not,
+     *       which closes the other half of the same gap (that deck's line came out 9.17pt short of
+     *       its frame).</li>
+     *   <li><b>nothing carried</b> — every token. A family registered without sources, or one the
+     *       deck gave up, has no faces to distinguish, so its name is all a run has; this is also
+     *       the answer for a bundled or standard-14 name, which no registration covers.</li>
+     * </ul>
+     *
+     * @param fontName the family a run names, may be {@code null}
+     * @return the style tokens {@link PptxFontMapping} may read out of the name
+     */
+    private Set<String> tokensTheNameMaySpeak(FontName fontName) {
+        Set<String> carried = fontName == null ? null : carriedSlots.get(fontName);
+        if (carried == null || carried.isEmpty()) {
+            return PptxFontMapping.ANY_TOKEN;
+        }
+        if (carried.size() > 1) {
+            return Set.of();
+        }
+        return switch (carried.iterator().next()) {
+            case "bold" -> Set.of("bold");
+            case "italic" -> Set.of("italic", "oblique");
+            case "boldItalic" -> PptxFontMapping.ANY_TOKEN;
+            default -> Set.of();
+        };
+    }
+
     @Internal
     public String fontFamily(FontName fontName, boolean bold, boolean italic) {
         if (fontName != null) {
@@ -571,7 +658,8 @@ public final class PptxRenderEnvironment {
             return fallbackAscent;
         }
         return PptxViewerMetrics.ascentPoints(
-                style, font, viewerFontMetrics.get(style.fontName()));
+                style, font, viewerFontMetrics.get(style.fontName()),
+                runIsBold(style), runIsItalic(style));
     }
 
     /**
@@ -678,7 +766,8 @@ public final class PptxRenderEnvironment {
             XMLSlideShow show,
             FontFamilyDefinition family,
             FontFamilyDefinition.FontSourceSet sources,
-            SlotLedger ledger) {
+            SlotLedger ledger,
+            Map<FontName, Set<String>> carriedSlots) {
         FamilyPrograms read = readPrograms(family, sources, EnumSet.allOf(Face.class), ledger);
         if (read == null) {
             return null;
@@ -717,7 +806,15 @@ public final class PptxRenderEnvironment {
             return null;
         }
         claimSlotsAndReportSharing(ledger, family, read.slots());
-        return handOverPrograms(show, family, read.programs()) ? viewerMetrics : null;
+        if (!handOverPrograms(show, family, read.programs())) {
+            return null;
+        }
+        // Recorded here and not at the read, for the reason the slot claim is: a family that did
+        // not make it into the presentation carries nothing, and a run of it has nothing but the
+        // family's name to go by. An absent entry says exactly that, so nothing has to be undone
+        // on the way out of a refusal.
+        carriedSlots.put(family.name(), Set.copyOf(read.slots().keySet()));
+        return viewerMetrics;
     }
 
     /**

@@ -149,12 +149,17 @@ final class PptxTextFrames {
     static void applyStyle(XSLFTextRun run,
                            TextStyle style,
                            PptxRenderEnvironment environment) {
-        run.setFontFamily(environment.fontFamily(style.fontName(),
-                PptxFontMapping.isBold(style), PptxFontMapping.isItalic(style)));
+        // One answer for the face, asked of the environment: the decoration plus whatever the
+        // family's registration leaves for its name to add. Reading it off the style here would
+        // give the recorded face and the written attribute a second, narrower source than the
+        // frame's own seat has.
+        boolean bold = environment.runIsBold(style);
+        boolean italic = environment.runIsItalic(style);
+        run.setFontFamily(environment.fontFamily(style.fontName(), bold, italic));
         run.setFontSize(style.size());
         run.setFontColor(style.color() == null ? Color.BLACK : style.color());
-        run.setBold(PptxFontMapping.isBold(style));
-        run.setItalic(PptxFontMapping.isItalic(style));
+        run.setBold(bold);
+        run.setItalic(italic);
         run.setUnderlined(PptxFontMapping.isUnderline(style));
         run.setStrikethrough(PptxFontMapping.isStrikethrough(style));
         disableKerning(run);

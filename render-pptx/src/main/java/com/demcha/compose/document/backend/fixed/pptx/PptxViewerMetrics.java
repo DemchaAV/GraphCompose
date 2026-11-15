@@ -52,8 +52,9 @@ final class PptxViewerMetrics {
      * registration leaves for its name to add, which only the environment knows
      * ({@code PptxRenderEnvironment.runIsBold}). Passing it keeps this the one seat formula while
      * the answer is worked out once, where the faces of the family are known; a caller that cannot
-     * know — the geometry mirror in the tests — passes what it writes on the run it is checking.
-     * </p>
+     * know — the geometry mirror in the tests — passes the flags it expects on the run it is
+     * checking, which for a fixture whose name carries no style suffix is what production
+     * writes.</p>
      *
      * @param style  the span's style
      * @param font   the PDF font the engine measured the span with

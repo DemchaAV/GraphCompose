@@ -93,8 +93,10 @@ class PptxFontMappingTest {
     /**
      * A style token that is part of the family's own name is not a face.
      *
-     * <p>The flag comes from the suffix list this class strips names by, and from nothing else; a
-     * token the name carries any other way is part of the family's own name. Measured in
+     * <p>The flag comes from the suffix list and from no other reading of the name, where the
+     * family's own faces leave the name free to speak at all — which is what {@code ANY_TOKEN}
+     * stands for here. A token the name carries any other way is part of the family's own name,
+     * whatever the family carries. Measured in
      * PowerPoint 16 on a 45-character line at 20pt, a family of two faces registered under such a
      * name had its <em>plain</em> paragraph drawn from the bold program, 12.90pt wider than the
      * frame the engine sized for it; with one regular face under the same name, the line came out

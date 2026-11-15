@@ -19,7 +19,8 @@ follow semantic versioning; release dates are ISO 8601.
     544.68 bold. The two-face definition drew its plain paragraph from the bold program at 544.80 —
     12.90pt over the frame. On the same deck with that run's flag cleared, which is what is written
     now, it drew 531.94 from the regular program and the bold paragraph did not move. The one-face
-    definition drew 522.73, 9.17pt short of the frame, and 531.94 with the flag cleared.
+    definition drew 522.73, 9.17pt short of the frame; with the flag cleared the same regular
+    program drew 531.94, measured on that deck when the entry below was made.
   - The name is now read only where the family cannot answer: a family carrying two or more
     programs says nothing by its name, one carrying a single program may be named in the style that
     program itself is, and one carrying none — registered without sources — has only its name. The
@@ -39,8 +40,8 @@ follow semantic versioning; release dates are ISO 8601.
     One observable thing goes with it — the substitution warning used to group `Roboto-Regular` and
     `Roboto-Bold` into one line, and now counts such spellings apart; neither can reach a render.
   - Deck bytes change for a family registered under a name carrying a style token that the family's
-    own faces already answer for. No preset or example here registers such a name, and the
-    105-document DOCX corpus is byte-identical.
+    own faces already answer for. No preset or example here registers such a name, which is what
+    the sweep of the catalogue and the templates says; no DOCX path is touched at all.
 - **A PPTX run no longer asks for a bold or italic face because the family's registered name
   happens to contain the word.**
   - The flag a run carries came from any `bold`, `italic` or `oblique` **anywhere** in the name a
@@ -56,9 +57,8 @@ follow semantic versioning; release dates are ISO 8601.
     program at the same size, 45 glyphs of the same widths, yet ending 9.17pt *short* of the frame;
     why it ends earlier was not measured. With the flag taken off the plain run, both came out at
     531.94pt, within four hundredths of the 531.90pt the page laid out.
-  - The flag now comes from a style suffix at the end of the name and from nothing else: one list
-    of suffixes, read both by the flag and by the stripping this class does on a name no
-    registration covers. A registration per face — `Acme-Sans` beside `Acme-Sans-Bold` under one
+  - The flag now comes from a style suffix at the end of the name and from no other reading of it:
+    one list of suffixes, read by the flag. A registration per face — `Acme-Sans` beside `Acme-Sans-Bold` under one
     `wordFamily`, one file each, neither paragraph carrying a decoration — still asks for its face,
     which is the one arrangement where the name is the only signal there is: measured, that
     paragraph comes out 12.88pt short of the frame, from the regular program, if the flag is

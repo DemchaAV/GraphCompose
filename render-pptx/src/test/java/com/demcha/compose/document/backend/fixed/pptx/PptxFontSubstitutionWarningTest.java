@@ -17,8 +17,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * A font that cannot travel into the deck identically must say so: standard-14
  * families warn about their metric-compatible replacement, unregistered names
- * warn that the deck carries a name-only reference, and each family warns once
- * per render pass. An embedded family stays silent.
+ * warn that the deck carries a name-only reference, and each <em>name</em> warns
+ * once per render pass — a standard-14 alias and its base name share a line,
+ * while two spellings of an unregistered name are counted apart. An embedded
+ * family stays silent.
  *
  * <p>What the warning may claim is bounded by when it runs. The two lines for a
  * registered family are written while the environment is built, before a single

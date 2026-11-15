@@ -17,14 +17,13 @@ import java.util.Set;
  * system fonts (Helvetica → Arial, Times → Times New Roman, Courier →
  * Courier New) — page geometry is safe either way because every line is
  * pre-wrapped and placed by the engine, but metric-compatible glyphs keep
- * intra-line rendering close. Binary families keep their real family name —
- * stripped of a style suffix ({@code Roboto-Bold} → {@code Roboto}) where no
- * registration covers the name, while a registered family declares the
- * {@code wordFamily()} it was given, suffix and all;
- * the bold/italic axis travels as run flags, combining the span's
- * {@link TextDecoration} with a style suffix at the <em>end</em> of the name,
- * read off the one list of suffixes this class strips names by and from no
- * other reading of the name (see {@link #nameCarriesStyle}).</p>
+ * intra-line rendering close. Binary families keep their real family name as
+ * written, and a registered family declares the {@code wordFamily()} it was
+ * given; the bold/italic axis travels as run flags, combining the span's
+ * {@link TextDecoration} with a style suffix at the <em>end</em> of the name —
+ * and that suffix only where the family's own faces cannot name a face
+ * themselves, which is {@code PptxRenderEnvironment.runIsBold}'s to decide (see
+ * {@link #nameCarriesStyle} and {@link #namesExactly}).</p>
  *
  * @since 2.1.0
  */
@@ -37,16 +36,27 @@ public final class PptxFontMapping {
      * {@code -bold-oblique} before {@code -oblique}. Read first to last, so the order is part of
      * the rule rather than a tidiness.
      *
-     * <p>Read by {@link #nameCarriesStyle} and by nothing else: a style suffix is the only thing a
-     * font name is read for here, and the one place it is read decides a run flag. Searching the
-     * <em>whole name</em> for a token instead — which is what this class did until the measurements
-     * below — is what the list exists to prevent. {@code -Regular} is in it so that a name ending
-     * in it is answered "this is a style suffix, and it names no face".</p>
+     * <p>Read by {@link #nameCarriesStyle}, which turns a suffix into a flag, and by
+     * {@link #namesExactly}, which asks whether that suffix names the one face a family carries.
+     * Searching the <em>whole name</em> for a token instead — which is what this class did until
+     * the measurements below — is what the list exists to prevent. {@code -Regular} is in it so
+     * that a name ending in it names the regular element rather than no element at all.</p>
      */
     private static final String[] STYLE_SUFFIXES = {
             "-bolditalic", "-bold-italic", "-boldoblique", "-bold-oblique",
             "-bold", "-italic", "-oblique", "-regular"
     };
+
+    /**
+     * What a family's own faces leave for its name to say: every token, where the registration
+     * cannot name a face at all.
+     *
+     * <p>Passed by a caller that knows nothing about the family's faces — a bundled or
+     * standard-14 name, which no registration covers, and the geometry mirror in the tests. A
+     * caller that does know passes what {@code PptxRenderEnvironment} works out from the faces
+     * the family carries.</p>
+     */
+    public static final Set<String> ANY_TOKEN = Set.of("bold", "italic", "oblique");
 
     private static final double ARIAL_ASCENT_RATIO = 1854.0 / 2048.0;
     private static final double TIMES_NEW_ROMAN_ASCENT_RATIO = 1825.0 / 2048.0;
@@ -121,17 +131,6 @@ public final class PptxFontMapping {
         }
         return fallback;
     }
-
-    /**
-     * What a family's own faces leave for its name to say: every token, where the registration
-     * cannot name a face at all.
-     *
-     * <p>Passed by a caller that knows nothing about the family's faces — a bundled or
-     * standard-14 name, which no registration covers, and the geometry mirror in the tests. A
-     * caller that does know passes what {@code PptxRenderEnvironment} works out from the faces
-     * the family carries.</p>
-     */
-    public static final Set<String> ANY_TOKEN = Set.of("bold", "italic", "oblique");
 
     /**
      * Returns whether the run selects a bold face.
@@ -236,6 +235,36 @@ public final class PptxFontMapping {
 
     static boolean isStrikethrough(TextStyle style) {
         return style.decoration() == TextDecoration.STRIKETHROUGH;
+    }
+
+    /**
+     * Whether this name names exactly the style of one carried face, and not a different one.
+     *
+     * <p>The question a caller with one face asks: a run flagged from the name reaches the element
+     * that face was seated in only if the name's suffix means that element. {@code -Bold} over a
+     * bold program does; over a regular one it asks for an element the deck does not hold, and over
+     * a bold-italic one it asks for the bold element while the program sits in the bold-italic one.
+     * A name ending in no style suffix, or in {@code -Regular}, names the regular element.</p>
+     *
+     * <p>Standard-14 names are excluded as everywhere else here: they are family aliases measured
+     * with the regular metrics, and they reach no registration anyway.</p>
+     *
+     * @param fontName the family a run names, may be {@code null}
+     * @param slot     the style element the family's one carried program was seated in, as
+     *                 {@code PptxEmbeddedFont.styleOf} spells it
+     * @return whether the name may be read for that face
+     */
+    public static boolean namesExactly(FontName fontName, String slot) {
+        if (fontName == null || standardReplacementFor(fontName) != null) {
+            return false;
+        }
+        String suffix = styleSuffixOf(fontName.name());
+        boolean bold = suffix != null && suffix.contains("bold");
+        boolean italic = suffix != null
+                && (suffix.contains("italic") || suffix.contains("oblique"));
+        String named = bold && italic ? "boldItalic"
+                : bold ? "bold" : italic ? "italic" : "regular";
+        return named.equals(slot);
     }
 
     /**

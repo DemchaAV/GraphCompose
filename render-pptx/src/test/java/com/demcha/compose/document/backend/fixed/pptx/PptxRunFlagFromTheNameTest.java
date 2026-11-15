@@ -40,6 +40,7 @@ class PptxRunFlagFromTheNameTest {
     private static final String LATO_REGULAR = "fonts/google/lato/Lato-Regular.ttf";
     private static final String LATO_BOLD = "fonts/google/lato/Lato-Bold.ttf";
     private static final String LATO_ITALIC = "fonts/google/lato/Lato-Italic.ttf";
+    private static final String LATO_BOLD_ITALIC = "fonts/google/lato/Lato-BoldItalic.ttf";
 
     @TempDir
     Path directory;
@@ -114,8 +115,9 @@ class PptxRunFlagFromTheNameTest {
      * <p>One definition under a name ending in {@code -Bold} holding a single <em>regular</em>
      * file: the name asks for a face the family has not got. PowerPoint 16 drew that line from the
      * only program in the deck but 9.17pt short of the frame — 522.73pt against the page's
-     * 531.90pt — and with the flag cleared, 531.94pt. The other half of the same gap, and the
-     * reason the permission is read off the program rather than off the slot a caller filled.</p>
+     * 531.90pt — and 531.94pt with the flag cleared, measured on that deck for the change that
+     * narrowed the name's reading. The other half of the same gap, and the reason the permission
+     * is read off the program rather than off the slot a caller filled.</p>
      */
     @Test
     void aFamilyCarryingOneRegularFaceMayNotBeNamedBold() throws Exception {
@@ -130,6 +132,55 @@ class PptxRunFlagFromTheNameTest {
 
         assertThat(boldFlags(deck))
                 .as("the one program it carries is a regular one, so the name says nothing")
+                .containsExactly(false);
+    }
+
+    /**
+     * The per-face registration on the italic axis: one definition, one italic file, named for it.
+     *
+     * <p>The mirror of the bold case above, and the arm the rule's own switch would otherwise have
+     * no deck behind: a single carried italic program, named {@code -Italic}, is what the run asks
+     * for.</p>
+     */
+    @Test
+    void aPerFaceItalicRegistrationStillAsksForItsFace() throws Exception {
+        Path italic = Files.write(directory.resolve("italic.ttf"), PptxDeck.face(LATO_ITALIC));
+        FontName name = FontName.of("Acme-Sans-Italic");
+        FontFamilyDefinition family = FontFamilyDefinition.files(name, italic)
+                .wordFamily("Acme Sans").build();
+        DocumentTextStyle plain = DocumentTextStyle.builder().fontName(name).size(18).build();
+
+        byte[] deck = PptxDeck.registering(family, page -> page
+                .addParagraph(p -> p.text("Slanted").textStyle(plain)));
+
+        assertThat(italicFlags(deck))
+                .as("the one program it carries is the italic one the name names")
+                .containsExactly(true);
+        assertThat(boldFlags(deck))
+                .as("and the name says nothing about weight")
+                .containsExactly(false);
+    }
+
+    /**
+     * And a single bold-italic program is not reached by a name that asks for bold alone.
+     *
+     * <p>The corner the permission has to be exact for: the program sits in the bold-italic
+     * element, and a run flagged bold only would ask for an element this deck does not hold.</p>
+     */
+    @Test
+    void aNameThatAsksForHalfTheCarriedFaceSaysNothing() throws Exception {
+        Path boldItalic = Files.write(directory.resolve("bolditalic.ttf"),
+                PptxDeck.face(LATO_BOLD_ITALIC));
+        FontName name = FontName.of("Acme-Sans-Bold");
+        FontFamilyDefinition family = FontFamilyDefinition.files(name, boldItalic)
+                .wordFamily("Acme Sans").build();
+        DocumentTextStyle plain = DocumentTextStyle.builder().fontName(name).size(18).build();
+
+        byte[] deck = PptxDeck.registering(family, page -> page
+                .addParagraph(p -> p.text("Both").textStyle(plain)));
+
+        assertThat(boldFlags(deck))
+                .as("asking for bold alone would name an element the deck has not got")
                 .containsExactly(false);
     }
 

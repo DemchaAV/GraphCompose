@@ -441,9 +441,9 @@ final class PptxGeometryAssertions {
         //
         // The face is given to the formula rather than read off the style, because production
         // works it out from the faces the family carries, which this mirror does not track.
-        // ANY_TOKEN is the answer for a family that carries none, and it is the production
-        // answer for every fixture here: these families are registered under names with no
-        // style suffix, so only the decoration speaks either way.
+        // ANY_TOKEN is the answer for a family that carries none; it yields the production flags
+        // for every fixture here, whose families are registered under names with no style
+        // suffix — so only the decoration speaks, whatever permission the family would grant.
         return PptxViewerMetrics.ascentPoints(style, font, embedded.get(style.fontName()),
                 PptxFontMapping.isBold(style, PptxFontMapping.ANY_TOKEN),
                 PptxFontMapping.isItalic(style, PptxFontMapping.ANY_TOKEN));

@@ -7,6 +7,45 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A DOCX export no longer stays silent about a face it ships that neither editor measured draws.**
+  - A font family's slots are filled one file at a time, so a caller can put a program of one
+    typeface in the regular slot and a program of another in the bold slot —
+    `classpath(name, "…/Lato-Regular.ttf").boldResource("…/IBMPlexMono-Bold.ttf")`. The export
+    writes one `w:font` with both children, and the PDF backend draws each paragraph in the program
+    its slot holds.
+  - An editor does not. Measured with a bold run in Word 16.0.20527 and LibreOffice 24.2, each
+    document converted in a process of its own, a 45-character line at 14pt: both paragraphs were
+    drawn from the Lato program, to the hundredth of a point where the same document ships no bold
+    program at all, while that program sat in the package at 137,784 bytes. Where the line is the
+    face's own, the bold paragraph keeps the one its own face measured, so it is drawn 1.4pt
+    shorter than the line reserved for it, and its line ends 13.11pt short of where Word itself
+    draws that program and 8.79pt short of where LibreOffice does — each editor against its own
+    rendering of the same program under a name of its own, which is the gap the family costs rather
+    than a difference between renderers. Nothing in the export said so.
+  - Such a face is now named in the report (`embedded font`, `APPROXIMATED`), with the typeface each
+    of the two programs states and what a reader sees instead. `APPROXIMATED` and not `DROPPED`
+    because nothing was refused: both faces are written, and the family travels whole.
+  - The bytes of every document are unchanged — the 105-document corpus exports identically — so
+    what the note buys is knowing, not geometry. It is not a limit of the format either: the same
+    program declared under a name of its own is drawn by both editors (Word 406.53pt, LibreOffice
+    `IBMPlexMono-Bold` 398.10pt against the page's own 398.00pt). Carrying a mixed family that way
+    would change the bytes of every such document and the Word name a bold run carries, and was
+    decided against.
+  - Whether two programs are of one typeface is read off the programs, as the format means it: the
+    typographic family (`name` id 16) where a face states one, the family (id 1) otherwise — both
+    from the Windows en-US record and only that one, so that two faces are never compared across two
+    namings of one typeface. Id 1 alone would be wrong on a bundled face and on a shipped preset:
+    `AsapCondensed-Italic` states `Asap Condensed Condensed Regular` there where its three siblings
+    state `Asap Condensed`, and it is the one face of the 130 bundled that states an id 16; the
+    `OrangeOps` preset pairs `Oswald-Regular`, which states `Oswald`, with `Oswald-SemiBold`, which
+    states `Oswald SemiBold` as its family and `Oswald` as its typographic one. Read as the format
+    means it, all 188 pairs of faces inside the 35 bundled families match and so does that pair, so
+    no family a document here is set in draws this note.
+  - The note is said only where the family ships a regular face and both programs name their
+    typeface, since that is what was measured and a program whose name cannot be read is one the
+    export cannot compare. What the editors read the sameness off was not measured either, so it is
+    said of every pair of typefaces a family holds and every slot but the regular one, on the
+    strength of the one pair and the one slot that were.
 - **A DOCX export no longer ships two face sets under one font name.**
   - A document's font table declares a family by its `FontFamilyDefinition.wordFamily()`, while
     the families an export knows are kept by the name they were *registered* under. That name

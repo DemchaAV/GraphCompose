@@ -52,8 +52,11 @@ class DocxFontTableTest {
     private static final String LATO_REGULAR = "fonts/google/lato/Lato-Regular.ttf";
     private static final String MONO_REGULAR = "fonts/google/ibmplexmono/IBMPlexMono-Regular.ttf";
     private static final String MONO_BOLD = "fonts/google/ibmplexmono/IBMPlexMono-Bold.ttf";
+    private static final String MONO_ITALIC = "fonts/google/ibmplexmono/IBMPlexMono-Italic.ttf";
     private static final String PAIR_REGULAR = "fonts/google/poppins/Poppins-Regular.ttf";
     private static final String PAIR_BOLD = "fonts/google/poppins/Poppins-Bold.ttf";
+    private static final String ASAP_REGULAR = "fonts/google/asapcondensed/AsapCondensed-Regular.ttf";
+    private static final String ASAP_ITALIC = "fonts/google/asapcondensed/AsapCondensed-Italic.ttf";
     /**
      * The names two families are registered under in the tests of one declared name. Two faces of
      * plainly different widths, so which of them a part holds is read off the file and not off a
@@ -66,6 +69,8 @@ class DocxFontTableTest {
      * third typeface, so that a child's program says which of the three families shipped it.
      */
     private static final FontName SHIPPED_PAIR = FontName.of("shipped-pair");
+    /** The bundled family whose italic face states a family record its siblings do not. */
+    private static final FontName SHIPPED_ASAP = FontName.of("shipped-asap");
 
     @Test
     void aBundledFamilyTravelsWithTheDocument() throws Exception {
@@ -290,8 +295,10 @@ class DocxFontTableTest {
         // family: the standard-14 face names resolve to theirs, so a family registered under one
         // of those names is reached twice. Read per name it declared itself twice and so met
         // itself over its own name; read by family it writes one element holding both slots.
-        FontFamilyDefinition ownHelvetica = FontFamilyDefinition.classpath(FontName.HELVETICA, LATO_REGULAR)
-                .boldResource(MONO_REGULAR).build();
+        // Two faces of one typeface, told apart by their files: a family whose slots held two
+        // typefaces would also be named for that, which is not what this case is about.
+        FontFamilyDefinition ownHelvetica = FontFamilyDefinition.classpath(FontName.HELVETICA, PAIR_REGULAR)
+                .boldResource(PAIR_BOLD).build();
         try (Shipped shipped = exportSetIn(List.of(ownHelvetica),
                 List.of(face(FontName.HELVETICA), bold(FontName.HELVETICA_BOLD)))) {
 
@@ -304,7 +311,8 @@ class DocxFontTableTest {
                     .contains("<w:embedBold");
             assertThat(fontParts(shipped.document())).hasSize(2);
             assertThat(shipped.report().notes())
-                    .as("a family does not give its own name up to itself")
+                    .as("a family does not give its own name up to itself, and its two faces are "
+                        + "of one typeface, so nothing is said about either")
                     .noneMatch(note -> note.subject().equals("embedded font"));
         }
     }
@@ -418,6 +426,131 @@ class DocxFontTableTest {
                 assertThat(carries(part, resource(MONO_BOLD)))
                         .as("no part holds the given-up family's bold face").isFalse();
             }
+        }
+    }
+
+    @Test
+    void aFaceOfAnotherTypefaceThanTheFamilysRegularOneIsNamedAsUndrawn() throws Exception {
+        // One family, its two slots holding programs of two typefaces. Measured in Word 16.0.20527
+        // and LibreOffice 24.2: both paragraphs are drawn from the regular program and the bold one
+        // is read by neither editor, so the document says so. It still ships — the export writes
+        // the bytes it was given — which is why this is APPROXIMATED and not a refusal.
+        FontFamilyDefinition mixed = FontFamilyDefinition.classpath(SHIPPED_MONO, LATO_REGULAR)
+                .boldResource(MONO_BOLD).wordFamily("MixedSlots").build();
+        try (Shipped shipped = exportSetIn(List.of(mixed),
+                List.of(face(SHIPPED_MONO), bold(SHIPPED_MONO)))) {
+
+            // The claim the note makes, read off the two files rather than taken from the note:
+            // these really are faces of two typefaces, and the note names each one as the file
+            // states it.
+            assertThat(typefaceOf(resource(LATO_REGULAR))).isEqualTo("Lato");
+            assertThat(typefaceOf(resource(MONO_BOLD))).isEqualTo("IBM Plex Mono");
+
+            // Both faces are in the package: nothing was refused.
+            assertThat(fontElements(shipped.document())).singleElement().satisfies(element -> {
+                assertThat(element.slots()).containsExactly("embedRegular", "embedBold");
+                assertCarries(element.programs().get(0), resource(LATO_REGULAR));
+                assertCarries(element.programs().get(1), resource(MONO_BOLD));
+            });
+
+            assertThat(shipped.report().notes())
+                    .filteredOn(note -> note.subject().equals("embedded font"))
+                    .singleElement()
+                    .satisfies(note -> {
+                        assertThat(note.severity())
+                                .as("the face travels, so it is not a loss but the nearest thing "
+                                    + "an editor reads")
+                                .isEqualTo(DocxExportReport.Severity.APPROXIMATED);
+                        assertThat(note.detail())
+                                .as("both typefaces named as the two files state them")
+                                .contains("the embedBold face of 'MixedSlots' is a face of "
+                                          + "'IBM Plex Mono'")
+                                .contains("its embedRegular face is a face of 'Lato'");
+                    });
+        }
+    }
+
+    @Test
+    void aFamilyWithNoRegularFaceOfItsOwnIsNotNamed() throws Exception {
+        // The silence the measurement does not reach past: what was measured is an editor drawing
+        // a family from the face it reads for the regular slot, and this family ships none — the
+        // page sets its text in bold and italic and never in the plain face. Nothing is known about
+        // what an editor draws then, so the export says nothing rather than guessing.
+        //
+        // Two faces ship, of two typefaces, so this is the branch that answers and not the one
+        // that returns because there is nothing to compare at all.
+        FontFamilyDefinition noPlainFace = FontFamilyDefinition.classpath(SHIPPED_PAIR, PAIR_REGULAR)
+                .boldResource(PAIR_BOLD).italicResource(MONO_ITALIC).wordFamily("NoPlainFace").build();
+        try (Shipped shipped = exportSetIn(List.of(noPlainFace),
+                List.of(bold(SHIPPED_PAIR), italic(SHIPPED_PAIR)))) {
+
+            assertThat(typefaceOf(resource(PAIR_BOLD)))
+                    .as("the premise: the two faces that ship are of two typefaces")
+                    .isNotEqualTo(typefaceOf(resource(MONO_ITALIC)));
+            assertThat(fontElements(shipped.document())).singleElement()
+                    .satisfies(element -> {
+                        assertThat(element.slots())
+                                .as("the slots the page asked for, with no regular face among them")
+                                .containsExactly("embedBold", "embedItalic");
+                        assertCarries(element.programs().get(0), resource(PAIR_BOLD));
+                        assertCarries(element.programs().get(1), resource(MONO_ITALIC));
+                    });
+            assertThat(shipped.report().notes())
+                    .filteredOn(note -> note.subject().equals("embedded font"))
+                    .as("no regular face, so no face to say an editor draws instead")
+                    .isEmpty();
+        }
+    }
+
+    @Test
+    void aFamilyWhoseFacesAreOfOneTypefaceIsNotNamed() throws Exception {
+        // The ordinary case, and the one a wrong reading of the name table would break: the bold
+        // face states the same typeface as the regular one, so there is nothing to say. Read as
+        // the format means it — the typographic family where a face states one — this holds for
+        // all 188 pairs of faces within the 35 bundled families.
+        FontFamilyDefinition pair = FontFamilyDefinition.classpath(SHIPPED_PAIR, PAIR_REGULAR)
+                .boldResource(PAIR_BOLD).wordFamily("OneTypeface").build();
+        try (Shipped shipped = exportSetIn(List.of(pair),
+                List.of(face(SHIPPED_PAIR), bold(SHIPPED_PAIR)))) {
+
+            assertThat(typefaceOf(resource(PAIR_REGULAR)))
+                    .as("the premise: the two files state one typeface")
+                    .isEqualTo(typefaceOf(resource(PAIR_BOLD)))
+                    .isEqualTo("Poppins");
+            assertThat(fontElements(shipped.document())).singleElement()
+                    .satisfies(element -> assertThat(element.slots())
+                            .containsExactly("embedRegular", "embedBold"));
+            assertThat(shipped.report().notes())
+                    .filteredOn(note -> note.subject().equals("embedded font"))
+                    .as("a family of one typeface draws no note")
+                    .isEmpty();
+        }
+    }
+
+    @Test
+    void aBundledFamilyWhoseItalicStatesAnotherFamilyRecordIsNotNamed() throws Exception {
+        // The bundled face that makes the reading matter: AsapCondensed-Italic states
+        // 'Asap Condensed Condensed Regular' as its family (name id 1) where its three siblings
+        // state 'Asap Condensed', and it is the one bundled face of 130 that states a typographic
+        // family (id 16) — 'Asap Condensed'. Read as id 1, this family would be told its italic
+        // face is of another typeface, which is false.
+        assertThat(typefaceOf(resource(ASAP_ITALIC)))
+                .as("read as the format means it, not as the broken family record says")
+                .isEqualTo("Asap Condensed")
+                .isEqualTo(typefaceOf(resource(ASAP_REGULAR)));
+
+        FontFamilyDefinition asap = FontFamilyDefinition.classpath(SHIPPED_ASAP, ASAP_REGULAR)
+                .italicResource(ASAP_ITALIC).wordFamily("AsapBoth").build();
+        try (Shipped shipped = exportSetIn(List.of(asap),
+                List.of(face(SHIPPED_ASAP), italic(SHIPPED_ASAP)))) {
+
+            assertThat(fontElements(shipped.document())).singleElement()
+                    .satisfies(element -> assertThat(element.slots())
+                            .containsExactly("embedRegular", "embedItalic"));
+            assertThat(shipped.report().notes())
+                    .filteredOn(note -> note.subject().equals("embedded font"))
+                    .as("no note about a family that is one typeface")
+                    .isEmpty();
         }
     }
 
@@ -634,6 +767,16 @@ class DocxFontTableTest {
             assertThat(in).as("the bundled font artifact is on the test classpath").isNotNull();
             return in.readAllBytes();
         }
+    }
+
+    /** The typeface a program states, as the export reads it. */
+    private static String typefaceOf(byte[] program) {
+        return DocxFontTable.typefaceOf(program);
+    }
+
+    private static DocumentTextStyle italic(FontName name) {
+        return DocumentTextStyle.builder().fontName(name).size(10)
+                .decoration(DocumentTextDecoration.ITALIC).build();
     }
 
     private static DocumentTextStyle bold(FontName name) {

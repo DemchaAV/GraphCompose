@@ -27,22 +27,46 @@ Full detail and the coverage table: [font coverage and glyph fallback](font-cove
 
 ## PowerPoint draws Arial where the deck embeds a font
 
-A presentation matches an embedded face to the family a deck declares by the
-family the **program** states for itself — `name` id 1 — not by the name the
-deck declares or anything in the font container. Where the two differ, the face
-travels in the deck and the runs laid out in it are not reached that way:
-measured in PowerPoint 16, one such face was replaced by Arial Italic and
-another was drawn with the viewer's own weight added on top.
+A presentation can match an embedded face to the family a deck declares by the
+family the **program** states for itself — `name` id 1 — rather than by the name
+the deck declares or anything in the font container. Measured in PowerPoint 16,
+a family carrying a regular face that states the declared name and an italic one
+that states another had that italic paragraph drawn in Arial Italic, the carried
+program used by nothing.
 
 The export says so: look for `render.pptx.font.name.mismatch` in the render log,
-which names the family the file states and the one the deck declares.
+which names the family the file states and the one the deck declares. The line
+names the condition and not an outcome, because the same condition was measured
+costing nothing twice: a bold-slot face stating another family, and an italic
+face of a family whose faces all state the *same* other name, were each drawn as
+the page laid them out.
 
 Declare the family under the name its files state. The declared name is
 `wordFamily()`, which defaults to the name the family was registered under, so
 `FontFamilyDefinition.files("Corporate", path)` on a file that states
-`Acme Sans` meets this — as does a weight registered beside its regular, such as
-`Oswald-SemiBold` under `Oswald`. See
+`Acme Sans` meets this. See
 [Font coverage](font-coverage.md#what-a-bundled-face-calls-itself).
+
+If the family you declare is one a font catalogue carries — `Oswald` and `Lato`
+are — read the next section first: the line fires there too, and the cause is
+not the name.
+
+## PowerPoint draws the right family but the wrong weight
+
+The machine viewing the deck may have the declared family itself, and then it can
+draw the text from its own copy and leave the carried faces unused — Office keeps
+a cache of families it downloads on demand, so a name like `Oswald` or `Lato` is
+local on a machine whose font folder holds no such file. A pair whose bold slot
+carries a SemiBold is where it shows: measured in PowerPoint 16, a deck declaring
+`Oswald` and carrying `Oswald-SemiBold` as its bold face had that paragraph drawn
+from the local family's **Bold** at 480.10pt, 10.40pt wider than the carried
+program draws it.
+
+No field measured changes this, and nothing in the render log can report it:
+the export cannot know what the viewing machine has. If the text must be drawn
+from the face you ship, declare the family under a name no font catalogue
+carries. See
+[What a deck cannot carry its way out of](font-coverage.md#what-a-deck-cannot-carry-its-way-out-of).
 
 ## DOCX export is missing paths, polygons, or other drawing
 

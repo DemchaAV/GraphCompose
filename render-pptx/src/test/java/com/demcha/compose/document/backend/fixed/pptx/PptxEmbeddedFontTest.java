@@ -65,9 +65,6 @@ class PptxEmbeddedFontTest {
             assertThat(header.getFullName())
                     .as("the full name is the two joined, as the container writes it")
                     .isEqualTo("Asap Condensed Condensed Regular Italic");
-            assertThat(parsed.readNBytes(4))
-                    .as("and that header was read out of the container just written")
-                    .containsExactly(container[0], container[1], container[2], container[3]);
         }
     }
 

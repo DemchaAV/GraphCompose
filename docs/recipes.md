@@ -109,7 +109,8 @@ For longer-form material:
 - [Extension guide](contributing/extension-guide.md) — walkthrough of the four
   extension paths, with `ShapeContainerNode` as the worked example.
 - [Font coverage and glyph fallback](font-coverage.md) — WinAnsi limits,
-  `●` vs `•`, and the inline-shape / bundled-font alternatives.
+  `●` vs `•`, the inline-shape / bundled-font alternatives, and the names a font
+  file states for itself.
 - [`ADR 0001 — Shape as container`](adr/0001-shape-as-container.md)
   and [`ADR 0002 — Theme unification`](adr/0002-theme-unification.md)
   for the design reasoning behind shape containers and the unified theme model.

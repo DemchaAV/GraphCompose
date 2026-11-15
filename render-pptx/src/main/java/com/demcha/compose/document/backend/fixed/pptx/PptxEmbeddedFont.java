@@ -178,19 +178,23 @@ final class PptxEmbeddedFont {
      * What the container will say about the face, read from the program's own tables.
      *
      * <p>The family and the style are the names a face states for the four-style model — {@code
-     * name} id 1 and id 2, or, where a face states neither for a language the header read accepts,
-     * its PostScript name and {@code Regular}. They are not the typographic names a face states
+     * name} id 1 and id 2, each falling back on its own where the face states none for a language
+     * the header read accepts: the PostScript name for the family, {@code Regular} for the style.
+     * They are not the typographic names a face states
      * when it falls outside that model, id 16 and id 17: the header read keeps ids 1, 2 and 6 only
      * ({@code NamingTable.isUsefulForOnlyHeaders}), so a typographic name is discarded before it
      * can be asked for. A face of six weights therefore names itself here by the name that made it
      * one of four — and a face whose id 1 is simply built wrong carries that: of the faces this
      * engine bundles, {@code AsapCondensed-Italic} states {@code Asap Condensed Condensed Regular}
      * where its three siblings state {@code Asap Condensed}. The backend capability details carry
-     * the whole account of what this costs.</p>
+     * the whole account of it.</p>
      *
      * <p><b>Do not key a guard on what these two fields say.</b> Nothing in the engine compares
-     * them with the typeface a deck declares, and nothing but a test reads them back. Preferring
-     * the typographic names was tried on both bundled faces that state them, and PowerPoint 16
+     * them with the typeface a deck declares, and nothing in it but a test reads what they say —
+     * the presentation reads the header itself, which is what {@link #validateReadableHeader}
+     * answers for. Preferring the typographic names was tried on both faces in this repository
+     * that state them, the bundled {@code AsapCondensed-Italic} and the {@code Oswald-SemiBold} a
+     * preset pairs, and PowerPoint 16
      * drew those decks the same to the hundredth of a point either way, so a refusal moved onto
      * these names would rest on nothing measured; no other viewer was measured at all. The one
      * refusal in this class that touches them reads how long they are and never what they say

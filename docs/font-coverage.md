@@ -128,8 +128,9 @@ carrying a rebuilt binary of its own.
 
 Where that record does and does not travel:
 
-- **A PDF** names each face by its PostScript name, so this one appears as
-  `AsapCondensed-Italic`.
+- **A PDF** names each face by its PostScript name, behind the six-letter tag
+  every subset carries, so this one appears as `AAAYYR+AsapCondensed-Italic` —
+  the tag differs from file to file.
 - **A DOCX** names the family its caller registered, never a name out of the
   file. It does *read* these records — id 16 first, then id 1 — to tell whether
   a family's faces are of one typeface, which is why a family of Asap Condensed

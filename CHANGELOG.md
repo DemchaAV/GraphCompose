@@ -376,6 +376,28 @@ follow semantic versioning; release dates are ISO 8601.
   the template value itself, since the carries-a-program case rests on the flag arriving set.
   The backend-capability details record it.
 
+### Documentation
+
+- **What a bundled face calls itself, and where that name travels.** A font file states its
+  family under `name` id 1, and a face the four-style model cannot hold states its real family
+  under id 16. One bundled face states an id 1 that simply reads wrong —
+  `AsapCondensed-Italic` gives `Asap Condensed Condensed Regular`, a doubled width word and a
+  `Regular` on an italic — where its full name, its PostScript name and its id 16 all give the
+  family correctly. The file is the one Google Fonts publishes, byte for byte, with no corrected
+  version published upstream, so it ships as it is rather than as a rebuilt binary of ours, and
+  a system that reads id 1 alone lists that string beside `Asap Condensed`. The font-coverage
+  page now says where the record does and does not travel: a PDF names each face by its
+  PostScript name, a DOCX names the family its caller registered while reading these records to
+  tell a family's typefaces apart, and a PPTX carries id 1 in its font container.
+- **A PPTX font container names its face by id 1 and id 2**, not by the typographic names a face
+  outside the four-style model states, because the header read it is built from keeps ids 1, 2
+  and 6 only. Nothing in the engine compares those fields with the typeface the deck declares,
+  and no refusal is keyed on what they say — the one that touches them reads how long they are.
+  Preferring the typographic names was tried on both faces here that state them and PowerPoint
+  16 drew those decks the same to the hundredth of a point either way, so the javadoc of the
+  method that writes them now says not to key a guard on them. Recorded in the backend
+  capability details.
+
 ## v2.5.0 — 2026-11-11
 
 ### Highlights

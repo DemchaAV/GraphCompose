@@ -174,6 +174,37 @@ final class PptxEmbeddedFont {
         return new Style(slot, header.getWeight(), italic);
     }
 
+    /**
+     * What the container will say about the face, read from the program's own tables.
+     *
+     * <p>The family and the style are the names a face states for the four-style model — {@code
+     * name} id 1 and id 2, each falling back on its own where the face states none for a language
+     * the header read accepts: the PostScript name for the family, {@code Regular} for the style.
+     * They are not the typographic names a face states
+     * when it falls outside that model, id 16 and id 17: the header read keeps ids 1, 2 and 6 only
+     * ({@code NamingTable.isUsefulForOnlyHeaders}), so a typographic name is discarded before it
+     * can be asked for. A face of six weights therefore names itself here by the name that made it
+     * one of four — and a face whose id 1 is simply built wrong carries that: of the faces this
+     * engine bundles, {@code AsapCondensed-Italic} states {@code Asap Condensed Condensed Regular}
+     * where its three siblings state {@code Asap Condensed}. The backend capability details carry
+     * the whole account of it.</p>
+     *
+     * <p><b>Do not key a guard on what these two fields say.</b> Nothing in the engine compares
+     * them with the typeface a deck declares, and nothing in it but a test reads what they say —
+     * the presentation reads the header itself, which is what {@link #validateReadableHeader}
+     * answers for. Preferring the typographic names was tried on both faces in this repository
+     * that state them, the bundled {@code AsapCondensed-Italic} and the {@code Oswald-SemiBold} a
+     * preset pairs, and PowerPoint 16
+     * drew those decks the same to the hundredth of a point either way, so a refusal moved onto
+     * these names would rest on nothing measured; no other viewer was measured at all. The one
+     * refusal in this class that touches them reads how long they are and never what they say
+     * ({@link #validateReadableHeader}), and the slot collisions a presentation can suffer are
+     * keyed on the weight and the italic flags instead ({@link #styleOf}).</p>
+     *
+     * @param fontData the face's own file, as read
+     * @return the fields the container is written from
+     * @throws IOException if the program's headers or its table directory cannot be read
+     */
     private static Metadata metadata(byte[] fontData) throws IOException {
         try (RandomAccessReadBuffer input = new RandomAccessReadBuffer(fontData)) {
             FontHeaders headers = new OTFParser().parseTableHeaders(input);

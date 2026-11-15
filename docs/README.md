@@ -84,7 +84,7 @@ GraphCompose itself.
 - **[recipes/page-backgrounds.md](recipes/page-backgrounds.md)** — per-page fills: sidebars, bands, layered tints.
 - **[recipes/layered-page-design.md](recipes/layered-page-design.md)** — page background vs. row vs. layer stack vs. canvas.
 - **[recipes/absolute-placement.md](recipes/absolute-placement.md)** — pixel-precise canvas placement.
-- **[font-coverage.md](font-coverage.md)** — WinAnsi limits, `●` vs `•`, and glyph fallback.
+- **[font-coverage.md](font-coverage.md)** — WinAnsi limits, `●` vs `•`, glyph fallback, and the names a font file states for itself.
 
 ### Operations / Testing
 - **[operations/test-your-document.md](operations/test-your-document.md)** — consumer smoke tests, layout snapshots, and PDF visual diffs.

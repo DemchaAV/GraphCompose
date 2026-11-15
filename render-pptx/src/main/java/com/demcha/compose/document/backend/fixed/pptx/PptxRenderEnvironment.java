@@ -877,10 +877,11 @@ public final class PptxRenderEnvironment {
                 // measured in PowerPoint 16 and differs by case. It cost everything once: the
                 // italic face of a family whose two faces state DIFFERENT names was replaced by a
                 // substitute, its program used by nothing. Twice it cost nothing: a face in the
-                // bold slot stating another family, and an italic face of a family whose faces all
-                // state the same other name, were each drawn from the carried program after all,
-                // 0.16pt and 0.27pt off the line the page had laid out. So this says what the two
-                // names are and names no outcome.
+                // bold element stating another family, and an italic face of a family whose faces
+                // all state the same other name, were each drawn from the carried program after
+                // all, 0.16pt and 0.27pt off the line the page had laid out, both under a declared
+                // name of no font on the measuring machine. So this says what the two names are
+                // and names no outcome.
                 //
                 // What it must not be read as is an account of a deck drawn from a family the
                 // viewing machine has under the declared name — there the carried face may not be
@@ -902,10 +903,11 @@ public final class PptxRenderEnvironment {
                              + "family its program states for itself rather than on the one this "
                              + "deck declares. What that costs was measured in PowerPoint 16 and "
                              + "differs: the italic face of a family whose faces state different "
-                             + "names was replaced by a substitute, while a face in the bold slot "
-                             + "stating another family, and an italic face of a family whose faces "
-                             + "all state the same other name, were each drawn from the carried "
-                             + "program after all. So this names the two families and no outcome",
+                             + "names was replaced by a substitute, while a face in the bold "
+                             + "element stating another family, and an italic face of a family "
+                             + "whose faces all state the same other name, were each drawn from "
+                             + "the carried program after all. So this names the two families and "
+                             + "no outcome",
                             familyName.name(), typeface, description, stated);
                 }
                 // Which slot the face is seated in is not the slot it was registered under:

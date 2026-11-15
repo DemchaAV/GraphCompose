@@ -48,8 +48,9 @@ Declare the family under the name its files state. The declared name is
 [Font coverage](font-coverage.md#what-a-bundled-face-calls-itself).
 
 If the family you declare is one a font catalogue carries — `Oswald` and `Lato`
-are — read the next section first: the line fires there too, and the cause is
-not the name.
+are — read the next section first: that family may be drawn from the viewing
+machine's own copy whether or not this line fires, and then the cause is not the
+name.
 
 ## PowerPoint draws the right family but the wrong weight
 

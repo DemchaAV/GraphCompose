@@ -148,7 +148,8 @@ Where that record does and does not travel:
   a face in the bold slot stating another family, and an italic face of a
   family whose faces all state the *same* other name, were each measured being
   drawn from the carried program after all, within three tenths of a point of
-  the line the page laid out. The face is still carried either
+  the line the page laid out — both under a declared name no local font answers
+  to. The face is still carried either
   way, and the export says so in its log
   (`render.pptx.font.name.mismatch`) with both names.
 
@@ -164,9 +165,10 @@ registered beside its regular meets it too: `Oswald-SemiBold` states
 One route out is to register the odd face as a family of its own, declared under
 the name that face states, and set that text in it; that was not measured, only
 reasoned from the arms above. And where the name that face states is itself one
-a font catalogue carries, it is no route out at all — see
-[What a deck cannot carry its way out of](#what-a-deck-cannot-carry-its-way-out-of),
-which measures that move costing more than it saves.
+a font catalogue carries, a viewer may draw its own copy of *that* name instead:
+declaring the whole family that way was measured costing more than it saves (see
+[What a deck cannot carry its way out of](#what-a-deck-cannot-carry-its-way-out-of)),
+while setting only the odd face in it was not measured at all.
 
 ## What a deck cannot carry its way out of
 
@@ -186,13 +188,14 @@ embedded in its own PDF export were the cached Oswald **Regular** and Oswald
 **Bold**, glyph for glyph — the two carried faces drew nothing. Most of the
 10.40pt is that weight and a little is the build: the Bold (700) is heavier than
 the SemiBold (600) the page measured, and the cache's own SemiBold already draws
-the line 0.88pt wider than the carried one, so 9.60pt is the weight and 0.88pt
-is the cached files being another build of the family.
+the line 0.88pt wider than the carried one.
 
 Nothing in the deck reaches this. Rewriting the program's own family record to
 the declared name, its `usWeightClass` to 700, either of its two bold bits, all
 four of the program's own at once, or the weight field of the container the deck
-carries, each changed nothing PowerPoint drew. Declaring the family as the carried face states
+carries, each changed nothing PowerPoint drew — nor did recompiling the file
+without changing a value, which is the control that says the rewriting itself
+was never the thing being measured. Declaring the family as the carried face states
 it (`Oswald SemiBold`) is worse: that name is a local family too, both
 paragraphs came out of it, and the plain line reached 440.93pt where the page
 had measured 405.02pt.
@@ -201,7 +204,10 @@ It does not always happen, and what decides is not established: another deck,
 declaring `Lato` and carrying two faces marked in one glyph to differ from the
 cached `Lato`, was drawn from the carried pair. If a deck's text must be drawn
 from the face you ship, the route that was measured to work is a declared name no
-font catalogue carries — a name of your own, which the files then state as well.
+font catalogue carries — a name of your own. That was measured both with the
+files rewritten to state it and with them left stating their own names; the
+carried programs were drawn either way, and stating the declared name is what
+keeps the mismatch line above quiet.
 
 ## See also
 

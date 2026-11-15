@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * A carried face whose program states a family of its own.
  *
- * <p>An embedded face is matched to the declared typeface by the family the program states for
+ * <p>An embedded face can be matched to the declared typeface by the family the program states for
  * itself, not by the name the container carries. Measured in PowerPoint 16 on the bundled
  * {@code AsapCondensed-Italic}, whose own family record reads {@code Asap Condensed Condensed
  * Regular} where its three siblings read {@code Asap Condensed}: declared as {@code Asap
@@ -32,9 +32,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * rewriting it to the string it already held changed nothing, so the rewriting was not what the
  * viewer went by.</p>
  *
- * <p>What that costs differs, and both halves were measured: that face was not drawn at all, while
- * the {@code Oswald-SemiBold} a preset here pairs under {@code Oswald} was drawn and then weighted
- * again by the viewer. So the line says what the two names are rather than promising one outcome.</p>
+ * <p>What that costs is the arrangement above and not the record on its own: a family whose faces
+ * state <em>different</em> names, where the odd one is the face replaced. Two arrangements of the
+ * same condition were measured drawing the carried program after all — a face in the bold element
+ * stating another family (439.86pt against the page's 439.70pt) and an italic face of a family
+ * whose faces all state the <em>same</em> other name (497.95pt against the page's 497.68pt) — so
+ * the line says what the two names are and names no outcome. Each of those declared a name no font
+ * on the measuring machine answers to, which is where the carried program can be seen at all:
+ * under a name it does have one for, the deck may be drawn from that font instead, which the
+ * backend capability details carry as a limit of its own.</p>
  *
  * <p>Nothing is refused for it. The program travels as the caller asked and no deck's bytes change
  * — what the export adds is the warning, so the reason is in the log rather than only in the

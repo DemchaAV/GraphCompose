@@ -214,9 +214,12 @@ final class PptxEmbeddedFont {
      * the presentation reads the header itself, which is what {@link #validateReadableHeader}
      * answers for. Preferring the typographic names was tried on both faces in this repository
      * that state them, the bundled {@code AsapCondensed-Italic} and the {@code Oswald-SemiBold} a
-     * preset pairs, and PowerPoint 16
-     * drew those decks the same to the hundredth of a point either way, so a refusal moved onto
-     * these names would rest on nothing measured; no other viewer was measured at all. The one
+     * preset pairs, and PowerPoint 16 drew those decks the same to the hundredth of a point either
+     * way, so a refusal moved onto these names would rest on nothing measured; no other viewer was
+     * measured at all. Only the first of those two decks says anything either way: the second
+     * declares a family the measuring machine has of its own, and such a deck was later measured
+     * being drawn from that family and not from the carried program at all, so no field this class
+     * writes could have moved it. The one
      * refusal in this class that touches them reads how long they are and never what they say
      * ({@link #validateReadableHeader}), and the slot collisions a presentation can suffer are
      * keyed on the weight and the italic flags instead ({@link #styleOf}).</p>
@@ -331,8 +334,8 @@ final class PptxEmbeddedFont {
     }
 
     /**
-     * The family a program states for itself, which is what a presentation matches an embedded
-     * face to a declared typeface on.
+     * The family a program states for itself, which a presentation can match an embedded face to
+     * a declared typeface on.
      *
      * <p>Measured in PowerPoint 16 on the bundled {@code AsapCondensed-Italic}, whose own family
      * record reads {@code Asap Condensed Condensed Regular} where the other three faces of that
@@ -343,6 +346,17 @@ final class PptxEmbeddedFont {
      * checksums as they were — is not what the viewer went by. Declaring the family as the italic
      * states it instead had that program drawn for both paragraphs and left the regular face
      * unused, so for a family whose faces disagree here no one declared name serves them all.</p>
+     *
+     * <p><b>Stating another family is a condition, not a prediction.</b> What it was measured to
+     * cost is the arrangement above — a family whose faces state <em>different</em> names, where
+     * the odd one was the loss. Two arrangements were measured drawing the carried program after
+     * all, each under a declared name of no font on the measuring machine: a face in the bold
+     * element stating another family (439.86pt against the page's 439.70pt), and an italic face of
+     * a family whose faces all state the same other name (497.95pt against the page's 497.68pt,
+     * from files marked in one glyph so that no other build of the same face could pass for them).
+     * A declared name with no local font is where the carried program can be seen at all: under a
+     * name the machine does have one for, the deck may be drawn from that font instead and these
+     * records then decide nothing.</p>
      *
      * <p><b>Name id 1, deliberately, and not the typographic family of id 16.</b> The DOCX backend
      * prefers id 16 where a face states one, because its question is which typeface a face belongs

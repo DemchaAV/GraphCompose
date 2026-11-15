@@ -135,33 +135,79 @@ Where that record does and does not travel:
   file. It does *read* these records — id 16 first, then id 1 — to tell whether
   a family's faces are of one typeface, which is why a family of Asap Condensed
   faces draws no note about them.
-- **A PPTX** is where it costs something. A presentation matches an embedded
+- **A PPTX** is where it costs something. A presentation can match an embedded
   face to the family the deck declares by the family the *program* states for
   itself — id 1, not the container's fields and not id 16. Measured in
   PowerPoint 16: a deck declaring `Asap Condensed` and carrying this face had
   that paragraph drawn in **Arial Italic**, the embedded program used by
   nothing, while the same deck's regular paragraph was drawn from its own
-  program. A face can also be mishandled rather than dropped:
-  `Oswald-SemiBold`, whose record reads `Oswald SemiBold`, came out of a deck
-  declaring `Oswald` with the viewer's own weight added on top of it. Declaring the family as this face states it instead draws this
+  program. Declaring the family as this face states it instead draws this
   program for every paragraph and leaves the regular face unused — so for a
   family whose faces disagree in that record, no single declared name serves
-  them all. The face is still carried, and the export says so in its log
+  them all. What it costs is that disagreement and not the record on its own:
+  a face in the bold slot stating another family, and an italic face of a
+  family whose faces all state the *same* other name, were each measured being
+  drawn from the carried program after all, within three tenths of a point of
+  the line the page laid out — both under a declared name no local font answers
+  to. The face is still carried either
+  way, and the export says so in its log
   (`render.pptx.font.name.mismatch`) with both names.
 
 This is not only about one mis-built file. **For a PPTX deck, declare a family
 under the name its files state in `name` id 1.** The declared name is
 `wordFamily()`, which defaults to the name you register the family under, so a
 family registered as `Corporate` from a file that states `Acme Sans` meets the
-same condition — a presentation matches on the file's record, and the program
-you paid bytes for is not what draws your text. A multi-weight face registered
-beside its regular meets it too: `Oswald-SemiBold` states `Oswald SemiBold`,
-and a deck declaring `Oswald` was measured drawing it with the viewer's own
-weight added on top.
+same condition — a presentation can match on the file's record, and the program
+you paid bytes for may not be what draws your text. A multi-weight face
+registered beside its regular meets it too: `Oswald-SemiBold` states
+`Oswald SemiBold` while the regular beside it states `Oswald`.
 
 One route out is to register the odd face as a family of its own, declared under
 the name that face states, and set that text in it; that was not measured, only
-reasoned from the arms above.
+reasoned from the arms above. And where the name that face states is itself one
+a font catalogue carries, a viewer may draw its own copy of *that* name instead:
+declaring the whole family that way was measured costing more than it saves (see
+[What a deck cannot carry its way out of](#what-a-deck-cannot-carry-its-way-out-of)),
+while setting only the odd face in it was not measured at all.
+
+## What a deck cannot carry its way out of
+
+A machine viewing the deck may already have the family the deck declares, and
+then it can draw your text from its own copy rather than from the face you
+carried — including fonts nobody installed. Office keeps a cache of families it
+fetches on demand, so a name like `Oswald` or `Lato` is a local family on a
+machine where the Windows font folder and the font registry keys hold no such
+thing.
+
+It shows most where a family pairs a weight the four-style model cannot name.
+The `OrangeOps` CV preset declares `Oswald` and carries `Oswald-Regular` as the
+regular face and `Oswald-SemiBold` as the bold one. Measured in PowerPoint 16 on
+a 45-character line at 20pt: the bold paragraph came out at 480.10pt where the
+carried SemiBold program itself draws 469.70pt, and the programs PowerPoint
+embedded in its own PDF export were the cached Oswald **Regular** and Oswald
+**Bold**, glyph for glyph — the two carried faces drew nothing. Most of the
+10.40pt is that weight and a little is the build: the Bold (700) is heavier than
+the SemiBold (600) the page measured, and the cache's own SemiBold already draws
+the line 0.88pt wider than the carried one.
+
+Nothing in the deck reaches this. Rewriting the program's own family record to
+the declared name, its `usWeightClass` to 700, either of its two bold bits, all
+four of the program's own at once, or the weight field of the container the deck
+carries, each changed nothing PowerPoint drew — nor did recompiling the file
+without changing a value, which is the control that says the rewriting itself
+was never the thing being measured. Declaring the family as the carried face states
+it (`Oswald SemiBold`) is worse: that name is a local family too, both
+paragraphs came out of it, and the plain line reached 440.93pt where the page
+had measured 405.02pt.
+
+It does not always happen, and what decides is not established: another deck,
+declaring `Lato` and carrying two faces marked in one glyph to differ from the
+cached `Lato`, was drawn from the carried pair. If a deck's text must be drawn
+from the face you ship, the route that was measured to work is a declared name no
+font catalogue carries — a name of your own. That was measured both with the
+files rewritten to state it and with them left stating their own names; the
+carried programs were drawn either way, and stating the declared name is what
+keeps the mismatch line above quiet.
 
 ## See also
 

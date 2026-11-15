@@ -7,13 +7,54 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
-- **A PPTX export no longer stays silent about a face it carries that a presentation does not
+- **A PPTX export's font-name line no longer claims an outcome the measurements do not support,
+  and the limit no deck can carry its way out of is written down.**
+  - The line `render.pptx.font.name.mismatch` named two outcomes for a face whose program states
+    another family than the deck declares. The second was wrong: the `Oswald-SemiBold` it cited
+    was not drawn with the viewer's own weight added, because that deck was not drawn from the
+    carried programs at all. The line now names the condition and no outcome, and keeps firing for
+    the two arrangements the measurements cleared, because only one viewer was measured.
+  - What the condition does cost was measured on one arrangement only — a family whose faces state
+    *different* names, where the odd face is the one replaced. Two arrangements of the same
+    condition were measured drawing the carried program after all, each under a declared name no
+    font on the machine answers to: a face in the bold element stating another family (439.86pt
+    against the page's 439.70pt), and an italic face of a family whose faces all state the *same*
+    other name (497.95pt against the page's 497.68pt, from files marked in one glyph so that no
+    other build of the same face could pass for them).
+  - The limit: a machine that has a family under the declared name can draw the deck from that
+    family and leave the carried faces unused, and nothing in a deck reaches it. Measured in
+    PowerPoint 16 on a 45-character line at 20pt, one deck per run: the `OrangeOps` preset's pair
+    (`Oswald-Regular` regular, `Oswald-SemiBold` bold, declared `Oswald`) had its bold paragraph
+    drawn at 480.10pt where that program itself draws 469.70pt, and the subsets PowerPoint wrote
+    into its own PDF export were the Oswald **Regular** and **Bold** of Office's cloud-font cache
+    glyph for glyph. Oswald is in no Windows font folder or font registry key on that machine: a
+    cloud-font cache is not a font folder, so "the font is not installed" does not establish that a
+    carried face is what gets drawn. Most of the 10.40pt is the weight and a little is the build:
+    on the programs' own numbers the cached Bold draws 450.18pt, its SemiBold 440.58pt and the
+    carried SemiBold 439.70pt, so 9.60pt is Bold against SemiBold and 0.88pt is another build of
+    the family — PowerPoint drew the line 0.08pt under the cached Bold's own figure.
+  - Five arms, one factor each, drew 480.10pt to the hundredth every time — the container's weight
+    field, the program's `usWeightClass`, its `fsSelection` bold bit, its `head.macStyle` bold bit,
+    and its `name` id 1 rewritten to the declared name — and so did a sixth setting all four of the
+    program's own fields at once with its id 2, and a control arm that recompiled the file without
+    changing a value. The run's own `b` flag does change the drawing, but only by picking the slot:
+    without it the local family's regular is drawn, at 405.91pt. Declaring the family as the carried
+    face states it (`Oswald SemiBold`) is worse: that name is a local family too, both paragraphs
+    came out of it, and the plain line reached 440.93pt where the page measured 405.02pt. It does
+    not always happen and what decides is unmeasured — a deck declaring `Lato`, carrying two faces
+    marked in one glyph to differ from the cached `Lato`, was drawn from the carried pair.
+  - No behaviour and no deck's bytes change: an export cannot know what the viewing machine has, so
+    there is nothing to warn about and nothing to refuse. The limit is recorded in the PPTX
+    font-portability entry of the backend capability details, on the font-coverage page, and as a
+    symptom in `docs/troubleshooting.md`; the log-key list carries the correction to the line.
+- **A PPTX export no longer stays silent about a face it carries that a presentation may not
   draw as laid out.**
-  - A presentation matches an embedded face to the family a deck declares by the family the
-    *program* states for itself — `name` id 1 — and not by the names its container carries. Where
-    the two differ, the face travels and any runs laid out in it are not reached that way.
+  - A presentation can match an embedded face to the family a deck declares by the family the
+    *program* states for itself — `name` id 1 — rather than by the names its container carries.
+    Where the two differ, the face travels and the runs laid out in it may not be reached that way.
   - Measured in PowerPoint 16 on a 45-character line at 20pt, one deck per run, with neither
-    family installed on the machine: a deck declaring `Asap Condensed` and carrying the bundled
+    family in the machine's font folders, its font registry keys or Office's cloud-font cache: a
+    deck declaring `Asap Condensed` and carrying the bundled
     `AsapCondensed-Italic`, whose own family record reads `Asap Condensed Condensed Regular`, had
     that paragraph drawn in **Arial Italic** at 566.51pt where PowerPoint draws that same program
     at 443.65pt once the record names the declared family — the engine's own render of the two
@@ -24,21 +65,20 @@ follow semantic versioning; release dates are ISO 8601.
     by. Declaring the family as the italic states it had that program drawn for both paragraphs
     and left the regular face unused, so for a family whose faces disagree in that record no one
     declared name serves them all.
-  - What that costs differs, and both halves were measured: that face was not drawn at all, while
-    `Oswald-SemiBold`, which the `OrangeOps` preset pairs under `Oswald` and whose own record
-    reads `Oswald SemiBold`, was drawn and then weighted again by the viewer — 480.10pt where the
-    program itself draws 469.70pt. So the log line names both families and leaves the outcome to
-    the reader rather than promising the one measured first.
-  - Such a face is now named in the log (`render.pptx.font.name.mismatch`), with the family it states and
-    the one the deck declares. It is not refused: the program travels as the caller asked and no
-    deck's bytes change, which is the whole of what the export can add — the face is still not
-    reached as laid out, and only PowerPoint 16 was measured. The line says nothing about whether
-    the family travels either; a later face of it can still collide or fail to be read, and those
-    have their own lines.
+  - The log line names both families and no outcome. What the condition was measured to cost, and
+    the two arrangements of it that cost nothing, are in the entry above: the second outcome this
+    entry first claimed — an `Oswald-SemiBold` drawn with the viewer's own weight added — was
+    refuted by a later measurement, and that deck's bold run has another cause entirely.
+  - Such a face is now named in the log (`render.pptx.font.name.mismatch`), with the family it
+    states and the one the deck declares. It is not refused: the program travels as the caller
+    asked and no deck's bytes change, which is the whole of what the export can add, and only
+    PowerPoint 16 was measured. The line says nothing about whether the family travels either; a
+    later face of it can still collide or fail to be read, and those have their own lines.
   - The comparison is on id 1 deliberately, not on the typographic family (id 16) the DOCX backend
     prefers for telling typefaces apart: that is a different question, and reading id 16 here
-    would answer with the declared name for the very face a presentation refuses — and would
-    silence the `Oswald` pair that id 16 rescues there.
+    would answer with the declared name for the face a presentation was measured replacing — and
+    would silence the `Oswald` pair that id 16 rescues there, a case the line keeps on the strength
+    of the condition rather than of a measured loss.
   - The condition is not confined to a mis-built file. A declared typeface is `wordFamily()`,
     which defaults to the name a family was registered under, so any caller registering a face
     under a name of their own meets it; the font-coverage page now says to declare the name the

@@ -1,8 +1,9 @@
 # Font coverage and glyph fallback
 
 Not every character can be drawn by every font. This page explains what the
-built-in PDF fonts can encode, why an unexpected `?` sometimes appears, and the
-three ways to render the symbol you actually wanted.
+built-in PDF fonts can encode, why an unexpected `?` sometimes appears, the
+three ways to render the symbol you actually wanted, and what names a font file
+states for itself.
 
 ## The name picks the family, the decoration picks the face
 
@@ -102,6 +103,43 @@ them and select it through `DocumentTextStyle.fontName(...)`.
 
 For simple lists, prefer the characters the base fonts already have — `•`
 instead of `●`, `-` or `–` instead of an arrow.
+
+## What a bundled face calls itself
+
+A font file states its own names, and a system that lists fonts reads them. Two
+of those names matter: the **family** (`name` id 1), which the four-style model
+groups by, and the **typographic family** (id 16), which a face states when that
+model cannot hold it — when it is one of six weights, say, or a width. Where a
+face states id 16, that is the family it really belongs to and id 1 carries
+whatever made the pair fit the four styles.
+
+One bundled face states an id 1 that reads oddly: `AsapCondensed-Italic` gives
+`Asap Condensed Condensed Regular` there, where its three siblings give
+`Asap Condensed`. Everything else about it is right — its full name is
+`Asap Condensed Italic`, its PostScript name `AsapCondensed-Italic`, and its
+id 16 `Asap Condensed`, which is also why a reader following the format arrives
+at the right family. A system that reads id 1 alone will show that string
+alongside `Asap Condensed` in its font list; fontconfig, which LibreOffice uses
+to build its list on Linux, lists both and puts `Asap Condensed` first.
+
+The file is the one Google Fonts publishes, byte for byte, and no corrected
+version is published upstream, so GraphCompose ships it as it is rather than
+carrying a rebuilt binary of its own.
+
+Where that record does and does not travel:
+
+- **A PDF** names each face by its PostScript name, so this one appears as
+  `AsapCondensed-Italic`.
+- **A DOCX** names the family its caller registered, never a name out of the
+  file. It does *read* these records — id 16 first, then id 1 — to tell whether
+  a family's faces are of one typeface, which is why a family of Asap Condensed
+  faces draws no note about them.
+- **A PPTX** carries an embedded face in a container that names it by id 1 and
+  id 2, so a deck setting text in this face carries
+  `Asap Condensed Condensed Regular` in that container's family field while the
+  deck itself declares `Asap Condensed`. Nothing in GraphCompose reads those
+  container names back, and PowerPoint 16 was measured drawing such a deck the
+  same whichever name the container carried.
 
 ## See also
 

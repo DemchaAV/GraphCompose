@@ -41,6 +41,37 @@ class PptxEmbeddedFontTest {
     }
 
     @Test
+    void theContainerNamesAFaceByTheFamilyAndStyleItStatesForFourStyles() throws Exception {
+        // The container carries name id 1 and id 2, not the typographic names a face states when
+        // the four-style model cannot hold it, because the header read it is built from keeps
+        // ids 1, 2 and 6 only. This is the face in the bundle where the two disagree:
+        // AsapCondensed-Italic states id 1 'Asap Condensed Condensed Regular' and id 16
+        // 'Asap Condensed', and its three siblings state id 1 'Asap Condensed' with no id 16.
+        //
+        // Pinned because the javadoc of the method that writes these fields says not to key a
+        // guard on what they say: preferring the typographic names changes both of them, and
+        // PowerPoint 16 was measured drawing such a deck the same either way, so a change of
+        // reading here would be a change of bytes with nothing measured behind it. This case goes
+        // red on one, rather than letting it through unnoticed.
+        byte[] container = PptxEmbeddedFont.wrap(new ByteArrayInputStream(
+                PptxDeck.face("fonts/google/asapcondensed/AsapCondensed-Italic.ttf")));
+
+        FontHeader header = new FontHeader();
+        try (InputStream parsed = header.bufferInit(new ByteArrayInputStream(container))) {
+            assertThat(header.getFamilyName())
+                    .as("the family the face states for four styles, not its typographic one")
+                    .isEqualTo("Asap Condensed Condensed Regular");
+            assertThat(header.getStyleName()).isEqualTo("Italic");
+            assertThat(header.getFullName())
+                    .as("the full name is the two joined, as the container writes it")
+                    .isEqualTo("Asap Condensed Condensed Regular Italic");
+            assertThat(parsed.readNBytes(4))
+                    .as("and that header was read out of the container just written")
+                    .containsExactly(container[0], container[1], container[2], container[3]);
+        }
+    }
+
+    @Test
     void aHeaderThePresentationCannotReadBackIsRefusedHere() throws Exception {
         // The header is measured where it is written, against the stricter of the two
         // thousand-byte rules the presentation reads it under: taking the face reads each

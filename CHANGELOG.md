@@ -7,6 +7,48 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A PPTX run no longer asks for a bold or italic face because the family's registered name
+  happens to contain the word.**
+  - The flag a run carries came from any `bold`, `italic` or `oblique` **anywhere** in the name a
+    family was registered under, while the only style token this backend otherwise recognises is a
+    suffix at the end of a name. So a family registered as `Acme Sans Bold`, or `Boldoni Text`, had
+    the flag on every run of it, including the plain ones the page had measured in the regular
+    program.
+  - Measured in PowerPoint 16 on a 45-character line at 20pt, one deck per PowerPoint instance,
+    with the two faces marked in one glyph so no other build of them could pass for them: a family
+    of two faces under such a name had its plain paragraph drawn from the **bold** program at
+    544.80pt where the page laid out 531.90pt — 12.90pt wider than the frame the engine sized for
+    it. A family of one regular face under the same name had that line drawn from the regular
+    program at the same size, 45 glyphs of the same widths, yet ending 9.17pt *short* of the frame;
+    why it ends earlier was not measured. With the flag taken off the plain run, both came out at
+    531.94pt, within four hundredths of the 531.90pt the page laid out.
+  - The flag now comes from a style suffix at the end of the name and from nothing else: one list
+    of suffixes, read both by the flag and by the stripping this class does on a name no
+    registration covers. A registration per face — `Acme-Sans` beside `Acme-Sans-Bold` under one
+    `wordFamily`, one file each, neither paragraph carrying a decoration — still asks for its face,
+    which is the one arrangement where the name is the only signal there is: measured, that
+    paragraph comes out 12.88pt short of the frame, from the regular program, if the flag is
+    dropped.
+  - What it costs: the same per-face registration spelled with a space (`Acme Sans Bold`) loses the
+    flag. The spelling is the caller's, and the font-coverage page now says so with the number.
+  - What it does not reach, measured and pinned by a test rather than left to be found: a *single*
+    definition under a name ending in `-Bold` that holds both a regular and a bold file still flags
+    every run of itself, its plain paragraph drawn from the bold program at the same 12.90pt over
+    the frame; so does such a name over a regular file alone. The style token in the name and the
+    face the file holds are never compared, and closing that means keying the flag on the
+    registration rather than on the name.
+  - Two more things take this flag besides the `b` attribute: which faces a bundled family is
+    embedded with — unmoved here, since no bundled name carries a token at all — and, through the
+    face's viewer ascent, where the frame is seated. The ascent arm was not demonstrated: the line
+    top was identical in every measured deck.
+  - The suffix list gained `-Bold-Italic` and `-Bold-Oblique`, so that a per-face name spelling the
+    pair with an inner hyphen keeps both halves of its face instead of only the italic one.
+  - Deck bytes change for a family registered under a name that contains a style token but does not
+    end in one of the `-Bold` / `-Italic` / `-BoldItalic` / `-BoldOblique` suffixes — the position
+    is not what decides it, the hyphen is: `Acme Sans Bold` ends in the token and is affected. No
+    bundled family's name carries a token at all (of 50 `FontName` constants the nine that do are
+    the standard-14 aliases, already excluded), and no preset or example here registers such a
+    name.
 - **A PPTX export's font-name line no longer claims an outcome the measurements do not support,
   and the limit no deck can carry its way out of is written down.**
   - The line `render.pptx.font.name.mismatch` named two outcomes for a face whose program states

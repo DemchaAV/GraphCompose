@@ -16,15 +16,36 @@ import java.util.Locale;
  * system fonts (Helvetica → Arial, Times → Times New Roman, Courier →
  * Courier New) — page geometry is safe either way because every line is
  * pre-wrapped and placed by the engine, but metric-compatible glyphs keep
- * intra-line rendering close. Binary families keep their real family name
- * with the style suffix stripped ({@code Roboto-Bold} → {@code Roboto});
- * the bold/italic axis travels as run flags, combining the name's own style
- * suffix with the span's {@link TextDecoration}.</p>
+ * intra-line rendering close. Binary families keep their real family name —
+ * stripped of a style suffix ({@code Roboto-Bold} → {@code Roboto}) where no
+ * registration covers the name, while a registered family declares the
+ * {@code wordFamily()} it was given, suffix and all;
+ * the bold/italic axis travels as run flags, combining the span's
+ * {@link TextDecoration} with a style suffix at the <em>end</em> of the name,
+ * read off the one list of suffixes this class strips names by and from no
+ * other reading of the name (see {@link #nameCarriesStyle}).</p>
  *
  * @since 2.1.0
  */
 @Internal
 public final class PptxFontMapping {
+
+    /**
+     * The style suffixes a font name can end in, ordered so that an entry is tried before any
+     * shorter entry it itself ends with: {@code -bold-italic} before {@code -italic}, and
+     * {@code -bold-oblique} before {@code -oblique}. Read first to last, so the order is part of
+     * the rule rather than a tidiness.
+     *
+     * <p>One list, read by the two places that must not disagree about what a style token is:
+     * {@link #stripStyleSuffix}, which takes the suffix off a name no registration covers, and
+     * {@link #nameCarriesStyle}, which turns it into a run flag. Adding a spelling here gives it to
+     * both at once; searching the <em>whole name</em> for a token instead — which is what this
+     * class did until the measurements below — is what the one list exists to prevent.</p>
+     */
+    private static final String[] STYLE_SUFFIXES = {
+            "-bolditalic", "-bold-italic", "-boldoblique", "-bold-oblique",
+            "-bold", "-italic", "-oblique", "-regular"
+    };
 
     private static final double ARIAL_ASCENT_RATIO = 1854.0 / 2048.0;
     private static final double TIMES_NEW_ROMAN_ASCENT_RATIO = 1825.0 / 2048.0;
@@ -114,15 +135,53 @@ public final class PptxFontMapping {
     /**
      * Reports whether a font name's own style suffix should become a run flag.
      *
-     * <p>Only binary families carry their face in the name. The standard-14
-     * PostScript variants — {@code Helvetica-Bold}, {@code Times-Italic},
-     * {@code Courier-BoldOblique} and their siblings — are <em>family
-     * aliases</em>: the engine resolves each to its regular base family and
-     * then picks the real face from the span's {@link TextDecoration}, so a
-     * span that names one of them without a decoration is measured with the
-     * regular metrics. Turning the suffix into a run flag would ask the viewer
-     * for a bold or italic face the layout never measured, and the placed text
-     * would render wider than the frame the engine sized for it.</p>
+     * <p><b>Only one of the suffixes {@link #STYLE_SUFFIXES} lists, at the end of the name.</b> A
+     * token the name carries any other way is part of the family's own name — {@code Boldoni Text}
+     * carries it inside a word, {@code Acme Sans Bold} and {@code Oswald SemiBold} at the end but
+     * not behind the hyphen a face name uses — and a flag taken off one of those asks the viewer
+     * for a face the layout never measured. A name beginning with a standard-14 family word is
+     * excluded before any of this (see below), whatever it ends in.
+     * Measured in PowerPoint 16 on a 45-character line at 20pt: a family of two faces registered
+     * under such a name had its <em>plain</em> paragraph drawn from the bold program, 12.90pt wider
+     * than the frame the engine had sized for it, and a family of one regular face under the same
+     * name had its line drawn 9.17pt short of it. The span's {@link TextDecoration} already says
+     * which face such a family wants.</p>
+     *
+     * <p>Where a name does end in the suffix, it is the only signal in the one arrangement that
+     * needs it: a registration <em>per face</em> under one {@code wordFamily} — {@code Acme-Sans}
+     * holding the regular file beside {@code Acme-Sans-Bold} holding the bold one — where no
+     * decoration distinguishes the two. Measured, that second paragraph is drawn from the bold
+     * program as the page laid it out, and 12.88pt short of it, from the regular program, with the
+     * flag taken away. What that costs is the same registration spelled with a space: it loses the
+     * flag, and the spelling is the caller's.</p>
+     *
+     * <p>The standard-14 PostScript variants — {@code Helvetica-Bold}, {@code Times-Italic},
+     * {@code Courier-BoldOblique} and their siblings — are excluded before any of this because they
+     * are <em>family aliases</em>: the engine resolves each to its regular base family and then
+     * picks the real face from the span's {@link TextDecoration}, so a span that names one of them
+     * without a decoration is measured with the regular metrics. That exclusion is by the name's
+     * <em>beginning</em> ({@link #standardReplacementFor}), so a caller's own
+     * {@code Courier Prime-Bold} is caught by it too and its suffix never read.</p>
+     *
+     * <p>Three things take this flag, not one: the run's {@code b} or {@code i} attribute, the
+     * record of which faces a family was drawn in — which decides what a bundled family is
+     * embedded with — and the viewer ascent that seats the frame
+     * ({@code PptxViewerMetrics.ascentPoints}). The first is what the measurements above read; the
+     * ascent arm was not demonstrated, the line top being identical in every deck measured.</p>
+     *
+     * <p><b>Two limits, both measured, neither reachable by a rule on the name.</b> A
+     * <em>single</em> definition registered under a name ending in {@code -Bold} and holding both
+     * a regular and a bold file still flags every run of itself: its plain paragraph was drawn from
+     * the bold program at the same 12.90pt over the frame. And a name ending in {@code -Bold} over
+     * a file that holds a regular program still contributes the flag. Both are the same gap — the
+     * style token in the name and the face the file holds are never compared — and closing it means
+     * keying the flag on the registration rather than on the name.</p>
+     *
+     * <p>What the deck <em>declares</em> is not this list's business: for a registered family it is
+     * {@code wordFamily()}, which defaults to the registered name with the suffix left on. So a
+     * definition under {@code Acme-Sans-Bold} that leaves {@code wordFamily} unset declares
+     * {@code Acme-Sans-Bold} and asks for its bold face; the stripping below is reached only by a
+     * name no registration covers.</p>
      *
      * @param fontName logical document font, may be {@code null}
      * @param token lowercase style token to look for
@@ -132,7 +191,8 @@ public final class PptxFontMapping {
         if (fontName == null || standardReplacementFor(fontName) != null) {
             return false;
         }
-        return fontName.name().toLowerCase(Locale.ROOT).contains(token);
+        String suffix = styleSuffixOf(fontName.name());
+        return suffix != null && suffix.contains(token);
     }
 
     static boolean isUnderline(TextStyle style) {
@@ -143,15 +203,24 @@ public final class PptxFontMapping {
         return style.decoration() == TextDecoration.STRIKETHROUGH;
     }
 
-    private static String stripStyleSuffix(String name) {
+    /**
+     * The style suffix this name ends with, lowercase, or {@code null} where it ends with none.
+     *
+     * @param name a font name as the caller spelled it
+     * @return the matching entry of {@link #STYLE_SUFFIXES}, or {@code null}
+     */
+    private static String styleSuffixOf(String name) {
         String lower = name.toLowerCase(Locale.ROOT);
-        for (String suffix : new String[]{
-                "-bolditalic", "-boldoblique", "-bold", "-italic", "-oblique", "-regular"
-        }) {
+        for (String suffix : STYLE_SUFFIXES) {
             if (lower.endsWith(suffix)) {
-                return name.substring(0, name.length() - suffix.length());
+                return suffix;
             }
         }
-        return name;
+        return null;
+    }
+
+    private static String stripStyleSuffix(String name) {
+        String suffix = styleSuffixOf(name);
+        return suffix == null ? name : name.substring(0, name.length() - suffix.length());
     }
 }

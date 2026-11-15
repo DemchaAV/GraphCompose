@@ -526,9 +526,10 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
   LibreOffice does. The export now names that face
   (`embedded font`, `APPROXIMATED`), with the typeface each program states — said where the
   family ships a regular face and both programs name their typeface, which is what was
-  measured. The document's bytes are unchanged, so what the note buys is knowing. Pair the
-  slots of one typeface, or register the second typeface as a family of its own and set the
-  text in it.
+  measured, and said of every other slot and every pair of typefaces, since what the editors
+  read the sameness off was not. The document's bytes are unchanged, so what the note buys
+  is knowing. Pair the slots of one typeface, or register the second typeface as a family of
+  its own and set the text in it.
 - **Only what the face permits.** An OpenType face states its terms in `OS/2`, and the
   format distinguishes embedding for reading and printing from embedding in a document
   someone will edit. A face that allows only the first is named but not shipped, with one

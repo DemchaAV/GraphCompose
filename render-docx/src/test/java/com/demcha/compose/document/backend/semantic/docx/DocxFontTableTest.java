@@ -311,7 +311,8 @@ class DocxFontTableTest {
                     .contains("<w:embedBold");
             assertThat(fontParts(shipped.document())).hasSize(2);
             assertThat(shipped.report().notes())
-                    .as("a family does not give its own name up to itself")
+                    .as("a family does not give its own name up to itself, and its two faces are "
+                        + "of one typeface, so nothing is said about either")
                     .noneMatch(note -> note.subject().equals("embedded font"));
         }
     }

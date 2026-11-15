@@ -32,14 +32,20 @@ follow semantic versioning; release dates are ISO 8601.
     would change the bytes of every such document and the Word name a bold run carries, and was
     decided against.
   - Whether two programs are of one typeface is read off the programs, as the format means it: the
-    typographic family (`name` id 16) where a face states one, the family (id 1) otherwise. Id 1
-    alone would be wrong on a bundled face — `AsapCondensed-Italic` states
-    `Asap Condensed Condensed Regular` there where its three siblings state `Asap Condensed`, and it
-    is the one face of the 130 bundled that states an id 16. Read as the format means it, all 188
-    pairs of faces inside the 35 bundled families match, so no bundled family draws this note. The
-    note is said only where the family ships a regular face and both programs name their typeface,
-    since that is what was measured and a program whose name cannot be read is one the export
-    cannot compare.
+    typographic family (`name` id 16) where a face states one, the family (id 1) otherwise — both
+    from the Windows en-US record and only that one, so that two faces are never compared across two
+    namings of one typeface. Id 1 alone would be wrong on a bundled face and on a shipped preset:
+    `AsapCondensed-Italic` states `Asap Condensed Condensed Regular` there where its three siblings
+    state `Asap Condensed`, and it is the one face of the 130 bundled that states an id 16; the
+    `OrangeOps` preset pairs `Oswald-Regular`, which states `Oswald`, with `Oswald-SemiBold`, which
+    states `Oswald SemiBold` as its family and `Oswald` as its typographic one. Read as the format
+    means it, all 188 pairs of faces inside the 35 bundled families match and so does that pair, so
+    no family a document here is set in draws this note.
+  - The note is said only where the family ships a regular face and both programs name their
+    typeface, since that is what was measured and a program whose name cannot be read is one the
+    export cannot compare. What the editors read the sameness off was not measured either, so it is
+    said of every pair of typefaces a family holds and every slot but the regular one, on the
+    strength of the one pair and the one slot that were.
 - **A DOCX export no longer ships two face sets under one font name.**
   - A document's font table declares a family by its `FontFamilyDefinition.wordFamily()`, while
     the families an export knows are kept by the name they were *registered* under. That name

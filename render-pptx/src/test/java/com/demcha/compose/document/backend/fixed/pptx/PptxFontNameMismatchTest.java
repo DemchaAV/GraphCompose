@@ -20,7 +20,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * A carried face a presentation will not draw.
+ * A carried face whose program states a family of its own.
  *
  * <p>An embedded face is matched to the declared typeface by the family the program states for
  * itself, not by the name the container carries. Measured in PowerPoint 16 on the bundled
@@ -40,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * — what the export adds is the warning, so the reason is in the log rather than only in the
  * picture.</p>
  */
-class PptxUndrawnFaceWarningTest {
+class PptxFontNameMismatchTest {
 
     /** The bundled family whose italic face states a family of its own. */
     private static final String ASAP_REGULAR = "fonts/google/asapcondensed/AsapCondensed-Regular.ttf";
@@ -74,6 +74,8 @@ class PptxUndrawnFaceWarningTest {
                 .isEqualTo("Asap Condensed");
         assertThat(PptxEmbeddedFont.statedFamilyOf(PptxDeck.face(LATO_ITALIC)))
                 .isEqualTo("Lato");
+        assertThat(PptxEmbeddedFont.statedFamilyOf(PptxDeck.face(LATO_REGULAR)))
+                .isEqualTo("Lato");
     }
 
     @Test
@@ -97,12 +99,14 @@ class PptxUndrawnFaceWarningTest {
                         + "attribute is asserted whole")
                 .contains("typeface=\"Asap Condensed\"");
 
-        assertThat(log.messages("render.pptx.font.undrawn"))
+        assertThat(log.messages("render.pptx.font.name.mismatch"))
                 .as("the face is named, with the family it states and the one the deck declares "
                         + "— a reader has to see both to know which of the two to go after, and "
                         + "which face of the family it is")
                 .singleElement(InstanceOfAssertFactories.STRING)
-                .contains("typeface=Asap Condensed")
+                .as("the declared name whole: the stated one begins with it, so a prefix match "
+                        + "would pass for either")
+                .contains("typeface=Asap Condensed face=")
                 .contains("states=Asap Condensed Condensed Regular")
                 .contains(italic.toString());
     }
@@ -167,7 +171,7 @@ class PptxUndrawnFaceWarningTest {
                 .as("the premise: this family is carried, so silence is about the names and "
                         + "not about an empty deck")
                 .hasSize(2);
-        assertThat(log.messages("render.pptx.font.undrawn"))
+        assertThat(log.messages("render.pptx.font.name.mismatch"))
                 .as("every face states the name the deck declares, so there is nothing to say")
                 .isEmpty();
     }

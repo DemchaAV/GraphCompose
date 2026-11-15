@@ -53,7 +53,7 @@ names what it cannot carry. The PPTX and DOCX Java APIs are Experimental
 | [Arabic contextual shaping](backend-capability-details.md#arabic-contextual-shaping) | ✅ shaped before drawing | ✅ base letters; PowerPoint shapes them | ✅ Word shapes it |
 | [Bidi mirroring](backend-capability-details.md#bidi-mirroring) | ✅ paired punctuation mirrored | ⚠️ brackets flipped in advance; right in PowerPoint only | n/a — Word mirrors it |
 | [Text extraction fidelity of reordered/shaped text](backend-capability-details.md#text-extraction-fidelity-of-reorderedshaped-text) | ✅ copies out as written | ⚠️ copied text has swapped brackets | n/a — runs stored as written |
-| [Font portability](backend-capability-details.md#font-portability) | ✅ subset into the file | ✅ fonts carried in the deck, whole; a face whose own family record is not the declared typeface is named | ⚠️ whole faces embedded; one face set per name; a restricted face, a name-sharing family and a face of another typeface than the family's regular one all named |
+| [Font portability](backend-capability-details.md#font-portability) | ✅ subset into the file | ⚠️ fonts carried in the deck, whole; a refused family, a name-sharing one and a face whose own family record is not the declared typeface are all named | ⚠️ whole faces embedded; one face set per name; a restricted face, a name-sharing family and a face of another typeface than the family's regular one all named |
 | [Writing direction inside a **table cell**](backend-capability-details.md#writing-direction-inside-a-table-cell) | ✅ | ✅ PowerPoint orders the cell text | ⚠️ cell is right-to-left; columns not mirrored |
 
 ## Navigation and interactivity

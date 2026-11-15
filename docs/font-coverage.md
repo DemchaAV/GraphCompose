@@ -141,11 +141,13 @@ Where that record does and does not travel:
   PowerPoint 16: a deck declaring `Asap Condensed` and carrying this face had
   that paragraph drawn in **Arial Italic**, the embedded program used by
   nothing, while the same deck's regular paragraph was drawn from its own
-  program. Declaring the family as this face states it instead draws this
+  program. A face can also be mishandled rather than dropped:
+  `Oswald-SemiBold`, whose record reads `Oswald SemiBold`, came out of a deck
+  declaring `Oswald` with the viewer's own weight added on top of it. Declaring the family as this face states it instead draws this
   program for every paragraph and leaves the regular face unused — so for a
   family whose faces disagree in that record, no single declared name serves
   them all. The face is still carried, and the export says so in its log
-  (`render.pptx.font.undrawn`) with both names.
+  (`render.pptx.font.name.mismatch`) with both names.
 
 This is not only about one mis-built file. **For a PPTX deck, declare a family
 under the name its files state in `name` id 1.** The declared name is

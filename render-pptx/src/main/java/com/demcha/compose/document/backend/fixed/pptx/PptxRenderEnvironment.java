@@ -870,7 +870,7 @@ public final class PptxRenderEnvironment {
                 try (InputStream stream = source.openStream()) {
                     program = stream.readAllBytes();
                 }
-                byte[] container = PptxEmbeddedFont.wrap(new ByteArrayInputStream(program));
+                byte[] container = PptxEmbeddedFont.wrap(program);
                 // A face whose program states a family of its own, said where the names are known.
                 // A presentation matches an embedded face to the declared typeface by that record
                 // and not by the names the container carries, so a face naming another family is
@@ -890,12 +890,13 @@ public final class PptxRenderEnvironment {
                 // guess.
                 String stated = PptxEmbeddedFont.statedFamilyOf(program);
                 if (stated != null && !stated.equalsIgnoreCase(typeface)) {
-                    LOG.warn("render.pptx.font.undrawn family={} typeface={} face={} states={} — "
-                             + "a presentation matches an embedded face on the family its program "
-                             + "states for itself, which is not the one this deck declares, so the "
-                             + "runs laid out in this face are not drawn from it; measured in "
-                             + "PowerPoint 16, one such face was replaced by a substitute and "
-                             + "another was drawn with the viewer's own weight added",
+                    LOG.warn("render.pptx.font.name.mismatch family={} typeface={} face={} "
+                             + "states={} — a presentation matches an embedded face on the family "
+                             + "its program states for itself, which is not the one this deck "
+                             + "declares, so any runs laid out in this face are not reached the "
+                             + "way the page laid them out; measured in PowerPoint 16, one such "
+                             + "face was replaced by a substitute and another was drawn with the "
+                             + "viewer's own weight added",
                             familyName.name(), typeface, description, stated);
                 }
                 // Which slot the face is seated in is not the slot it was registered under:

@@ -7,18 +7,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
-- **A PPTX export no longer stays silent about a face it carries that a presentation will not
-  draw.**
+- **A PPTX export no longer stays silent about a face it carries that a presentation does not
+  draw as laid out.**
   - A presentation matches an embedded face to the family a deck declares by the family the
     *program* states for itself — `name` id 1 — and not by the names its container carries. Where
-    the two differ, the face travels and nothing draws it.
+    the two differ, the face travels and any runs laid out in it are not reached that way.
   - Measured in PowerPoint 16 on a 45-character line at 20pt, one deck per run, with neither
     family installed on the machine: a deck declaring `Asap Condensed` and carrying the bundled
     `AsapCondensed-Italic`, whose own family record reads `Asap Condensed Condensed Regular`, had
-    that paragraph drawn in **Arial Italic** at 566.51pt where the program itself draws 443.96pt,
-    while the same deck's regular paragraph — whose record does name the declared family — came
-    out at 442.92pt against 443.14pt. Rewriting that one record to the declared name, and nothing
-    else, had the program drawn at 443.65pt; rewriting it to the string it already held changed
+    that paragraph drawn in **Arial Italic** at 566.51pt where PowerPoint draws that same program
+    at 443.65pt once the record names the declared family — the engine's own render of the two
+    faces is 443.14pt and 443.96pt, which is what the page laid out. Its regular paragraph, whose
+    record does name the declared family, came out at 442.92pt. Rewriting that one record to the
+    declared name, and nothing else, was the only change that drew the program; rewriting it to the string it already held changed
     nothing, so neither the rewriting nor the stale checksums it leaves were what the viewer went
     by. Declaring the family as the italic states it had that program drawn for both paragraphs
     and left the regular face unused, so for a family whose faces disagree in that record no one
@@ -28,7 +29,7 @@ follow semantic versioning; release dates are ISO 8601.
     reads `Oswald SemiBold`, was drawn and then weighted again by the viewer — 480.10pt where the
     program itself draws 469.70pt. So the log line names both families and leaves the outcome to
     the reader rather than promising the one measured first.
-  - Such a face is now named in the log (`render.pptx.font.undrawn`), with the family it states and
+  - Such a face is now named in the log (`render.pptx.font.name.mismatch`), with the family it states and
     the one the deck declares. It is not refused: the program travels as the caller asked and no
     deck's bytes change, which is the whole of what the export can add — the face is still not
     reached as laid out, and only PowerPoint 16 was measured. The line says nothing about whether
@@ -42,7 +43,9 @@ follow semantic versioning; release dates are ISO 8601.
     which defaults to the name a family was registered under, so any caller registering a face
     under a name of their own meets it; the font-coverage page now says to declare the name the
     files state. Of the bundled families' face sources exactly one differs today, and a sweep in
-    `PptxUndrawnFaceWarningTest` keeps that count honest across a font bump.
+    `PptxFontNameMismatchTest` keeps that count honest across a font bump. The capability matrix
+    cell and its details entry move from ✅ to ⚠️ together, the mark the legend reserves for a
+    backend whose details name a deviation.
 - **A DOCX export no longer stays silent about a face it ships that neither editor measured draws.**
   - A font family's slots are filled one file at a time, so a caller can put a program of one
     typeface in the regular slot and a program of another in the bold slot —

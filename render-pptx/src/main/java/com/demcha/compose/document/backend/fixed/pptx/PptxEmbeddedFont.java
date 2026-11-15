@@ -1,8 +1,10 @@
 package com.demcha.compose.document.backend.fixed.pptx;
 
 import org.apache.fontbox.ttf.FontHeaders;
+import org.apache.fontbox.ttf.NamingTable;
 import org.apache.fontbox.ttf.OS2WindowsMetricsTable;
 import org.apache.fontbox.ttf.OTFParser;
+import org.apache.fontbox.ttf.TrueTypeFont;
 import org.apache.pdfbox.io.RandomAccessReadBuffer;
 import org.apache.poi.common.usermodel.fonts.FontHeader;
 
@@ -78,7 +80,21 @@ final class PptxEmbeddedFont {
     }
 
     static byte[] wrap(InputStream input) throws IOException {
-        byte[] fontData = input.readAllBytes();
+        return wrap(input.readAllBytes());
+    }
+
+    /**
+     * The same, for a caller that already holds the program.
+     *
+     * <p>Which the embedder does: it reads the face once and asks what family the program states
+     * for itself before handing it over, and reading the stream twice would copy every face twice
+     * over for nothing.</p>
+     *
+     * @param fontData the face's own file, as read
+     * @return the container a presentation reads
+     * @throws IOException if the program cannot be read, or its terms forbid embedding
+     */
+    static byte[] wrap(byte[] fontData) throws IOException {
         Metadata metadata = metadata(fontData);
         validateEmbeddingRights(metadata.fsType());
 
@@ -337,24 +353,26 @@ final class PptxEmbeddedFont {
      * <p>The Windows en-US record and only it, because that is the record the measurement read;
      * a face stating id 1 on the Unicode or Macintosh platform alone answers null here and is
      * left unsaid, which is the safe direction for a warning — silence misses a face, a guess
-     * accuses a good one. The program is parsed whole rather than through the header read
-     * {@link #metadata} uses, which keeps no record this needs; that parse is stricter, so a face
-     * the embedder carries happily can still answer null here. Once per face per render, and not
-     * on a layout or render path.</p>
+     * accuses a good one. The name is trimmed, as {@code FontFamilyDefinition} trims the name a
+     * family declares, so a trailing space in a file cannot pass for a different family. The
+     * program is parsed whole rather than through the header read {@link #metadata} uses, whose
+     * {@code FontHeaders} exposes fontbox's own English-name pick and not the record itself; the
+     * parse is asked to take an embedded font, so a face missing a table a standalone one must
+     * have is read here as the embedder reads it. Once per face per render, and not on a layout or
+     * render path.</p>
      *
      * @param program the face's own file, as read
      * @return the family it states for the Windows en-US record, or null where it states none or
      *         cannot be read
      */
     static String statedFamilyOf(byte[] program) {
-        try (org.apache.fontbox.ttf.TrueTypeFont font = new OTFParser()
-                .parse(new RandomAccessReadBuffer(program))) {
-            org.apache.fontbox.ttf.NamingTable naming = font.getNaming();
+        try (TrueTypeFont font = new OTFParser(true).parse(new RandomAccessReadBuffer(program))) {
+            NamingTable naming = font.getNaming();
             if (naming == null) {
                 return null;
             }
             String stated = naming.getName(1, 3, 1, 0x409);
-            return stated == null || stated.isBlank() ? null : stated;
+            return stated == null || stated.isBlank() ? null : stated.trim();
         } catch (IOException | RuntimeException unreadable) {
             return null;
         }

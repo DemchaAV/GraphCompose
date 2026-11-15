@@ -27,6 +27,41 @@ announces it. The library logs one warning per such name to make it visible.
 
 Name the family, set the decoration.
 
+### A registered family's name in a PPTX deck
+
+A deck asks the viewer for a face with a flag on the run, and that flag comes from
+the span's decoration plus a style suffix at the **end** of the name the family is
+registered under — `Acme-Sans-Bold`, not `Acme Sans Bold` and not `Boldoni Text`,
+where the word is part of the family's own name. The family the deck *declares* is
+a separate thing: for a registered family it is `wordFamily()`, which defaults to
+the registered name with the suffix left on.
+
+The one arrangement that needs the name is a registration **per face**: one
+definition under `Acme-Sans` holding the regular file and one under
+`Acme-Sans-Bold` holding the bold file, both declaring the same `wordFamily`.
+Neither paragraph carries a decoration, so nothing but the name can say which face
+a run wants — measured in PowerPoint 16 on a 45-character line at 20pt, the
+paragraph set in the `-Bold` name is drawn from the bold program, and 12.88pt
+short of the frame, from the regular one, without the flag.
+
+Before this rule any `bold` or `italic` **anywhere** in a registered name set the
+flag on every run of that family. A family of two faces came out with its plain
+paragraph drawn from the bold program, 12.90pt wider than the frame the engine had
+sized for it; a family of one regular face under such a name had its line drawn
+9.17pt short of the frame instead.
+
+The cost is a spelling: a per-face registration written `Acme Sans Bold`, with a
+space, no longer asks for the face — write the suffix with a hyphen, as the
+family's own files name it.
+
+**The limit.** A *single* definition under a name ending in `-Bold` that holds
+both a regular and a bold file still flags every run of itself, and its plain
+paragraph is drawn from the bold program — the same 12.90pt over the frame,
+measured. So does a definition under such a name holding a regular file only. The
+style token in the name and the face the file holds are never compared; if your
+family has more than one face, let the decoration pick it and keep the token out of
+the name's end.
+
 ## WinAnsi and the base-14 fonts
 
 The built-in fonts — `HELVETICA`, `TIMES`, `COURIER` and their bold / italic

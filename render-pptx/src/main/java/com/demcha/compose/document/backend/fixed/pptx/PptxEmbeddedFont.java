@@ -190,7 +190,11 @@ final class PptxEmbeddedFont {
      * the whole account of it.</p>
      *
      * <p><b>Do not key a guard on what these two fields say.</b> Nothing in the engine compares
-     * them with the typeface a deck declares, and nothing in it but a test reads what they say —
+     * <em>these</em> with the typeface a deck declares — {@link #statedFamilyOf} compares the
+     * family a program states, which is a different read of a different record: that one pins the
+     * Windows en-US id 1, where the header's family comes through fontbox's search of the Unicode,
+     * Windows and Macintosh platforms in turn and so can answer a record no viewer matches on.
+     * Nothing in the engine but a test reads what the container's two fields say —
      * the presentation reads the header itself, which is what {@link #validateReadableHeader}
      * answers for. Preferring the typographic names was tried on both faces in this repository
      * that state them, the bundled {@code AsapCondensed-Italic} and the {@code Oswald-SemiBold} a
@@ -308,6 +312,52 @@ final class PptxEmbeddedFont {
         target.putShort((short) encoded.length);
         target.put(encoded);
         target.putShort((short) 0);
+    }
+
+    /**
+     * The family a program states for itself, which is what a presentation matches an embedded
+     * face to a declared typeface on.
+     *
+     * <p>Measured in PowerPoint 16 on the bundled {@code AsapCondensed-Italic}, whose own family
+     * record reads {@code Asap Condensed Condensed Regular} where the other three faces of that
+     * family read {@code Asap Condensed}: declared as {@code Asap Condensed}, the italic paragraph
+     * was drawn in Arial Italic and the program was not used; rewriting that one record to the
+     * declared name, and nothing else, had the program drawn. Rewriting it to the same string it
+     * already held changed nothing, so the rewriting itself — which leaves the table directory's
+     * checksums as they were — is not what the viewer went by. Declaring the family as the italic
+     * states it instead had that program drawn for both paragraphs and left the regular face
+     * unused, so for a family whose faces disagree here no one declared name serves them all.</p>
+     *
+     * <p><b>Name id 1, deliberately, and not the typographic family of id 16.</b> The DOCX backend
+     * prefers id 16 where a face states one, because its question is which typeface a face belongs
+     * to; the question here is what a viewer matches on, and what it was measured matching on is
+     * id 1. Reading id 16 here would answer {@code Asap Condensed} for the very face a viewer
+     * refuses, and the warning would fall silent exactly where it is needed.</p>
+     *
+     * <p>The Windows en-US record and only it, because that is the record the measurement read;
+     * a face stating id 1 on the Unicode or Macintosh platform alone answers null here and is
+     * left unsaid, which is the safe direction for a warning — silence misses a face, a guess
+     * accuses a good one. The program is parsed whole rather than through the header read
+     * {@link #metadata} uses, which keeps no record this needs; that parse is stricter, so a face
+     * the embedder carries happily can still answer null here. Once per face per render, and not
+     * on a layout or render path.</p>
+     *
+     * @param program the face's own file, as read
+     * @return the family it states for the Windows en-US record, or null where it states none or
+     *         cannot be read
+     */
+    static String statedFamilyOf(byte[] program) {
+        try (org.apache.fontbox.ttf.TrueTypeFont font = new OTFParser()
+                .parse(new RandomAccessReadBuffer(program))) {
+            org.apache.fontbox.ttf.NamingTable naming = font.getNaming();
+            if (naming == null) {
+                return null;
+            }
+            String stated = naming.getName(1, 3, 1, 0x409);
+            return stated == null || stated.isBlank() ? null : stated;
+        } catch (IOException | RuntimeException unreadable) {
+            return null;
+        }
     }
 
     private static String valueOr(String value, String fallback) {

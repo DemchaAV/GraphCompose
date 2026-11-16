@@ -17,8 +17,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * A font that cannot travel into the deck identically must say so: standard-14
  * families warn about their metric-compatible replacement, unregistered names
- * warn that the deck carries a name-only reference, and each family warns once
- * per render pass. An embedded family stays silent.
+ * warn that the deck carries a name-only reference, and each <em>name</em> warns
+ * once per render pass — a standard-14 alias and its base name share a line,
+ * while two spellings of an unregistered name are counted apart. An embedded
+ * family stays silent.
  *
  * <p>What the warning may claim is bounded by when it runs. The two lines for a
  * registered family are written while the environment is built, before a single
@@ -63,22 +65,31 @@ class PptxFontSubstitutionWarningTest {
 
             assertThat(environment.fontFamily(FontName.HELVETICA)).isEqualTo("Arial");
             assertThat(environment.fontFamily(FontName.HELVETICA)).isEqualTo("Arial");
-            assertThat(environment.fontFamily(FontName.of("Roboto-Regular"))).isEqualTo("Roboto");
+            // A name no registration covers comes back as it was written. It used to come back
+            // with a style suffix taken off, which grouped these two spellings into one warning —
+            // a grouping no render could reach, since a name the font library cannot resolve fails
+            // the layout before any of this runs, and nothing bundled carries a suffix. Reached
+            // here only because the method is called directly.
+            assertThat(environment.fontFamily(FontName.of("Roboto-Regular")))
+                    .isEqualTo("Roboto-Regular");
             assertThat(environment.fontFamily(FontName.of("Roboto-Bold")))
-                    .as("facet of an already-warned family")
-                    .isEqualTo("Roboto");
+                    .as("counted apart from the spelling above, not as a facet of it")
+                    .isEqualTo("Roboto-Bold");
             assertThat(environment.fontFamily(EMBEDDED)).isEqualTo("Lato");
 
             List<String> warnings = log.messages("render.pptx.font.substitution");
             assertThat(warnings)
-                    .as("one warning per substituted family, none for the embedded one")
-                    .hasSize(2);
+                    .as("one warning per substituted name, none for the embedded family")
+                    .hasSize(3);
             assertThat(warnings.get(0))
                     .contains("Helvetica")
                     .contains("Arial")
                     .contains("metric-compatible");
             assertThat(warnings.get(1))
                     .contains("Roboto-Regular")
+                    .contains("by name");
+            assertThat(warnings.get(2))
+                    .contains("Roboto-Bold")
                     .contains("by name");
             assertThat(warnings).noneMatch(message -> message.contains("WarnLato"));
         }

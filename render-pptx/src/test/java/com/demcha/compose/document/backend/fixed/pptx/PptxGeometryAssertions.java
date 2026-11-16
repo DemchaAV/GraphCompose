@@ -9,6 +9,7 @@ import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.font.FontFamilyDefinition;
 import org.apache.poi.util.Units;
@@ -437,7 +438,15 @@ final class PptxGeometryAssertions {
         // PptxFontMappingTest. Note the mirror loads metrics for every family
         // with sources while production gates on a successful embed — test
         // fonts must be embeddable.
-        return PptxViewerMetrics.ascentPoints(style, font, embedded.get(style.fontName()));
+        //
+        // The face is given to the formula rather than read off the style, because production
+        // works it out from the faces the family carries, which this mirror does not track.
+        // ANY_TOKEN is the answer for a family that carries none; it yields the production flags
+        // for every fixture here, whose families are registered under names with no style
+        // suffix — so only the decoration speaks, whatever permission the family would grant.
+        return PptxViewerMetrics.ascentPoints(style, font, embedded.get(style.fontName()),
+                PptxFontMapping.isBold(style, PptxFontMapping.ANY_TOKEN),
+                PptxFontMapping.isItalic(style, PptxFontMapping.ANY_TOKEN));
     }
 
     /** Mirrors the handler's shared-frame gate: mixed plain-run sizes force per-span frames. */

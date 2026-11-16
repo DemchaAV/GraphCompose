@@ -7,6 +7,41 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **Which face a PPTX run asks for is the family's own answer wherever the family can give one.**
+  - A run's bold and italic flags are the span's decoration plus, until now, a style suffix at the
+    end of the name the family was registered under. The name was read even for a family that
+    distinguishes its faces itself: a single definition under `Acme-Sans-Bold` holding a regular
+    file *and* a bold one flagged every run of itself, the plain ones included, and a definition
+    under such a name holding one regular file asked for a bold face it had not got.
+  - Measured in PowerPoint 16 on a 45-character line at 20pt, one deck per PowerPoint instance,
+    under a declared name no font on the machine answers to and with the two faces marked in one
+    glyph so that no other build of them could pass for them. The page laid out 531.90 plain and
+    544.68 bold. The two-face definition drew its plain paragraph from the bold program at 544.80 —
+    12.90pt over the frame. On the same deck with that run's flag cleared, which is what is written
+    now, it drew 531.94 from the regular program and the bold paragraph did not move. The one-face
+    definition drew 522.73, 9.17pt short of the frame; with the flag cleared the same regular
+    program drew 531.94, measured on that deck when the entry below was made.
+  - The name is now read only where the family cannot answer: a family carrying two or more
+    programs says nothing by its name, one carrying a single program may be named in the style that
+    program itself is, and one carrying none — registered without sources — has only its name. The
+    style a carried program is comes from the program, not from the slot a caller filled: the file
+    passed as a family's regular source may be a bold program, which is exactly the per-face
+    registration this reads. That registration still asks for its face: measured, its paragraph
+    comes out 12.88pt short of the frame, from the regular program, with the flag taken away.
+  - One answer, asked once. The flag decides three things — the attribute a run carries, the face
+    recorded as drawn, and the viewer ascent the frame is seated on — and all three now come from
+    `PptxRenderEnvironment.runIsBold`/`runIsItalic` rather than from three readings of the style.
+    The seat formula `PptxViewerMetrics.ascentPoints` therefore takes the face as two parameters
+    instead of reading it: it is the one formula the render and the geometry mirror in the tests
+    share so that they cannot drift, and the mirror passes what it writes on the run it checks.
+  - `PptxFontMapping.familyFor` no longer takes a style suffix off a name. That branch was dead: a
+    registered family declares its own `wordFamily()` and never reaches it, a bundled name carries
+    no suffix, and a name nothing registers must resolve in the font library to be laid out at all.
+    One observable thing goes with it — the substitution warning used to group `Roboto-Regular` and
+    `Roboto-Bold` into one line, and now counts such spellings apart; neither can reach a render.
+  - Deck bytes change for a family registered under a name carrying a style token that the family's
+    own faces already answer for. No preset or example here registers such a name, which is what
+    the sweep of the catalogue and the templates says; no DOCX path is touched at all.
 - **A PPTX run no longer asks for a bold or italic face because the family's registered name
   happens to contain the word.**
   - The flag a run carries came from any `bold`, `italic` or `oblique` **anywhere** in the name a
@@ -22,21 +57,19 @@ follow semantic versioning; release dates are ISO 8601.
     program at the same size, 45 glyphs of the same widths, yet ending 9.17pt *short* of the frame;
     why it ends earlier was not measured. With the flag taken off the plain run, both came out at
     531.94pt, within four hundredths of the 531.90pt the page laid out.
-  - The flag now comes from a style suffix at the end of the name and from nothing else: one list
-    of suffixes, read both by the flag and by the stripping this class does on a name no
-    registration covers. A registration per face — `Acme-Sans` beside `Acme-Sans-Bold` under one
+  - The flag now comes from a style suffix at the end of the name and from no other reading of it:
+    one list of suffixes, read by the flag. A registration per face — `Acme-Sans` beside `Acme-Sans-Bold` under one
     `wordFamily`, one file each, neither paragraph carrying a decoration — still asks for its face,
     which is the one arrangement where the name is the only signal there is: measured, that
     paragraph comes out 12.88pt short of the frame, from the regular program, if the flag is
     dropped.
   - What it costs: the same per-face registration spelled with a space (`Acme Sans Bold`) loses the
     flag. The spelling is the caller's, and the font-coverage page now says so with the number.
-  - What it does not reach, measured and pinned by a test rather than left to be found: a *single*
-    definition under a name ending in `-Bold` that holds both a regular and a bold file still flags
+  - What it did not reach, measured and pinned by a test rather than left to be found: a *single*
+    definition under a name ending in `-Bold` that holds both a regular and a bold file flagged
     every run of itself, its plain paragraph drawn from the bold program at the same 12.90pt over
-    the frame; so does such a name over a regular file alone. The style token in the name and the
-    face the file holds are never compared, and closing that means keying the flag on the
-    registration rather than on the name.
+    the frame; so did such a name over a regular file alone. Both are closed by the entry above,
+    which keys the flag on the registration.
   - Two more things take this flag besides the `b` attribute: which faces a bundled family is
     embedded with — unmoved here, since no bundled name carries a token at all — and, through the
     face's viewer ascent, where the frame is seated. The ascent arm was not demonstrated: the line

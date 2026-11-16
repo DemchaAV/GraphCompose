@@ -24,10 +24,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Which face a deck asks the viewer for, read off the written runs rather than off the mapping.
  *
- * <p>A run's bold flag is what a viewer picks the face by, and a deck takes it from two places: the
- * span's decoration, and a style suffix at the end of the name the family is registered under. The
- * unit cases beside these, in {@code PptxFontMappingTest}, answer the rule; these answer the deck.
- * </p>
+ * <p>A run's bold flag is what a viewer picks the face by, and a deck takes it from the span's
+ * decoration plus — only where the family's own faces cannot answer — a style suffix at the end of
+ * the name the family is registered under. The unit cases beside these, in
+ * {@code PptxFontMappingTest}, answer the two halves of that rule apart; these answer the deck.</p>
  *
  * <p>Measured in PowerPoint 16 on a 45-character line at 20pt, with the faces marked in one glyph
  * so no other build of them could pass for them: under a name that merely contains the token, the
@@ -40,6 +40,7 @@ class PptxRunFlagFromTheNameTest {
     private static final String LATO_REGULAR = "fonts/google/lato/Lato-Regular.ttf";
     private static final String LATO_BOLD = "fonts/google/lato/Lato-Bold.ttf";
     private static final String LATO_ITALIC = "fonts/google/lato/Lato-Italic.ttf";
+    private static final String LATO_BOLD_ITALIC = "fonts/google/lato/Lato-BoldItalic.ttf";
 
     @TempDir
     Path directory;
@@ -89,22 +90,98 @@ class PptxRunFlagFromTheNameTest {
     }
 
     /**
-     * The limit this rule does not reach, pinned so that it is a known state and not a surprise.
+     * A family that carries two faces is not named by its name, whatever that name ends in.
      *
      * <p>One definition under a name ending in the suffix, holding a regular file <em>and</em> a
-     * bold one: every run of it is flagged, the plain ones included, and PowerPoint 16 drew that
-     * plain paragraph from the bold program at 544.80pt where the page laid out 531.90pt — the same
-     * 12.90pt over the frame as the name that merely contains the token. Closing this needs the
-     * flag keyed on the registration rather than on the name, which is not what this rule does.</p>
+     * bold one. This used to flag every run of it, the plain ones included: PowerPoint 16 drew that
+     * plain paragraph from the bold program at 544.80pt where the page laid out 531.90pt, 12.90pt
+     * over the frame the engine had sized for it. On the same deck with the plain run's flag
+     * cleared — which is what is written now — it drew 531.94pt from the regular program, and the
+     * bold paragraph did not move. The family distinguishes its own faces, so the decoration is
+     * what says which one a run wants.</p>
      */
     @Test
-    void aShedSuffixOverTwoFacesStillFlagsThePlainRun() throws Exception {
+    void aFamilyCarryingTwoFacesIsNotNamedByItsName() throws Exception {
         byte[] deck = twoFaceDeck("Acme-Sans-Bold");
 
         assertThat(boldFlags(deck))
-                .as("the known limit: the name speaks for a family the decoration could have "
-                        + "spoken for")
-                .containsExactly(true, true);
+                .as("the registration speaks, so the plain run stays plain")
+                .containsExactly(false, true);
+    }
+
+    /**
+     * And a family that carries one program may be named only in the style that program is.
+     *
+     * <p>One definition under a name ending in {@code -Bold} holding a single <em>regular</em>
+     * file: the name asks for a face the family has not got. PowerPoint 16 drew that line from the
+     * only program in the deck but 9.17pt short of the frame — 522.73pt against the page's
+     * 531.90pt — and 531.94pt with the flag cleared, measured on that deck for the change that
+     * narrowed the name's reading. The other half of the same gap, and the reason the permission
+     * is read off the program rather than off the slot a caller filled.</p>
+     */
+    @Test
+    void aFamilyCarryingOneRegularFaceMayNotBeNamedBold() throws Exception {
+        Path regular = Files.write(directory.resolve("regular.ttf"), PptxDeck.face(LATO_REGULAR));
+        FontName name = FontName.of("Acme-Sans-Bold");
+        FontFamilyDefinition family = FontFamilyDefinition.files(name, regular)
+                .wordFamily("Acme Sans").build();
+        DocumentTextStyle plain = DocumentTextStyle.builder().fontName(name).size(18).build();
+
+        byte[] deck = PptxDeck.registering(family, page -> page
+                .addParagraph(p -> p.text("Plain").textStyle(plain)));
+
+        assertThat(boldFlags(deck))
+                .as("the one program it carries is a regular one, so the name says nothing")
+                .containsExactly(false);
+    }
+
+    /**
+     * The per-face registration on the italic axis: one definition, one italic file, named for it.
+     *
+     * <p>The mirror of the bold case above, and the arm the rule's own switch would otherwise have
+     * no deck behind: a single carried italic program, named {@code -Italic}, is what the run asks
+     * for.</p>
+     */
+    @Test
+    void aPerFaceItalicRegistrationStillAsksForItsFace() throws Exception {
+        Path italic = Files.write(directory.resolve("italic.ttf"), PptxDeck.face(LATO_ITALIC));
+        FontName name = FontName.of("Acme-Sans-Italic");
+        FontFamilyDefinition family = FontFamilyDefinition.files(name, italic)
+                .wordFamily("Acme Sans").build();
+        DocumentTextStyle plain = DocumentTextStyle.builder().fontName(name).size(18).build();
+
+        byte[] deck = PptxDeck.registering(family, page -> page
+                .addParagraph(p -> p.text("Slanted").textStyle(plain)));
+
+        assertThat(italicFlags(deck))
+                .as("the one program it carries is the italic one the name names")
+                .containsExactly(true);
+        assertThat(boldFlags(deck))
+                .as("and the name says nothing about weight")
+                .containsExactly(false);
+    }
+
+    /**
+     * And a single bold-italic program is not reached by a name that asks for bold alone.
+     *
+     * <p>The corner the permission has to be exact for: the program sits in the bold-italic
+     * element, and a run flagged bold only would ask for an element this deck does not hold.</p>
+     */
+    @Test
+    void aNameThatAsksForHalfTheCarriedFaceSaysNothing() throws Exception {
+        Path boldItalic = Files.write(directory.resolve("bolditalic.ttf"),
+                PptxDeck.face(LATO_BOLD_ITALIC));
+        FontName name = FontName.of("Acme-Sans-Bold");
+        FontFamilyDefinition family = FontFamilyDefinition.files(name, boldItalic)
+                .wordFamily("Acme Sans").build();
+        DocumentTextStyle plain = DocumentTextStyle.builder().fontName(name).size(18).build();
+
+        byte[] deck = PptxDeck.registering(family, page -> page
+                .addParagraph(p -> p.text("Both").textStyle(plain)));
+
+        assertThat(boldFlags(deck))
+                .as("asking for bold alone would name an element the deck has not got")
+                .containsExactly(false);
     }
 
     /** A name with no style token at all, so that the comparisons above have a floor. */
@@ -133,8 +210,9 @@ class PptxRunFlagFromTheNameTest {
                 .as("a token the name keeps leaves the upright run upright")
                 .containsExactly(false, true);
         assertThat(italicFlags(italicDeck(shed, regular, italic)))
-                .as("a name ending in the suffix asks for the italic face on both runs")
-                .containsExactly(true, true);
+                .as("and so does a name ending in the suffix, once the family carries two faces "
+                        + "of its own: the same rule, on the other axis")
+                .containsExactly(false, true);
     }
 
     private byte[] italicDeck(FontName name, Path regular, Path italic) {

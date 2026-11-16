@@ -6,6 +6,7 @@ import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.font.FontName;
 
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Maps the engine's {@link FontName} identifiers onto PPTX font families and
@@ -16,14 +17,13 @@ import java.util.Locale;
  * system fonts (Helvetica → Arial, Times → Times New Roman, Courier →
  * Courier New) — page geometry is safe either way because every line is
  * pre-wrapped and placed by the engine, but metric-compatible glyphs keep
- * intra-line rendering close. Binary families keep their real family name —
- * stripped of a style suffix ({@code Roboto-Bold} → {@code Roboto}) where no
- * registration covers the name, while a registered family declares the
- * {@code wordFamily()} it was given, suffix and all;
- * the bold/italic axis travels as run flags, combining the span's
- * {@link TextDecoration} with a style suffix at the <em>end</em> of the name,
- * read off the one list of suffixes this class strips names by and from no
- * other reading of the name (see {@link #nameCarriesStyle}).</p>
+ * intra-line rendering close. Binary families keep their real family name as
+ * written, and a registered family declares the {@code wordFamily()} it was
+ * given; the bold/italic axis travels as run flags, combining the span's
+ * {@link TextDecoration} with a style suffix at the <em>end</em> of the name —
+ * and that suffix only where the family's own faces cannot name a face
+ * themselves, which is {@code PptxRenderEnvironment.runIsBold}'s to decide (see
+ * {@link #nameCarriesStyle} and {@link #namesExactly}).</p>
  *
  * @since 2.1.0
  */
@@ -36,16 +36,27 @@ public final class PptxFontMapping {
      * {@code -bold-oblique} before {@code -oblique}. Read first to last, so the order is part of
      * the rule rather than a tidiness.
      *
-     * <p>One list, read by the two places that must not disagree about what a style token is:
-     * {@link #stripStyleSuffix}, which takes the suffix off a name no registration covers, and
-     * {@link #nameCarriesStyle}, which turns it into a run flag. Adding a spelling here gives it to
-     * both at once; searching the <em>whole name</em> for a token instead — which is what this
-     * class did until the measurements below — is what the one list exists to prevent.</p>
+     * <p>Read by {@link #nameCarriesStyle}, which turns a suffix into a flag, and by
+     * {@link #namesExactly}, which asks whether that suffix names the one face a family carries.
+     * Searching the <em>whole name</em> for a token instead — which is what this class did until
+     * the measurements below — is what the list exists to prevent. {@code -Regular} is in it so
+     * that a name ending in it names the regular element rather than no element at all.</p>
      */
     private static final String[] STYLE_SUFFIXES = {
             "-bolditalic", "-bold-italic", "-boldoblique", "-bold-oblique",
             "-bold", "-italic", "-oblique", "-regular"
     };
+
+    /**
+     * What a family's own faces leave for its name to say: every token, where the registration
+     * cannot name a face at all.
+     *
+     * <p>Passed by a caller that knows nothing about the family's faces — a bundled or
+     * standard-14 name, which no registration covers, and the geometry mirror in the tests. A
+     * caller that does know passes what {@code PptxRenderEnvironment} works out from the faces
+     * the family carries.</p>
+     */
+    public static final Set<String> ANY_TOKEN = Set.of("bold", "italic", "oblique");
 
     private static final double ARIAL_ASCENT_RATIO = 1854.0 / 2048.0;
     private static final double TIMES_NEW_ROMAN_ASCENT_RATIO = 1825.0 / 2048.0;
@@ -57,6 +68,14 @@ public final class PptxFontMapping {
     /**
      * Maps one logical engine font identifier to a viewer-facing PPTX family.
      *
+     * <p>The name itself, for anything but a standard-14 alias. It used to come back with a style
+     * suffix taken off it, which was a dead branch: a <em>registered</em> family declares its
+     * {@code wordFamily()} and never reaches here, a bundled name carries no suffix, and a name
+     * nothing registers has to resolve in the font library to be laid out at all — one that does
+     * not fails the layout outright ("Font not found for style") before a deck is written. So no
+     * reachable name was ever stripped, and the one caller left — the substitution warning's
+     * deduplication — now counts such names apart rather than together.</p>
+     *
      * @param fontName logical font identifier, or {@code null} for Helvetica
      * @return PPTX family name
      */
@@ -65,7 +84,7 @@ public final class PptxFontMapping {
         if (replacement != null) {
             return replacement;
         }
-        return stripStyleSuffix((fontName == null ? FontName.HELVETICA : fontName).name());
+        return (fontName == null ? FontName.HELVETICA : fontName).name();
     }
 
     /**
@@ -113,23 +132,37 @@ public final class PptxFontMapping {
         return fallback;
     }
 
-    /** Returns whether the run selects a bold face. */
-    public static boolean isBold(TextStyle style) {
+    /**
+     * Returns whether the run selects a bold face.
+     *
+     * @param style       the span's style
+     * @param nameMaySpeak the tokens this family's name is allowed to contribute — see
+     *                     {@link #ANY_TOKEN} and {@link #nameCarriesStyle}
+     * @return whether the run asks a viewer for a bold face
+     */
+    public static boolean isBold(TextStyle style, Set<String> nameMaySpeak) {
         TextDecoration decoration = style.decoration();
         if (decoration == TextDecoration.BOLD || decoration == TextDecoration.BOLD_ITALIC) {
             return true;
         }
-        return nameCarriesStyle(style.fontName(), "bold");
+        return nameMaySpeak.contains("bold") && nameCarriesStyle(style.fontName(), "bold");
     }
 
-    /** Returns whether the run selects an italic face. */
-    public static boolean isItalic(TextStyle style) {
+    /**
+     * Returns whether the run selects an italic face.
+     *
+     * @param style       the span's style
+     * @param nameMaySpeak the tokens this family's name is allowed to contribute
+     * @return whether the run asks a viewer for an italic face
+     */
+    public static boolean isItalic(TextStyle style, Set<String> nameMaySpeak) {
         TextDecoration decoration = style.decoration();
         if (decoration == TextDecoration.ITALIC || decoration == TextDecoration.BOLD_ITALIC) {
             return true;
         }
-        return nameCarriesStyle(style.fontName(), "italic")
-                || nameCarriesStyle(style.fontName(), "oblique");
+        return (nameMaySpeak.contains("italic") && nameCarriesStyle(style.fontName(), "italic"))
+                || (nameMaySpeak.contains("oblique")
+                        && nameCarriesStyle(style.fontName(), "oblique"));
     }
 
     /**
@@ -169,19 +202,20 @@ public final class PptxFontMapping {
      * ({@code PptxViewerMetrics.ascentPoints}). The first is what the measurements above read; the
      * ascent arm was not demonstrated, the line top being identical in every deck measured.</p>
      *
-     * <p><b>Two limits, both measured, neither reachable by a rule on the name.</b> A
-     * <em>single</em> definition registered under a name ending in {@code -Bold} and holding both
-     * a regular and a bold file still flags every run of itself: its plain paragraph was drawn from
-     * the bold program at the same 12.90pt over the frame. And a name ending in {@code -Bold} over
-     * a file that holds a regular program still contributes the flag. Both are the same gap — the
-     * style token in the name and the face the file holds are never compared — and closing it means
-     * keying the flag on the registration rather than on the name.</p>
+     * <p><b>And only where the family's own faces cannot say it.</b> {@code nameMaySpeak} is that
+     * permission, worked out by {@code PptxRenderEnvironment} from the faces a registered family
+     * carries: a family carrying two or more programs distinguishes its faces by the slot a run
+     * asks for, so its name says nothing and the decoration decides; a family carrying one program
+     * may be named only in the style that program itself is; a family carrying none has nothing but
+     * its name. Without that permission a definition under {@code Acme-Sans-Bold} holding a regular
+     * file and a bold one flagged every run of itself, and its plain paragraph was drawn from the
+     * bold program at 12.90pt over the frame — measured, and now closed, as is the same name over a
+     * regular file alone (9.17pt under the frame).</p>
      *
-     * <p>What the deck <em>declares</em> is not this list's business: for a registered family it is
-     * {@code wordFamily()}, which defaults to the registered name with the suffix left on. So a
+     * <p>What the deck <em>declares</em> is not this reading's business: for a registered family it
+     * is {@code wordFamily()}, which defaults to the registered name with the suffix left on. So a
      * definition under {@code Acme-Sans-Bold} that leaves {@code wordFamily} unset declares
-     * {@code Acme-Sans-Bold} and asks for its bold face; the stripping below is reached only by a
-     * name no registration covers.</p>
+     * {@code Acme-Sans-Bold} and, carrying that one bold file, asks for its bold face.</p>
      *
      * @param fontName logical document font, may be {@code null}
      * @param token lowercase style token to look for
@@ -204,6 +238,36 @@ public final class PptxFontMapping {
     }
 
     /**
+     * Whether this name names exactly the style of one carried face, and not a different one.
+     *
+     * <p>The question a caller with one face asks: a run flagged from the name reaches the element
+     * that face was seated in only if the name's suffix means that element. {@code -Bold} over a
+     * bold program does; over a regular one it asks for an element the deck does not hold, and over
+     * a bold-italic one it asks for the bold element while the program sits in the bold-italic one.
+     * A name ending in no style suffix, or in {@code -Regular}, names the regular element.</p>
+     *
+     * <p>Standard-14 names are excluded as everywhere else here: they are family aliases measured
+     * with the regular metrics, and they reach no registration anyway.</p>
+     *
+     * @param fontName the family a run names, may be {@code null}
+     * @param slot     the style element the family's one carried program was seated in, as
+     *                 {@code PptxEmbeddedFont.styleOf} spells it
+     * @return whether the name may be read for that face
+     */
+    public static boolean namesExactly(FontName fontName, String slot) {
+        if (fontName == null || standardReplacementFor(fontName) != null) {
+            return false;
+        }
+        String suffix = styleSuffixOf(fontName.name());
+        boolean bold = suffix != null && suffix.contains("bold");
+        boolean italic = suffix != null
+                && (suffix.contains("italic") || suffix.contains("oblique"));
+        String named = bold && italic ? "boldItalic"
+                : bold ? "bold" : italic ? "italic" : "regular";
+        return named.equals(slot);
+    }
+
+    /**
      * The style suffix this name ends with, lowercase, or {@code null} where it ends with none.
      *
      * @param name a font name as the caller spelled it
@@ -219,8 +283,4 @@ public final class PptxFontMapping {
         return null;
     }
 
-    private static String stripStyleSuffix(String name) {
-        String suffix = styleSuffixOf(name);
-        return suffix == null ? name : name.substring(0, name.length() - suffix.length());
-    }
 }

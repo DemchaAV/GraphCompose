@@ -291,9 +291,14 @@ class PptxParagraphFragmentRenderHandlerTest {
             PdfFont font = measurement.fontLibrary()
                     .getFont(customName, PdfFont.class).orElseThrow();
             TextStyle resolved = TextStyle.builder().fontName(customName).size(20).build();
+            // A plain run of a family whose name carries no style suffix: both flags false
+            // whichever way the face is worked out, so the premise below is about the metrics
+            // and not about the face.
             double seated = PptxViewerMetrics.ascentPoints(resolved, font,
-                    PptxViewerMetrics.load(family, family.fontSourceSet().orElseThrow()));
-            double fromDescriptor = PptxViewerMetrics.ascentPoints(resolved, font, null);
+                    PptxViewerMetrics.load(family, family.fontSourceSet().orElseThrow()),
+                    false, false);
+            double fromDescriptor = PptxViewerMetrics.ascentPoints(resolved, font, null,
+                    false, false);
             assertThat(fromDescriptor - seated)
                     .as("the premise: the viewer's ascent and the descriptor's are 2pt apart "
                             + "for this family at 20pt")

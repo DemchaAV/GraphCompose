@@ -3,7 +3,7 @@
   "verifiedAgainst": "2.5.1-SNAPSHOT",
   "generator": "knowledge/tools/api-surface/extract-api.mjs",
   "note": "Public types and members deliberately kept out of every surface. An exclusion nobody can see is indistinguishable from a bug, so each one records why.",
-  "count": 188,
+  "count": 190,
   "excluded": [
     {
       "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.BarcodeMatrices",
@@ -70,6 +70,20 @@
     },
     {
       "binaryName": "com.demcha.compose.document.backend.fixed.pptx.PptxRenderEnvironment#registerBookmark",
+      "package": "com.demcha.compose.document.backend.fixed.pptx",
+      "kind": "method",
+      "artifact": "graph-compose-render-pptx",
+      "reason": "member @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.backend.fixed.pptx.PptxRenderEnvironment#runIsBold",
+      "package": "com.demcha.compose.document.backend.fixed.pptx",
+      "kind": "method",
+      "artifact": "graph-compose-render-pptx",
+      "reason": "member @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.backend.fixed.pptx.PptxRenderEnvironment#runIsItalic",
       "package": "com.demcha.compose.document.backend.fixed.pptx",
       "kind": "method",
       "artifact": "graph-compose-render-pptx",

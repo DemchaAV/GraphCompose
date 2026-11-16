@@ -72,6 +72,23 @@ public final class PptxRenderEnvironment {
     private final double canvasHeight;
     private final FontLibrary fonts;
     private final Map<FontName, String> customFontFamilies;
+    /**
+     * Which style elements a registered family's own programs fill, by the name it was registered
+     * under — the answer to "can this family name a face itself?", which is what decides whether
+     * its <em>name</em> may contribute a run flag (see {@link #tokensTheNameMaySpeak}).
+     *
+     * <p>Written where the faces are handed to the presentation, so an entry stands for a
+     * registered family the presentation took whole. Everything else is absent, and absent means
+     * "the name is all a run has": a family registered without sources, one refused or given up,
+     * one whose hand-over failed part way — which leaves what it took, so such a family does carry
+     * a face the name then speaks over — and every bundled family, which travels by another road
+     * and never carries a style token in its name to begin with. The slot a program lands in is
+     * read off the program
+     * itself ({@code PptxEmbeddedFont.styleOf}) and not off the slot a caller put it in, because
+     * those need not agree — the file a caller passes as the family's regular source may be a bold
+     * program, which is exactly the registration this permission exists to read.</p>
+     */
+    private final Map<FontName, Set<String>> carriedSlots;
     private final Map<FontName, PptxViewerMetrics.ViewerFontMetrics> viewerFontMetrics;
     private final Map<String, XSLFPictureData> pictureDataCache = new LinkedHashMap<>();
     private final Map<String, java.awt.Dimension> pictureSizeCache = new LinkedHashMap<>();
@@ -278,6 +295,7 @@ public final class PptxRenderEnvironment {
         this.fonts = fonts;
         Map<FontName, String> familyNames = new LinkedHashMap<>();
         Map<FontName, PptxViewerMetrics.ViewerFontMetrics> metrics = new LinkedHashMap<>();
+        Map<FontName, Set<String>> slotsCarried = new LinkedHashMap<>();
         for (FontFamilyDefinition family : customFontFamilies) {
             familyNames.put(family.name(), family.wordFamily());
             if (family.fontSourceSet().isEmpty()) {
@@ -296,7 +314,7 @@ public final class PptxRenderEnvironment {
             }
             family.fontSourceSet().ifPresent(sources -> {
                 PptxViewerMetrics.ViewerFontMetrics viewerMetrics =
-                        embedFontFamilyWithMetrics(show, family, sources, slotLedger);
+                        embedFontFamilyWithMetrics(show, family, sources, slotLedger, slotsCarried);
                 if (viewerMetrics != null) {
                     metrics.put(family.name(), viewerMetrics);
                 } else if (slotLedger.wasRefusedForASharedName(family.name())) {
@@ -339,6 +357,7 @@ public final class PptxRenderEnvironment {
             show.getCTPresentation().setSaveSubsetFonts(false);
         }
         this.customFontFamilies = Map.copyOf(familyNames);
+        this.carriedSlots = Map.copyOf(slotsCarried);
         this.viewerFontMetrics = Map.copyOf(metrics);
     }
 
@@ -505,9 +524,11 @@ public final class PptxRenderEnvironment {
                 return customFamily;
             }
         }
-        // Dedupe on the resolved viewer family so facet-suffixed names
-        // (Roboto-Regular, Roboto-Bold) warn once, not once per facet; the
-        // message still names the source font the document asked for.
+        // Dedupe on the resolved viewer family: a standard-14 alias and its base name share one
+        // line, while a name no registration covers is counted as written. Facet-suffixed
+        // spellings of such a name used to share a line too, when this read took the suffix off
+        // them — a grouping no render could reach, since such a name fails the layout first.
+        // The message still names the source font the document asked for.
         String viewerFamily = PptxFontMapping.familyFor(fontName);
         String sourceName = (fontName == null ? FontName.HELVETICA : fontName).name();
         String replacement = PptxFontMapping.standardReplacementFor(fontName);
@@ -544,6 +565,77 @@ public final class PptxRenderEnvironment {
     }
 
     /**
+     * Whether this run asks a viewer for a bold face.
+     *
+     * <p>The span's decoration, and the family's registered name only where the family's own faces
+     * cannot name one — see {@link #tokensTheNameMaySpeak}. Every writer that needs the flag asks
+     * here, so the attribute a run carries, the face recorded as drawn and the ascent the frame is
+     * seated on are one answer rather than three readings of the same style.</p>
+     *
+     * @param style the span's style
+     * @return whether the run is written bold
+     */
+    @Internal
+    public boolean runIsBold(TextStyle style) {
+        return PptxFontMapping.isBold(style, tokensTheNameMaySpeak(style.fontName()));
+    }
+
+    /**
+     * Whether this run asks a viewer for an italic face, on the same terms as
+     * {@link #runIsBold}.
+     *
+     * @param style the span's style
+     * @return whether the run is written italic
+     */
+    @Internal
+    public boolean runIsItalic(TextStyle style) {
+        return PptxFontMapping.isItalic(style, tokensTheNameMaySpeak(style.fontName()));
+    }
+
+    /**
+     * Whether a family's registered name may say anything about a run's face, given the faces the
+     * family itself carries. One rule: <b>the name speaks only where it names exactly the one face
+     * the family carries, or where the family carries none.</b>
+     *
+     * <ul>
+     *   <li><b>two or more elements carried</b> — nothing. Such a family distinguishes its faces by
+     *       the element a run asks for, and the span's decoration is what says which. Measured in
+     *       PowerPoint 16 on a 45-character line at 20pt: a single definition under
+     *       {@code Acme-Sans-Bold} holding a regular file and a bold one used to flag every run of
+     *       itself, and its plain paragraph came out of the bold program 12.90pt wider than the
+     *       frame the engine had sized for it. With the flag off that run, the same deck drew
+     *       531.94pt against the 531.90pt the page laid out, from the regular program, and the bold
+     *       paragraph did not move.</li>
+     *   <li><b>one element carried</b> — every token, but only if the name names <em>that</em>
+     *       element. This is the registration a caller makes per face, where nothing but the name
+     *       can say which face its runs want. A name ending {@code -Bold} over a single bold
+     *       program speaks; the same name over a single <em>regular</em> program does not, which is
+     *       the other half of the same gap (that deck's line came out 9.17pt short of its frame);
+     *       and it does not speak over a single bold-<em>italic</em> program either, because a run
+     *       flagged bold alone would ask for an element that deck does not hold.</li>
+     *   <li><b>nothing carried</b> — every token. A family registered without sources has no faces
+     *       to distinguish, so its name is all a run has. This is also the answer for a bundled or
+     *       standard-14 name, which no registration covers, and for a family the presentation did
+     *       not take: an absent entry and an empty one say the same thing here.</li>
+     * </ul>
+     *
+     * @param fontName the family a run names, may be {@code null}
+     * @return the style tokens {@link PptxFontMapping} may read out of the name
+     */
+    private Set<String> tokensTheNameMaySpeak(FontName fontName) {
+        Set<String> carried = fontName == null ? null : carriedSlots.get(fontName);
+        if (carried == null || carried.isEmpty()) {
+            return PptxFontMapping.ANY_TOKEN;
+        }
+        if (carried.size() > 1) {
+            return Set.of();
+        }
+        return PptxFontMapping.namesExactly(fontName, carried.iterator().next())
+                ? PptxFontMapping.ANY_TOKEN
+                : Set.of();
+    }
+
+    /**
      * Returns the ascent, in points, that the viewer's font engine uses to seat
      * this run's first baseline below a top-anchored frame. PowerPoint positions
      * text by frame, not by baseline: the first baseline lands at
@@ -571,7 +663,8 @@ public final class PptxRenderEnvironment {
             return fallbackAscent;
         }
         return PptxViewerMetrics.ascentPoints(
-                style, font, viewerFontMetrics.get(style.fontName()));
+                style, font, viewerFontMetrics.get(style.fontName()),
+                runIsBold(style), runIsItalic(style));
     }
 
     /**
@@ -678,7 +771,8 @@ public final class PptxRenderEnvironment {
             XMLSlideShow show,
             FontFamilyDefinition family,
             FontFamilyDefinition.FontSourceSet sources,
-            SlotLedger ledger) {
+            SlotLedger ledger,
+            Map<FontName, Set<String>> carriedSlots) {
         FamilyPrograms read = readPrograms(family, sources, EnumSet.allOf(Face.class), ledger);
         if (read == null) {
             return null;
@@ -717,7 +811,15 @@ public final class PptxRenderEnvironment {
             return null;
         }
         claimSlotsAndReportSharing(ledger, family, read.slots());
-        return handOverPrograms(show, family, read.programs()) ? viewerMetrics : null;
+        if (!handOverPrograms(show, family, read.programs())) {
+            return null;
+        }
+        // Recorded here and not at the read, for the reason the slot claim is: a family that did
+        // not make it into the presentation carries nothing, and a run of it has nothing but the
+        // family's name to go by. An absent entry says exactly that, so nothing has to be undone
+        // on the way out of a refusal.
+        carriedSlots.put(family.name(), Set.copyOf(read.slots().keySet()));
+        return viewerMetrics;
     }
 
     /**

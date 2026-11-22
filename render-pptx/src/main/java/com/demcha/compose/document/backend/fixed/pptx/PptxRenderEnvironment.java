@@ -959,9 +959,12 @@ public final class PptxRenderEnvironment {
         for (FontFamilyDefinition.FontBinarySource source
                 : faces.stream().map(face -> face.in(sources)).toList()) {
             // Named before it is read, so a source that cannot even say what it is still
-            // warns rather than failing the render inside the warning. No source this
-            // library ships can reach the sentinel; FontBinarySource is a caller's to
-            // implement, and this answers for theirs.
+            // warns rather than failing the render inside the warning. Only the library's
+            // own sources arrive here: FontBinarySource is a public interface, but
+            // FontFamilyDefinition builds every source itself, from a classpath resource or
+            // a Path, and offers no public way to hand it another. Neither of those
+            // description() methods can throw in an ordinary run, so the sentinel is
+            // defensive and no test reaches it.
             String description = "<unnamed>";
             try {
                 description = source.description();
@@ -1194,9 +1197,13 @@ public final class PptxRenderEnvironment {
      * Tells this render whether the families it uses will be carried.
      *
      * <p>Set before anything is drawn, because the answer changes what a run is warned
-     * about: a family the deck is about to carry must not be reported as one the reader
-     * has to install, and a render explicitly asked not to carry them must not be told to
-     * register what it just declined.</p>
+     * about. A family the deck is about to carry must not be reported as one the reader
+     * has to install. A render explicitly asked not to carry them gets the name-only
+     * warning for each bundled family it draws in that ships a binary and is not
+     * registered, and that warning does tell it to register the family: registering is
+     * how one family travels while the rest stay declined, since a family registered
+     * through {@code registerFontFamily} with binary sources goes to the embedder
+     * whatever this flag says.</p>
      *
      * @param enabled whether {@link #embedBundledFontsUsed()} will run for this render
      */

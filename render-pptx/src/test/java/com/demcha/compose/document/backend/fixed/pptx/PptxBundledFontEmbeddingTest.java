@@ -11,6 +11,8 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
 import com.demcha.compose.document.backend.fixed.SectionUnit;
 import com.demcha.compose.document.layout.LayoutGraph;
+import com.demcha.compose.font.DefaultFonts;
+import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontName;
 
 import org.junit.jupiter.api.Test;
@@ -111,7 +113,7 @@ class PptxBundledFontEmbeddingTest {
         // file ends up containing. PptxFontSubstitutionWarningTest already reads this log,
         // but only for Helvetica, a facet-suffixed name and a registered family, so no
         // case ever drew with a bundled one and the contradiction passed CI.
-        List<String> warnings = substitutionWarningsFrom(true);
+        List<String> warnings = substitutionWarningsFromACarryingRender();
 
         assertThat(warnings)
                 .describedAs("a carried family is not a substituted one")
@@ -119,18 +121,66 @@ class PptxBundledFontEmbeddingTest {
     }
 
     @Test
-    void decliningToCarryThemStillReportsWhatTheReaderMustInstall() throws Exception {
-        // The other half: a render told not to carry the fonts genuinely does reference
-        // them by name, so the reader does need to install them — and saying so is right.
-        assertThat(substitutionWarningsFrom(false))
-                .describedAs("declined, so the family really is name-only")
-                .anyMatch(message -> message.contains("Amiri"));
+    void decliningToCarryThemReportsANameOnlyFamilyAndPointsAtRegistering() throws Exception {
+        // The other half: a render told not to carry the fonts references them by name, so
+        // the warning says the family is name-only and tells the author to register it.
+        // The name-only half is also read from the deck, not only taken from the log: no font
+        // part, and the slide still names the family.
+        byte[] deck;
+        List<String> warnings;
+        try (RenderLogCapture log = RenderLogCapture.attach()) {
+            deck = renderWith(PptxFixedLayoutBackend.builder().embedBundledFonts(false).build(),
+                    FontName.AMIRI, "مرحبا");
+            warnings = log.messages("render.pptx.font.substitution");
+        }
+
+        assertThat(warnings)
+                .describedAs("declined, so the family is reported as name-only, with registering "
+                        + "as the way to carry it")
+                .anyMatch(message -> message.contains("Amiri")
+                        && message.contains("by name only")
+                        && message.contains("registerFontFamily"));
+        assertThat(PptxDeck.fontParts(deck))
+                .describedAs("name-only: the deck carries no program")
+                .isEmpty();
+        assertThat(PptxDeck.partsNaming(deck, "Amiri"))
+                .describedAs("name-only: the slide that drew the text still names the family")
+                .anyMatch(part -> part.startsWith("ppt/slides/"));
     }
 
-    /** The substitution warnings a render emits for a bundled Arabic family. */
-    private static List<String> substitutionWarningsFrom(boolean carry) throws Exception {
+    @Test
+    void registeringTheFamilyCarriesItWhereBundledFontsAreDeclined() throws Exception {
+        // The advice the declined render gives, followed: a family registered with binary
+        // sources travels whatever embedBundledFonts says, so the same declined backend that
+        // carried nothing now carries Amiri and stops reporting it.
+        FontFamilyDefinition amiri = DefaultFonts.bundledFamilies().stream()
+                .filter(family -> family.name().equals(FontName.AMIRI))
+                .findFirst()
+                .orElseThrow();
+        byte[] deck;
+        List<String> warnings;
         try (RenderLogCapture log = RenderLogCapture.attach()) {
-            renderWith(PptxFixedLayoutBackend.builder().embedBundledFonts(carry).build(),
+            deck = renderWith(PptxFixedLayoutBackend.builder().embedBundledFonts(false).build(),
+                    FontName.AMIRI, "مرحبا", List.of(amiri));
+            warnings = log.messages("render.pptx.font.substitution");
+        }
+
+        assertThat(PptxDeck.fontParts(deck))
+                .describedAs("registered, so carried although bundled fonts are declined")
+                .isNotEmpty();
+        assertThat(PptxDeck.part(deck, "ppt/presentation.xml"))
+                .describedAs("the face carried is Amiri's: the presentation declares it embedded")
+                .contains("embeddedFont")
+                .contains("typeface=\"Amiri\"");
+        assertThat(warnings)
+                .describedAs("a carried family is not a substituted one")
+                .noneMatch(message -> message.contains("Amiri"));
+    }
+
+    /** The substitution warnings a carrying render emits for a bundled Arabic family. */
+    private static List<String> substitutionWarningsFromACarryingRender() throws Exception {
+        try (RenderLogCapture log = RenderLogCapture.attach()) {
+            renderWith(PptxFixedLayoutBackend.builder().embedBundledFonts(true).build(),
                     FontName.AMIRI, "مرحبا");
             return log.messages("render.pptx.font.substitution");
         }
@@ -143,10 +193,16 @@ class PptxBundledFontEmbeddingTest {
 
     private static byte[] renderWith(PptxFixedLayoutBackend backend, FontName font, String text)
             throws Exception {
-        try (DocumentSession document = GraphCompose.document()
+        return renderWith(backend, font, text, List.of());
+    }
+
+    private static byte[] renderWith(PptxFixedLayoutBackend backend, FontName font, String text,
+                                     List<FontFamilyDefinition> registered) throws Exception {
+        GraphCompose.DocumentBuilder builder = GraphCompose.document()
                 .pageSize(400, 160)
-                .margin(DocumentInsets.of(20))
-                .create()) {
+                .margin(DocumentInsets.of(20));
+        registered.forEach(builder::registerFontFamily);
+        try (DocumentSession document = builder.create()) {
 
             document.pageFlow(page -> page.addParagraph(p -> p
                     .text(text)
@@ -154,7 +210,9 @@ class PptxBundledFontEmbeddingTest {
 
             LayoutGraph graph = document.render(new GraphCapturingBackend());
             ByteArrayOutputStream output = new ByteArrayOutputStream();
-            backend.write(graph, new FixedLayoutRenderContext(graph.canvas(), List.of(), null, output));
+            // The backend is handed the families directly: render(GraphCapturingBackend) keeps
+            // only the graph, so the registration has to reach the PPTX write here too.
+            backend.write(graph, new FixedLayoutRenderContext(graph.canvas(), registered, null, output));
             return output.toByteArray();
         }
     }

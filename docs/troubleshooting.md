@@ -115,7 +115,7 @@ classpath that has the PDF backend. The message names that artifact instead.
 <dependency>
   <groupId>io.github.demchaav</groupId>
   <artifactId>graph-compose-render-pdf</artifactId>
-  <version>2.5.0</version>
+  <version>2.5.1</version>
 </dependency>
 ```
 
@@ -138,7 +138,7 @@ dependency to **your** project.
 <dependency>
   <groupId>io.github.demchaav</groupId>
   <artifactId>graph-compose-render-docx</artifactId>
-  <version>2.5.0</version>
+  <version>2.5.1</version>
 </dependency>
 ```
 

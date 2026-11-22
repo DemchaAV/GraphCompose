@@ -561,6 +561,10 @@ follow semantic versioning; release dates are ISO 8601.
   2.22.4 to 2.23.0, together with its test-scope pin in `qa/`. The rest are build tooling: the
   Maven wrapper 3.10.0 → 3.10.1, and `exec-maven-plugin` 3.6.4 → 3.7.0 in `benchmarks/` and
   `examples/`.
+- **`ci.yml` and `codeql.yml` no longer list `2.5-dev` under `push.branches`.** The 2.5 line has
+  reached `develop` and the branch is deleted, so the trigger added for it goes with it. The
+  branch-flow section of the release process now states the rule for a release line branch
+  instead of the 2.5 one.
 
 ### Documentation
 

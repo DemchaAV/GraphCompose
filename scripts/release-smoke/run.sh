@@ -78,6 +78,30 @@ if [ -n "$STAGED" ]; then
   if command -v cygpath >/dev/null 2>&1; then STAGED_ABS="$(cygpath -m "$STAGED_ABS")"; fi
   # The path goes into XML; escape the characters that would break it.
   STAGED_URL_PATH="$(printf '%s' "${STAGED_ABS#/}" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g')"
+  # The name _remote.repositories records for the staged repository. Maven 3.9
+  # (resolver 1.9) wrote the bare id, `staged`; Maven 3.10 (resolver 2.0.24+) writes the
+  # id followed by the SHA-1 of the repository URL, `staged-<sha1>`. The hash is taken
+  # over the URL Maven reads back from the settings file, unescaped, so it names this
+  # staged directory and no other. The resolver picks the form by
+  # aether.system.trackingRepositoryKeyFunction (default nid_hurl); a run that sets it
+  # to another value records another name and fails this check.
+  STAGED_URL="file:///${STAGED_ABS#/}"
+  if command -v sha1sum >/dev/null 2>&1; then
+    STAGED_SHA1="$(printf '%s' "$STAGED_URL" | sha1sum)"
+  elif command -v shasum >/dev/null 2>&1; then
+    STAGED_SHA1="$(printf '%s' "$STAGED_URL" | shasum -a 1)"
+  else
+    STAGED_SHA1=""
+  fi
+  STAGED_SHA1="${STAGED_SHA1%% *}"
+  case "$STAGED_SHA1" in
+    *[!0-9a-f]*) STAGED_SHA1="" ;;
+  esac
+  if [ "${#STAGED_SHA1}" != "40" ]; then
+    echo "FATAL: cannot compute the SHA-1 the staged provenance check needs (sha1sum or shasum missing, or its output unreadable)" >&2
+    exit 2
+  fi
+  STAGED_KEY="staged-$STAGED_SHA1"
   if [ "$VERSION_SET" = "0" ]; then
     # Version directories only — a maven-metadata.xml beside them is not a version.
     staged_versions="$(cd "$STAGED/io/github/demchaav/graph-compose-core" 2>/dev/null && ls -d -- */ 2>/dev/null | tr -d /)"
@@ -148,7 +172,7 @@ staged_provenance_ok() {
       line="${line%$'\r'}"
       case "$line" in ''|'#'*) continue ;; esac
       case "$line" in
-        *'>staged=') ;;
+        *'>staged='|*">$STAGED_KEY=") ;;
         *) echo "PROVENANCE: $artifact $version: '$line' was not resolved from the staged repository" >&2
            bad=$((bad + 1)) ;;
       esac

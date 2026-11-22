@@ -61,7 +61,22 @@ if ($StagedRepo) {
         exit 2
     }
     # The path goes into XML; escape the characters that would break it.
-    $stagedAbs = [System.Security.SecurityElement]::Escape(((Resolve-Path -LiteralPath $StagedRepo).Path -replace '\\', '/'))
+    $stagedPath = (Resolve-Path -LiteralPath $StagedRepo).Path -replace '\\', '/'
+    $stagedAbs = [System.Security.SecurityElement]::Escape($stagedPath)
+    # The name _remote.repositories records for the staged repository. Maven 3.9
+    # (resolver 1.9) wrote the bare id, `staged`; Maven 3.10 (resolver 2.0.24+) writes the
+    # id followed by the SHA-1 of the repository URL, `staged-<sha1>`. The hash is taken
+    # over the URL Maven reads back from the settings file, unescaped, so it names this
+    # staged directory and no other. The resolver picks the form by
+    # aether.system.trackingRepositoryKeyFunction (default nid_hurl); a run that sets it
+    # to another value records another name and fails this check.
+    $stagedUrl = "file:///$($stagedPath.TrimStart('/'))"
+    $sha1 = [System.Security.Cryptography.SHA1]::Create()
+    try {
+        $stagedKey = 'staged-' + (-join ($sha1.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($stagedUrl)) | ForEach-Object { $_.ToString('x2') }))
+    } finally {
+        $sha1.Dispose()
+    }
     if (-not $PSBoundParameters.ContainsKey('Version')) {
         $staged = @(Get-ChildItem -Directory -LiteralPath (Join-Path $stagedGc 'graph-compose-core') -ErrorAction SilentlyContinue)
         if ($staged.Count -ne 1) {
@@ -131,7 +146,7 @@ function Test-StagedProvenance {
             }
             foreach ($line in Get-Content $marker) {
                 if (-not $line -or $line.StartsWith('#')) { continue }
-                if (-not $line.EndsWith('>staged=')) {
+                if (-not ($line.EndsWith('>staged=') -or $line.EndsWith(">$stagedKey="))) {
                     Write-Host "PROVENANCE: $($artifact.Name) ${Version}: '$line' was not resolved from the staged repository"
                     $ok = $false
                 }

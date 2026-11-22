@@ -24,13 +24,21 @@ import static org.assertj.core.api.Assertions.assertThat;
  * machine, but without {@code -SkipPush} the wrong commit would have been tagged and
  * published.</p>
  *
- * <p>Every {@code add}, {@code commit}, {@code tag} and {@code push} therefore goes
- * through {@code Invoke-Git}, which throws on a non-zero exit. This test holds both
- * halves: no bare repository-changing call is left — the four the script makes, and
- * {@code reset}, {@code checkout}, {@code merge} and {@code rm} should one be added —
+ * <p>Every {@code fetch}, {@code add}, {@code commit}, {@code tag}, {@code push} and
+ * {@code checkout} therefore goes through {@code Invoke-Git}, which throws on a non-zero
+ * exit. This test holds both halves: no bare repository-changing call is left — the six
+ * the script makes, and {@code reset}, {@code merge} and {@code rm} should one be added —
  * and the helper still checks the exit code. That the
  * helper actually throws under a held lock is executed by the <em>A failed git
  * mutation stops the cut</em> step in {@code release-script-check.yml}.</p>
+ *
+ * <p>The helper also runs git with automatic gc and maintenance switched off. A commit
+ * or a fetch may start {@code git maintenance run --auto}; on Windows a repack that
+ * cannot delete an object directory held open by another worktree's git process asks
+ * y/n for each one, and on the 2.5.0 cut that prompt stopped the script after the
+ * release commit. That the settings keep a commit from starting automatic maintenance
+ * is executed by the same workflow step, read from {@code GIT_TRACE} against a bare
+ * commit that starts it.</p>
  */
 class ReleaseScriptGitExitCodeGuardTest {
 
@@ -38,11 +46,14 @@ class ReleaseScriptGitExitCodeGuardTest {
 
     /** A statement that starts with a repository-changing git command. */
     private static final Pattern BARE_MUTATION = Pattern.compile(
-            "^\\s*(?:&\\s*)?git\\s+(add|commit|tag|push|reset|checkout|merge|rm)\\b");
+            "^\\s*(?:&\\s*)?git\\s+(fetch|add|commit|tag|push|reset|checkout|merge|rm)\\b");
 
     /** The helper's body, from its declaration to the first column-0 closing brace. */
     private static final Pattern HELPER = Pattern.compile(
             "(?ms)^function Invoke-Git \\{\\r?\\n(.*?)^}");
+
+    /** The helper's git call: its options, then the caller's arguments, ending the line. */
+    private static final Pattern GIT_CALL = Pattern.compile("(?m)^\\s*git\\s(.*)@args\\s*$");
 
     @Test
     void everyGitMutationGoesThroughTheCheckedHelper() throws IOException {
@@ -61,9 +72,9 @@ class ReleaseScriptGitExitCodeGuardTest {
         }
 
         assertThat(routed)
-                .describedAs("sanity: the script must commit, tag and push through Invoke-Git — "
+                .describedAs("sanity: the script must fetch, commit, tag and push through Invoke-Git — "
                         + "no routed call means this guard is reading a script that changed shape")
-                .isGreaterThanOrEqualTo(4);
+                .isGreaterThanOrEqualTo(5);
         assertThat(bare)
                 .describedAs("a bare git mutation does not stop the script when it fails: PowerShell "
                         + "ignores a native non-zero exit, so the cut reports the step and carries on — "
@@ -81,7 +92,27 @@ class ReleaseScriptGitExitCodeGuardTest {
         assertThat(helper.group(1))
                 .describedAs("Invoke-Git must run git and throw when $LASTEXITCODE is non-zero — "
                         + "a helper that only forwards the call restores the silent failure")
-                .contains("git @args")
+                .containsPattern(GIT_CALL)
                 .containsPattern("if \\(\\$LASTEXITCODE -ne 0\\)\\s*\\{\\s*\\r?\\n\\s*throw ");
+    }
+
+    @Test
+    void theHelperRunsGitWithAutoGcOff() throws IOException {
+        Matcher helper = HELPER.matcher(Files.readString(SCRIPT));
+
+        assertThat(helper.find())
+                .describedAs("cut-release.ps1 no longer defines Invoke-Git at column 0")
+                .isTrue();
+        Matcher call = GIT_CALL.matcher(helper.group(1));
+        assertThat(call.find())
+                .describedAs("Invoke-Git no longer runs git with the caller's arguments")
+                .isTrue();
+        assertThat(call.group(1))
+                .describedAs("Invoke-Git must pass -c gc.auto=0 -c maintenance.auto=false ahead of the "
+                        + "caller's arguments: a commit or fetch may otherwise start auto-maintenance, and "
+                        + "on Windows its repack asks y/n for every object directory another worktree's "
+                        + "git holds open — on the 2.5.0 cut that prompt stopped the script after the commit")
+                .contains("-c gc.auto=0")
+                .contains("-c maintenance.auto=false");
     }
 }

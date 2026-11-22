@@ -717,8 +717,9 @@ public final class PptxRenderEnvironment {
             // clause and not a second sentence, so that it too says nothing about a deck
             // that draws no text in the family. "No program for" the declared name holds
             // because the branch above takes every family whose name another one carries,
-            // short of the first arrangement the javadoc names (a family without sources
-            // cannot declare a bundled family's name, so the second never reaches here).
+            // short of the first arrangement the javadoc names. The second never reaches here:
+            // a family without sources declares only its own name, and registering a bundled
+            // family's name keeps the bundled pass from carrying that family.
             LOG.warn("render.pptx.font.substitution family={} — registered without binary "
                             + "sources, so no program for \"{}\" travels with the deck; any "
                             + "text drawn with it is referenced by name only and "

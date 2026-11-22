@@ -3,6 +3,34 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v2.5.2 — Planned
+
+### Build
+
+- **The post-release showcase restore in `cut-release.ps1` passes its `--` to git.** PowerShell
+  reads a bare `--` in a call to one of its own functions as the end of that function's
+  parameters and drops it, so `Invoke-Git checkout -- web/showcase` ran
+  `git checkout web/showcase`. With no branch or tag of that name it restored the paths as meant;
+  with a branch of that name it switches to it, with a tag it detaches at it, and either way the
+  re-rendered previews stay in the tree. The call now passes `'--'` quoted, which arrives intact;
+  it was the only call to a function of the script that passed a bare one.
+  `ReleaseScriptGitExitCodeGuardTest` refuses a bare `--` in any call to `Invoke-Git`, and a new
+  step of `release-script-check.yml`, **A pathspec separator reaches git**, refuses one in a call
+  to any function the script defines, and runs the restore in a repository holding a branch named
+  `web/showcase`: the files come back and the branch stays where it was.
+- **A pull request that changes the Maven the release smoke runs on now runs the staged smoke.**
+  The provenance steps of `release-script-check.yml` feed the check records written by hand, so
+  they pin the format the check knows: the move to Maven 3.10, which records the staged
+  repository as `staged-<sha1>` instead of `staged`, surfaced only on the 2.5.0 cut. The new
+  `release-smoke-staged.yml` runs on a pull request that touches `.mvn/`, `mvnw`, `mvnw.cmd` or
+  `scripts/release-smoke/`. It stages the published train of the version `run.sh` smokes by
+  default — resolved from Central by the repository's own wrapper and copied out as jars, POMs and
+  `.sha1` files, the shape of the unzipped bundle — and runs `run.sh --staged-repo` against it on
+  Linux, so the records the check reads are the ones that Maven writes. While a cut is between its
+  release commit and Central the version is not published, and the job skips the smoke with a
+  notice. A scenario must now pass against the published version `run.sh` names on every such
+  pull request, not only at the cut.
+
 ## v2.5.1 — 2026-11-22
 
 ### Fixed

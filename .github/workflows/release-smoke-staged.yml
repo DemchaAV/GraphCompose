@@ -1,0 +1,111 @@
+name: Release Smoke (staged, on the repository's Maven)
+
+# The staged release smoke (scripts/release-smoke/run.sh --staged-repo) passes a scenario only
+# if every train artifact records the staged repository as its source in _remote.repositories.
+# Maven writes that record, and its format has moved once: Maven 3.9 wrote the bare repository
+# id, 3.10 writes the id and a hash of the URL. The 2.5.0 cut found the move only when its
+# staged smoke failed every scenario that had built. The provenance steps of
+# release-script-check.yml feed the check records written by hand, so they pin the format the
+# check knows and cannot see it move.
+#
+# This workflow lets the repository's own Maven write the records. It stages the published
+# train of the version run.sh smokes by default, laid out as the unzipped bundle is, and runs
+# the staged smoke against it. A wrapper bump, or a change to the harness, that makes Maven
+# record another name fails in the pull request that makes it. It runs on Linux: the cut's
+# own staged smoke runs on Windows, where the staged URL carries a drive letter.
+
+on:
+  pull_request:
+    paths:
+      - '.mvn/**'
+      - 'mvnw'
+      - 'mvnw.cmd'
+      - 'scripts/release-smoke/**'
+      - '.github/workflows/release-smoke-staged.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  staged-smoke:
+    name: staged release smoke on the repository's Maven
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Temurin JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Stage the published train with the repository's Maven
+        id: stage
+        run: |
+          # Every GraphCompose artifact a smoke scenario declares, at the version run.sh
+          # defaults to, resolved from Central through the harness's own settings. The local
+          # repository is the one run.sh uses, so the third-party libraries and plugins are
+          # fetched once; run.sh evicts io/github/demchaav before every scenario, so nothing
+          # resolved here can stand in for the staged copy. Only the jars and POMs are copied
+          # out, each with its .sha1: the shape of the bundle, with no resolver files.
+          set -euo pipefail
+          version="$(sed -n 's/^GC_VERSION="\(.*\)"$/\1/p' scripts/release-smoke/run.sh)"
+          [ -n "$version" ] || { echo 'run.sh no longer sets GC_VERSION'; exit 1; }
+          # From the release commit until Central publishes the version it tags, run.sh names
+          # a version that is not there yet. That is the release in progress, not this change.
+          central="https://repo.maven.apache.org/maven2/io/github/demchaav"
+          status="$(curl -sS --retry 3 --retry-all-errors --max-time 30 -o /dev/null -w '%{http_code}' -I \
+            "$central/graph-compose-core/$version/graph-compose-core-$version.pom" || true)"
+          if [ "$status" = "404" ]; then
+            echo "::notice::graph-compose-core $version is not on Central yet (a release in progress); nothing to stage, the staged smoke is skipped."
+            echo "staged=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          [ "$status" = "200" ] || { echo "Central answered '$status' for graph-compose-core $version (000: no answer at all)"; exit 1; }
+          # Direct dependencies only, read as XML: an exclusion names a coordinate too. fonts and
+          # emoji version on their own, come from Central, and are exempt in run.sh as well.
+          artifacts="$(python3 - scripts/release-smoke/s*/pom.xml <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          ns = {"m": "http://maven.apache.org/POM/4.0.0"}
+          found = set()
+          for pom in sys.argv[1:]:
+              for dep in ET.parse(pom).getroot().findall("m:dependencies/m:dependency", ns):
+                  artifact = dep.findtext("m:artifactId", "", ns).strip()
+                  if dep.findtext("m:groupId", "", ns).strip() == "io.github.demchaav" and \
+                          artifact not in ("graph-compose-fonts", "graph-compose-emoji"):
+                      found.add(artifact)
+          print(" ".join(sorted(found)))
+          PY
+          )"
+          [ -n "$artifacts" ] || { echo 'no GraphCompose artifact found in the smoke scenarios'; exit 1; }
+          repo="$PWD/target/release-smoke-m2/repo"
+          staged="$RUNNER_TEMP/staged"
+          for a in $artifacts; do
+            ./mvnw -B -ntp -q -s scripts/release-smoke/settings.xml -Dmaven.repo.local="$repo" \
+              org.apache.maven.plugins:maven-dependency-plugin:3.8.1:get -Dartifact="io.github.demchaav:$a:$version" \
+              || { echo "io.github.demchaav:$a:$version did not resolve from Central. Every train artifact a scenario declares must be published at the version run.sh names."; exit 1; }
+          done
+          count=0
+          for dir in "$repo"/io/github/demchaav/*/"$version"; do
+            [ -d "$dir" ] || continue
+            artifact="$(basename "$(dirname "$dir")")"
+            target="$staged/io/github/demchaav/$artifact/$version"
+            mkdir -p "$target"
+            for f in "$dir"/*.jar "$dir"/*.pom; do
+              [ -f "$f" ] || continue
+              cp "$f" "$target/"
+              sha1sum "$f" | cut -d' ' -f1 > "$target/$(basename "$f").sha1"
+            done
+            count=$((count + 1))
+          done
+          [ "$count" -gt 0 ] || { echo "nothing was staged at $version"; exit 1; }
+          echo "staged $count GraphCompose artifacts at $version for: $artifacts"
+          echo "staged=true" >> "$GITHUB_OUTPUT"
+
+      - name: Run the staged smoke against it
+        if: steps.stage.outputs.staged == 'true'
+        run: bash scripts/release-smoke/run.sh --staged-repo "$RUNNER_TEMP/staged"

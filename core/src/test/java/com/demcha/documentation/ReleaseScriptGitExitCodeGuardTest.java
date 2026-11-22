@@ -39,6 +39,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * release commit. That the settings keep a commit from starting automatic maintenance
  * is executed by the same workflow step, read from {@code GIT_TRACE} against a bare
  * commit that starts it.</p>
+ *
+ * <p>A pathspec separator passed to the helper is written {@code '--'}. PowerShell reads a
+ * bare {@code --} in a call to one of its own functions as the end of the function's
+ * parameters and drops it, so {@code Invoke-Git checkout -- web/showcase} ran
+ * {@code git checkout web/showcase}, which switches to a branch or tag of that name
+ * instead of restoring the paths. That the quoted form restores the paths beside such a
+ * branch is executed by the <em>A pathspec separator reaches git</em> step of the same
+ * workflow.</p>
  */
 class ReleaseScriptGitExitCodeGuardTest {
 
@@ -47,6 +55,15 @@ class ReleaseScriptGitExitCodeGuardTest {
     /** A statement that starts with a repository-changing git command. */
     private static final Pattern BARE_MUTATION = Pattern.compile(
             "^\\s*(?:&\\s*)?git\\s+(fetch|add|commit|tag|push|reset|checkout|merge|rm)\\b");
+
+    /** A call to the helper anywhere on a line, including inside a one-line {@code if} block. */
+    private static final Pattern HELPER_CALL = Pattern.compile("(?<![\\w-])Invoke-Git\\s");
+
+    /** A single- or double-quoted string. */
+    private static final Pattern QUOTED = Pattern.compile("'[^']*'|\"[^\"]*\"");
+
+    /** A bare {@code --} token, not part of a longer option such as {@code --quiet}. */
+    private static final Pattern BARE_SEPARATOR = Pattern.compile("(?<![\\w-])--(?![\\w-])");
 
     /** The helper's body, from its declaration to the first column-0 closing brace. */
     private static final Pattern HELPER = Pattern.compile(
@@ -79,6 +96,47 @@ class ReleaseScriptGitExitCodeGuardTest {
                 .describedAs("a bare git mutation does not stop the script when it fails: PowerShell "
                         + "ignores a native non-zero exit, so the cut reports the step and carries on — "
                         + "on 2.4.0 it tagged the commit before the release. Call Invoke-Git instead")
+                .isEmpty();
+    }
+
+    @Test
+    void aPathspecSeparatorPassedToTheHelperIsQuoted() throws IOException {
+        List<String> lines = Files.readAllLines(SCRIPT);
+        List<String> bare = new ArrayList<>();
+        int quoted = 0;
+
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i).strip();
+            Matcher call = HELPER_CALL.matcher(line);
+            if (line.startsWith("#") || !call.find()) {
+                continue;
+            }
+            String arguments = line.substring(call.end());
+            if (arguments.contains("'--'")) {
+                quoted++;
+            }
+            // A -- inside a quoted string, or in a comment after the call, is text, not a token
+            // PowerShell binds. A call continued onto the next line with a backtick is not read
+            // here; the workflow step's AST scan covers that shape.
+            String unquoted = QUOTED.matcher(arguments).replaceAll("''");
+            int comment = unquoted.indexOf('#');
+            if (comment >= 0) {
+                unquoted = unquoted.substring(0, comment);
+            }
+            if (BARE_SEPARATOR.matcher(unquoted).find()) {
+                bare.add("line " + (i + 1) + ": " + line);
+            }
+        }
+
+        assertThat(quoted)
+                .describedAs("sanity: the post-release showcase restore passes '--' to Invoke-Git — "
+                        + "none found means this guard is reading a script that changed shape")
+                .isGreaterThanOrEqualTo(1);
+        assertThat(bare)
+                .describedAs("PowerShell drops a bare -- passed to one of its own functions, so it never "
+                        + "reaches git: `Invoke-Git checkout -- web/showcase` runs `git checkout web/showcase`, "
+                        + "which switches to a branch or tag of that name instead of restoring the paths. "
+                        + "Quote it as '--'")
                 .isEmpty();
     }
 

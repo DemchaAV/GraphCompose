@@ -58,22 +58,26 @@ jobs:
           # From the release commit until Central publishes the version it tags, run.sh names
           # a version that is not there yet. That is the release in progress, not this change.
           central="https://repo.maven.apache.org/maven2/io/github/demchaav"
-          status="$(curl -s -o /dev/null -w '%{http_code}' -I "$central/graph-compose-core/$version/graph-compose-core-$version.pom")"
+          status="$(curl -sS --retry 3 --retry-all-errors --max-time 30 -o /dev/null -w '%{http_code}' -I \
+            "$central/graph-compose-core/$version/graph-compose-core-$version.pom" || true)"
           if [ "$status" = "404" ]; then
             echo "::notice::graph-compose-core $version is not on Central yet (a release in progress); nothing to stage, the staged smoke is skipped."
             echo "staged=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          [ "$status" = "200" ] || { echo "Central answered $status for graph-compose-core $version"; exit 1; }
-          # Direct dependencies only, read as XML: an exclusion names a coordinate too.
+          [ "$status" = "200" ] || { echo "Central answered '$status' for graph-compose-core $version (000: no answer at all)"; exit 1; }
+          # Direct dependencies only, read as XML: an exclusion names a coordinate too. fonts and
+          # emoji version on their own, come from Central, and are exempt in run.sh as well.
           artifacts="$(python3 - scripts/release-smoke/s*/pom.xml <<'PY'
           import sys, xml.etree.ElementTree as ET
           ns = {"m": "http://maven.apache.org/POM/4.0.0"}
           found = set()
           for pom in sys.argv[1:]:
               for dep in ET.parse(pom).getroot().findall("m:dependencies/m:dependency", ns):
-                  if dep.findtext("m:groupId", "", ns).strip() == "io.github.demchaav":
-                      found.add(dep.findtext("m:artifactId", "", ns).strip())
+                  artifact = dep.findtext("m:artifactId", "", ns).strip()
+                  if dep.findtext("m:groupId", "", ns).strip() == "io.github.demchaav" and \
+                          artifact not in ("graph-compose-fonts", "graph-compose-emoji"):
+                      found.add(artifact)
           print(" ".join(sorted(found)))
           PY
           )"
@@ -83,10 +87,11 @@ jobs:
           for a in $artifacts; do
             ./mvnw -B -ntp -q -s scripts/release-smoke/settings.xml -Dmaven.repo.local="$repo" \
               org.apache.maven.plugins:maven-dependency-plugin:3.8.1:get -Dartifact="io.github.demchaav:$a:$version" \
-              || { echo "io.github.demchaav:$a:$version did not resolve from Central. Every artifact a scenario declares must be published at the version run.sh names."; exit 1; }
+              || { echo "io.github.demchaav:$a:$version did not resolve from Central. Every train artifact a scenario declares must be published at the version run.sh names."; exit 1; }
           done
           count=0
           for dir in "$repo"/io/github/demchaav/*/"$version"; do
+            [ -d "$dir" ] || continue
             artifact="$(basename "$(dirname "$dir")")"
             target="$staged/io/github/demchaav/$artifact/$version"
             mkdir -p "$target"

@@ -115,8 +115,14 @@ class ReleaseScriptGitExitCodeGuardTest {
             if (arguments.contains("'--'")) {
                 quoted++;
             }
-            // A -- inside a quoted string is text, not a token PowerShell binds.
+            // A -- inside a quoted string, or in a comment after the call, is text, not a token
+            // PowerShell binds. A call continued onto the next line with a backtick is not read
+            // here; the workflow step's AST scan covers that shape.
             String unquoted = QUOTED.matcher(arguments).replaceAll("''");
+            int comment = unquoted.indexOf('#');
+            if (comment >= 0) {
+                unquoted = unquoted.substring(0, comment);
+            }
             if (BARE_SEPARATOR.matcher(unquoted).find()) {
                 bare.add("line " + (i + 1) + ": " + line);
             }

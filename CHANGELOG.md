@@ -530,6 +530,31 @@ follow semantic versioning; release dates are ISO 8601.
   the template value itself, since the carries-a-program case rests on the flag arriving set.
   The backend-capability details record it.
 
+### Build
+
+- **The staged release smoke passes a staged bundle that resolved from the staged
+  directory.** `run.sh --staged-repo` and `run.ps1 -StagedRepo` require every train artifact a
+  scenario resolved to record the staged repository as its source in `_remote.repositories`, and
+  looked for the bare id `staged`. The wrapper moved to Maven 3.10 in #991, whose resolver records
+  the id followed by the SHA-1 of the repository URL, `staged-<sha1>`, so every scenario failed
+  after a successful build: on the 2.5.0 cut the summary read 0 of 9 over nine `BUILD SUCCESS`.
+  The check now accepts `staged-` followed by the SHA-1 of the staged directory's own URL, which
+  the script computes, and still accepts the bare `staged` an older Maven writes. Everything else
+  still fails it: the Central mirror's name, a hash over another directory, a missing record, a
+  sibling at another version, and a scenario that resolved no train artifact. The Central mode
+  makes no such check and is unchanged. `release-script-check.yml` now also runs on a change to
+  either smoke script, and lifts the check and its key from each to hold that list.
+- **`cut-release.ps1` no longer stops at a git prompt after the release commit.** A commit or a
+  fetch may start git's automatic maintenance, and on Windows its repack asks `(y/n)` for every
+  `.git/objects` directory another worktree's git holds open. On the 2.5.0 cut that prompt stopped
+  the script after the release commit, and the tag and the push were done by hand. `Invoke-Git`
+  now runs git with `-c gc.auto=0 -c maintenance.auto=false`, and the pre-flight `git fetch`, the
+  one repository-changing call that bypassed it, goes through it too; a failed fetch now reports
+  through the helper's message. `ReleaseScriptGitExitCodeGuardTest` holds the helper to both
+  settings and a statement-initial `git fetch` to the helper, and `release-script-check.yml`
+  commits through the helper in a repository that a bare commit repacks, and fails if the
+  helper's commit writes a pack.
+
 ### Documentation
 
 - **What a bundled face calls itself, and where that name travels.** A font file states its

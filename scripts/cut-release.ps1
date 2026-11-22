@@ -125,14 +125,20 @@ function Run($command) {
 }
 
 function Invoke-Git {
-    # Every git call that changes the repository — add, commit, tag, push — goes
-    # through here. PowerShell does not stop on a native command's non-zero exit, so a
+    # Every git call that changes the repository — fetch, add, commit, tag, push,
+    # checkout — goes through here. PowerShell does not stop on a native command's non-zero exit, so a
     # bare `git commit` that loses to a stale .git/index.lock prints "fatal:" and the
     # script carries on. On the 2.4.0 cut that is what happened: the add and the commit
     # both failed, the script reported "commit: Release v2.4.0", and Step 7 tagged the
     # commit before it. Throwing here stops the release at the step that failed, before
     # a tag can name the wrong commit or a push can publish it.
-    git @args
+    #
+    # Automatic gc and maintenance are switched off for these calls. A commit or a fetch
+    # may start `git maintenance run --auto`, and on Windows a repack that cannot delete
+    # an object directory held open by another git process (another worktree's) asks
+    # "Should I try again? (y/n)" for each one. On the 2.5.0 cut that prompt stopped the
+    # script after the release commit, and the tag and push were done by hand.
+    git -c gc.auto=0 -c maintenance.auto=false @args
     if ($LASTEXITCODE -ne 0) {
         throw "git $($args -join ' ') failed (exit $LASTEXITCODE); nothing after it ran."
     }
@@ -164,11 +170,9 @@ function Assert-BranchPreflight($branch) {
 
     # 3. Local branch in sync with origin? A silently-failed fetch (network / auth)
     #    would compare against a STALE origin ref and wrongly report "in sync", so
-    #    check every git exit code before trusting the comparison.
-    git fetch origin $branch --quiet
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to fetch origin/$branch. Cannot verify branch synchronization."
-    }
+    #    check every git exit code before trusting the comparison. The fetch goes
+    #    through Invoke-Git, which throws on a failed fetch and keeps auto-gc off.
+    Invoke-Git fetch origin $branch --quiet
     # Capture, THEN check the exit code, THEN .Trim(): calling .Trim() on a failed
     # rev-parse's $null output would throw a confusing null-method error and skip the
     # message below.

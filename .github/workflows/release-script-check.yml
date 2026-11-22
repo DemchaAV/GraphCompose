@@ -7,7 +7,8 @@ name: Release Script Check
 # exercise every code path except the actual git/Maven mutations — plus focused unit
 # checks of the helpers a dry-run cannot reach on its own: the version arithmetic, the
 # README install-snippet bump, the README and roadmap promotions, the japicmp baseline
-# move, and the knowledge-tooling refusal. It creates no tag and touches no remote.
+# move, the knowledge-tooling refusal, Invoke-Git's exit-code and auto-gc handling, and
+# the release smoke's staged provenance check. It creates no tag and touches no remote.
 
 on:
   push:
@@ -15,6 +16,8 @@ on:
       - 'scripts/cut-release.ps1'
       - 'scripts/release-notes.mjs'
       - 'scripts/release-notes.test.mjs'
+      - 'scripts/release-smoke/run.sh'
+      - 'scripts/release-smoke/run.ps1'
       - '.github/workflows/release.yml'
       - '.github/workflows/release-script-check.yml'
       # Carries the japicmp previous-release pin the script moves.
@@ -28,6 +31,8 @@ on:
       - 'scripts/cut-release.ps1'
       - 'scripts/release-notes.mjs'
       - 'scripts/release-notes.test.mjs'
+      - 'scripts/release-smoke/run.sh'
+      - 'scripts/release-smoke/run.ps1'
       - '.github/workflows/release.yml'
       - '.github/workflows/release-script-check.yml'
       - 'templates/pom.xml'
@@ -927,8 +932,116 @@ jobs:
           } finally {
             Pop-Location
           }
-          Write-Host 'Invoke-Git: stops on a held lock, an existing tag and a failed push; passes arguments intact.'
-          # The last git call above failed on purpose, and the Actions pwsh wrapper ends
-          # every step with `exit $LASTEXITCODE` — without this the step would pass every
-          # check and still report exit 128.
+
+          # 5. A commit through Invoke-Git does not start auto-gc. On the 2.5.0 cut the
+          #    repack it started asked y/n for every object directory another worktree's
+          #    git held open, and the script stopped after the release commit. Each
+          #    repository below holds 1500 loose blobs under gc.auto=1, so the next commit
+          #    repacks them in the foreground unless gc is off for that call. The bare
+          #    commit is the control: without a repack there, the check proves nothing.
+          function Get-PacksAfterCommit([scriptblock]$commit) {
+            $gcRepo = Join-Path ([IO.Path]::GetTempPath()) ('git-gc-' + [guid]::NewGuid().ToString())
+            New-Item -ItemType Directory -Path (Join-Path $gcRepo 'f') | Out-Null
+            Push-Location $gcRepo
+            try {
+              git init -q
+              git config user.email ci@example.invalid
+              git config user.name ci
+              git config gc.auto 1
+              git config gc.autoDetach false
+              git config maintenance.autoDetach false
+              1..1500 | ForEach-Object { [IO.File]::WriteAllText((Join-Path $gcRepo "f/$_.txt"), "blob $_") }
+              git add f
+              & $commit
+              if ($LASTEXITCODE -ne 0) { throw "the commit failed (exit $LASTEXITCODE)" }
+              return @(Get-ChildItem .git/objects/pack -Filter *.pack -ErrorAction SilentlyContinue).Count
+            } finally {
+              Pop-Location
+            }
+          }
+          $barePacks = Get-PacksAfterCommit { git commit -q -m 'control' }
+          if ($barePacks -eq 0) { throw 'a bare commit under gc.auto=1 did not repack — the auto-gc check proves nothing' }
+          $helperPacks = Get-PacksAfterCommit { Invoke-Git commit -q -m 'Release v9.9.9' }
+          if ($helperPacks -ne 0) { throw "a commit through Invoke-Git started auto-gc ($helperPacks pack(s) written)" }
+          Write-Host 'Invoke-Git: stops on a held lock, an existing tag and a failed push; passes arguments intact; starts no auto-gc.'
+          # Git calls above failed on purpose, and the Actions pwsh wrapper ends every step
+          # with `exit $LASTEXITCODE` — without this the step could pass every check and
+          # still report a non-zero exit.
           $global:LASTEXITCODE = 0
+
+      - name: The staged smoke accepts its own provenance record and no other (run.sh)
+        shell: bash
+        run: |
+          # In staged mode a scenario passes only if every train artifact records the staged
+          # repository as its source in _remote.repositories. Maven 3.10 records it as
+          # `staged-<sha1 of the repository URL>`; the check looked for the bare `staged`,
+          # and on the 2.5.0 cut it failed 9 scenarios out of 9 that had built. The check and
+          # its key are lifted from run.sh, so the code under test is the code that ships.
+          # f0310661… is the SHA-1 of file:///C:/staged/repo, the name Maven 3.10 records
+          # for a repository `staged` at that URL; 3129d989… is that of file:///C:/other/repo.
+          set -euo pipefail
+          script=scripts/release-smoke/run.sh
+          eval "$(sed -n '/^staged_provenance_ok() {/,/^}/p' "$script")"
+          declare -F staged_provenance_ok >/dev/null || { echo 'run.sh no longer defines staged_provenance_ok'; exit 1; }
+          keycode="$(sed -n '/^  STAGED_URL="file:/,/^  STAGED_KEY=/p' "$script")"
+          [ -n "$keycode" ] || { echo 'run.sh no longer computes STAGED_KEY from STAGED_URL'; exit 1; }
+          STAGED_ABS='C:/staged/repo'
+          eval "$keycode"
+          [ "$STAGED_KEY" = 'staged-f0310661ba8e43d605dd6b3815403661b5b98a6b' ] || { echo "run.sh computes $STAGED_KEY, not the key Maven recorded"; exit 1; }
+          GC_VERSION=2.5.0
+          root="$(mktemp -d)"
+          verdict() {
+            REPO="$root/$1"
+            mkdir -p "$REPO/io/github/demchaav/graph-compose-core/2.5.0"
+            printf '#NOTE: resolver file\ngraph-compose-core-2.5.0.jar>%s=\n' "$2" > "$REPO/io/github/demchaav/graph-compose-core/2.5.0/_remote.repositories"
+            if staged_provenance_ok 2>/dev/null; then echo PASS; else echo FAIL; fi
+          }
+          check() {
+            got="$(verdict "$1" "$2")"
+            [ "$got" = "$3" ] || { echo "run.sh: a record from '$2' gave $got, expected $3"; exit 1; }
+          }
+          check real    'staged-f0310661ba8e43d605dd6b3815403661b5b98a6b' PASS
+          check bare    'staged' PASS
+          check central 'central-only-8fac3ebd6edbaca3c794783fa38088af0aa128e7' FAIL
+          check other   'staged-3129d9899400030acd4eac20176fe1c2198d1c1f' FAIL
+          check prefix  'xstaged-f0310661ba8e43d605dd6b3815403661b5b98a6b' FAIL
+          check empty   '' FAIL
+          echo 'run.sh: accepts staged-<sha1 of its URL> and bare staged; refuses Central, another directory, a prefixed id and an empty record.'
+
+      - name: The staged smoke accepts its own provenance record and no other (run.ps1)
+        shell: pwsh
+        run: |
+          # The same check as the step above, lifted from run.ps1.
+          $path = (Resolve-Path scripts/release-smoke/run.ps1).Path
+          $text = [IO.File]::ReadAllText($path)
+          $tokens = $null; $errors = $null
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
+          $fn = $ast.FindAll({
+              param($n)
+              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Test-StagedProvenance'
+            }, $true) | Select-Object -First 1
+          if (-not $fn) { throw 'run.ps1 no longer defines Test-StagedProvenance' }
+          Invoke-Expression $fn.Extent.Text
+          $keycode = [regex]::Match($text, '(?s)\$stagedUrl = .*?\$sha1\.Dispose\(\)\s*\}')
+          if (-not $keycode.Success) { throw 'run.ps1 no longer computes $stagedKey from $stagedUrl' }
+          $stagedPath = 'C:/staged/repo'
+          Invoke-Expression $keycode.Value
+          if ($stagedKey -ne 'staged-f0310661ba8e43d605dd6b3815403661b5b98a6b') { throw "run.ps1 computes $stagedKey, not the key Maven recorded" }
+          $Version = '2.5.0'
+          $root = Join-Path ([IO.Path]::GetTempPath()) ('prov-' + [guid]::NewGuid().ToString())
+          $cases = @(
+            @{ name = 'real';    record = 'staged-f0310661ba8e43d605dd6b3815403661b5b98a6b'; expected = $true },
+            @{ name = 'bare';    record = 'staged'; expected = $true },
+            @{ name = 'central'; record = 'central-only-8fac3ebd6edbaca3c794783fa38088af0aa128e7'; expected = $false },
+            @{ name = 'other';   record = 'staged-3129d9899400030acd4eac20176fe1c2198d1c1f'; expected = $false },
+            @{ name = 'prefix';  record = 'xstaged-f0310661ba8e43d605dd6b3815403661b5b98a6b'; expected = $false },
+            @{ name = 'empty';   record = ''; expected = $false })
+          foreach ($case in $cases) {
+            $repo = Join-Path $root $case.name
+            $dir = Join-Path $repo 'io/github/demchaav/graph-compose-core/2.5.0'
+            New-Item -ItemType Directory -Force -Path $dir | Out-Null
+            [IO.File]::WriteAllText((Join-Path $dir '_remote.repositories'), "#NOTE: resolver file`ngraph-compose-core-2.5.0.jar>$($case.record)=`n")
+            $got = Test-StagedProvenance 6>$null
+            if ([bool]$got -ne $case.expected) { throw "run.ps1: a record from '$($case.record)' gave $got, expected $($case.expected)" }
+          }
+          Write-Host 'run.ps1: accepts staged-<sha1 of its URL> and bare staged; refuses Central, another directory, a prefixed id and an empty record.'

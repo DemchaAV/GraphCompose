@@ -138,6 +138,13 @@ function Invoke-Git {
     # an object directory held open by another git process (another worktree's) asks
     # "Should I try again? (y/n)" for each one. On the 2.5.0 cut that prompt stopped the
     # script after the release commit, and the tag and push were done by hand.
+    #
+    # A pathspec separator must be passed quoted, as '--'. PowerShell reads a bare -- in a
+    # call to any of its own functions as the end of the function's parameters and drops
+    # it, so `Invoke-Git checkout -- web/showcase` runs `git checkout web/showcase` — which
+    # switches to a branch or tag of that name instead of restoring the paths, once one
+    # exists. Nothing in here can put it back: it is gone before $args is filled. A quoted
+    # '--' or one inside a splatted array arrives intact.
     git -c gc.auto=0 -c maintenance.auto=false @args
     if ($LASTEXITCODE -ne 0) {
         throw "git $($args -join ' ') failed (exit $LASTEXITCODE); nothing after it ran."
@@ -1277,7 +1284,8 @@ function Restore-CommittedShowcase {
         Write-Host "    [DRY RUN] git checkout -- web/showcase ($($changed.Count) file(s))" -ForegroundColor Yellow
         return
     }
-    Invoke-Git checkout -- web/showcase
+    # Quoted: a bare -- is consumed by PowerShell's own binder and never reaches git (see Invoke-Git).
+    Invoke-Git checkout '--' web/showcase
     Note "restored $($changed.Count) committed showcase file(s) the sync re-rendered"
 }
 

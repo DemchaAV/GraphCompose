@@ -7,8 +7,9 @@ name: Release Script Check
 # exercise every code path except the actual git/Maven mutations — plus focused unit
 # checks of the helpers a dry-run cannot reach on its own: the version arithmetic, the
 # README install-snippet bump, the README and roadmap promotions, the japicmp baseline
-# move, the knowledge-tooling refusal, Invoke-Git's exit-code and auto-gc handling, and
-# the release smoke's staged provenance check. It creates no tag and touches no remote.
+# move, the knowledge-tooling refusal, Invoke-Git's exit-code, auto-gc and pathspec
+# separator handling, and the release smoke's staged provenance check. It creates no tag
+# and touches no remote.
 
 on:
   push:
@@ -975,6 +976,75 @@ jobs:
           # Git calls above failed on purpose, and the Actions pwsh wrapper ends every step
           # with `exit $LASTEXITCODE` — without this the step could pass every check and
           # still report a non-zero exit.
+          $global:LASTEXITCODE = 0
+
+      - name: A pathspec separator reaches git
+        shell: pwsh
+        run: |
+          # PowerShell reads a bare -- in a call to one of its own functions as the end of the
+          # function's parameters and drops it before $args is filled, so
+          # `Invoke-Git checkout -- web/showcase` ran `git checkout web/showcase`: once a branch
+          # of that name exists, the post-release restore switches to it instead of putting the
+          # committed previews back. Both halves are read from the script that ships.
+          $path = (Resolve-Path scripts/cut-release.ps1).Path
+          $tokens = $null; $errors = $null
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
+          $functions = @($ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true))
+          $names = @($functions | ForEach-Object Name)
+          $bareSeparator = {
+            param($call)
+            @($call.CommandElements | Where-Object {
+                $_ -is [System.Management.Automation.Language.CommandParameterAst] -and $_.Extent.Text -eq '--' }).Count -gt 0
+          }
+          $calls = @($ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.CommandAst] }, $true))
+
+          # 1. The control: the parser reports the native `git diff ... -- web/showcase` with a
+          #    bare --. A scan that finds none there would prove nothing below.
+          $native = @($calls | Where-Object { $_.GetCommandName() -eq 'git' -and (& $bareSeparator $_) })
+          if ($native.Count -eq 0) { throw 'no native git call with a bare -- was found — the scan below proves nothing' }
+
+          # 2. No call to a function the script defines carries a bare --.
+          $lost = @($calls | Where-Object { $names -contains $_.GetCommandName() -and (& $bareSeparator $_) } |
+            ForEach-Object { "line $($_.Extent.StartLineNumber): $($_.Extent.Text)" })
+          if ($lost.Count) { throw "a bare -- never reaches the function it is passed to; quote it as '--':`n$($lost -join "`n")" }
+
+          # 3. The restore itself, run against a repository holding a branch named web/showcase.
+          foreach ($name in 'Invoke-Git', 'Restore-CommittedShowcase') {
+            $fn = $functions | Where-Object Name -eq $name | Select-Object -First 1
+            if (-not $fn) { throw "cut-release.ps1 no longer defines $name" }
+            Invoke-Expression $fn.Extent.Text
+          }
+          function Note($message) { }
+          $DryRun = $false
+
+          $repo = Join-Path ([IO.Path]::GetTempPath()) ('git-sep-' + [guid]::NewGuid().ToString())
+          New-Item -ItemType Directory -Path (Join-Path $repo 'web/showcase') | Out-Null
+          Push-Location $repo
+          try {
+            git init -q -b main
+            git config user.email ci@example.invalid
+            git config user.name ci
+            Set-Content -Path 'web/showcase/a.txt' -Value 'committed'
+            git add web
+            git commit -q -m init
+            git branch web/showcase
+            function Get-State { "$((git rev-parse --abbrev-ref HEAD).Trim()) / $((Get-Content 'web/showcase/a.txt' -Raw).Trim())" }
+
+            # The control: the same call written with a bare -- switches branches, so this
+            # repository does tell the two forms apart.
+            Set-Content -Path 'web/showcase/a.txt' -Value 're-rendered'
+            Invoke-Git checkout -q -- web/showcase 2>$null
+            if ((Get-State) -ne 'web/showcase / re-rendered') { throw "control: a bare -- did not switch to the branch (got '$(Get-State)') — the check below proves nothing" }
+            Invoke-Git checkout -q main
+
+            # The restore puts the committed file back and stays on main.
+            Restore-CommittedShowcase
+            if ((Get-State) -ne 'main / committed') { throw "Restore-CommittedShowcase did not restore web/showcase on main: got '$(Get-State)'" }
+            if (git status --porcelain) { throw "the restore left changes: $(git status --porcelain)" }
+          } finally {
+            Pop-Location
+          }
+          Write-Host 'pathspec separator: no function call drops a bare --; the showcase restore restores paths beside a branch of the same name.'
           $global:LASTEXITCODE = 0
 
       - name: The staged smoke accepts its own provenance record and no other (run.sh)

@@ -77,6 +77,14 @@ bytes, a staged POM that pins a sibling at a drifted version fails, and a scenar
 that resolved no train artifact fails. The source is recorded as `staged-<sha1>`, the
 id followed by the SHA-1 of the `<dir>` URL, by the wrapper's Maven 3.10, and as the
 bare `staged` by Maven 3.9; the check accepts those two names and no other.
+A pull request that changes the wrapper, `.mvn/` or this directory runs `--staged-repo`
+on Linux against the published train of the default version, staged by the wrapper's own
+Maven (`.github/workflows/release-smoke-staged.yml`), so a Maven that records another name
+fails there before a cut. Every GraphCompose artifact a scenario declares must therefore be
+published at the version `run.sh` names, and a scenario must pass against it: a scenario for
+a module or an API that ships in the next release waits for that release. While a cut is
+between its release commit and Central, the version is not published yet, and the job skips
+the smoke with a notice.
 `graph-compose-fonts` and `graph-compose-emoji` are exempt: they version
 independently and come from Central. Staged mode refuses `--warm` for the same
 reason.

@@ -142,8 +142,8 @@ class PptxSharedViewerFamilyTest {
                 .contains("This family is the one refused");
         assertThat(log.messages("render.pptx.font.substitution"))
                 .as("and the refused family's own line says the text is drawn from the "
-                        + "program that travelled — not, as every other refusal says, that "
-                        + "the font has to be installed")
+                        + "program that travelled — not, as a refusal under a name nothing else "
+                        + "carries says, that the font has to be installed")
                 .singleElement(InstanceOfAssertFactories.STRING)
                 .contains("family=Second")
                 .contains("viewer family \"Brand\"")
@@ -366,14 +366,90 @@ class PptxSharedViewerFamilyTest {
                 .hasSize(1);
         assertThat(carriedBy(deck, "ppt/fonts/font1.fntdata")).isEqualTo(POPPINS);
         assertThat(log.messages("render.pptx.font.substitution"))
-                .as("the refused family is named once, for the metrics read — not for a "
-                        + "shared name, and the second family is not named at all")
+                .as("the refused family is named once, and the second family is not named at "
+                        + "all. What it is told follows the deck rather than the cause: the "
+                        + "second family's program travels under the name the first one's text "
+                        + "is written with, so that text is drawn from it")
                 .singleElement(InstanceOfAssertFactories.STRING)
                 .contains("family=Truncated")
-                .doesNotContain("draws it from the program that did travel");
+                .contains("draws it from the program that did travel");
         assertThat(log.messages("render.pptx.font.shared.family"))
                 .as("and nothing was shared, the holder's slots never having been claimed")
                 .isEmpty();
+    }
+
+    @Test
+    void aFamilyTheDeckDoesNotCarryIsToldTheSameInEitherOrderOfRegistration() throws Exception {
+        // The same two registrations in both orders make byte-identical decks: the second
+        // family's program under "Brand", nothing of the first. The first family's line used
+        // to depend on the order all the same — "needs that font installed" when it was
+        // registered first, because it was reported before the carrier had been read, and
+        // "drawn from the program that did travel" when it was registered second, because by
+        // then the carrier held the slot and the read refused it for that.
+        byte[] lato = PptxDeck.face(LATO);
+        Path truncated = Files.write(directory.resolve("Truncated-Regular.ttf"),
+                java.util.Arrays.copyOf(lato, lato.length - 1));
+        Path poppinsFile = Files.write(directory.resolve("Poppins-Regular.ttf"),
+                PptxDeck.face(POPPINS));
+        FontFamilyDefinition refused =
+                FontFamilyDefinition.files("Truncated", truncated).wordFamily("Brand").build();
+        FontFamilyDefinition carrier =
+                FontFamilyDefinition.files("Second", poppinsFile).wordFamily("Brand").build();
+
+        List<List<String>> linesByOrder = new ArrayList<>();
+        for (List<FontFamilyDefinition> order : List.of(
+                List.of(refused, carrier), List.of(carrier, refused))) {
+            try (RenderLogCapture ordered = RenderLogCapture.attach()) {
+                byte[] deck = deckOf(order.get(0), order.get(1));
+                assertThat(carriedBy(deck, "ppt/fonts/font1.fntdata"))
+                        .as("the premise, in this order too: the carrier's program travels")
+                        .isEqualTo(POPPINS);
+                linesByOrder.add(ordered.messages("render.pptx.font.substitution"));
+            }
+        }
+
+        assertThat(linesByOrder.get(0))
+                .as("the line follows what the deck carries under the declared name")
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .contains("family=Truncated")
+                .contains("draws it from the program that did travel");
+        assertThat(linesByOrder.get(1))
+                .as("and is the same line whichever family was registered first")
+                .isEqualTo(linesByOrder.get(0));
+    }
+
+    @Test
+    void aFamilyWithoutSourcesUnderACarriedNameIsToldItsTextIsDrawnFromThatProgram()
+            throws Exception {
+        // A family registered without binary sources declares its own name, and a binary
+        // family can declare that name too with an explicit wordFamily. The line for the
+        // first one said "no program for \"Brand\" travels with the deck" while the deck
+        // carried the second one's program under "Brand" — in both orders, being decided
+        // per definition rather than by what the deck ends up carrying.
+        Path poppinsFile = Files.write(directory.resolve("Poppins-Regular.ttf"),
+                PptxDeck.face(POPPINS));
+        FontFamilyDefinition named = FontFamilyDefinition.standard14(FontName.of("Brand"),
+                "HELVETICA", "HELVETICA_BOLD", "HELVETICA_OBLIQUE", "HELVETICA_BOLD_OBLIQUE");
+        FontFamilyDefinition carrier =
+                FontFamilyDefinition.files("Second", poppinsFile).wordFamily("Brand").build();
+
+        for (List<FontFamilyDefinition> order : List.of(
+                List.of(named, carrier), List.of(carrier, named))) {
+            try (RenderLogCapture ordered = RenderLogCapture.attach()) {
+                byte[] deck = deckOf(order.get(0), order.get(1));
+
+                assertThat(carriedBy(deck, "ppt/fonts/font1.fntdata"))
+                        .as("the premise: a program travels under the name the family declares")
+                        .isEqualTo(POPPINS);
+                assertThat(ordered.messages("render.pptx.font.substitution"))
+                        .as("so the family is told its text is drawn from it, and not that no "
+                                + "program for its name travels")
+                        .singleElement(InstanceOfAssertFactories.STRING)
+                        .contains("family=Brand")
+                        .contains("draws it from the program that did travel")
+                        .doesNotContain("no program for");
+            }
+        }
     }
 
     @Test

@@ -15,6 +15,7 @@ import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontName;
 
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -146,6 +147,37 @@ class PptxBundledFontEmbeddingTest {
         assertThat(PptxDeck.partsNaming(deck, "Amiri"))
                 .describedAs("name-only: the slide that drew the text still names the family")
                 .anyMatch(part -> part.startsWith("ppt/slides/"));
+    }
+
+    @Test
+    void aDeclinedFamilyWhoseNameARegistrationCarriesIsNotReportedAsNameOnly() throws Exception {
+        // The line above, for a declined family whose viewer name a registration declares as
+        // well: the registered family travels whatever embedBundledFonts says, under the very
+        // name the declined family's runs are written with, so "the deck references \"Lato\"
+        // by name only" was untrue — the deck carries a program for Lato and draws that text
+        // from it.
+        FontFamilyDefinition brand = FontFamilyDefinition
+                .classpath("BrandLato", "fonts/google/lato/Lato-Regular.ttf")
+                .wordFamily("Lato")
+                .build();
+        byte[] deck;
+        List<String> warnings;
+        try (RenderLogCapture log = RenderLogCapture.attach()) {
+            deck = renderWith(PptxFixedLayoutBackend.builder().embedBundledFonts(false).build(),
+                    FontName.LATO, "Drawn in the bundled family", List.of(brand));
+            warnings = log.messages("render.pptx.font.substitution");
+        }
+
+        assertThat(PptxDeck.fontParts(deck))
+                .describedAs("the premise: the registration's program travels")
+                .hasSize(1);
+        assertThat(warnings)
+                .describedAs("so the declined family is told its text is drawn from that "
+                        + "program, and not that the deck names it only")
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .contains("family=Lato")
+                .contains("draws it from the program that did travel")
+                .doesNotContain("by name only");
     }
 
     @Test

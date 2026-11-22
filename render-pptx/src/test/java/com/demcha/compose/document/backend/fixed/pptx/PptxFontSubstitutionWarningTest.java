@@ -9,7 +9,11 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,8 +30,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * registered family are written while the environment is built, before a single
  * run is drawn, so neither can know whether the deck will use the family — and a
  * family whose program the deck cannot carry, that nothing draws in, is named
- * nowhere in the package. The last two tests hold both sides of that: no reference
- * when nothing draws with it, a reference on the slide once something does.</p>
+ * nowhere in the package. Two tests hold both sides of that:
+ * {@code aRegisteredFamilyNothingDrawsWithIsNotReportedAsOneTheDeckReferences} — no
+ * reference when nothing draws with it — and
+ * {@code theSameFamilyIsReferencedByTheSlideOnceTextIsDrawnInIt} — a reference on the
+ * slide once something does.</p>
  */
 class PptxFontSubstitutionWarningTest {
 
@@ -42,6 +49,9 @@ class PptxFontSubstitutionWarningTest {
     private static final FontFamilyDefinition NAMED_ONLY_FAMILY = FontFamilyDefinition.standard14(
             NAMED_ONLY, "HELVETICA", "HELVETICA_BOLD", "HELVETICA_OBLIQUE",
             "HELVETICA_BOLD_OBLIQUE");
+
+    @TempDir
+    Path directory;
 
     private RenderLogCapture log;
 
@@ -142,5 +152,41 @@ class PptxFontSubstitutionWarningTest {
                 .as("the same line, which is why its claim is conditional")
                 .contains("any text drawn with it is referenced by name only and "
                         + "substituted by viewers");
+    }
+
+    @Test
+    void aFamilyRegisteredTwiceIsWarnedAboutOnce() throws Exception {
+        // The registrations are a list, and the lines for a registered family used to be
+        // written per definition, so a family registered twice was announced twice — the
+        // README promises one line per family per render. Both of the lines a registered
+        // family can get, each from a family registered twice and drawn in.
+        byte[] lato = PptxDeck.face("fonts/google/lato/Lato-Regular.ttf");
+        Path truncated = Files.write(directory.resolve("Truncated-Regular.ttf"),
+                Arrays.copyOf(lato, lato.length - 1));
+        FontFamilyDefinition unreadable =
+                FontFamilyDefinition.files("Unreadable", truncated).build();
+
+        PptxDeck.registering(List.of(NAMED_ONLY_FAMILY, NAMED_ONLY_FAMILY, unreadable, unreadable),
+                page -> {
+                    page.addParagraph(paragraph -> paragraph.text("Drawn in the named family")
+                            .textStyle(DocumentTextStyle.builder()
+                                    .fontName(NAMED_ONLY).size(10).build()));
+                    page.addParagraph(paragraph -> paragraph.text("Drawn in the unreadable one")
+                            .textStyle(DocumentTextStyle.builder()
+                                    .fontName(unreadable.name()).size(10).build()));
+                });
+
+        List<String> warnings = log.messages("render.pptx.font.substitution");
+        assertThat(warnings)
+                .filteredOn(message -> message.contains("family=NamedOnly"))
+                .as("one line for the family registered without sources")
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .contains("registered without binary sources");
+        assertThat(warnings)
+                .filteredOn(message -> message.contains("family=Unreadable"))
+                .as("and one for the family that could not be embedded")
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .contains("could not be embedded");
+        assertThat(warnings).as("and nothing else").hasSize(2);
     }
 }

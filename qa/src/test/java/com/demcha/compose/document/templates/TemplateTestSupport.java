@@ -9,7 +9,6 @@ import org.apache.pdfbox.cos.COSNumber;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdfparser.PDFStreamParser;
 
 import java.awt.Color;
@@ -18,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Pattern;
 
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 
@@ -36,7 +34,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * because nothing reports a snapshot that no test reads any more.</p>
  */
 public final class TemplateTestSupport {
-    private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-z0-9]");
     private static final Color GUIDE_BOX_COLOR = new Color(150, 150, 150);
     private static final Color GUIDE_MARGIN_COLOR = new Color(0, 110, 255);
     private static final Color GUIDE_PADDING_COLOR = new Color(255, 140, 0);
@@ -133,30 +130,6 @@ public final class TemplateTestSupport {
         }
     }
 
-    public static void assertPdfUsesFont(Path outputFile, String expectedPdfFontNameFragment) throws Exception {
-        try (PDDocument saved = Loader.loadPDF(outputFile.toFile())) {
-            boolean containsExpectedFont = false;
-            String normalizedExpectedName = normalizeFontName(expectedPdfFontNameFragment);
-
-            for (var page : saved.getPages()) {
-                for (var resourceFontName : page.getResources().getFontNames()) {
-                    PDFont font = page.getResources().getFont(resourceFontName);
-                    if (font != null && normalizeFontName(font.getName()).contains(normalizedExpectedName)) {
-                        containsExpectedFont = true;
-                        break;
-                    }
-                }
-                if (containsExpectedFont) {
-                    break;
-                }
-            }
-
-            assertThat(containsExpectedFont)
-                    .as("PDF should use font containing '%s'", expectedPdfFontNameFragment)
-                    .isTrue();
-        }
-    }
-
     public static void assertPdfContainsGuideLines(Path outputFile) throws Exception {
         try (PDDocument saved = Loader.loadPDF(outputFile.toFile())) {
             assertThat(hasStrokeColor(saved, GUIDE_BOX_COLOR))
@@ -169,10 +142,6 @@ public final class TemplateTestSupport {
                     .as("PDF should contain guide-line margin or padding colors")
                     .isTrue();
         }
-    }
-
-    private static String normalizeFontName(String value) {
-        return NON_ALPHANUMERIC.matcher(value.toLowerCase(Locale.ROOT)).replaceAll("");
     }
 
     private static DocumentPageSize toDocumentPageSize(PDRectangle pageSize) {

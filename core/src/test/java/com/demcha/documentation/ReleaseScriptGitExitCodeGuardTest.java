@@ -36,9 +36,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * or a fetch may start {@code git maintenance run --auto}; on Windows a repack that
  * cannot delete an object directory held open by another worktree's git process asks
  * y/n for each one, and on the 2.5.0 cut that prompt stopped the script after the
- * release commit. That the settings keep a commit from repacking is executed by the
- * same workflow step, against a repository whose {@code gc.auto} would otherwise
- * repack on the next commit.</p>
+ * release commit. That the settings keep a commit from starting automatic maintenance
+ * is executed by the same workflow step, read from {@code GIT_TRACE} against a bare
+ * commit that starts it.</p>
  */
 class ReleaseScriptGitExitCodeGuardTest {
 

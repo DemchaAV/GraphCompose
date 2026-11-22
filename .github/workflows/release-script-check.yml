@@ -933,15 +933,18 @@ jobs:
             Pop-Location
           }
 
-          # 5. A commit through Invoke-Git does not start auto-gc. On the 2.5.0 cut the
-          #    repack it started asked y/n for every object directory another worktree's
-          #    git held open, and the script stopped after the release commit. Each
-          #    repository below holds 1500 loose blobs under gc.auto=1, so the next commit
-          #    repacks them in the foreground unless gc is off for that call. The bare
-          #    commit is the control: without a repack there, the check proves nothing.
-          function Get-PacksAfterCommit([scriptblock]$commit) {
+          # 5. A commit through Invoke-Git starts no automatic maintenance. On the 2.5.0 cut
+          #    the repack it started asked y/n for every object directory another
+          #    worktree's git held open, and the script stopped after the release commit.
+          #    Whether a started maintenance run repacks depends on the git version (2.55
+          #    packs 1500 loose blobs under gc.auto=1; 2.56 leaves them), so the check is
+          #    on what git starts, read from GIT_TRACE: `maintenance run --auto` or
+          #    `gc --auto`. The bare commit is the control: if it starts neither, the
+          #    check proves nothing.
+          function Get-AutoMaintenanceAfterCommit([scriptblock]$commit) {
             $gcRepo = Join-Path ([IO.Path]::GetTempPath()) ('git-gc-' + [guid]::NewGuid().ToString())
             New-Item -ItemType Directory -Path (Join-Path $gcRepo 'f') | Out-Null
+            $trace = Join-Path ([IO.Path]::GetTempPath()) ('git-gc-trace-' + [guid]::NewGuid().ToString())
             Push-Location $gcRepo
             try {
               git init -q
@@ -952,17 +955,22 @@ jobs:
               git config maintenance.autoDetach false
               1..1500 | ForEach-Object { [IO.File]::WriteAllText((Join-Path $gcRepo "f/$_.txt"), "blob $_") }
               git add f
-              & $commit
+              $env:GIT_TRACE = $trace
+              try { & $commit } finally { Remove-Item Env:GIT_TRACE }
               if ($LASTEXITCODE -ne 0) { throw "the commit failed (exit $LASTEXITCODE)" }
-              return @(Get-ChildItem .git/objects/pack -Filter *.pack -ErrorAction SilentlyContinue).Count
+              return @(Get-Content $trace | Where-Object { $_ -match 'built-in: git (maintenance run|gc) --auto' })
             } finally {
               Pop-Location
             }
           }
-          $barePacks = Get-PacksAfterCommit { git commit -q -m 'control' }
-          if ($barePacks -eq 0) { throw 'a bare commit under gc.auto=1 did not repack — the auto-gc check proves nothing' }
-          $helperPacks = Get-PacksAfterCommit { Invoke-Git commit -q -m 'Release v9.9.9' }
-          if ($helperPacks -ne 0) { throw "a commit through Invoke-Git started auto-gc ($helperPacks pack(s) written)" }
+          $bare = Get-AutoMaintenanceAfterCommit { git commit -q -m 'control' }
+          if ($bare.Count -eq 0) {
+            git --version
+            git config --show-origin --get-regexp '^(gc|maintenance)\.'
+            throw 'a bare commit under gc.auto=1 started no automatic maintenance — the check proves nothing'
+          }
+          $helper = Get-AutoMaintenanceAfterCommit { Invoke-Git commit -q -m 'Release v9.9.9' }
+          if ($helper.Count -ne 0) { throw "a commit through Invoke-Git started automatic maintenance: $($helper -join '; ')" }
           Write-Host 'Invoke-Git: stops on a held lock, an existing tag and a failed push; passes arguments intact; starts no auto-gc.'
           # Git calls above failed on purpose, and the Actions pwsh wrapper ends every step
           # with `exit $LASTEXITCODE` — without this the step could pass every check and

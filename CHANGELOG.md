@@ -543,7 +543,9 @@ follow semantic versioning; release dates are ISO 8601.
   still fails it: the Central mirror's name, a hash over another directory, a missing record, a
   sibling at another version, and a scenario that resolved no train artifact. The Central mode
   makes no such check and is unchanged. `release-script-check.yml` now also runs on a change to
-  either smoke script, and lifts the check and its key from each to hold that list.
+  either smoke script, and lifts the check and its key from each: the key for a known URL must be
+  that URL's SHA-1, the script's own `staged-<sha1>` and the bare `staged` must pass, and the
+  Central mirror's name, another directory's hash, a prefixed id and an empty id must fail.
 - **`cut-release.ps1` no longer stops at a git prompt after the release commit.** A commit or a
   fetch may start git's automatic maintenance, and on Windows its repack asks `(y/n)` for every
   `.git/objects` directory another worktree's git holds open. On the 2.5.0 cut that prompt stopped
@@ -552,8 +554,8 @@ follow semantic versioning; release dates are ISO 8601.
   one repository-changing call that bypassed it, goes through it too; a failed fetch now reports
   through the helper's message. `ReleaseScriptGitExitCodeGuardTest` holds the helper to both
   settings and a statement-initial `git fetch` to the helper, and `release-script-check.yml`
-  commits through the helper in a repository that a bare commit repacks, and fails if the
-  helper's commit writes a pack.
+  commits through the helper in a repository where a bare commit starts automatic maintenance,
+  and fails if the helper's commit starts it too.
 
 ### Documentation
 

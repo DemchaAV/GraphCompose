@@ -76,9 +76,10 @@ the one staged — so a stale cache or a Central copy cannot stand in for the st
 bytes, a staged POM that pins a sibling at a drifted version fails, and a scenario
 that resolved no train artifact fails. The source is recorded as `staged-<sha1>`, the
 id followed by the SHA-1 of the `<dir>` URL, by the wrapper's Maven 3.10, and as the
-bare `staged` by Maven 3.9; the check accepts those two names and no other. `graph-compose-fonts` and `graph-compose-emoji` are exempt: they
-version independently and come from Central. Staged mode refuses `--warm` for the
-same reason.
+bare `staged` by Maven 3.9; the check accepts those two names and no other.
+`graph-compose-fonts` and `graph-compose-emoji` are exempt: they version
+independently and come from Central. Staged mode refuses `--warm` for the same
+reason.
 
 The bundle a tagged run uploaded is kept as the workflow artifact
 `central-bundle-v<X.Y.Z>-attempt-<N>`. While the deployment waits at `VALIDATED`,

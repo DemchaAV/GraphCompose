@@ -24,11 +24,17 @@ follow semantic versioning; release dates are ISO 8601.
     deck references it by name only.
   - Every such family now gets the line that says its text is drawn from the program that
     travelled under the shared viewer family, whatever the reason it is not carried and in either
-    order of registration; a face that was refused is
-    still named, with the reason, by `render.pptx.font.embed.skipped`. A family whose viewer name
-    nothing else carries keeps the line it had. Only the log changed: a deck rendered for each of
-    these arrangements, in both orders where there are two registrations, is the same bytes before
-    and after.
+    order of registration; a face that was refused is still named, with the reason, by
+    `render.pptx.font.embed.skipped`, once per registration. A family whose viewer name nothing
+    else carries keeps the line it had. Only the log changed: a deck rendered for each of these
+    arrangements, in both orders where there are two registrations, is the same bytes before and
+    after.
+  - The carrier has to be another registered family. A registration declaring a *bundled*
+    family's name, and not carried itself, is still told it needs its font installed when the
+    bundled program travels under that name, because the bundled families are carried after the
+    last slide and the registered families' lines are written before the first. A family name
+    registered again, after a registration of it that travelled, is likewise told only what its
+    last registration lacks.
 
 ### Build
 

@@ -690,11 +690,16 @@ public final class PptxRenderEnvironment {
      * program, whether this family was registered without sources, could not be read, or was
      * refused for the slot — and in whichever order the two were registered.</p>
      *
-     * <p>"Another family" is another {@link FontName}: the ledger does not count slots the
-     * same name holds. So a name registered first with sources that travelled and then again
-     * without any is told no program for it travels, while the earlier registration's does —
-     * a deck whose text is drawn from a program the page was not measured in, which no line
-     * here describes.</p>
+     * <p>Two arrangements are not seen, and keep the line the cause alone would give. "Another
+     * family" is another {@link FontName}, because the ledger does not count slots the same
+     * name holds: a name registered first with sources that travelled, and then again without
+     * any or with sources that are not carried, is told what its last registration lacks while
+     * the earlier registration's program is in the deck — text drawn from a program the page
+     * was not measured in, which no line here describes. And "another family" is another
+     * <em>registered</em> family, because this runs while the environment is built: a bundled
+     * family carried under the same declared name is handed over after the last slide, so a
+     * registration declaring a bundled family's name that is not carried is told it needs its
+     * font installed while the bundled program travels under that name.</p>
      *
      * @param family the last registration of a family name the deck does not carry
      * @param ledger the render's slot ledger, complete for the registered families
@@ -712,7 +717,8 @@ public final class PptxRenderEnvironment {
             // clause and not a second sentence, so that it too says nothing about a deck
             // that draws no text in the family. "No program for" the declared name holds
             // because the branch above takes every family whose name another one carries,
-            // short of the one arrangement the javadoc names.
+            // short of the first arrangement the javadoc names (a family without sources
+            // cannot declare a bundled family's name, so the second never reaches here).
             LOG.warn("render.pptx.font.substitution family={} — registered without binary "
                             + "sources, so no program for \"{}\" travels with the deck; any "
                             + "text drawn with it is referenced by name only and "

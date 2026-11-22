@@ -556,6 +556,11 @@ follow semantic versioning; release dates are ISO 8601.
   settings and a statement-initial `git fetch` to the helper, and `release-script-check.yml`
   commits through the helper in a repository where a bare commit starts automatic maintenance,
   and fails if the helper's commit starts it too.
+- **Dependency updates from the `maven-minor-patch` group (#1057, #1073).** One reaches a
+  consumer: `jackson-databind`, a compile dependency of `graph-compose-testing`, moves from
+  2.22.4 to 2.23.0, together with its test-scope pin in `qa/`. The rest are build tooling: the
+  Maven wrapper 3.10.0 → 3.10.1, and `exec-maven-plugin` 3.6.4 → 3.7.0 in `benchmarks/` and
+  `examples/`.
 
 ### Documentation
 
@@ -7343,11 +7348,12 @@ The same notes, grouped for an upgrade, are in
 - **Dependency updates from the `maven-minor-patch` group (#767, #991, #1034).** Three reach a
   consumer: `slf4j-api`, a compile dependency of `graph-compose-core`, and `jcl-over-slf4j`, one
   of `graph-compose-render-pdf`, move from 2.0.19 to 2.0.20, and `graph-compose-testing`'s
-  `jackson-databind` from 2.22.2 to 2.22.4. The rest are build, test and benchmark tooling: Logback 1.6.3 → 1.6.6, Mockito 5.23.0 →
-  5.24.0, ArchUnit 1.5.0 → 1.5.1, Byte Buddy 1.18.14 → 1.18.17, jqwik 1.10.1 → 1.10.2, JavaFX
-  21.0.12 → 21.0.13, iText 9.7.1 → 9.8.0 and JasperReports 7.0.8 → 7.1.1 (benchmarks only),
-  JaCoCo 0.8.15 → 0.8.16, japicmp 0.26.2 → 0.27.0, the Central publishing plugin 0.11.0 →
-  0.12.0, Surefire 3.6.0 → 3.6.1 and the Enforcer plugin 3.6.3 → 3.7.0.
+  `jackson-databind` from 2.22.2 to 2.22.4. The rest are build, test and benchmark tooling: the
+  Maven wrapper 3.9.16 → 3.10.0, Logback 1.6.3 → 1.6.6, Mockito 5.23.0 → 5.24.0, ArchUnit
+  1.5.0 → 1.5.1, Byte Buddy 1.18.14 → 1.18.17, jqwik 1.10.1 → 1.10.2, JavaFX 21.0.12 →
+  21.0.13, iText 9.7.1 → 9.8.0 and JasperReports 7.0.8 → 7.1.1 (benchmarks only), JaCoCo
+  0.8.15 → 0.8.16, japicmp 0.26.2 → 0.27.0, the Central publishing plugin 0.11.0 → 0.12.0,
+  Surefire 3.6.0 → 3.6.1 and the Enforcer plugin 3.6.3 → 3.7.0.
 - **The coverage aggregate counts the Word export.** `graph-compose-render-docx` ran its tests
   without the JaCoCo agent and was not among the modules `graph-compose-coverage` reports on, so
   the export had no coverage figure and its classes were outside the ratchet. Its pom now runs the

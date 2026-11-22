@@ -1199,10 +1199,10 @@ public final class PptxRenderEnvironment {
      * <p>Set before anything is drawn, because the answer changes what a run is warned
      * about. A family the deck is about to carry must not be reported as one the reader
      * has to install. A render explicitly asked not to carry them gets the name-only
-     * warning for each bundled family with a binary that it draws in and has not
-     * registered, and that warning does tell it to
-     * register the family: registering is how one family travels while the rest stay
-     * declined, since a family registered through {@code registerFontFamily} is carried
+     * warning for each bundled family it draws in that ships a binary and is not
+     * registered, and that warning does tell it to register the family: registering is
+     * how one family travels while the rest stay declined, since a family registered
+     * through {@code registerFontFamily} with binary sources goes to the embedder
      * whatever this flag says.</p>
      *
      * @param enabled whether {@link #embedBundledFontsUsed()} will run for this render

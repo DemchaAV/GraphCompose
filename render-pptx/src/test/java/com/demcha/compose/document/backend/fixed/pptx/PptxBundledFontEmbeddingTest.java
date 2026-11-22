@@ -150,9 +150,9 @@ class PptxBundledFontEmbeddingTest {
 
     @Test
     void registeringTheFamilyCarriesItWhereBundledFontsAreDeclined() throws Exception {
-        // The advice the declined render gives, followed: a registered family travels whatever
-        // embedBundledFonts says, so the same render that carried nothing now carries Amiri
-        // and stops reporting it.
+        // The advice the declined render gives, followed: a family registered with binary
+        // sources travels whatever embedBundledFonts says, so the same declined backend that
+        // carried nothing now carries Amiri and stops reporting it.
         FontFamilyDefinition amiri = DefaultFonts.bundledFamilies().stream()
                 .filter(family -> family.name().equals(FontName.AMIRI))
                 .findFirst()
@@ -168,9 +168,10 @@ class PptxBundledFontEmbeddingTest {
         assertThat(PptxDeck.fontParts(deck))
                 .describedAs("registered, so carried although bundled fonts are declined")
                 .isNotEmpty();
-        assertThat(PptxDeck.partsNaming(deck, "Amiri"))
+        assertThat(PptxDeck.part(deck, "ppt/presentation.xml"))
                 .describedAs("the face carried is Amiri's: the presentation declares it embedded")
-                .contains("ppt/presentation.xml");
+                .contains("embeddedFont")
+                .contains("typeface=\"Amiri\"");
         assertThat(warnings)
                 .describedAs("a carried family is not a substituted one")
                 .noneMatch(message -> message.contains("Amiri"));

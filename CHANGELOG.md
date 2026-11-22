@@ -561,9 +561,14 @@ follow semantic versioning; release dates are ISO 8601.
   2.22.4 to 2.23.0, together with its test-scope pin in `qa/`. The rest are build tooling: the
   Maven wrapper 3.10.0 → 3.10.1, and `exec-maven-plugin` 3.6.4 → 3.7.0 in `benchmarks/` and
   `examples/`.
+- **`ci.yml` and `codeql.yml` no longer list `2.5-dev` under `push.branches`.** The 2.5 line has
+  reached `develop` and the branch is deleted, so the trigger added for it goes with it.
 
 ### Documentation
 
+- **The release process states the rule for a release line branch instead of the 2.5 one.** Its
+  branch-flow section listed `2.5-dev` as the branch the 2.5 work lands on; it now says when a
+  line built apart from `develop` is listed in the CI and CodeQL triggers and when it is dropped.
 - **What a bundled face calls itself, and where that name travels.** A font file states its
   family under `name` id 1, and a face the four-style model cannot hold states its real family
   under id 16. One bundled face states an id 1 that simply reads wrong —

@@ -544,7 +544,7 @@ follow semantic versioning; release dates are ISO 8601.
   sibling at another version, and a scenario that resolved no train artifact. The Central mode
   makes no such check and is unchanged. `release-script-check.yml` now also runs on a change to
   either smoke script, and lifts the check and its key from each: the key for a known URL must be
-  that URL's SHA-1, the script's own `staged-<sha1>` and the bare `staged` must pass, and the
+  `staged-` and that URL's SHA-1, the script's own `staged-<sha1>` and the bare `staged` must pass, and the
   Central mirror's name, another directory's hash, a prefixed id and an empty id must fail.
 - **`cut-release.ps1` no longer stops at a git prompt after the release commit.** A commit or a
   fetch may start git's automatic maintenance, and on Windows its repack asks `(y/n)` for every

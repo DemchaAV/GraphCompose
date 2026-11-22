@@ -936,9 +936,9 @@ jobs:
           # 5. A commit through Invoke-Git starts no automatic maintenance. On the 2.5.0 cut
           #    the repack it started asked y/n for every object directory another
           #    worktree's git held open, and the script stopped after the release commit.
-          #    Whether a started maintenance run repacks depends on the git version (2.55
-          #    packs 1500 loose blobs under gc.auto=1; 2.56 leaves them), so the check is
-          #    on what git starts, read from GIT_TRACE: `maintenance run --auto` or
+          #    Whether a started maintenance run repacks is not stable across gits (Windows
+          #    git 2.55 packs 1500 loose blobs under gc.auto=1; Linux git 2.56.1 leaves them),
+          #    so the check is on what git starts, read from GIT_TRACE: `maintenance run --auto` or
           #    `gc --auto`. The bare commit is the control: if it starts neither, the
           #    check proves nothing.
           function Get-AutoMaintenanceAfterCommit([scriptblock]$commit) {
@@ -971,7 +971,7 @@ jobs:
           }
           $helper = Get-AutoMaintenanceAfterCommit { Invoke-Git commit -q -m 'Release v9.9.9' }
           if ($helper.Count -ne 0) { throw "a commit through Invoke-Git started automatic maintenance: $($helper -join '; ')" }
-          Write-Host 'Invoke-Git: stops on a held lock, an existing tag and a failed push; passes arguments intact; starts no auto-gc.'
+          Write-Host 'Invoke-Git: stops on a held lock, an existing tag and a failed push; passes arguments intact; starts no automatic maintenance.'
           # Git calls above failed on purpose, and the Actions pwsh wrapper ends every step
           # with `exit $LASTEXITCODE` — without this the step could pass every check and
           # still report a non-zero exit.

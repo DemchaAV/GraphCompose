@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 @Warmup(iterations = 3, time = 2)
 @Measurement(iterations = 5, time = 2)
 @Fork(1)
-public class IconRampJmhBenchmark {
+public class IconRampJmhBenchmark extends QuietJmhBenchmark {
 
     @Param({"8", "32", "128"})
     public int iconCount;

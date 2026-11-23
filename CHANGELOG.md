@@ -74,6 +74,21 @@ follow semantic versioning; release dates are ISO 8601.
   release commit and Central the version is not published, and the job skips the smoke with a
   notice. A scenario must now pass against the published version `run.sh` names on every such
   pull request, not only at the cut.
+- **The JMH benchmarks in `benchmarks.jar` run with quiet logging.** Only the manual harness
+  applied `logback-benchmark.xml`; a forked JMH JVM found no Logback configuration, fell back to
+  Logback's default and printed every engine DEBUG line to the console — 32.8 MB of output for one
+  `CanonicalRender` fork, 22.2 MB for the four `DocxExport.docx` shapes. Every JMH benchmark now
+  extends `QuietJmhBenchmark`, whose static initializer applies the manual harness's quiet
+  configuration and initializes Logback before the fork loads anything that logs, so Logback's
+  start-up is outside every measured region; the same two runs print 6 KB and 19 KB. The logging was inside the measured region: `CanonicalRender` allocated 333 172 B/op with
+  it and 273 169 B/op without, each `ColdStart` shot 12.5–13.2 % less, and three of the four
+  `DocxExport.docx` shapes 1.1–4.8 % less (the fourth moved within its error). JMH results
+  recorded before this change, the weekly `benchmarks-jmh.yml` series among them, are not
+  comparable with later ones. `-jvmArgsAppend "-Dgraphcompose.benchmark.logging=debug"` keeps the
+  engine's logging, as `-Dgraphcompose.benchmark.logging=debug` does for the manual harness.
+  `JmhQuietLoggingGuardTest` reads `META-INF/BenchmarkList`, the list the JMH runner reads, adds
+  every `@State` class of the package, and fails for a class whose initialization leaves the
+  engine's loggers at DEBUG.
 
 ## v2.5.1 — 2026-11-22
 

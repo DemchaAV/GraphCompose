@@ -121,6 +121,13 @@ Direct Java entry points accept the same switch as a JVM property:
 java -Dgraphcompose.benchmark.logging=debug -cp "benchmarks\target\test-classes;benchmarks\target\classes;$cp" com.demcha.compose.CurrentSpeedBenchmark
 ```
 
+The JMH benchmarks in `benchmarks.jar` are quiet by default too, and take the
+same switch in the forked JVM:
+
+```powershell
+java -jar benchmarks\target\benchmarks.jar CanonicalRender -jvmArgsAppend "-Dgraphcompose.benchmark.logging=debug"
+```
+
 ## Diff selection rules
 
 ### Current-speed diffs

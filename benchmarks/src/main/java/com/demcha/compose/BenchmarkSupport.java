@@ -3,7 +3,10 @@ package com.demcha.compose;
 import java.net.URL;
 import java.util.Locale;
 
-final class BenchmarkSupport {
+/**
+ * Logging set-up shared by the manual harness and the JMH benchmarks.
+ */
+public final class BenchmarkSupport {
 
     private static final String BENCHMARK_LOGGING_PROPERTY = "graphcompose.benchmark.logging";
     private static final String LOGBACK_CONFIG_PROPERTY = "logback.configurationFile";
@@ -13,7 +16,13 @@ final class BenchmarkSupport {
     private BenchmarkSupport() {
     }
 
-    static void configureQuietLogging() {
+    /**
+     * Points Logback at {@code logback-benchmark.xml} unless the run asked for
+     * the engine's logging ({@code -Dgraphcompose.benchmark.logging=debug}) or
+     * chose a configuration itself ({@code -Dlogback.configurationFile}). Takes
+     * effect only when called before Logback initializes.
+     */
+    public static void configureQuietLogging() {
         // Suppress Logback's own bootstrap/status output for benchmark runs.
         // This keeps console output focused on the benchmark metrics instead of
         // framework initialization noise.

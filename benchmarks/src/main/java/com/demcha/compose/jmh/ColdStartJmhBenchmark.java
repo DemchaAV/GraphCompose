@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
 @Warmup(iterations = 0)
 @Measurement(iterations = 1)
 @Fork(10)
-public class ColdStartJmhBenchmark {
+public class ColdStartJmhBenchmark extends QuietJmhBenchmark {
 
     private InvoiceDocumentSpec invoice;
     private DocumentTemplate<InvoiceDocumentSpec> invoiceTemplate;

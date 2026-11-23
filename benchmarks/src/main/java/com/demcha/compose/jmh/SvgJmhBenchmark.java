@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 @Warmup(iterations = 3, time = 2)
 @Measurement(iterations = 5, time = 2)
 @Fork(1)
-public class SvgJmhBenchmark {
+public class SvgJmhBenchmark extends QuietJmhBenchmark {
 
     /** Parsed once so {@code svgIconToNode} measures only the node-build cost. */
     private final SvgIcon icon = SvgIcon.parse(SvgBenchmarkFixtures.MULTI_LAYER_ICON_SVG);

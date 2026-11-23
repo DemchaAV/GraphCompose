@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 @Warmup(iterations = 3, time = 2)
 @Measurement(iterations = 5, time = 2)
 @Fork(1)
-public class VectorPaintJmhBenchmark {
+public class VectorPaintJmhBenchmark extends QuietJmhBenchmark {
 
     private static final int PATHS = 40;
 

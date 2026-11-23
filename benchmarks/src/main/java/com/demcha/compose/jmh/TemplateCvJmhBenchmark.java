@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 @Warmup(iterations = 3, time = 2)
 @Measurement(iterations = 5, time = 2)
 @Fork(1)
-public class TemplateCvJmhBenchmark {
+public class TemplateCvJmhBenchmark extends QuietJmhBenchmark {
 
     private CvDocument cv;
     private DocumentTemplate<CvDocument> template;

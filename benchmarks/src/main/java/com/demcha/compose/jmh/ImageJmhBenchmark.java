@@ -43,7 +43,7 @@ import java.util.stream.IntStream;
 @Warmup(iterations = 3, time = 2)
 @Measurement(iterations = 5, time = 2)
 @Fork(1)
-public class ImageJmhBenchmark {
+public class ImageJmhBenchmark extends QuietJmhBenchmark {
 
     private static final int IMAGES = 12;
 

@@ -49,7 +49,7 @@ import java.util.function.Consumer;
 @Warmup(iterations = 3, time = 2)
 @Measurement(iterations = 5, time = 2)
 @Fork(1)
-public class DocxExportJmhBenchmark {
+public class DocxExportJmhBenchmark extends QuietJmhBenchmark {
 
     @Param({"small", "report20", "table1000", "images20"})
     public String shape;

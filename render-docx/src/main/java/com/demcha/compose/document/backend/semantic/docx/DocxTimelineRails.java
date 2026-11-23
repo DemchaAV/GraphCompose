@@ -184,8 +184,7 @@ final class DocxTimelineRails {
             remove(bar);
         }
         List<CTRow> rows = new ArrayList<>();
-        String colour = String.format("%02X%02X%02X", plan.colour().getRed(), plan.colour().getGreen(),
-                plan.colour().getBlue());
+        byte[] colour = DocxTranslucency.rgb(plan.colour());
         BigInteger eighths = BigInteger.valueOf(Math.max(2, Math.min(96, Math.round(plan.width() * 8))));
         for (int index = 0; index < tables.size(); index++) {
             CTRow row = (CTRow) tables.get(index).getTrArray(0).copy();
@@ -612,7 +611,7 @@ final class DocxTimelineRails {
         spacing.setLineRule(STLineSpacingRule.EXACT);
     }
 
-    private static void border(CTTc cell, String colour, BigInteger eighths) {
+    private static void border(CTTc cell, byte[] colour, BigInteger eighths) {
         CTTcPr properties = cell.getTcPr();
         CTTcBorders borders = properties.isSetTcBorders() ? properties.getTcBorders() : properties.addNewTcBorders();
         CTBorder left = borders.isSetLeft() ? borders.getLeft() : borders.addNewLeft();
@@ -629,7 +628,7 @@ final class DocxTimelineRails {
      * @param upperOnTheRail whether the rail runs along the upper row (it ends here) or the lower one (it
      *                       starts here)
      */
-    private static List<CTRow> cutAt(CTRow row, int rail, int height, boolean upperOnTheRail, String colour,
+    private static List<CTRow> cutAt(CTRow row, int rail, int height, boolean upperOnTheRail, byte[] colour,
                                      BigInteger eighths) {
         CTRow lower = (CTRow) row.copy();
         for (int index = 0; index < row.sizeOfTcArray(); index++) {
@@ -714,7 +713,7 @@ final class DocxTimelineRails {
     }
 
     /** A row of the gap's exact height, its cells as wide as the entry's, the rail's bordered. */
-    private static CTRow gapRow(CTRow entry, int rail, int height, String colour, BigInteger eighths) {
+    private static CTRow gapRow(CTRow entry, int rail, int height, byte[] colour, BigInteger eighths) {
         CTRow gap = CTRow.Factory.newInstance();
         CTTrPr properties = gap.addNewTrPr();
         properties.addNewCantSplit();

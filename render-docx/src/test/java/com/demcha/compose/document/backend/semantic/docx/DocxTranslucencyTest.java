@@ -93,6 +93,18 @@ class DocxTranslucencyTest {
     }
 
     @Test
+    void anOpaqueBodyColourIsTheNormalStylesColour() throws Exception {
+        DocumentTextStyle blue = DocumentTextStyle.DEFAULT.withColor(DocumentColor.rgb(0x1E, 0x5A, 0xA0));
+        try (Exported exported = export(null, page -> page
+                .addParagraph(p -> p.text("The body of the page is set in a blue, and there is more of it than "
+                                          + "of anything else, so it is the style's.").textStyle(blue))
+                .addParagraph(p -> p.text("A second paragraph in the same blue.").textStyle(blue)))) {
+            CTRPr defaults = exported.document().getStyles().getStyle("Normal").getCTStyle().getRPr();
+            assertThat(hex(defaults.getColorArray(0).getVal())).as("the Normal style's colour").isEqualTo("1E5AA0");
+        }
+    }
+
+    @Test
     void aPanelsTranslucentFillIsFlattenedAgainstThePagesBackground() throws Exception {
         try (Exported exported = export(navyPage(), page -> page
                 .addSection("Card", card -> card.fillColor(HALF_BLUE).addParagraph("Inside")))) {
@@ -606,6 +618,39 @@ class DocxTranslucencyTest {
                 .selectChildren(new QName(W14, "srgbClr"))[0];
         XmlObject[] alpha = colour.selectChildren(new QName(W14, "alpha"));
         return attribute(colour) + "@" + (alpha.length == 0 ? "" : attribute(alpha[0]));
+    }
+
+    // -- a colour attribute given its bytes ------------------------------------------------------
+
+    @Test
+    void aColourGivenItsBytesIsWrittenAsItsHexIs() {
+        for (java.awt.Color colour : List.of(new java.awt.Color(0x1A, 0x2B, 0x3C), new java.awt.Color(0, 0, 0),
+                new java.awt.Color(255, 255, 255), new java.awt.Color(0x0A, 0xF0, 0x05),
+                new java.awt.Color(0x80, 0x7F, 0xC4, 90))) {
+            String hex = DocxTranslucency.hex(colour);
+            byte[] bytes = DocxTranslucency.rgb(colour);
+
+            CTBorder edgeFromHex = CTBorder.Factory.newInstance();
+            edgeFromHex.setColor(hex);
+            CTBorder edgeFromBytes = CTBorder.Factory.newInstance();
+            edgeFromBytes.setColor(bytes);
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd fillFromHex =
+                    org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd.Factory.newInstance();
+            fillFromHex.setFill(hex);
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd fillFromBytes =
+                    org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd.Factory.newInstance();
+            fillFromBytes.setFill(bytes);
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTColor textFromHex =
+                    org.openxmlformats.schemas.wordprocessingml.x2006.main.CTColor.Factory.newInstance();
+            textFromHex.setVal(hex);
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTColor textFromBytes =
+                    org.openxmlformats.schemas.wordprocessingml.x2006.main.CTColor.Factory.newInstance();
+            textFromBytes.setVal(bytes);
+
+            assertThat(edgeFromBytes.xmlText()).as(hex).isEqualTo(edgeFromHex.xmlText()).contains("\"" + hex + "\"");
+            assertThat(fillFromBytes.xmlText()).as(hex).isEqualTo(fillFromHex.xmlText()).contains("\"" + hex + "\"");
+            assertThat(textFromBytes.xmlText()).as(hex).isEqualTo(textFromHex.xmlText()).contains("\"" + hex + "\"");
+        }
     }
 
     private static String attribute(XmlObject element) {

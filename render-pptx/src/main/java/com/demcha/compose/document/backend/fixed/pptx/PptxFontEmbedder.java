@@ -67,7 +67,8 @@ final class PptxFontEmbedder {
             FontFamilyDefinition.FontSourceSet sources,
             PptxSlotLedger ledger,
             Map<FontName, Set<String>> carriedSlots) {
-        FamilyPrograms read = readPrograms(family, sources, EnumSet.allOf(PptxFontFace.class), ledger);
+        FamilyPrograms read =
+                readPrograms(family, sources, EnumSet.allOf(PptxFontFace.class), ledger);
         if (read == null) {
             return null;
         }

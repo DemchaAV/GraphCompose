@@ -39,15 +39,15 @@ follow semantic versioning; release dates are ISO 8601.
 ### Internal
 
 - **`PptxRenderEnvironment` no longer carries the PPTX backend's font embedding.** Embedding had
-  grown into most of the class (1,426 lines), and now lives in three package-private classes:
+  grown into most of the class (1,426 lines), and now lives in package-private classes beside it:
   `PptxDeckFonts` (which families a render carries, the viewer family a run is written with, and
   the `render.pptx.font.substitution` lines), `PptxFontEmbedder` (reading a family's faces,
-  refusing it whole, handing the programs to the presentation, and the `embed.skipped`,
-  `shared.family` and `name.mismatch` lines that name why) and `PptxSlotLedger` (which face holds
-  each style slot of a declared viewer family). The environment keeps every public method; the
-  font ones delegate. No behaviour changes: decks rendered with
-  `deterministic(...)` are the same bytes, and the render log carries the same lines in the same
-  order.
+  refusing it whole, handing the programs to the presentation, with the `embed.skipped` lines that
+  say why a face did not travel and the `shared.family` and `name.mismatch` lines about what it
+  noticed on the way), `PptxSlotLedger` (which face holds each style slot of a declared viewer
+  family) and the `PptxFontFace` enum the first two share. The environment keeps every public
+  method; the font ones delegate. No behaviour changes: decks rendered with `deterministic(...)`
+  are the same bytes, and the render log carries the same lines in the same order.
 
 ### Build
 

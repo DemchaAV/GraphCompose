@@ -166,6 +166,23 @@ final class DocxTranslucency {
     }
 
     /**
+     * A colour as the three bytes a Word colour attribute — {@code w:color}, {@code w:fill} — is
+     * given, its alpha dropped.
+     *
+     * <p>Such an attribute holds either the word {@code auto} or three hex bytes. Handed a string,
+     * XMLBeans reads it as the word first, and for every other colour throws, and catches, an
+     * exception with its stack trace before it reads the bytes; handed the bytes, it takes them
+     * as they are. The file holds the same text either way: XMLBeans writes the bytes in upper
+     * case, as {@link #hex} does.</p>
+     *
+     * @param colour a colour
+     * @return its red, green and blue
+     */
+    static byte[] rgb(Color colour) {
+        return new byte[] {(byte) colour.getRed(), (byte) colour.getGreen(), (byte) colour.getBlue()};
+    }
+
+    /**
      * Writes a run's transparency as its text fill, or takes away a text fill an opaque colour
      * no longer wants.
      *

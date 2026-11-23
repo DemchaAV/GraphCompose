@@ -36,6 +36,33 @@ follow semantic versioning; release dates are ISO 8601.
     registered again, after a registration of it that travelled, is likewise told only what its
     last registration lacks.
 
+### Performance
+
+- **A large table's DOCX export no longer reads its rows quadratically, nor makes XMLBeans throw
+  for every colour.** The file it writes is the same bytes.
+  - POI's `XWPFTable.getRow(int)` and `getNumberOfRows()` count the table's rows on every call, and
+    the export read each row that way several times while writing it, so the reads grew with the
+    square of the table's rows. The rows are now read from POI's own list of them, in the passes
+    that write a table's rows.
+  - A Word colour attribute (`w:color`, `w:fill`) holds either the word `auto` or three hex bytes.
+    Given a colour as a hex string, XMLBeans tried it as the word first and threw and caught an
+    `XmlValueOutOfRangeException`, stack trace included, for every colour that is not `auto` —
+    four for each ruled cell. Every such attribute the export sets to a colour — on borders,
+    shading, a run, the Normal style, a timeline rail — is now given its bytes, which XMLBeans
+    writes as the same upper-case hex.
+  - The passes that count the lines written at an exact height and fill the shaded spaces closing a
+    paragraph asked each paragraph and run for a few of its children through an XPath of its own;
+    they walk the children now.
+  - JMH `DocxExportJmhBenchmark`, `-prof gc`, allocation per export, the mean of two runs:
+    `table1000` 233 → 159 MB, `report20` 10.1 → 9.5 MB, `small` 1.87 → 1.68 MB, `images20`
+    2.99 → 2.92 MB. Time was measured on a machine other builds were loading, so as pairs: run
+    alternately, one fork of each build a round, `table1000` was faster in three rounds of four
+    (median 1,496 → 476 ms/op), and its thread CPU time per export in the quietest round went
+    688 → 500 ms; the smaller shapes move within the noise.
+  - Measured byte-identical: the 105 documents of the DOCX fidelity corpus, every part of each, with
+    the same 1,718 report notes; and the benchmark's four documents, every part but the creation
+    time in `docProps/core.xml`.
+
 ### Internal
 
 - **`PptxRenderEnvironment` no longer carries the PPTX backend's font embedding.** Embedding had

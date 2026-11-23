@@ -34,14 +34,16 @@ final class DocxClosingSpaces {
 
     private static final String W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 
-    private static final String NAMESPACES = "declare namespace w='" + W + "' "
-            + "declare namespace wp='http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing' ";
-
     /** Every paragraph of a part, those in its tables, cells and text boxes included. */
-    private static final String PARAGRAPHS = NAMESPACES + ".//w:p";
+    private static final String PARAGRAPHS = "declare namespace w='" + W + "' .//w:p";
 
-    /** A paragraph's own runs in reading order, those inside its links and simple fields included. */
-    private static final String RUNS = NAMESPACES + "./w:r | ./w:hyperlink/w:r | ./w:fldSimple/w:r";
+    private static final QName RUN = new QName(W, "r");
+    private static final QName HYPERLINK = new QName(W, "hyperlink");
+    private static final QName SIMPLE_FIELD = new QName(W, "fldSimple");
+    private static final QName RUN_PROPERTIES = new QName(W, "rPr");
+    private static final QName SHADING = new QName(W, "shd");
+    private static final QName INLINE =
+            new QName("http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing", "inline");
 
     private static final char NO_BREAK_SPACE = (char) 0x00A0;
 
@@ -72,9 +74,9 @@ final class DocxClosingSpaces {
 
     private static void fill(XmlObject part, List<XmlObject> filled) {
         for (XmlObject paragraph : part.selectPath(PARAGRAPHS)) {
-            XmlObject[] runs = paragraph.selectPath(RUNS);
-            for (int index = runs.length - 1; index >= 0; index--) {
-                XmlObject run = runs[index];
+            List<XmlObject> runs = runs(paragraph);
+            for (int index = runs.size() - 1; index >= 0; index--) {
+                XmlObject run = runs.get(index);
                 Closing closing = fillTheClosingSpaces(run);
                 if (closing == Closing.FILLED || closing == Closing.FILLED_AND_ENDED) {
                     filled.add(run);
@@ -84,6 +86,22 @@ final class DocxClosingSpaces {
                 }
             }
         }
+    }
+
+    /** A paragraph's own runs in reading order, those inside its links and simple fields included. */
+    private static List<XmlObject> runs(XmlObject paragraph) {
+        List<XmlObject> runs = new ArrayList<>();
+        try (XmlCursor cursor = paragraph.newCursor()) {
+            for (boolean more = cursor.toFirstChild(); more; more = cursor.toNextSibling()) {
+                QName name = cursor.getName();
+                if (RUN.equals(name)) {
+                    runs.add(cursor.getObject());
+                } else if (HYPERLINK.equals(name) || SIMPLE_FIELD.equals(name)) {
+                    runs.addAll(DocxXmlChildren.path(cursor.getObject(), RUN));
+                }
+            }
+        }
+        return runs;
     }
 
     /** What a run read from its end does to the walk back along its paragraph. */
@@ -119,7 +137,7 @@ final class DocxClosingSpaces {
             if ("rPr".equals(name)) {
                 continue;
             }
-            if ("drawing".equals(name) && child.selectPath(NAMESPACES + "./wp:inline").length == 0) {
+            if ("drawing".equals(name) && DocxXmlChildren.path(child, INLINE).isEmpty()) {
                 // Anchored, it takes no room in the line.
                 continue;
             }
@@ -153,11 +171,11 @@ final class DocxClosingSpaces {
      * which a text box's content holds untyped.
      */
     private static boolean isShaded(XmlObject run) {
-        XmlObject[] shadings = run.selectPath(NAMESPACES + "./w:rPr/w:shd");
-        if (shadings.length == 0) {
+        XmlObject shading = DocxXmlChildren.first(run, RUN_PROPERTIES, SHADING);
+        if (shading == null) {
             return false;
         }
-        try (XmlCursor cursor = shadings[0].newCursor()) {
+        try (XmlCursor cursor = shading.newCursor()) {
             String fill = cursor.getAttributeText(new QName(W, "fill"));
             return fill != null && !"auto".equalsIgnoreCase(fill)
                    && !"nil".equals(cursor.getAttributeText(new QName(W, "val")));

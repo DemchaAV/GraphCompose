@@ -269,6 +269,35 @@ class DocxExportReportTest {
     }
 
     @Test
+    void aParagraphWhoseTextIsAllInALinkIsCountedAmongTheExactOnes() throws Exception {
+        // Its text in the link's runs alone, the paragraph holds text of its own: in Helvetica its
+        // line is exact, and the masthead's Lato line grows.
+        AtomicReference<DocxExportReport> captured = new AtomicReference<>();
+        byte[] docx;
+        try (DocumentSession session = session(page -> page
+                .addParagraph(p -> p.inlineLink("Guide",
+                        new com.demcha.compose.document.node.DocumentLinkOptions("https://example.org")))
+                .addParagraph(p -> p.text("Masthead").textStyle(
+                        com.demcha.compose.document.style.DocumentTextStyle.builder()
+                                .fontName(com.demcha.compose.font.FontName.LATO).size(10).build())))) {
+            docx = session.export(new DocxSemanticBackend(captured::set));
+        }
+        String body = new String(partsBesidesTheDates(docx).get("word/document.xml"),
+                java.nio.charset.StandardCharsets.UTF_8);
+        java.util.regex.Matcher linked = java.util.regex.Pattern.compile(
+                "<w:p>(?:(?!</w:p>).)*Guide(?:(?!</w:p>).)*</w:p>", java.util.regex.Pattern.DOTALL).matcher(body);
+        assertThat(linked.find()).as("a paragraph holds the link").isTrue();
+        String paragraph = linked.group();
+        assertThat(paragraph).as("its text is in the link").contains("<w:hyperlink").contains("w:lineRule=\"exact\"");
+        assertThat(paragraph.replaceAll("(?s)<w:hyperlink.*?</w:hyperlink>", ""))
+                .as("and in no run outside it").doesNotContain("<w:t");
+        assertThat(exactLinesIn(body)).as("its line alone is exact").isEqualTo(1);
+
+        assertThat(captured.get().bySubject().get(DocxExports.EXACT_LINES)).singleElement()
+                .satisfies(note -> assertThat(note.detail()).startsWith("the lines of one paragraph are"));
+    }
+
+    @Test
     void aBadgesInitialsInTheirTextBoxAreNotCountedAmongTheExactOnes() throws Exception {
         // A badge's initials are its shape's text, in a text box of their own, on a line Word sets
         // single: nothing in the document is exact, so there is no note.

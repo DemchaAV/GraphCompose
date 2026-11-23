@@ -1923,21 +1923,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** Whether a paragraph's own properties write its lines at an exact height. */
     private static boolean isWrittenExact(org.apache.xmlbeans.XmlObject paragraph) {
-        try (org.apache.xmlbeans.XmlCursor cursor = paragraph.newCursor()) {
-            cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' "
-                              + "./w:pPr/w:spacing");
-            return cursor.toNextSelection()
-                   && STLineSpacingRule.EXACT.toString().equals(cursor.getAttributeText(new javax.xml.namespace.QName(
-                    "http://schemas.openxmlformats.org/wordprocessingml/2006/main", "lineRule")));
+        org.apache.xmlbeans.XmlObject spacing = DocxXmlChildren.first(paragraph, W_PPR, W_SPACING);
+        if (spacing == null) {
+            return false;
+        }
+        try (org.apache.xmlbeans.XmlCursor cursor = spacing.newCursor()) {
+            return STLineSpacingRule.EXACT.toString().equals(cursor.getAttributeText(W_LINE_RULE));
         }
     }
 
     /** Whether a paragraph's own runs, its links' among them, hold any text. */
     private static boolean holdsTextOfItsOwn(org.apache.xmlbeans.XmlObject paragraph) {
-        try (org.apache.xmlbeans.XmlCursor cursor = paragraph.newCursor()) {
-            cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' "
-                              + "./w:r/w:t | ./w:hyperlink/w:r/w:t");
-            while (cursor.toNextSelection()) {
+        return holdsText(DocxXmlChildren.path(paragraph, W_R, W_T))
+               || holdsText(DocxXmlChildren.path(paragraph, W_HYPERLINK, W_R, W_T));
+    }
+
+    private static boolean holdsText(List<org.apache.xmlbeans.XmlObject> texts) {
+        for (org.apache.xmlbeans.XmlObject text : texts) {
+            try (org.apache.xmlbeans.XmlCursor cursor = text.newCursor()) {
                 if (!cursor.getTextValue().isBlank()) {
                     return true;
                 }
@@ -1945,6 +1948,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         return false;
     }
+
+    private static final String W_NAMESPACE = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+    private static final javax.xml.namespace.QName W_PPR = new javax.xml.namespace.QName(W_NAMESPACE, "pPr");
+    private static final javax.xml.namespace.QName W_SPACING = new javax.xml.namespace.QName(W_NAMESPACE, "spacing");
+    private static final javax.xml.namespace.QName W_LINE_RULE = new javax.xml.namespace.QName(W_NAMESPACE, "lineRule");
+    private static final javax.xml.namespace.QName W_R = new javax.xml.namespace.QName(W_NAMESPACE, "r");
+    private static final javax.xml.namespace.QName W_T = new javax.xml.namespace.QName(W_NAMESPACE, "t");
+    private static final javax.xml.namespace.QName W_HYPERLINK = new javax.xml.namespace.QName(W_NAMESPACE, "hyperlink");
 
     /**
      * Hides the mark of the empty paragraph a document ending in a table must end with.
@@ -2762,7 +2773,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             java.awt.Color colour = band.getSeparatorColor().color();
             paintEdge(edge, STBorder.SINGLE,
                     BigInteger.valueOf(DocxBorderWidths.eighths(band.getSeparatorThickness())),
-                    toHexColor(DocxTranslucency.flatten(colour, java.awt.Color.WHITE)));
+                    colourBytes(DocxTranslucency.flatten(colour, java.awt.Color.WHITE)));
             edge.setSpace(BigInteger.valueOf(Math.round(DocxTextBands.separatorSpace(band))));
             // A band is written into each kind of header it is given: told once.
             if (separatorsReported.add(band)) {
@@ -10030,7 +10041,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // rule does: a hairline the author asked for stays a line, and a row counts the border at
         // the width written (eighthsInTwips).
         paintEdge(edge, STBorder.SINGLE, BigInteger.valueOf(DocxBorderWidths.eighths(stroke.width())),
-                toHexColor(stroke.color().color()));
+                colourBytes(stroke.color().color()));
     }
 
     /**
@@ -10872,7 +10883,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             properties.addNewSzCs().setVal(halfPoints);
         }
         if (defaults.color() != null) {
-            properties.addNewColor().setVal(toHexColor(defaults.color().color()));
+            properties.addNewColor().setVal(colourBytes(defaults.color().color()));
             // Both editors take a text fill's transparency from the style a run follows.
             textFillsWritten |= DocxTranslucency.writeTextAlpha(properties, defaults.color().color(),
                     overATranslucentStyle);
@@ -16889,7 +16900,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         shading.setVal(STShd.CLEAR);
         shading.setColor("auto");
         java.awt.Color fill = background.fill().color();
-        shading.setFill(toHexColor(fill.getAlpha() < 255 ? DocxTranslucency.flatten(fill, colourUnder(run, path)) : fill));
+        shading.setFill(colourBytes(fill.getAlpha() < 255 ? DocxTranslucency.flatten(fill, colourUnder(run, path)) : fill));
         String lost = chipLost(background, leftPaddingAs(runs, index, rightToLeft),
                 !rightToLeft && takesSpaceAfter(textOf(runs.get(index)).text()));
         int noteAt = -1;
@@ -17795,7 +17806,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             CTPBdr borders = properties.isSetPBdr() ? properties.getPBdr() : properties.addNewPBdr();
             CTBorder bottom = borders.isSetBottom() ? borders.getBottom() : borders.addNewBottom();
             paintEdge(bottom, dashOf(rule), BigInteger.valueOf(DocxBorderWidths.eighths(rule.thickness())),
-                    toHexColor(colour.getAlpha() < 255 ? DocxTranslucency.flatten(colour, colourUnder(node)) : colour));
+                    colourBytes(colour.getAlpha() < 255 ? DocxTranslucency.flatten(colour, colourUnder(node)) : colour));
             bottom.setSpace(BigInteger.ZERO);
             // A rule wider than Word's widest is drawn rather than written (DocxRules); a hairline
             // thinner than its thinnest is written at that.
@@ -18825,7 +18836,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void holdRowHeight(XWPFTable table, TableNode node, int rowIdx) {
         java.util.OptionalDouble height = layout.rowHeight(node, rowIdx);
         if (height.isPresent()) {
-            XWPFTableRow row = table.getRow(rowIdx);
+            XWPFTableRow row = rowOf(table, rowIdx);
             holdRowAtLeast(row, height.getAsDouble(), rulesBeyondOne(table, rowIdx));
             fitBlankLinesToTheRow(row);
         }
@@ -18853,7 +18864,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void carryTheRowsRounding(XWPFTable table, TableNode node, TableGrid.Placement[][] cover) {
         DocxRowRounding rounding = new DocxRowRounding();
         for (int rowIdx = 0; rowIdx < cover.length; rowIdx++) {
-            XWPFTableRow row = table.getRow(rowIdx);
+            XWPFTableRow row = rowOf(table, rowIdx);
             java.util.OptionalDouble height = layout.rowHeight(node, rowIdx);
             int page = layout.rowPage(node, rowIdx);
             org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTrPr properties = row.getCtRow().getTrPr();
@@ -18963,12 +18974,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static long rulesBeyondOne(XWPFTable table, int rowIdx) {
         boolean first = rowIdx == 0;
-        boolean last = rowIdx == table.getNumberOfRows() - 1;
-        XWPFTableRow next = last ? null : table.getRow(rowIdx + 1);
+        boolean last = rowIdx == table.getRows().size() - 1;
+        XWPFTableRow next = last ? null : rowOf(table, rowIdx + 1);
         long most = Long.MIN_VALUE;
         long counted = Long.MIN_VALUE;
         int column = 0;
-        for (XWPFTableCell cell : table.getRow(rowIdx).getTableCells()) {
+        for (XWPFTableCell cell : rowOf(table, rowIdx).getTableCells()) {
             long above = rule(cell, true);
             long below = rule(cell, false);
             // Its share of the rule under it: the next row's, of the cell under it, half rounded
@@ -18980,6 +18991,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             column += gridSpan(cell);
         }
         return most == Long.MIN_VALUE ? 0 : most - counted;
+    }
+
+    /**
+     * A table's row by its index, from the rows POI keeps for the table.
+     *
+     * <p>POI's {@code XWPFTable.getRow} reads this same list, but counts the table's {@code w:tr}
+     * elements first to check the index, as {@code getNumberOfRows} counts them: a walk of the whole
+     * table on every call, so read once a row, the walks grew with the square of the table's rows.
+     * The rows read here are all in range.</p>
+     */
+    private static XWPFTableRow rowOf(XWPFTable table, int index) {
+        return table.getRows().get(index);
     }
 
     /** The top rule of the cell of a row that covers a column of the grid, in twips; 0 past its last cell. */
@@ -19421,7 +19444,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         DocxRuleRoom ruleRoom = new DocxRuleRoom(rowCount);
         KeptMargins keptMargins = KeptMargins.NONE;
         for (int rowIdx = 0; rowIdx < rowCount; rowIdx++) {
-            XWPFTableRow row = table.getRow(rowIdx);
+            XWPFTableRow row = rowOf(table, rowIdx);
             List<TableGrid.Placement> physical = new ArrayList<>();
             for (int col = 0; col < columnCount; ) {
                 TableGrid.Placement placement = cover[rowIdx][col];
@@ -19516,7 +19539,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (page < 0) {
                 continue;
             }
-            for (XWPFTableCell cell : table.getRow(index).getTableCells()) {
+            for (XWPFTableCell cell : rowOf(table, index).getTableCells()) {
                 if (!cell.getParagraphs().isEmpty()) {
                     anchors.paragraphOn(page, cell.getParagraphs().get(0), false);
                     break;
@@ -19547,7 +19570,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         int rowCount = table.getRows().size();
         int headerRows = Math.min(node.repeatedHeaderRowCount(), rowCount);
         for (int index = 0; index < rowCount; index++) {
-            XWPFTableRow row = table.getRow(index);
+            XWPFTableRow row = rowOf(table, index);
             if (layout.placedRow(node, index)) {
                 row.setCantSplitRow(true);
             }
@@ -19609,7 +19632,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (fill != null) {
             CTShd shading = properties.isSetShd() ? properties.getShd() : properties.addNewShd();
             shading.setVal(STShd.CLEAR);
-            shading.setFill(toHexColor(fill.color()));
+            shading.setFill(colourBytes(fill.color()));
         }
         if (stroke != null) {
             CTTcBorders borders = properties.isSetTcBorders()
@@ -19618,7 +19641,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (stroke.width() > 0) {
                 // A hairline the author asked for stays a line, at Word's thinnest.
                 BigInteger eighths = BigInteger.valueOf(DocxBorderWidths.eighths(stroke.width()));
-                String colour = toHexColor(stroke.color().color());
+                byte[] colour = colourBytes(stroke.color().color());
                 paintEdge(borders.addNewTop(), STBorder.SINGLE, eighths, colour);
                 paintEdge(borders.addNewBottom(), STBorder.SINGLE, eighths, colour);
                 paintEdge(borders.addNewLeft(), STBorder.SINGLE, eighths, colour);
@@ -19663,7 +19686,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return (long) Math.floor(eighths * POINT_TO_TWIP / 8.0);
     }
 
-    private static void paintEdge(CTBorder edge, STBorder.Enum kind, BigInteger eighths, String colour) {
+    private static void paintEdge(CTBorder edge, STBorder.Enum kind, BigInteger eighths, byte[] colour) {
         edge.setVal(kind);
         if (eighths != null) {
             edge.setSz(eighths);
@@ -24387,7 +24410,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // getRGB carries the alpha, so a run whose colour differs from Normal's only in
                 // strength writes its own.
                 || style.color().color().getRGB() != defaults.color().color().getRGB())) {
-            run.setColor(toHexColor(style.color().color()));
+            // XWPFRun.setColor, but given the colour's bytes rather than its hex (colourBytes).
+            CTRPr coloured = run.getCTR().isSetRPr() ? run.getCTR().getRPr() : run.getCTR().addNewRPr();
+            (coloured.sizeOfColorArray() > 0 ? coloured.getColorArray(0) : coloured.addNewColor())
+                    .setVal(colourBytes(style.color().color()));
             textFillsWritten |= DocxTranslucency.writeTextAlpha(
                     run.getCTR().isSetRPr() ? run.getCTR().getRPr() : run.getCTR().addNewRPr(),
                     style.color().color(), normalIsTranslucent());
@@ -24453,11 +24479,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return Math.max(0, (long) Math.floor(points * POINT_TO_TWIP + 1e-6));
     }
 
-    private static String toHexColor(java.awt.Color color) {
-        if (color == null) {
-            return "000000";
-        }
-        return DocxTranslucency.hex(color);
+    /**
+     * A colour as a Word colour attribute is given it, black where there is none: its bytes, which
+     * XMLBeans takes without first trying them as the word {@code auto} ({@link DocxTranslucency#rgb}).
+     */
+    private static byte[] colourBytes(java.awt.Color color) {
+        return DocxTranslucency.rgb(color == null ? java.awt.Color.BLACK : color);
     }
 
     /**

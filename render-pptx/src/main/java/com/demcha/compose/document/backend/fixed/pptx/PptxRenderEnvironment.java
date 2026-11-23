@@ -199,15 +199,6 @@ public final class PptxRenderEnvironment {
         }
 
         private final List<Declared> declared = new ArrayList<>();
-        /**
-         * Families refused because another one already held a slot of their declared name.
-         *
-         * <p>Kept so the caller can say what such a family's text will be drawn from. Every
-         * other refusal leaves nothing of the family in the deck and the text needs the font
-         * installed; this one leaves a program under the very name the text carries, so the
-         * ordinary line would tell the reader the opposite of what a viewer does.</p>
-         */
-        private final Set<FontName> refusedForASharedName = new LinkedHashSet<>();
 
         /** The face holding that slot of that declared name, or {@code null}. */
         Seated holderOf(String typeface, String slot) {
@@ -255,14 +246,6 @@ public final class PptxRenderEnvironment {
             return owed.isPresent();
         }
 
-        void recordRefusalForASharedName(FontName family) {
-            refusedForASharedName.add(family);
-        }
-
-        boolean wasRefusedForASharedName(FontName family) {
-            return refusedForASharedName.contains(family);
-        }
-
         private Optional<Declared> entry(String typeface) {
             return declared.stream()
                     .filter(found -> typeface.equalsIgnoreCase(found.typeface))
@@ -296,54 +279,28 @@ public final class PptxRenderEnvironment {
         Map<FontName, String> familyNames = new LinkedHashMap<>();
         Map<FontName, PptxViewerMetrics.ViewerFontMetrics> metrics = new LinkedHashMap<>();
         Map<FontName, Set<String>> slotsCarried = new LinkedHashMap<>();
+        // The families the deck will not carry, keyed by name so that each is reported once
+        // however many times it was registered, and by the last registration of that name —
+        // the one whose declared family the runs are written with (familyNames keeps the last)
+        // and whose program the page was measured in (the font library keeps the last factory).
+        Map<FontName, FontFamilyDefinition> notCarried = new LinkedHashMap<>();
         for (FontFamilyDefinition family : customFontFamilies) {
             familyNames.put(family.name(), family.wordFamily());
-            if (family.fontSourceSet().isEmpty()) {
-                // Said of the text, not of the deck: this runs before a single run is drawn,
-                // so whether anything will use the family is not known here, and a family
-                // registered this way and never drawn in is named nowhere in the package.
-                // "No program" rather than "nothing": where text is drawn, the family's name
-                // does travel, on the slide that drew it. The substitution is part of the same
-                // clause and not a second sentence, so that it too says nothing about a deck
-                // that draws no text in the family.
-                LOG.warn("render.pptx.font.substitution family={} — registered without binary "
-                                + "sources, so no program for \"{}\" travels with the deck; any "
-                                + "text drawn with it is referenced by name only and "
-                                + "substituted by viewers that do not have the font installed",
-                        family.name().name(), family.wordFamily());
+            PptxViewerMetrics.ViewerFontMetrics viewerMetrics = family.fontSourceSet()
+                    .map(sources -> embedFontFamilyWithMetrics(
+                            show, family, sources, slotLedger, slotsCarried))
+                    .orElse(null);
+            if (viewerMetrics != null) {
+                metrics.put(family.name(), viewerMetrics);
+                notCarried.remove(family.name());
+            } else {
+                notCarried.put(family.name(), family);
             }
-            family.fontSourceSet().ifPresent(sources -> {
-                PptxViewerMetrics.ViewerFontMetrics viewerMetrics =
-                        embedFontFamilyWithMetrics(show, family, sources, slotLedger, slotsCarried);
-                if (viewerMetrics != null) {
-                    metrics.put(family.name(), viewerMetrics);
-                } else if (slotLedger.wasRefusedForASharedName(family.name())) {
-                    warnDrawnFromAnotherFamilysProgram(family);
-                } else {
-                    // Same key as every other substitution so one log filter
-                    // catches them all; the embed-skip warning carries the cause.
-                    // "Not carried whole" rather than "not carried" because this answers for
-                    // the family and not the face: what the reader has to act on is that some
-                    // face of it did not travel, which is true whether none did or only one
-                    // did. Every refusal there is a public path to today leaves nothing of the
-                    // family — the reads and the metrics all run while the presentation is
-                    // still untouched (see handOverPrograms) — so "whole" is the weaker of the
-                    // two claims and the one that stays true if that ever changes.
-                    // For the same reason this line says what the text needs rather than what
-                    // a viewer will do with it: where a face of the family is in the deck, what
-                    // a viewer draws a run of a missing face from — a synthetic face, or
-                    // another family — is the viewer's to decide, and nobody here has watched
-                    // one decide it. What holds either way is that identical glyphs need the
-                    // font itself.
-                    LOG.warn("render.pptx.font.substitution family={} — could not be embedded, "
-                                    + "so \"{}\" is not carried whole; text drawn in a face "
-                                    + "that did not travel is referenced by name, and needs "
-                                    + "that font installed where the deck is opened for "
-                                    + "identical glyphs",
-                            family.name().name(), family.wordFamily());
-                }
-            });
         }
+        // Reported after the last registration and not as each one is read, because which line
+        // is true depends on what the deck ends up carrying under the family's declared name,
+        // and a family registered later can be the one that carries it.
+        notCarried.values().forEach(family -> warnRegisteredFamilyNotCarried(family, slotLedger));
         if (!metrics.isEmpty()) {
             // Cleared, never set: POI's blank template already carries this flag set, and
             // addFacet sets it again for every face it takes, so a standing instruction to
@@ -552,14 +509,27 @@ public final class PptxRenderEnvironment {
                         sourceName);
             }
         } else if (substitutionWarned.add(viewerFamily)) {
-            // Nothing will carry it: either it was never registered, or this render was
-            // asked not to carry bundled families. Either way the deck can only name it,
-            // so a viewer without it installed substitutes.
-            LOG.warn("render.pptx.font.substitution family={} — not registered with binary "
-                            + "sources for this render, the deck references \"{}\" by name "
-                            + "only; register the family (registerFontFamily) to embed it and "
-                            + "guarantee identical glyphs on every machine",
-                    sourceName, viewerFamily);
+            if (slotLedger.alreadyDeclaredByAnother(viewerFamily, fontName)) {
+                // Nothing carries this family, but a registered one carries a face under the
+                // very name its runs are written with — a bundled family this render declined,
+                // drawn beside a registration that declares its name — so its text is drawn
+                // from that program and "by name only" would be untrue. The ledger already
+                // answers for every carrier while runs are drawn: registered families are
+                // carried before the first slide, and the only ones carried later are bundled
+                // — none where the render declined them, and otherwise each under its own
+                // name, which a run reaching this branch cannot have, since a run in a bundled
+                // family the render carries takes the branch above.
+                warnDrawnFromAnotherFamilysProgram(fontName, viewerFamily);
+            } else {
+                // Nothing will carry it: either it was never registered, or this render was
+                // asked not to carry bundled families. Either way the deck can only name it,
+                // so a viewer without it installed substitutes.
+                LOG.warn("render.pptx.font.substitution family={} — not registered with binary "
+                                + "sources for this render, the deck references \"{}\" by name "
+                                + "only; register the family (registerFontFamily) to embed it "
+                                + "and guarantee identical glyphs on every machine",
+                        sourceName, viewerFamily);
+            }
         }
         return viewerFamily;
     }
@@ -712,27 +682,102 @@ public final class PptxRenderEnvironment {
     }
 
     /**
-     * Reports a family refused because another one already held a slot of its declared name.
+     * Reports a registered family the deck does not carry, once, with the line that is true of
+     * what the deck carries under the family's declared name.
      *
-     * <p>Its own line rather than the substitution warning the other refusals share, because
+     * <p>Which line is true is decided by the deck rather than by why this family missed: where
+     * another family carries a face under the same declared name, the text is drawn from that
+     * program, whether this family was registered without sources, could not be read, or was
+     * refused for the slot — and in whichever order the two were registered.</p>
+     *
+     * <p>Two arrangements are not seen, and keep the line the cause alone would give. "Another
+     * family" is another {@link FontName}, because the ledger does not count slots the same
+     * name holds: a name registered first with sources that travelled, and then again without
+     * any or with sources that are not carried, is told what its last registration lacks while
+     * the earlier registration's program is in the deck — text drawn from a program the page
+     * was not measured in, which no line here describes. And "another family" is another
+     * <em>registered</em> family, because this runs while the environment is built: a bundled
+     * family carried under the same declared name is handed over after the last slide, so a
+     * registration declaring a bundled family's name that is not carried is told it needs its
+     * font installed while the bundled program travels under that name.</p>
+     *
+     * @param family the last registration of a family name the deck does not carry
+     * @param ledger the render's slot ledger, complete for the registered families
+     */
+    private static void warnRegisteredFamilyNotCarried(FontFamilyDefinition family,
+                                                       SlotLedger ledger) {
+        if (ledger.alreadyDeclaredByAnother(family.wordFamily(), family.name())) {
+            warnDrawnFromAnotherFamilysProgram(family.name(), family.wordFamily());
+        } else if (family.fontSourceSet().isEmpty()) {
+            // Said of the text, not of the deck: this runs before a single run is drawn,
+            // so whether anything will use the family is not known here, and a family
+            // registered this way and never drawn in is named nowhere in the package.
+            // "No program" rather than "nothing": where text is drawn, the family's name
+            // does travel, on the slide that drew it. The substitution is part of the same
+            // clause and not a second sentence, so that it too says nothing about a deck
+            // that draws no text in the family. "No program for" the declared name holds
+            // because the branch above takes every family whose name another one carries,
+            // short of the first arrangement the javadoc names. The second never reaches here:
+            // a family without sources declares only its own name, and registering a bundled
+            // family's name keeps the bundled pass from carrying that family.
+            LOG.warn("render.pptx.font.substitution family={} — registered without binary "
+                            + "sources, so no program for \"{}\" travels with the deck; any "
+                            + "text drawn with it is referenced by name only and "
+                            + "substituted by viewers that do not have the font installed",
+                    family.name().name(), family.wordFamily());
+        } else {
+            // Same key as every other substitution so one log filter
+            // catches them all; the embed-skip warning carries the cause.
+            // "Not carried whole" rather than "not carried" because this answers for
+            // the family and not the face: what the reader has to act on is that some
+            // face of it did not travel, which is true whether none did or only one
+            // did. Every refusal there is a public path to today leaves nothing of the
+            // family — the reads and the metrics all run while the presentation is
+            // still untouched (see handOverPrograms) — so "whole" is the weaker of the
+            // two claims and the one that stays true if that ever changes.
+            // For the same reason this line says what the text needs rather than what
+            // a viewer will do with it: where a face of the family is in the deck, what
+            // a viewer draws a run of a missing face from — a synthetic face, or
+            // another family — is the viewer's to decide, and nobody here has watched
+            // one decide it. What holds either way is that identical glyphs need the
+            // font itself.
+            LOG.warn("render.pptx.font.substitution family={} — could not be embedded, "
+                            + "so \"{}\" is not carried whole; text drawn in a face "
+                            + "that did not travel is referenced by name, and needs "
+                            + "that font installed where the deck is opened for "
+                            + "identical glyphs",
+                    family.name().name(), family.wordFamily());
+        }
+    }
+
+    /**
+     * Reports a family the deck does not carry, under whose declared name another family
+     * carries a face.
+     *
+     * <p>Its own line rather than the substitution warning the other misses share, because
      * that one tells the reader to install the font and here that would be the opposite of
      * what a viewer does: a program <em>is</em> in the deck under the very name this
      * family's text carries, and the text is drawn from it. The only thing the reader can
      * act on is the declaration — two families asking for one viewer name is a choice they
      * made and can unmake, and nothing short of unmaking it lets both programs travel.</p>
      *
-     * <p>Said for the registered path and the bundled one alike, and worded for both: which
-     * of the two the refused family came from changes nothing about what its text is drawn
-     * from, and the family is named either way.</p>
+     * <p>Said for a registered family, a bundled one and a name only a run carries alike, and
+     * worded for all three: where the family came from changes nothing about what its text is
+     * drawn from, and the family is named either way. The carrier is always a registration —
+     * the registered pass runs before a slide is drawn and no two bundled families declare one
+     * name — which is what the line says of it.</p>
+     *
+     * @param family   the family the document asked for, as it was named
+     * @param declared the viewer family its text is written with
      */
-    private static void warnDrawnFromAnotherFamilysProgram(FontFamilyDefinition family) {
+    private static void warnDrawnFromAnotherFamilysProgram(FontName family, String declared) {
         LOG.warn("render.pptx.font.substitution family={} — another registered family already "
                         + "carries a face under the viewer family \"{}\" this one declares, so "
                         + "no program of this family travels under that name; its text is "
                         + "referenced by that shared name and a viewer draws it from the "
                         + "program that did travel, not from this family's own font. Declare "
                         + "the two under different viewer families for each to carry its own",
-                family.name().name(), family.wordFamily());
+                family.name(), declared);
     }
 
     /**
@@ -754,16 +799,13 @@ public final class PptxRenderEnvironment {
      * and what is left of it after the name check in {@link PptxEmbeddedFont} is
      * POI's part store — see {@link #handOverPrograms}.</p>
      *
-     * <p>A fourth answers {@code null} here and is the one the caller has to tell apart: a
-     * face arriving into a style slot another family already holds under the same declared
-     * name. Every other refusal leaves nothing <em>of the family</em> in the deck, so its
-     * text needs the font installed; this one leaves another family's program under the very
-     * name the text carries, so the caller reports it with
-     * {@link #warnDrawnFromAnotherFamilysProgram} instead. Only this refusal, and not any
-     * other way of sharing a name: a family that shares one in a <em>free</em> slot and is
-     * then given up by the metrics read gets the ordinary line, with a program under that
-     * name all the same — true but weaker there, since what its own text needs is still the
-     * font itself.</p>
+     * <p>A fourth answers {@code null} here too: a face arriving into a style slot another
+     * family already holds under the same declared name. The caller does not tell the four
+     * apart. Which line it writes for a family this answers {@code null} for is decided by
+     * what the deck carries under the family's declared name once every registration has been
+     * read — see {@link #warnRegisteredFamilyNotCarried} — so a family sharing a name in a
+     * <em>free</em> slot and then given up by the metrics read is told the same as one refused
+     * for the slot, and in either order of registration.</p>
      *
      * @return the family's viewer metrics, or {@code null} where it is not carried
      */
@@ -938,10 +980,9 @@ public final class PptxRenderEnvironment {
      * which is the defect this guard exists to stop rather than a milder form of it.</p>
      *
      * <p>Nothing of the presentation is touched here, so a refusal costs the deck the family
-     * and nothing else. The only thing written to the ledger is the refusal itself, for the
-     * caller's choice of line; the slots are answered to the caller, which claims them when
-     * it is about to hand the faces over. Answers {@code null} where a face refused, having
-     * named it in the log; the caller reports the family. The cost of buffering is that one
+     * and nothing else. Nothing is written to the ledger either: the slots are answered to the
+     * caller, which claims them when it is about to hand the faces over. Answers
+     * {@code null} where a face refused, having named it in the log; the caller reports the family. The cost of buffering is that one
      * family's programs are held twice while its facets are added, since the parts keep
      * their bytes as well.</p>
      *
@@ -1047,7 +1088,6 @@ public final class PptxRenderEnvironment {
                 // own header to recover a weight from at all.
                 Seated holder = ledger.holderOf(typeface, style.slot());
                 if (holder != null && !holder.family().equals(familyName)) {
-                    ledger.recordRefusalForASharedName(familyName);
                     throw new IOException("a presentation seats one face per style, and the "
                             + "style belongs to the declared family rather than to a "
                             + "registration: this family declares \"" + typeface
@@ -1250,13 +1290,15 @@ public final class PptxRenderEnvironment {
             Optional<FontFamilyDefinition.FontSourceSet> sources = family.fontSourceSet();
             if (embedFontFamily(show, family, sources.orElseThrow(), faces, slotLedger)) {
                 embeddedAny = true;
-            } else if (slotLedger.wasRefusedForASharedName(family.name())) {
+            } else if (slotLedger.alreadyDeclaredByAnother(family.wordFamily(), family.name())) {
                 // The reachable half of this: a caller registers their own family under a
                 // bundled one's viewer name. The bundled pass runs after the last slide, so
                 // the caller's family holds the slot by now and this one is the refused one
                 // — which is the way round the decision wants it, an explicit registration
-                // keeping its own font.
-                warnDrawnFromAnotherFamilysProgram(family);
+                // keeping its own font. Asked of the ledger rather than of the refusal, as
+                // for a registered family, so the line follows what the deck carries under
+                // the name and not which of the reads turned the family down.
+                warnDrawnFromAnotherFamilysProgram(family.name(), family.wordFamily());
             } else {
                 // Reached on the same answer as the registered-family line above, and worded
                 // the same way. The family was certainly drawn in — the loop skips one that

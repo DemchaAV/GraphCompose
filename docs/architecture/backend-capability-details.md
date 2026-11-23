@@ -728,9 +728,19 @@ font cannot travel as an embedded program — because it has no program,
 because one could not be carried, because no family of either kind covers
 the name, because the render was asked not to carry a bundled family it
 drew with, or because it is a standard-14 name mapped to a
-metric-compatible replacement. Three of those lines say what the
+metric-compatible replacement. Three of the lines for those causes say what the
 deck will not carry and leave what it does reference to the text that was
-drawn — in the family, or in the face that did not travel; embedded
+drawn — in the family, or in the face that did not travel. Once per family
+holds however many times a family is registered: the lines for registered
+families are written after the last registration has been read, one per family
+name, and the last registration of a name decides it, as it decides the viewer
+family the runs are written with and the program the page was measured in.
+Where another registered family carries a face under the viewer family a
+missing family's text is written with — a family registered without sources,
+one that could not be carried, or a bundled family the render declined, beside
+a registration declaring the same `wordFamily` — the line says that text is
+drawn from the program that travelled, whatever the cause and in either order
+of registration, instead of telling the reader to install the font. Embedded
 families render silently unless a face of theirs is named by the line
 below. That one is about the naming of a face rather than about what the
 deck carries: `render.pptx.font.name.mismatch`, once per face whose

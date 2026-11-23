@@ -18996,10 +18996,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * A table's row by its index, from the rows POI keeps for the table.
      *
-     * <p>POI's {@code XWPFTable.getRow} and {@code getNumberOfRows} count the table's {@code w:tr}
-     * elements on every call, a walk of the whole table: read once a row, the walks grow with the
-     * square of the table's rows. The list holds the same rows in the same order for a table the
-     * export writes through POI, as the row loops here do.</p>
+     * <p>POI's {@code XWPFTable.getRow} reads this same list, but counts the table's {@code w:tr}
+     * elements first to check the index, as {@code getNumberOfRows} counts them: a walk of the whole
+     * table on every call, so read once a row, the walks grew with the square of the table's rows.
+     * The rows read here are all in range.</p>
      */
     private static XWPFTableRow rowOf(XWPFTable table, int index) {
         return table.getRows().get(index);

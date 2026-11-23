@@ -218,6 +218,35 @@ class DocxClosingSpacesTest {
     }
 
     @Test
+    void aLinksAndAFieldsRunsAreReadInTheirPlacesAmongThePlainRuns() throws Exception {
+        // Read back from the paragraph's end in the order they stand: the plain chip, the field's
+        // run, the link's run; the plain letters before them end the walk.
+        try (XWPFDocument document = new XWPFDocument()) {
+            XWPFParagraph para = document.createParagraph();
+            text(para, "Total", false);
+            CTR linked = para.getCTP().addNewHyperlink().addNewR();
+            linked.addNewT().setStringValue("  ");
+            shade(linked);
+            CTR inField = para.getCTP().addNewFldSimple().addNewR();
+            inField.addNewT().setStringValue("  ");
+            shade(inField);
+            XWPFRun chip = text(para, "  ", true);
+            List<String> children = new java.util.ArrayList<>();
+            try (org.apache.xmlbeans.XmlCursor cursor = para.getCTP().newCursor()) {
+                for (boolean more = cursor.toFirstChild(); more; more = cursor.toNextSibling()) {
+                    children.add(cursor.getName().getLocalPart());
+                }
+            }
+            assertThat(children).as("the paragraph holds a run, a link, a field and a run, in that order")
+                    .containsExactly("r", "hyperlink", "fldSimple", "r");
+
+            assertThat(DocxClosingSpaces.fill(document)).containsExactly(chip.getCTR(), inField, linked);
+            assertThat(inField.getTArray(0).getStringValue()).isEqualTo(NBSP.repeat(2));
+            assertThat(linked.getTArray(0).getStringValue()).isEqualTo(NBSP.repeat(2));
+        }
+    }
+
+    @Test
     void shadedSpacesBeforeAFieldCharacterStay() throws Exception {
         try (XWPFDocument document = new XWPFDocument()) {
             XWPFParagraph para = document.createParagraph();

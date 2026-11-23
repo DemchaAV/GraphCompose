@@ -80,15 +80,16 @@ follow semantic versioning; release dates are ISO 8601.
   `CanonicalRender` fork, 22.2 MB for the four `DocxExport.docx` shapes. Every JMH benchmark now
   extends `QuietJmhBenchmark`, whose static initializer applies the manual harness's quiet
   configuration and initializes Logback before the fork loads anything that logs, so Logback's
-  start-up is outside every measured region; the same two runs print 6 KB and 19 KB. The logging was inside the measured region: `CanonicalRender` allocated 333 172 B/op with
-  it and 273 169 B/op without, each `ColdStart` shot 12.5–13.2 % less, and three of the four
-  `DocxExport.docx` shapes 1.1–4.8 % less (the fourth moved within its error). JMH results
-  recorded before this change, the weekly `benchmarks-jmh.yml` series among them, are not
-  comparable with later ones. `-jvmArgsAppend "-Dgraphcompose.benchmark.logging=debug"` keeps the
-  engine's logging, as `-Dgraphcompose.benchmark.logging=debug` does for the manual harness.
+  start-up is outside every measured region; the same two runs print 6 KB and 19 KB. The logging
+  was inside the measured region: `CanonicalRender` allocated 333 172 B/op with it and
+  273 169 B/op without, each `ColdStart` shot 12.5–13.2 % less, and the `table1000` shape of
+  `DocxExport.docx` 4.8 % less; the other three shapes moved within their error. JMH results
+  recorded before 2.5.2, the weekly `benchmarks-jmh.yml` series among them, are not comparable
+  with later ones. `-jvmArgsAppend "-Dgraphcompose.benchmark.logging=debug"` keeps the engine's
+  logging, as `-Dgraphcompose.benchmark.logging=debug` does for the manual harness.
   `JmhQuietLoggingGuardTest` reads `META-INF/BenchmarkList`, the list the JMH runner reads, adds
-  every `@State` class of the package, and fails for a class whose initialization leaves the
-  engine's loggers at DEBUG.
+  the `@State` classes the benchmarks take and every `@State` class of the package, and fails for a
+  class whose initialization leaves the engine's loggers at DEBUG.
 
 ## v2.5.1 — 2026-11-22
 

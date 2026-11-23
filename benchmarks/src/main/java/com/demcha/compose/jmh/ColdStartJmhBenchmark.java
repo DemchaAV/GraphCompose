@@ -37,7 +37,9 @@ import java.util.concurrent.TimeUnit;
  * The spec/template objects are built in {@link #setUp()} so the measured shot is
  * the cold render path, not fixture assembly. Same workloads as the warm benches
  * ({@code engine-simple} inline, {@code ModernInvoice}, {@code ModernProfessional})
- * so cold and warm numbers are directly comparable.</p>
+ * so cold and warm numbers are directly comparable. Logback starts in
+ * {@link QuietJmhBenchmark}'s class initializer, so its start-up is not in the
+ * shot.</p>
  *
  * <pre>
  *   ./mvnw -f benchmarks/pom.xml clean package -DskipTests

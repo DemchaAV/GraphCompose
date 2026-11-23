@@ -185,23 +185,24 @@ java -jar benchmarks/target/benchmarks.jar CanonicalRender -f 1 -wi 2 -i 3
 ```
 
 An `exec:java` run **cannot** fork (the child JVM loses the project classpath),
-so always run JMH through the jar.
+so always run JMH through the jar. Quote the JMH numbers — not the manual
+harness numbers — for any public performance claim.
 
 Every JMH benchmark, and any `@State` class of its own, extends
 `QuietJmhBenchmark`, which applies `logback-benchmark.xml` in the forked JVM and
 initializes Logback before anything in it logs — the same quiet configuration the
 manual harness uses. Without it a fork falls back to Logback's default and prints
 the engine's DEBUG lines to the console, tens of megabytes per run, inside the
-timed region. `JmhQuietLoggingGuardTest` fails for a class that does not. To see the engine's logging in a JMH run, pass the
+timed region. `JmhQuietLoggingGuardTest` fails for a benchmark or `@State` class
+that does not extend it. To see the engine's logging in a JMH run, pass the
 manual harness's switch to the fork:
 
 ```bash
 java -jar benchmarks/target/benchmarks.jar CanonicalRender -jvmArgsAppend "-Dgraphcompose.benchmark.logging=debug"
 ```
 
-JMH results from before this change were measured with DEBUG logging on and are
-not comparable with later ones. Quote the JMH numbers — not the manual
-harness numbers — for any public performance claim.
+JMH results from before 2.5.2 were measured with DEBUG logging on and are not
+comparable with later ones.
 
 ## Roadmap
 

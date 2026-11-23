@@ -3,19 +3,24 @@ package com.demcha.compose.jmh;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.runner.BenchmarkList;
 import org.openjdk.jmh.runner.BenchmarkListEntry;
 import org.openjdk.jmh.runner.format.OutputFormatFactory;
 import org.openjdk.jmh.runner.options.VerboseMode;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,11 +32,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Every JMH benchmark in the runner jar must start its forked JVM with the
- * quiet benchmark logging, whatever arguments the run is given.
+ * quiet benchmark logging unless the run opts out.
  *
  * <p>The benchmarks are read from {@code META-INF/BenchmarkList}, the list the
  * JMH runner itself reads, so a benchmark added later is checked without being
- * named here; every {@code @State} class in this package is checked with them.
+ * named here. Checked with them are the {@code @State} classes their
+ * {@code @Benchmark}, {@code @Setup} and {@code @TearDown} methods take, in any
+ * package, and every {@code @State} class compiled into this package.
  * Each class is initialized in a class loader of its own, as the
  * forked JVM does, and the test then asks that loader's SLF4J which level the
  * engine's loggers ended up at.</p>
@@ -80,6 +87,7 @@ class JmhQuietLoggingGuardTest {
         // A @State class of its own may be initialized before the benchmark
         // class, so it has to be quiet on its own as well.
         TreeSet<String> classes = new TreeSet<>(benchmarks);
+        classes.addAll(stateClassesTakenBy(benchmarks));
         classes.addAll(stateClassesInThisPackage());
 
         List<String> loud = new ArrayList<>();
@@ -122,13 +130,49 @@ class JmhQuietLoggingGuardTest {
     }
 
     /**
+     * The {@code @State} classes the benchmarks' {@code @Benchmark},
+     * {@code @Setup} and {@code @TearDown} methods take, followed through the
+     * states' own fixture methods: the set JMH instantiates, whatever package
+     * a state class lives in.
+     */
+    private static List<String> stateClassesTakenBy(List<String> benchmarks) throws Exception {
+        ClassLoader loader = JmhQuietLoggingGuardTest.class.getClassLoader();
+        ArrayDeque<Class<?>> pending = new ArrayDeque<>();
+        for (String name : benchmarks) {
+            pending.add(Class.forName(name, false, loader));
+        }
+        TreeSet<String> seen = new TreeSet<>();
+        List<String> states = new ArrayList<>();
+        while (!pending.isEmpty()) {
+            Class<?> type = pending.poll();
+            if (!seen.add(type.getName())) {
+                continue;
+            }
+            for (Method method : type.getMethods()) {
+                if (!method.isAnnotationPresent(Benchmark.class) && !method.isAnnotationPresent(Setup.class)
+                        && !method.isAnnotationPresent(TearDown.class)) {
+                    continue;
+                }
+                for (Class<?> parameter : method.getParameterTypes()) {
+                    if (parameter.isAnnotationPresent(State.class) && !seen.contains(parameter.getName())) {
+                        states.add(parameter.getName());
+                        pending.add(parameter);
+                    }
+                }
+            }
+        }
+        return states;
+    }
+
+    /**
      * Every {@code @State} class compiled into this package, nested ones
      * included; JMH's generated code lives in a sub-package and is skipped.
      */
     private static List<String> stateClassesInThisPackage() throws Exception {
         String pkg = QuietJmhBenchmark.class.getPackageName();
-        Path dir = Path.of(QuietJmhBenchmark.class.getProtectionDomain().getCodeSource().getLocation().toURI())
-                .resolve(pkg.replace('.', '/'));
+        Path root = Path.of(QuietJmhBenchmark.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        assertThat(root).as("benchmark classes are read from a directory, not a jar").isDirectory();
+        Path dir = root.resolve(pkg.replace('.', '/'));
         List<String> states = new ArrayList<>();
         try (Stream<Path> files = Files.list(dir)) {
             for (Path file : files.filter(f -> f.toString().endsWith(".class")).toList()) {

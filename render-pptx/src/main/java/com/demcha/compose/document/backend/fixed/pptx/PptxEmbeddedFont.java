@@ -41,7 +41,7 @@ final class PptxEmbeddedFont {
      * fit, or the part comes back as {@code Buffer overrun, having 1000 bytes in the
      * stream}. The second rule is the stricter — it bounds the four together where the
      * first bounds them one at a time — so it is the one measured here, where a refusal is
-     * the checked one {@code readPrograms} already degrades a family on.</p>
+     * the checked one {@code PptxFontEmbedder.readPrograms} already degrades a family on.</p>
      *
      * <p>It has to be measured here rather than left to the readers in front of this one.
      * {@code java.awt.Font.createFont}, which the viewer metrics are read through, rejects

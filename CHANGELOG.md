@@ -36,6 +36,19 @@ follow semantic versioning; release dates are ISO 8601.
     registered again, after a registration of it that travelled, is likewise told only what its
     last registration lacks.
 
+### Internal
+
+- **`PptxRenderEnvironment` no longer carries the PPTX backend's font embedding.** Embedding had
+  grown into most of the class (1,426 lines), and now lives in three package-private classes:
+  `PptxDeckFonts` (which families a render carries, the viewer family a run is written with, and
+  the `render.pptx.font.substitution` lines), `PptxFontEmbedder` (reading a family's faces,
+  refusing it whole, handing the programs to the presentation, and the `embed.skipped`,
+  `shared.family` and `name.mismatch` lines that name why) and `PptxSlotLedger` (which face holds
+  each style slot of a declared viewer family). The environment keeps every public method; the
+  font ones delegate. No behaviour changes: decks rendered with
+  `deterministic(...)` are the same bytes, and the render log carries the same lines in the same
+  order.
+
 ### Build
 
 - **The post-release showcase restore in `cut-release.ps1` passes its `--` to git.** PowerShell

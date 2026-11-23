@@ -468,7 +468,7 @@ final class DocxFontTable {
      *
      * <p>For a free slot, what decides whether that second program is read turns out not to be how
      * it is written.
-     * The PPTX sibling ({@code PptxRenderEnvironment.SlotLedger}) decides the same refusal per
+     * The PPTX sibling ({@code PptxSlotLedger}) decides the same refusal per
      * slot, so two families sharing a name both travel there where their slots do not clash, and
      * the format would allow the same here twice over: as a second {@code w:font} element under
      * the name, or as another child of the holder's element, since a {@code w:font} holds one

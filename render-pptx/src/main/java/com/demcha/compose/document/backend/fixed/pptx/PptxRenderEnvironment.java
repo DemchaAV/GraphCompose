@@ -10,13 +10,11 @@ import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping;
 import com.demcha.compose.engine.components.content.ImageData;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.render.pdf.PdfFont;
-import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.font.FontName;
 import org.apache.poi.sl.usermodel.PictureData;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
-import org.apache.poi.xslf.usermodel.XSLFFontInfo;
 import org.apache.poi.xslf.usermodel.XSLFPictureData;
 import org.apache.poi.xslf.usermodel.XSLFGroupShape;
 import org.apache.poi.xslf.usermodel.XSLFShapeContainer;
@@ -27,16 +25,11 @@ import org.slf4j.LoggerFactory;
 import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
-import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * Shared per-render-pass state for the fixed-layout PPTX backend.
@@ -71,196 +64,12 @@ public final class PptxRenderEnvironment {
     private int pageIndexOffset;
     private final double canvasHeight;
     private final FontLibrary fonts;
-    private final Map<FontName, String> customFontFamilies;
-    /**
-     * Which style elements a registered family's own programs fill, by the name it was registered
-     * under — the answer to "can this family name a face itself?", which is what decides whether
-     * its <em>name</em> may contribute a run flag (see {@link #tokensTheNameMaySpeak}).
-     *
-     * <p>Written where the faces are handed to the presentation, so an entry stands for a
-     * registered family the presentation took whole. Everything else is absent, and absent means
-     * "the name is all a run has": a family registered without sources, one refused or given up,
-     * one whose hand-over failed part way — which leaves what it took, so such a family does carry
-     * a face the name then speaks over — and every bundled family, which travels by another road
-     * and never carries a style token in its name to begin with. The slot a program lands in is
-     * read off the program
-     * itself ({@code PptxEmbeddedFont.styleOf}) and not off the slot a caller put it in, because
-     * those need not agree — the file a caller passes as the family's regular source may be a bold
-     * program, which is exactly the registration this permission exists to read.</p>
-     */
-    private final Map<FontName, Set<String>> carriedSlots;
-    private final Map<FontName, PptxViewerMetrics.ViewerFontMetrics> viewerFontMetrics;
+    private final PptxDeckFonts deckFonts;
     private final Map<String, XSLFPictureData> pictureDataCache = new LinkedHashMap<>();
     private final Map<String, java.awt.Dimension> pictureSizeCache = new LinkedHashMap<>();
     private final List<BookmarkRecord> bookmarkRecords = new ArrayList<>();
     private final Map<String, AnchorDestination> anchorDestinations = new LinkedHashMap<>();
     private final List<FragmentLink> fragmentLinks = new ArrayList<>();
-    private final Set<String> substitutionWarned = new LinkedHashSet<>();
-    /**
-     * Every face a run asked for: family to the bold/italic combinations drawn with it.
-     *
-     * <p>Kept per face rather than per family because embedding is whole-font. A deck
-     * showing six Korean characters in one weight was carrying Gothic A1 twice — 4.4 MB
-     * for a facet that is never on a slide.</p>
-     */
-    private final Map<FontName, Set<Face>> usedFaces = new LinkedHashMap<>();
-    /** Bundled families already noted as carried, so the note is one line per family. */
-    private final Set<String> bundledCarryNoted = new LinkedHashSet<>();
-    /** Which face holds each style slot of each declared family name, for this render. */
-    private final SlotLedger slotLedger = new SlotLedger();
-
-    /** A family's four faces, as the source set names them. */
-    private enum Face {
-        REGULAR, BOLD, ITALIC, BOLD_ITALIC;
-
-        static Face of(boolean bold, boolean italic) {
-            if (bold && italic) {
-                return BOLD_ITALIC;
-            }
-            return bold ? BOLD : italic ? ITALIC : REGULAR;
-        }
-
-        FontFamilyDefinition.FontBinarySource in(FontFamilyDefinition.FontSourceSet sources) {
-            return switch (this) {
-                case BOLD -> sources.bold();
-                case ITALIC -> sources.italic();
-                case BOLD_ITALIC -> sources.boldItalic();
-                case REGULAR -> sources.regular();
-            };
-        }
-    }
-
-    /**
-     * A face already seated in a style slot, as a refusal over that slot has to name it.
-     *
-     * <p>Its own weight, not the colliding face's: the two differ — a bold slot holding a
-     * 300-weight face collides with a 400-weight regular — and the weight is what a caller
-     * can go and look for in their font, so naming one of the two for both would send them
-     * after the wrong face. The italic flag is not here because the two always agree on it:
-     * the slot is read from the weight's side of 400 and that flag, so faces that share a
-     * slot share the flag.</p>
-     *
-     * <p>Not a {@link Face}, which is the slot a family <em>registers</em> a face under. The
-     * slot a refusal is about is the one the container reads back as, and the whole of what
-     * is guarded is that the two need not agree.</p>
-     *
-     * @param family      the family the face was registered under, for a refusal that
-     *                    crosses two of them. A {@link FontName}, so that two registrations
-     *                    the rest of the engine treats as one family — the name being
-     *                    case-insensitive — are one family here too
-     * @param description the source the face was read from, as it names itself
-     * @param weight      that face's own weight, as the presentation reads it
-     */
-    private record Seated(FontName family, String description, int weight) {
-    }
-
-    /**
-     * Which face holds each style slot of each declared family name, for this render.
-     *
-     * <p>A style slot's capacity belongs to the <em>declared</em> family name rather than to
-     * a definition: {@code XSLFFontInfo} looks an entry up by typeface, ignoring case, so two
-     * definitions whose {@link FontFamilyDefinition#wordFamily()} matches that way write into
-     * one entry and one set of four slots. Keyed the way that lookup is, and shared across
-     * the whole render rather than built per definition, because the two halves of it are far
-     * apart: a registered family is carried while the environment is being constructed, and a
-     * bundled one after the last slide is drawn.</p>
-     *
-     * <p>Nothing here is claimed until the caller is about to hand a family's faces over, so
-     * a family whose read or whose viewer metrics refuse claims nothing: a claim is what
-     * stops a later family writing over a part, and it has to stand for a part that is about
-     * to exist. It is made before the hand-over rather than after, because a hand-over that
-     * fails part way through has still written what it took. What that leaves is a family the
-     * presentation refuses the <em>first</em> of its faces, which holds claimed slots with
-     * only a declaration written — and the one refusal still possible there is POI's part
-     * store, which no font can provoke (see {@link #handOverPrograms}).</p>
-     */
-    private static final class SlotLedger {
-
-        /**
-         * One declared family name, as the first family to declare it spelled it, the face
-         * holding each of its four style slots, and whether the sharing of it has been
-         * reported.
-         *
-         * <p>Held in a list walked with {@link String#equalsIgnoreCase}, not in a map on a
-         * case-folded key: that operator is the one {@code XSLFFontInfo} matches an entry
-         * with, and a key derived here instead could disagree with it for a name where
-         * folding and {@code equalsIgnoreCase} part company — which would be a collision the
-         * deck makes and this does not see. A render declares a handful of families, so the
-         * walk is the cheaper half of that trade as well.</p>
-         */
-        private static final class Declared {
-            private final String typeface;
-            private final Map<String, Seated> bySlot = new LinkedHashMap<>();
-            private boolean sharingReported;
-
-            private Declared(String typeface) {
-                this.typeface = typeface;
-            }
-        }
-
-        private final List<Declared> declared = new ArrayList<>();
-
-        /** The face holding that slot of that declared name, or {@code null}. */
-        Seated holderOf(String typeface, String slot) {
-            return entry(typeface).map(found -> found.bySlot.get(slot)).orElse(null);
-        }
-
-        /** Records that these faces hold these slots of that declared name. */
-        void claim(String typeface, Map<String, Seated> bySlot) {
-            entry(typeface).orElseGet(() -> {
-                Declared fresh = new Declared(typeface);
-                declared.add(fresh);
-                return fresh;
-            }).bySlot.putAll(bySlot);
-        }
-
-        /**
-         * That name as the deck declares it: the spelling of the family that declared it
-         * first, which is the one {@code XSLFFontInfo} writes into the entry and keeps.
-         *
-         * <p>What a line about the <em>entry</em> has to name, since a later family's own
-         * spelling appears nowhere in the package and would send a reader looking for a
-         * declaration the deck does not contain.</p>
-         */
-        String asDeclared(String typeface) {
-            return entry(typeface).map(found -> found.typeface).orElse(typeface);
-        }
-
-        /** Whether that declared name already carries a face of another family. */
-        boolean alreadyDeclaredByAnother(String typeface, FontName family) {
-            return entry(typeface).stream()
-                    .flatMap(found -> found.bySlot.values().stream())
-                    .anyMatch(seated -> !seated.family().equals(family));
-        }
-
-        /**
-         * Whether the sharing of that declared name is still to be reported, marking it
-         * reported if so — once for the name, however many families join it.
-         *
-         * <p>Only ever asked of a name an entry already exists for, the caller having found
-         * another family in it first, so the flag can live on the entry.</p>
-         */
-        boolean reportSharingOnce(String typeface) {
-            Optional<Declared> owed = entry(typeface).filter(found -> !found.sharingReported);
-            owed.ifPresent(found -> found.sharingReported = true);
-            return owed.isPresent();
-        }
-
-        private Optional<Declared> entry(String typeface) {
-            return declared.stream()
-                    .filter(found -> typeface.equalsIgnoreCase(found.typeface))
-                    .findFirst();
-        }
-    }
-    /** Bundled families that carry a binary, i.e. the ones the embedder can take. */
-    private static final Map<FontName, FontFamilyDefinition> EMBEDDABLE_BUNDLED =
-            DefaultFonts.bundledFamilies().stream()
-                    .filter(family -> family.fontSourceSet().isPresent())
-                    .collect(java.util.stream.Collectors.toMap(
-                            FontFamilyDefinition::name, family -> family, (a, b) -> a,
-                            LinkedHashMap::new));
-    /** Whether this render will offer the families it used to the embedder. */
-    private boolean embedsBundledFonts = true;
     private final java.util.Deque<XSLFGroupShape> groupStack = new java.util.ArrayDeque<>();
     private int rasterizedClipCount;
     private long rasterizedClipPixels;
@@ -276,46 +85,7 @@ public final class PptxRenderEnvironment {
         this.pageIndexOffset = pageIndexOffset;
         this.canvasHeight = canvasHeight;
         this.fonts = fonts;
-        Map<FontName, String> familyNames = new LinkedHashMap<>();
-        Map<FontName, PptxViewerMetrics.ViewerFontMetrics> metrics = new LinkedHashMap<>();
-        Map<FontName, Set<String>> slotsCarried = new LinkedHashMap<>();
-        // The families the deck will not carry, keyed by name so that each is reported once
-        // however many times it was registered, and by the last registration of that name —
-        // the one whose declared family the runs are written with (familyNames keeps the last)
-        // and whose program the page was measured in (the font library keeps the last factory).
-        Map<FontName, FontFamilyDefinition> notCarried = new LinkedHashMap<>();
-        for (FontFamilyDefinition family : customFontFamilies) {
-            familyNames.put(family.name(), family.wordFamily());
-            PptxViewerMetrics.ViewerFontMetrics viewerMetrics = family.fontSourceSet()
-                    .map(sources -> embedFontFamilyWithMetrics(
-                            show, family, sources, slotLedger, slotsCarried))
-                    .orElse(null);
-            if (viewerMetrics != null) {
-                metrics.put(family.name(), viewerMetrics);
-                notCarried.remove(family.name());
-            } else {
-                notCarried.put(family.name(), family);
-            }
-        }
-        // Reported after the last registration and not as each one is read, because which line
-        // is true depends on what the deck ends up carrying under the family's declared name,
-        // and a family registered later can be the one that carries it.
-        notCarried.values().forEach(family -> warnRegisteredFamilyNotCarried(family, slotLedger));
-        if (!metrics.isEmpty()) {
-            // Cleared, never set: POI's blank template already carries this flag set, and
-            // addFacet sets it again for every face it takes, so a standing instruction to
-            // subset on save is what a deck says by default. Nothing here subsets a face —
-            // a program travels with every glyph it has — so a deck that carries one says
-            // the opposite. The Word counterpart of that instruction was measured cutting
-            // an embedded face down on a save (docs/recipes/docx-export.md), which is why
-            // a document never writes it; PowerPoint's own handling of the pair has not
-            // been measured. A deck that carries nothing leaves the template's value alone,
-            // where embedding is off and it decides nothing.
-            show.getCTPresentation().setSaveSubsetFonts(false);
-        }
-        this.customFontFamilies = Map.copyOf(familyNames);
-        this.carriedSlots = Map.copyOf(slotsCarried);
-        this.viewerFontMetrics = Map.copyOf(metrics);
+        this.deckFonts = new PptxDeckFonts(show, customFontFamilies);
     }
 
     PptxRenderEnvironment(XMLSlideShow show,
@@ -473,81 +243,24 @@ public final class PptxRenderEnvironment {
      */
     @Internal
     public String fontFamily(FontName fontName, boolean bold, boolean italic) {
-        if (fontName != null) {
-            usedFaces.computeIfAbsent(fontName, name -> new LinkedHashSet<>())
-                    .add(Face.of(bold, italic));
-            String customFamily = customFontFamilies.get(fontName);
-            if (customFamily != null) {
-                return customFamily;
-            }
-        }
-        // Dedupe on the resolved viewer family: a standard-14 alias and its base name share one
-        // line, while a name no registration covers is counted as written. Facet-suffixed
-        // spellings of such a name used to share a line too, when this read took the suffix off
-        // them — a grouping no render could reach, since such a name fails the layout first.
-        // The message still names the source font the document asked for.
-        String viewerFamily = PptxFontMapping.familyFor(fontName);
-        String sourceName = (fontName == null ? FontName.HELVETICA : fontName).name();
-        String replacement = PptxFontMapping.standardReplacementFor(fontName);
-        if (replacement != null) {
-            if (substitutionWarned.add(viewerFamily)) {
-                LOG.warn("render.pptx.font.substitution family={} — a PDF built-in with no "
-                                + "PPTX counterpart, rendered as metric-compatible \"{}\" "
-                                + "(identical widths, slightly different letterforms); register "
-                                + "a binary font family for identical glyphs in both formats",
-                        sourceName, replacement);
-            }
-        } else if (embedsBundledFonts && EMBEDDABLE_BUNDLED.containsKey(fontName)) {
-            // A bundled family this render carries itself. Warning here would tell the
-            // reader the opposite of what the deck ends up containing; if the embed
-            // fails, embedBundledFontsUsed says so at the point it knows. Noted once per
-            // family, as the warning below is — an Arabic article draws sixteen hundred
-            // runs in one family, and sixteen hundred identical lines say nothing more
-            // than the first. Its own set, so a later decline still warns.
-            if (bundledCarryNoted.add(viewerFamily)) {
-                LOG.debug("render.pptx.font.bundled family={} — carried by this deck",
-                        sourceName);
-            }
-        } else if (substitutionWarned.add(viewerFamily)) {
-            if (slotLedger.alreadyDeclaredByAnother(viewerFamily, fontName)) {
-                // Nothing carries this family, but a registered one carries a face under the
-                // very name its runs are written with — a bundled family this render declined,
-                // drawn beside a registration that declares its name — so its text is drawn
-                // from that program and "by name only" would be untrue. The ledger already
-                // answers for every carrier while runs are drawn: registered families are
-                // carried before the first slide, and the only ones carried later are bundled
-                // — none where the render declined them, and otherwise each under its own
-                // name, which a run reaching this branch cannot have, since a run in a bundled
-                // family the render carries takes the branch above.
-                warnDrawnFromAnotherFamilysProgram(fontName, viewerFamily);
-            } else {
-                // Nothing will carry it: either it was never registered, or this render was
-                // asked not to carry bundled families. Either way the deck can only name it,
-                // so a viewer without it installed substitutes.
-                LOG.warn("render.pptx.font.substitution family={} — not registered with binary "
-                                + "sources for this render, the deck references \"{}\" by name "
-                                + "only; register the family (registerFontFamily) to embed it "
-                                + "and guarantee identical glyphs on every machine",
-                        sourceName, viewerFamily);
-            }
-        }
-        return viewerFamily;
+        return deckFonts.fontFamily(fontName, bold, italic);
     }
 
     /**
      * Whether this run asks a viewer for a bold face.
      *
      * <p>The span's decoration, and the family's registered name only where the family's own faces
-     * cannot name one — see {@link #tokensTheNameMaySpeak}. Every writer that needs the flag asks
-     * here, so the attribute a run carries, the face recorded as drawn and the ascent the frame is
-     * seated on are one answer rather than three readings of the same style.</p>
+     * cannot name one — see {@code PptxDeckFonts.tokensTheNameMaySpeak}. Every writer that needs
+     * the flag asks here, so the attribute a run carries, the face recorded as drawn and the
+     * ascent the frame is seated on are one answer rather than three readings of the same
+     * style.</p>
      *
      * @param style the span's style
      * @return whether the run is written bold
      */
     @Internal
     public boolean runIsBold(TextStyle style) {
-        return PptxFontMapping.isBold(style, tokensTheNameMaySpeak(style.fontName()));
+        return PptxFontMapping.isBold(style, deckFonts.tokensTheNameMaySpeak(style.fontName()));
     }
 
     /**
@@ -559,50 +272,7 @@ public final class PptxRenderEnvironment {
      */
     @Internal
     public boolean runIsItalic(TextStyle style) {
-        return PptxFontMapping.isItalic(style, tokensTheNameMaySpeak(style.fontName()));
-    }
-
-    /**
-     * Whether a family's registered name may say anything about a run's face, given the faces the
-     * family itself carries. One rule: <b>the name speaks only where it names exactly the one face
-     * the family carries, or where the family carries none.</b>
-     *
-     * <ul>
-     *   <li><b>two or more elements carried</b> — nothing. Such a family distinguishes its faces by
-     *       the element a run asks for, and the span's decoration is what says which. Measured in
-     *       PowerPoint 16 on a 45-character line at 20pt: a single definition under
-     *       {@code Acme-Sans-Bold} holding a regular file and a bold one used to flag every run of
-     *       itself, and its plain paragraph came out of the bold program 12.90pt wider than the
-     *       frame the engine had sized for it. With the flag off that run, the same deck drew
-     *       531.94pt against the 531.90pt the page laid out, from the regular program, and the bold
-     *       paragraph did not move.</li>
-     *   <li><b>one element carried</b> — every token, but only if the name names <em>that</em>
-     *       element. This is the registration a caller makes per face, where nothing but the name
-     *       can say which face its runs want. A name ending {@code -Bold} over a single bold
-     *       program speaks; the same name over a single <em>regular</em> program does not, which is
-     *       the other half of the same gap (that deck's line came out 9.17pt short of its frame);
-     *       and it does not speak over a single bold-<em>italic</em> program either, because a run
-     *       flagged bold alone would ask for an element that deck does not hold.</li>
-     *   <li><b>nothing carried</b> — every token. A family registered without sources has no faces
-     *       to distinguish, so its name is all a run has. This is also the answer for a bundled or
-     *       standard-14 name, which no registration covers, and for a family the presentation did
-     *       not take: an absent entry and an empty one say the same thing here.</li>
-     * </ul>
-     *
-     * @param fontName the family a run names, may be {@code null}
-     * @return the style tokens {@link PptxFontMapping} may read out of the name
-     */
-    private Set<String> tokensTheNameMaySpeak(FontName fontName) {
-        Set<String> carried = fontName == null ? null : carriedSlots.get(fontName);
-        if (carried == null || carried.isEmpty()) {
-            return PptxFontMapping.ANY_TOKEN;
-        }
-        if (carried.size() > 1) {
-            return Set.of();
-        }
-        return PptxFontMapping.namesExactly(fontName, carried.iterator().next())
-                ? PptxFontMapping.ANY_TOKEN
-                : Set.of();
+        return PptxFontMapping.isItalic(style, deckFonts.tokensTheNameMaySpeak(style.fontName()));
     }
 
     /**
@@ -633,7 +303,7 @@ public final class PptxRenderEnvironment {
             return fallbackAscent;
         }
         return PptxViewerMetrics.ascentPoints(
-                style, font, viewerFontMetrics.get(style.fontName()),
+                style, font, deckFonts.viewerMetrics(style.fontName()),
                 runIsBold(style), runIsItalic(style));
     }
 
@@ -682,646 +352,21 @@ public final class PptxRenderEnvironment {
     }
 
     /**
-     * Reports a registered family the deck does not carry, once, with the line that is true of
-     * what the deck carries under the family's declared name.
-     *
-     * <p>Which line is true is decided by the deck rather than by why this family missed: where
-     * another family carries a face under the same declared name, the text is drawn from that
-     * program, whether this family was registered without sources, could not be read, or was
-     * refused for the slot — and in whichever order the two were registered.</p>
-     *
-     * <p>Two arrangements are not seen, and keep the line the cause alone would give. "Another
-     * family" is another {@link FontName}, because the ledger does not count slots the same
-     * name holds: a name registered first with sources that travelled, and then again without
-     * any or with sources that are not carried, is told what its last registration lacks while
-     * the earlier registration's program is in the deck — text drawn from a program the page
-     * was not measured in, which no line here describes. And "another family" is another
-     * <em>registered</em> family, because this runs while the environment is built: a bundled
-     * family carried under the same declared name is handed over after the last slide, so a
-     * registration declaring a bundled family's name that is not carried is told it needs its
-     * font installed while the bundled program travels under that name.</p>
-     *
-     * @param family the last registration of a family name the deck does not carry
-     * @param ledger the render's slot ledger, complete for the registered families
-     */
-    private static void warnRegisteredFamilyNotCarried(FontFamilyDefinition family,
-                                                       SlotLedger ledger) {
-        if (ledger.alreadyDeclaredByAnother(family.wordFamily(), family.name())) {
-            warnDrawnFromAnotherFamilysProgram(family.name(), family.wordFamily());
-        } else if (family.fontSourceSet().isEmpty()) {
-            // Said of the text, not of the deck: this runs before a single run is drawn,
-            // so whether anything will use the family is not known here, and a family
-            // registered this way and never drawn in is named nowhere in the package.
-            // "No program" rather than "nothing": where text is drawn, the family's name
-            // does travel, on the slide that drew it. The substitution is part of the same
-            // clause and not a second sentence, so that it too says nothing about a deck
-            // that draws no text in the family. "No program for" the declared name holds
-            // because the branch above takes every family whose name another one carries,
-            // short of the first arrangement the javadoc names. The second never reaches here:
-            // a family without sources declares only its own name, and registering a bundled
-            // family's name keeps the bundled pass from carrying that family.
-            LOG.warn("render.pptx.font.substitution family={} — registered without binary "
-                            + "sources, so no program for \"{}\" travels with the deck; any "
-                            + "text drawn with it is referenced by name only and "
-                            + "substituted by viewers that do not have the font installed",
-                    family.name().name(), family.wordFamily());
-        } else {
-            // Same key as every other substitution so one log filter
-            // catches them all; the embed-skip warning carries the cause.
-            // "Not carried whole" rather than "not carried" because this answers for
-            // the family and not the face: what the reader has to act on is that some
-            // face of it did not travel, which is true whether none did or only one
-            // did. Every refusal there is a public path to today leaves nothing of the
-            // family — the reads and the metrics all run while the presentation is
-            // still untouched (see handOverPrograms) — so "whole" is the weaker of the
-            // two claims and the one that stays true if that ever changes.
-            // For the same reason this line says what the text needs rather than what
-            // a viewer will do with it: where a face of the family is in the deck, what
-            // a viewer draws a run of a missing face from — a synthetic face, or
-            // another family — is the viewer's to decide, and nobody here has watched
-            // one decide it. What holds either way is that identical glyphs need the
-            // font itself.
-            LOG.warn("render.pptx.font.substitution family={} — could not be embedded, "
-                            + "so \"{}\" is not carried whole; text drawn in a face "
-                            + "that did not travel is referenced by name, and needs "
-                            + "that font installed where the deck is opened for "
-                            + "identical glyphs",
-                    family.name().name(), family.wordFamily());
-        }
-    }
-
-    /**
-     * Reports a family the deck does not carry, under whose declared name another family
-     * carries a face.
-     *
-     * <p>Its own line rather than the substitution warning the other misses share, because
-     * that one tells the reader to install the font and here that would be the opposite of
-     * what a viewer does: a program <em>is</em> in the deck under the very name this
-     * family's text carries, and the text is drawn from it. The only thing the reader can
-     * act on is the declaration — two families asking for one viewer name is a choice they
-     * made and can unmake, and nothing short of unmaking it lets both programs travel.</p>
-     *
-     * <p>Said for a registered family, a bundled one and a name only a run carries alike, and
-     * worded for all three: where the family came from changes nothing about what its text is
-     * drawn from, and the family is named either way. The carrier is always a registration —
-     * the registered pass runs before a slide is drawn and no two bundled families declare one
-     * name — which is what the line says of it.</p>
-     *
-     * @param family   the family the document asked for, as it was named
-     * @param declared the viewer family its text is written with
-     */
-    private static void warnDrawnFromAnotherFamilysProgram(FontName family, String declared) {
-        LOG.warn("render.pptx.font.substitution family={} — another registered family already "
-                        + "carries a face under the viewer family \"{}\" this one declares, so "
-                        + "no program of this family travels under that name; its text is "
-                        + "referenced by that shared name and a viewer draws it from the "
-                        + "program that did travel, not from this family's own font. Declare "
-                        + "the two under different viewer families for each to carry its own",
-                family.name(), declared);
-    }
-
-    /**
-     * Carries one registered font family into the presentation, with the viewer
-     * metrics its text is seated by. Embedding is best-effort: a font whose
-     * license bits forbid embedding, or whose bytes cannot be read at all — a
-     * missing file, a missing classpath resource, a program either reader cannot
-     * parse — costs the deck the font program rather than the render: page
-     * geometry is unaffected, and text drawn in the family needs that font on the
-     * machine the deck is opened on. None of those fails the export here, however
-     * the refusal arrives; this answers {@code null} instead, and names the family
-     * in the log.
-     *
-     * <p>One answer covers the program and the metrics, because a family that
-     * travels without them is seated from the PDF descriptor's ascent instead,
-     * which for some faces is not the ascent the viewer uses. A family the page
-     * had to <em>measure</em> is a different matter and fails the render before a
-     * slide is built. The presentation refusing a face it is handed is a third,
-     * and what is left of it after the name check in {@link PptxEmbeddedFont} is
-     * POI's part store — see {@link #handOverPrograms}.</p>
-     *
-     * <p>A fourth answers {@code null} here too: a face arriving into a style slot another
-     * family already holds under the same declared name. The caller does not tell the four
-     * apart. Which line it writes for a family this answers {@code null} for is decided by
-     * what the deck carries under the family's declared name once every registration has been
-     * read — see {@link #warnRegisteredFamilyNotCarried} — so a family sharing a name in a
-     * <em>free</em> slot and then given up by the metrics read is told the same as one refused
-     * for the slot, and in either order of registration.</p>
-     *
-     * @return the family's viewer metrics, or {@code null} where it is not carried
-     */
-    private static PptxViewerMetrics.ViewerFontMetrics embedFontFamilyWithMetrics(
-            XMLSlideShow show,
-            FontFamilyDefinition family,
-            FontFamilyDefinition.FontSourceSet sources,
-            SlotLedger ledger,
-            Map<FontName, Set<String>> carriedSlots) {
-        FamilyPrograms read = readPrograms(family, sources, EnumSet.allOf(Face.class), ledger);
-        if (read == null) {
-            return null;
-        }
-        // The other read of the same programs, and the last one before the presentation is
-        // touched: a font whose tail is missing passes fontbox's header parse, which skips
-        // a table that runs past the end of the file, and is rejected outright by the
-        // reader below.
-        //
-        // It runs before the presentation is handed anything because one answer has to
-        // gate both halves. What is left to seat a family whose metrics would not read is
-        // the PDF descriptor's ascent (PptxFontMapping.viewerAscentRatio answers a
-        // non-standard family with the fallback it is given) — the same number the viewer
-        // reports for most faces, but not for all: across the 130 bundled faces, 126 agree
-        // to within 0.0001pt at 10pt text while the four Alegreya Sans faces differ by a
-        // full point — 8.0pt from the viewer's reader against 9.0pt from the descriptor,
-        // a tenth of the em. Which of the two a refused font would have been
-        // cannot be known here, because the reader that would say is the one that refused.
-        // So carrying the program and seating it from the descriptor risks putting every
-        // top-anchored frame's text a tenth of the em off its measured line with nothing
-        // said, where not carrying it is the degradation the backend already has a warning
-        // for.
-        PptxViewerMetrics.ViewerFontMetrics viewerMetrics;
-        try {
-            viewerMetrics = PptxViewerMetrics.load(family, sources);
-        } catch (PptxViewerMetrics.UnreadableFaceException exception) {
-            // Same key and fields as the program read's refusal, so one log filter catches
-            // every face this deck could not carry — and the reason says which of the two
-            // reads turned it down, since a face the embedder took and the metrics reader
-            // refused is a different thing for the reader to act on than one neither could
-            // read.
-            LOG.warn("render.pptx.font.embed.skipped family={} source={} reason=viewer "
-                            + "metrics: {}",
-                    family.name().name(), exception.source(),
-                    String.valueOf(exception.getCause()));
-            return null;
-        }
-        claimSlotsAndReportSharing(ledger, family, read.slots());
-        if (!handOverPrograms(show, family, read.programs())) {
-            return null;
-        }
-        // Recorded here and not at the read, for the reason the slot claim is: a family that did
-        // not make it into the presentation carries nothing, and a run of it has nothing but the
-        // family's name to go by. An absent entry says exactly that, so nothing has to be undone
-        // on the way out of a refusal.
-        carriedSlots.put(family.name(), Set.copyOf(read.slots().keySet()));
-        return viewerMetrics;
-    }
-
-    /**
-     * Embeds the named faces of a family, without viewer metrics.
-     *
-     * <p>Faces rather than the whole family, because embedding carries a font program
-     * whole: a deck drawing one weight of a CJK family was shipping the other at over two
-     * megabytes for glyphs no slide contains. A family whose source set repeats a source
-     * across faces — a regular-and-bold family asked for italic — embeds it once, since
-     * the sources dedupe by description.</p>
-     *
-     * <p>Embedding is best-effort here as it is for a registered family: a face whose
-     * licence bits forbid embedding, or whose bytes cannot be read, costs the deck the
-     * font program rather than the render, and this answers {@code false} with the face
-     * named in the log.</p>
-     *
-     * <p>The bundled families take this road, and deliberately get no metrics: see
-     * {@link #embedBundledFontsUsed()}. A family a caller registered goes through
-     * {@link #embedFontFamilyWithMetrics} instead, which reads its metrics in the same
-     * pre-flight.</p>
-     *
-     * @return whether the family made it into the presentation
-     */
-    private static boolean embedFontFamily(XMLSlideShow show,
-                                           FontFamilyDefinition family,
-                                           FontFamilyDefinition.FontSourceSet sources,
-                                           Set<Face> faces,
-                                           SlotLedger ledger) {
-        FamilyPrograms read = readPrograms(family, sources, faces, ledger);
-        if (read == null) {
-            return false;
-        }
-        claimSlotsAndReportSharing(ledger, family, read.slots());
-        return handOverPrograms(show, family, read.programs());
-    }
-
-    /**
-     * Reads and wraps the named faces' font programs, keyed by source description.
-     *
-     * <p>Every face is read before any of them is handed to the presentation, because one
-     * answer covers the whole family: it decides whether the family is carried at all and
-     * whether the reader is told to install the font. The presentation is mutated at both
-     * of the hand-over's steps — constructing the font info declares the family, and
-     * adding a facet writes its part and sets the embedded-font flags — so handing faces
-     * over as they were read left a family whose second face could not be read with its
-     * first face in the deck, while the caller was told the deck carries nothing of it. A
-     * family whose first face could not be read left the bare declaration.</p>
-     *
-     * <p>That holds for everything that fails before the hand-over: a face that cannot be
-     * read, and a face read whole whose licence bits forbid embedding, which
-     * {@link PptxEmbeddedFont#wrap} refuses. So a family of one embeddable face and one
-     * restricted face carries neither, where it used to carry the first. It does not hold
-     * for the presentation refusing a face it is handed: see {@link #handOverPrograms}.</p>
-     *
-     * <p>One refusal is the family's rather than a face's, and belongs here for that
-     * reason: a presentation seats a face in one of four style slots, chosen off the
-     * container, and holds one face in each. Two faces of a family that read back as the
-     * same slot cannot both travel, and the slot a face lands in is not the slot it was
-     * registered under — a face in the bold slot whose own weight is 400 or less reads
-     * back as the regular one. That used to end with the deck carrying the later face's
-     * program under the earlier face's declaration, and nothing said: the presentation
-     * reports the family as embedded, and every run of it, the regular ones included, is
-     * drawn from the one program that survived. Refused rather than resolved, because the
-     * slot is the presentation's answer and not a choice this backend has: there is no
-     * fifth slot to move a face to, and the two that collide agree on the fields the slot
-     * is read from. Refused for the family rather than the face for the reason the other
-     * refusals here have on the registered path — keeping the first would leave the family
-     * its viewer metrics while a face of it did not travel — and, on the bundled path,
-     * which has no metrics to keep, because this method answers whole-or-nothing for a
-     * family either way and a deck that carries some of one is what the caller's
-     * substitution warning cannot describe.</p>
-     *
-     * <p>The slot's capacity belongs to the <em>declared</em> family name rather than to a
-     * definition, so the same refusal answers for two definitions that share one. Two
-     * definitions whose {@link FontFamilyDefinition#wordFamily()} matches, ignoring case,
-     * write into one font-list entry — that is how {@code XSLFFontInfo} looks an entry up —
-     * and so into one set of four slots. The family whose face arrives into a slot another
-     * family already holds is refused whole, as a family with an unreadable face is — not
-     * only the colliding face, so a face of it that would have landed in a free slot does
-     * not travel either; the family holding the slot keeps its program, and its viewer
-     * metrics where it has any — the holder is always a registration, the registered pass
-     * running before a slide is drawn and no two bundled families declaring one name, so the
-     * bundled path's deliberate lack of metrics never comes up here. Measured: two
-     * definitions under one
-     * {@code wordFamily}, each with a single regular face, left one part holding the
-     * second's bytes with nothing said, and PowerPoint 16.0 drew both families' text from
-     * it.</p>
-     *
-     * <p>Which way round the refusal falls is a decision rather than a property of the
-     * format, and it leaves an explicitly registered family carrying its own font where a
-     * bundled one of the same name would otherwise have written over it. Its limit is that
-     * the registered pass runs before a run is drawn, so it cannot prefer the family the
-     * deck actually sets text in: a family registered under a bundled one's name and never
-     * drawn in still takes the slot, and the bundled family's own text is then drawn from
-     * that program — where before this guard the bundled face wrote over it and that text
-     * was right. Both arrangements are wrong for one of the two families, this one says
-     * which, and the alternative — holding a registered family's hand-over back until the
-     * faces the deck drew with are known — would decide it by what is on the slides rather
-     * than by registration order.</p>
-     *
-     * <p>What refusing does <em>not</em> fix, and what the message therefore says: the
-     * refused family's text carries the shared declared name too, so a viewer draws it from
-     * the program that did travel. A run names a family and nothing else, so no deck can
-     * hold two programs for one name and one style. What the refusal buys is the other
-     * family's text, which was being drawn from the wrong program before.</p>
-     *
-     * <p>What this does <em>not</em> cover: the refusal keys on the family a face was
-     * registered under, and on it as a {@link FontName}, which is case-insensitive. So two
-     * registrations the rest of the engine treats as one family are one family here, and the
-     * second is not refused: its faces take the slots as the first's would, and where the two
-     * name different files the later program still writes over the earlier one. Deliberate on
-     * both counts. An identical definition registered twice has to stay harmless; and for two
-     * registrations of one {@code FontName} the later program is the one the page
-     * <em>measured</em> with, because the font library keeps the last factory registered under
-     * a name — so refusing it would leave the deck carrying a face no text was laid out in,
-     * which is the defect this guard exists to stop rather than a milder form of it.</p>
-     *
-     * <p>Nothing of the presentation is touched here, so a refusal costs the deck the family
-     * and nothing else. Nothing is written to the ledger either: the slots are answered to the
-     * caller, which claims them when it is about to hand the faces over. Answers
-     * {@code null} where a face refused, having named it in the log; the caller reports the family. The cost of buffering is that one
-     * family's programs are held twice while its facets are added, since the parts keep
-     * their bytes as well.</p>
-     *
-     * @return the wrapped programs and the slots they would take, or {@code null} where a
-     *         face refused
-     */
-    private static FamilyPrograms readPrograms(FontFamilyDefinition family,
-                                               FontFamilyDefinition.FontSourceSet sources,
-                                               Set<Face> faces,
-                                               SlotLedger ledger) {
-        String typeface = family.wordFamily();
-        FontName familyName = family.name();
-        Map<String, byte[]> programs = new LinkedHashMap<>();
-        Map<String, Seated> bySlot = new LinkedHashMap<>();
-        for (FontFamilyDefinition.FontBinarySource source
-                : faces.stream().map(face -> face.in(sources)).toList()) {
-            // Named before it is read, so a source that cannot even say what it is still
-            // warns rather than failing the render inside the warning. Only the library's
-            // own sources arrive here: FontBinarySource is a public interface, but
-            // FontFamilyDefinition builds every source itself, from a classpath resource or
-            // a Path, and offers no public way to hand it another. Neither of those
-            // description() methods can throw in an ordinary run, so the sentinel is
-            // defensive and no test reaches it.
-            String description = "<unnamed>";
-            try {
-                description = source.description();
-                if (programs.containsKey(description)) {
-                    continue;
-                }
-                byte[] program;
-                try (InputStream stream = source.openStream()) {
-                    program = stream.readAllBytes();
-                }
-                byte[] container = PptxEmbeddedFont.wrap(program);
-                // A face whose program states a family of its own, said where the names are known.
-                // A presentation can match an embedded face to the declared typeface by that
-                // record rather than by the names the container carries, and what that costs was
-                // measured in PowerPoint 16 and differs by case. It cost everything once: the
-                // italic face of a family whose two faces state DIFFERENT names was replaced by a
-                // substitute, its program used by nothing. Twice it cost nothing: a face in the
-                // bold element stating another family, and an italic face of a family whose faces
-                // all state the same other name, were each drawn from the carried program after
-                // all, 0.16pt and 0.27pt off the line the page had laid out, both under a declared
-                // name of no font on the measuring machine. So this says what the two names are
-                // and names no outcome.
-                //
-                // What it must not be read as is an account of a deck drawn from a family the
-                // viewing machine has under the declared name — there the carried face may not be
-                // drawn whatever it states, which no record in the deck can change and this line
-                // would wrongly take credit for. That limit is the capability details' to carry.
-                //
-                // Nothing is refused for it, and nothing here says the family travels: a later
-                // face of it can still collide, be unreadable, or lose its viewer metrics, and
-                // each of those says so on its own line. What this line is about is the naming.
-                //
-                // The names are compared ignoring case, which folds the same way wherever the
-                // export runs. Whether a viewer matches case-insensitively was not measured, so
-                // a pair differing only in case is left silent rather than warned about on a
-                // guess.
-                String stated = PptxEmbeddedFont.statedFamilyOf(program);
-                if (stated != null && !stated.equalsIgnoreCase(typeface)) {
-                    LOG.warn("render.pptx.font.name.mismatch family={} typeface={} face={} "
-                             + "states={} — a presentation can match an embedded face on the "
-                             + "family its program states for itself rather than on the one this "
-                             + "deck declares. What that costs was measured in PowerPoint 16 and "
-                             + "differs: the italic face of a family whose faces state different "
-                             + "names was replaced by a substitute, while a face in the bold "
-                             + "element stating another family, and an italic face of a family "
-                             + "whose faces all state the same other name, were each drawn from "
-                             + "the carried program after all. So this names the two families and "
-                             + "no outcome",
-                            familyName.name(), typeface, description, stated);
-                }
-                // Which slot the face is seated in is not the slot it was registered under:
-                // a presentation reads it off the container, so a face put in one slot of
-                // the family travels in whichever one its own weight and italic flag name.
-                // Two faces naming the same slot cannot both be carried — there are four and
-                // the second overwrites the first's part — so this answers for the family
-                // the way every other refusal here does, rather than letting the deck keep
-                // the last one under the first one's declaration.
-                PptxEmbeddedFont.Style style = PptxEmbeddedFont.styleOf(container);
-                // containsKey, so the branch reads as "this slot is taken" rather than as
-                // something about the face in it. putIfAbsent would do the same here, since
-                // what is stored is a record this method builds and so is never null; the
-                // two part company only for a map whose value could be, which this one's was
-                // before the seated face's own weight had to be kept.
-                if (bySlot.containsKey(style.slot())) {
-                    Seated seated = bySlot.get(style.slot());
-                    throw new IOException("a presentation seats one face per style and reads "
-                            + "the style off the face: \"" + seated.description()
-                            + "\" (weight " + seated.weight() + ") and \"" + description
-                            + "\" (weight " + style.weight() + ") both read back as "
-                            + style.slot() + ", italic " + style.italic()
-                            + ", so a deck carrying both would hold only the second, under "
-                            + "the declaration the first made");
-                }
-                // The same slot, one step wider: this family's own faces are above, and a
-                // family that shares its declared name is here. Checked while the
-                // presentation is still untouched, as every refusal on this path is, and
-                // against the ledger rather than the entry's own XML, which records a dataId
-                // per element and nothing of the family that registered it or the source it
-                // came from, and which a reader would have to pair with the written part's
-                // own header to recover a weight from at all.
-                Seated holder = ledger.holderOf(typeface, style.slot());
-                if (holder != null && !holder.family().equals(familyName)) {
-                    throw new IOException("a presentation seats one face per style, and the "
-                            + "style belongs to the declared family rather than to a "
-                            + "registration: this family declares \"" + typeface
-                            + "\", which the deck holds as the one font-list entry \""
-                            + ledger.asDeclared(typeface) + "\" — the lookup ignores case — "
-                            + "and the family \"" + holder.family().name() + "\" already "
-                            + "carries a face there: \"" + holder.description() + "\" (weight "
-                            + holder.weight() + ") holds " + style.slot() + ", and \""
-                            + description + "\" (weight " + style.weight() + ") reads back as "
-                            + "that same one, italic " + style.italic() + ", so a deck "
-                            + "carrying both would hold only this one, under the declaration "
-                            + "the other made. This family is the one refused, the other "
-                            + "having travelled already. What that does not fix is this "
-                            + "family's own text: it carries the same declared name, so a "
-                            + "viewer draws it from the program that travelled — a run names "
-                            + "a family and no more, and one name holds one program per style");
-                }
-                bySlot.put(style.slot(), new Seated(familyName, description, style.weight()));
-                programs.put(description, container);
-            } catch (IOException | RuntimeException exception) {
-                // A source may fail unchecked: the classpath one reports a missing resource
-                // with an IllegalArgumentException. Named here and the family degrades, as
-                // for a missing file on disk — the render is not the caller's to lose.
-                // toString rather than getMessage because an unchecked failure may carry none.
-                LOG.warn("render.pptx.font.embed.skipped family={} source={} reason={}",
-                        family.name().name(), description, exception.toString());
-                return null;
-            }
-        }
-        return new FamilyPrograms(programs, bySlot);
-    }
-
-    /**
-     * Claims a family's style slots, about to hand its faces to the presentation.
-     *
-     * <p>Called from the hand-over's doorstep rather than from the read, which is why it is a
-     * method of its own rather than the tail of one: a claim is what stops a later family writing
-     * over a part, so it must stand for a part that is about to exist. Between the read and
-     * here, the registered path also reads the family's viewer metrics and gives the family
-     * up if that read refuses — and such a family has had nothing written for it, no entry
-     * and no part, so claiming at the read would have let it hold slots it never filled.
-     * The next family declaring that name would then be refused in favour of a face that is
-     * not in the deck, lose its own program, and be told its text is drawn from one that
-     * travelled when none did.</p>
-     *
-     * <p>Before the hand-over and not after, because a hand-over that fails part way through
-     * has still written what it took.</p>
-     */
-    private static void claimSlotsAndReportSharing(SlotLedger ledger,
-                                                   FontFamilyDefinition family,
-                                                   Map<String, Seated> bySlot) {
-        String typeface = family.wordFamily();
-        if (ledger.alreadyDeclaredByAnother(typeface, family.name())
-                && ledger.reportSharingOnce(typeface)) {
-            // Said even though nothing collided, and said once for the declared name rather
-            // than per face or per family: the sharing itself is the hazard the slots cannot
-            // show. The page measured each family with its own program, while the deck has
-            // one name for both, and a run names a family and no more — so every style this
-            // family does not itself hold under that name is drawn from whatever the other
-            // one put there. Two names shared in one render are two different facts about
-            // the deck, so the line is per name; a third family joining one of them adds
-            // nothing a reader can act on. "Font family" rather than "registered family":
-            // the other half of such a pair can be a bundled family, which joins a name a
-            // caller declared when the face it draws with lands in a slot still free.
-            LOG.warn("render.pptx.font.shared.family typeface=\"{}\" — more than one font "
-                            + "family declares this viewer family, so the deck has one "
-                            + "font-list entry and one program per style for all of them; "
-                            + "text measured in one of those families is drawn from whichever "
-                            + "one carries the style it uses, which for a face it does not "
-                            + "carry itself is not its own font",
-                    ledger.asDeclared(typeface));
-        }
-        ledger.claim(typeface, bySlot);
-    }
-
-    /**
-     * A family's wrapped font programs and the style slots they would be seated in.
-     *
-     * <p>Neither map is copied on the way in, and neither needs to be: both are built by
-     * {@link #readPrograms} and go out of its scope when it returns, so the only holder
-     * afterwards is the caller — which reads {@code programs} once to hand the faces over
-     * and copies {@code slots} into the ledger. Copying {@code slots} here would also drop
-     * the order it was read in, which the ledger does not care about but which
-     * {@code programs} is kept in deliberately.</p>
-     *
-     * @param programs the containers by source description, in the order they were read
-     * @param slots    the face taking each style slot, for the ledger the caller claims in
-     */
-    private record FamilyPrograms(Map<String, byte[]> programs, Map<String, Seated> slots) {
-    }
-
-    /**
-     * Hands read programs to the presentation, returning whether it took them all.
-     *
-     * <p>From here the handling is the presentation's own, and exactly what it was before
-     * the reads were pulled forward: a refusal while taking a face degrades the family,
-     * and this does not undo what it took. What it took depends on where it refused.
-     * {@code addFacet} reads the EOT header before it writes anything, so a refusal over
-     * the container leaves only the declaration the {@code XSLFFontInfo} constructor makes
-     * on every call — one entry, not a part, a dataId and the embedded-font flags. Those
-     * come after, and a refusal among them is POI's own part store failing, which no font
-     * can provoke.</p>
-     *
-     * <p>The refusal over the container is the one that mattered — it arrived
-     * <em>unchecked</em>, straight past this catch, and cost the whole deck after the page
-     * had laid out — and it is now spent before this: {@link PptxEmbeddedFont} measures the
-     * header against what a presentation reads, where a refusal is the checked one
-     * {@link #readPrograms} degrades a family on, on this path and on the bundled one,
-     * which has no metrics pre-flight at all. What the limit is and what it does not
-     * promise is written down once, beside the constant there.</p>
-     *
-     * <p>Widening this catch instead would have swallowed the part store's failures with
-     * it and left a deck in exactly the half-written state above, which is why the guard
-     * sits where the container is built rather than here.</p>
-     *
-     * <p>One thing the writer does not refuse at all: a second face seated in a style slot
-     * a face already holds. It takes the {@code dataId} the first one wrote and writes over
-     * that part, so nothing arrives here to catch and the deck comes out carrying the later
-     * face under the earlier one's declaration. That is spent before the hand-over, in
-     * {@link #readPrograms} — for the faces of one definition, which are read together
-     * there, and for two definitions sharing a declared name, which the slot ledger carries
-     * between them. What can still arrive here is two registrations of one family naming
-     * different files: those are one family to the guard, deliberately (see
-     * {@link #readPrograms}), so the later {@code addFacet} takes the first's {@code dataId}
-     * and writes over that part — which is what the page measured with, the font library
-     * keeping the last factory registered under a name.</p>
-     *
-     * @return whether the presentation took every program it was handed
-     */
-    private static boolean handOverPrograms(XMLSlideShow show,
-                                            FontFamilyDefinition family,
-                                            Map<String, byte[]> programs) {
-        XSLFFontInfo embedded = new XSLFFontInfo(show, family.wordFamily());
-        for (Map.Entry<String, byte[]> program : programs.entrySet()) {
-            try {
-                embedded.addFacet(new ByteArrayInputStream(program.getValue()));
-            } catch (IOException exception) {
-                LOG.warn("render.pptx.font.embed.skipped family={} source={} reason={}",
-                        family.name().name(), program.getKey(), exception.toString());
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Tells this render whether the families it uses will be carried.
-     *
-     * <p>Set before anything is drawn, because the answer changes what a run is warned
-     * about. A family the deck is about to carry must not be reported as one the reader
-     * has to install. A render explicitly asked not to carry them gets the name-only
-     * warning for each bundled family it draws in that ships a binary and is not
-     * registered, and that warning does tell it to register the family: registering is
-     * how one family travels while the rest stay declined, since a family registered
-     * through {@code registerFontFamily} with binary sources goes to the embedder
-     * whatever this flag says.</p>
+     * Tells this render whether the families it uses will be carried; see
+     * {@link PptxDeckFonts#embedsBundledFonts(boolean)}.
      *
      * @param enabled whether {@link #embedBundledFontsUsed()} will run for this render
      */
     void embedsBundledFonts(boolean enabled) {
-        this.embedsBundledFonts = enabled;
+        deckFonts.embedsBundledFonts(enabled);
     }
 
     /**
-     * Embeds the bundled families this deck drew with, on the terms a registered one gets.
-     *
-     * <p>A family a caller registers themselves is embedded, and warned about when it
-     * cannot be. A family this library <em>ships</em> — Amiri for Arabic, David Libre for
-     * Hebrew, the Noto faces for Georgian and Armenian, Gothic A1 for Hangul — was neither:
-     * the deck named it and embedded nothing, so a viewer without it installed substituted,
-     * and for a script the substitute does not cover the slide showed boxes. The asymmetry
-     * was the sharp edge, since the shipped families are the ones a deck reaches for
-     * precisely when the reader is least likely to have the font.</p>
-     *
-     * <p>Only what was drawn is embedded, down to the face — the bundled set is dozens of
-     * families, and embedding carries a font program whole with no subsetting, so a deck
-     * offering all of them would be tens of megabytes and one offering a face it never
-     * drew would pay megabytes for glyphs no slide contains.</p>
-     *
-     * <p>Metrics are deliberately untouched. A registered family also contributes viewer
-     * metrics, which participate in layout; taking those from a bundled family now would
-     * move text in every deck that already renders correctly. This changes what the file
-     * carries, not where anything sits.</p>
-     *
-     * <p>Call after the last run is drawn — the recorded face set is only complete then.</p>
+     * Embeds the bundled families this deck drew with; see
+     * {@link PptxDeckFonts#embedBundledFontsUsed()}. Call after the last run is drawn.
      */
     void embedBundledFontsUsed() {
-        boolean embeddedAny = false;
-        for (FontFamilyDefinition family : EMBEDDABLE_BUNDLED.values()) {
-            // EMBEDDABLE_BUNDLED already excludes the standard-14 definitions: they carry
-            // no binary to embed, and PPTX maps them to viewer-facing metric-compatible
-            // replacements (Helvetica to Arial, and so on) rather than assuming the
-            // viewer has the PDF built-in.
-            Set<Face> faces = usedFaces.get(family.name());
-            if (faces == null || customFontFamilies.containsKey(family.name())) {
-                // Not drawn with, or the caller registered their own under this name — the
-                // deck then references that family, so the bundled binary would be unused.
-                continue;
-            }
-            Optional<FontFamilyDefinition.FontSourceSet> sources = family.fontSourceSet();
-            if (embedFontFamily(show, family, sources.orElseThrow(), faces, slotLedger)) {
-                embeddedAny = true;
-            } else if (slotLedger.alreadyDeclaredByAnother(family.wordFamily(), family.name())) {
-                // The reachable half of this: a caller registers their own family under a
-                // bundled one's viewer name. The bundled pass runs after the last slide, so
-                // the caller's family holds the slot by now and this one is the refused one
-                // — which is the way round the decision wants it, an explicit registration
-                // keeping its own font. Asked of the ledger rather than of the refusal, as
-                // for a registered family, so the line follows what the deck carries under
-                // the name and not which of the reads turned the family down.
-                warnDrawnFromAnotherFamilysProgram(family.name(), family.wordFamily());
-            } else {
-                // Reached on the same answer as the registered-family line above, and worded
-                // the same way. The family was certainly drawn in — the loop skips one that
-                // was not — so unlike the registered line this one does know the deck sets
-                // text in the family. What it still does not say is that the deck references
-                // it by name only: that was argued from a face of the family travelling, and
-                // every refusal there is a public path to leaves nothing of the family (see
-                // handOverPrograms). So the line says what is not carried and what the text
-                // needs, which holds whether a face travelled or none did.
-                LOG.warn("render.pptx.font.substitution family={} — a bundled family that "
-                                + "could not be embedded, so \"{}\" is not carried whole; text "
-                                + "drawn in a face that did not travel is referenced by name, "
-                                + "and needs that font installed where the deck is opened for "
-                                + "identical glyphs",
-                        family.name().name(), family.wordFamily());
-            }
-        }
-        if (embeddedAny) {
-            // The bundled half of the same clear the constructor makes for a registered
-            // family — on its own for a deck that registered none, and needed again after
-            // one that did, because addFacet set the flag back while taking these faces.
-            show.getCTPresentation().setSaveSubsetFonts(false);
-        }
+        deckFonts.embedBundledFontsUsed();
     }
 
     /**

@@ -53,7 +53,7 @@ public final class PptxFontMapping {
      *
      * <p>Passed by a caller that knows nothing about the family's faces — a bundled or
      * standard-14 name, which no registration covers, and the geometry mirror in the tests. A
-     * caller that does know passes what {@code PptxRenderEnvironment} works out from the faces
+     * caller that does know passes what {@code PptxDeckFonts} works out from the faces
      * the family carries.</p>
      */
     public static final Set<String> ANY_TOKEN = Set.of("bold", "italic", "oblique");
@@ -203,7 +203,7 @@ public final class PptxFontMapping {
      * ascent arm was not demonstrated, the line top being identical in every deck measured.</p>
      *
      * <p><b>And only where the family's own faces cannot say it.</b> {@code nameMaySpeak} is that
-     * permission, worked out by {@code PptxRenderEnvironment} from the faces a registered family
+     * permission, worked out by {@code PptxDeckFonts} from the faces a registered family
      * carries: a family carrying two or more programs distinguishes its faces by the slot a run
      * asks for, so its name says nothing and the decoration decides; a family carrying one program
      * may be named only in the style that program itself is; a family carrying none has nothing but

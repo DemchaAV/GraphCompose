@@ -189,4 +189,36 @@ class PptxFontSubstitutionWarningTest {
                 .contains("could not be embedded");
         assertThat(warnings).as("and nothing else").hasSize(2);
     }
+
+    @Test
+    void aNameAnEarlierRegistrationCarriedIsNotToldNoFaceOfItTravels() throws Exception {
+        // The last registration of a name decides its line, and here it is not carried — but
+        // an earlier registration of the same name was, so a program of it is in the deck.
+        // "No face of it travels" would be untrue of that deck; the line stays the one that
+        // says the family is not carried whole.
+        byte[] lato = PptxDeck.face("fonts/google/lato/Lato-Regular.ttf");
+        Path whole = Files.write(directory.resolve("Whole-Regular.ttf"), lato);
+        Path truncated = Files.write(directory.resolve("Truncated-Regular.ttf"),
+                Arrays.copyOf(lato, lato.length - 1));
+
+        byte[] deck = PptxDeck.registering(List.of(
+                        FontFamilyDefinition.files("Brand", whole).build(),
+                        FontFamilyDefinition.files("Brand", truncated).build()),
+                page -> page.addParagraph(paragraph -> paragraph.text("Drawn in the default face")));
+
+        assertThat(PptxDeck.fontParts(deck))
+                .as("the premise: the earlier registration's program travelled")
+                .hasSize(1);
+        assertThat(log.messages("render.pptx.font.embed.skipped"))
+                .as("the premise: the later one was given up")
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .contains("family=Brand")
+                .contains(truncated.toString())
+                .contains("reason=viewer metrics");
+        assertThat(log.messages("render.pptx.font.substitution"))
+                .filteredOn(message -> message.contains("family=Brand"))
+                .singleElement(InstanceOfAssertFactories.STRING)
+                .contains("\"Brand\" is not carried whole")
+                .doesNotContain("no face of it travels");
+    }
 }

@@ -419,6 +419,54 @@ class PptxSharedViewerFamilyTest {
     }
 
     @Test
+    void aFamilyGivenUpInAFreeSlotOfACarriedNameIsToldItsTextIsDrawnFromThatProgram()
+            throws Exception {
+        // The arrangement no slot refusal reaches: the given-up family's face reads back as a
+        // slot the carrier left empty, so the read lets it through in either order, and it is
+        // the viewer metrics that give it up. Its text still carries the declared name the
+        // carrier's program travels under, so the line is the shared one — the line follows
+        // the deck, not the read that refused — and not the one telling the reader to install
+        // the font.
+        byte[] latoBold = PptxDeck.face(LATO_BOLD);
+        Path truncatedBold = Files.write(directory.resolve("Truncated-Bold.ttf"),
+                java.util.Arrays.copyOf(latoBold, latoBold.length - 1));
+        Path poppinsFile = Files.write(directory.resolve("Poppins-Regular.ttf"),
+                PptxDeck.face(POPPINS));
+        assertThat(PptxDeck.slotOf(Files.readAllBytes(truncatedBold)))
+                .as("the premise: the given-up family's face wants a slot the carrier, a "
+                        + "regular face, leaves empty")
+                .isEqualTo("bold");
+        assertThat(PptxDeck.slotOf(PptxDeck.face(POPPINS))).isEqualTo("regular");
+        FontFamilyDefinition givenUp = FontFamilyDefinition
+                .files("TruncatedBold", truncatedBold).wordFamily("Brand").build();
+        FontFamilyDefinition carrier =
+                FontFamilyDefinition.files("Second", poppinsFile).wordFamily("Brand").build();
+
+        for (List<FontFamilyDefinition> order : List.of(
+                List.of(givenUp, carrier), List.of(carrier, givenUp))) {
+            try (RenderLogCapture ordered = RenderLogCapture.attach()) {
+                byte[] deck = deckOf(order.get(0), order.get(1));
+
+                assertThat(ordered.messages("render.pptx.font.embed.skipped"))
+                        .as("the premise, in this order too: the metrics read gave the family "
+                                + "up, not the slot")
+                        .singleElement(InstanceOfAssertFactories.STRING)
+                        .contains("family=TruncatedBold")
+                        .contains("reason=viewer metrics");
+                assertThat(PptxDeck.fontParts(deck)).hasSize(1);
+                assertThat(carriedBy(deck, "ppt/fonts/font1.fntdata")).isEqualTo(POPPINS);
+                assertThat(ordered.messages("render.pptx.font.substitution"))
+                        .as("so the given-up family is told its text is drawn from the program "
+                                + "that travelled under its declared name")
+                        .singleElement(InstanceOfAssertFactories.STRING)
+                        .contains("family=TruncatedBold")
+                        .contains("draws it from the program that did travel")
+                        .doesNotContain("needs that font installed");
+            }
+        }
+    }
+
+    @Test
     void aFamilyWithoutSourcesUnderACarriedNameIsToldItsTextIsDrawnFromThatProgram()
             throws Exception {
         // A family registered without binary sources declares its own name, and a binary

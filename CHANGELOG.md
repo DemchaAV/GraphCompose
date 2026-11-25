@@ -105,8 +105,22 @@ follow semantic versioning; release dates are ISO 8601.
     family's name, and not carried itself, is still told it needs its font installed when the
     bundled program travels under that name, because the bundled families are carried after the
     last slide and the registered families' lines are written before the first. A family name
-    registered again, after a registration of it that travelled, is likewise told only what its
-    last registration lacks.
+    registered again without sources, after a registration of it that travelled, is likewise told
+    only what its last registration lacks.
+
+- **A PPTX font the deck carries nothing of is told so.**
+  - A registered or bundled family the deck could not carry was told `"X" is not carried whole`,
+    which is worded for a deck holding part of the family. Every refusal a font can provoke —
+    a face that cannot be read, licence bits that forbid embedding, a header the presentation
+    could not read back, two of the family's faces reading back as one style slot, and for a
+    registered family its viewer metrics — arrives before the presentation is handed a face, and
+    leaves nothing of the family in the deck. Such a family is now told `no face of it travels
+    with the deck`, and what its text needs. A family refused for a slot another family holds
+    keeps the line saying its text is drawn from that family's program.
+  - `not carried whole` stays where something of the name is in the deck: an earlier registration
+    of the same family name travelled and its last one did not, or the presentation refused a face
+    it had been handed, which only POI's own part store can do. On every path a font can reach,
+    only the log changes: what a deck carries is unchanged.
 
 ### Performance
 

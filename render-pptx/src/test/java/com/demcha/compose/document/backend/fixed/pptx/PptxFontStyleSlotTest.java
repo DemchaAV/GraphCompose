@@ -157,11 +157,13 @@ class PptxFontStyleSlotTest {
                 .contains("both read back as regular")
                 .contains("italic false");
         assertThat(log.messages("render.pptx.font.substitution"))
-                .as("and the reader is told the family is not carried, as for any other "
-                        + "family a face of which did not travel")
+                .as("and the reader is told no face of the family travels, as for any other "
+                        + "family refused before the presentation was handed a face")
                 .filteredOn(warning -> warning.contains("Airy"))
                 .singleElement(InstanceOfAssertFactories.STRING)
-                .contains("\"Airy\" is not carried whole");
+                .contains("no face of it travels with the deck")
+                .contains("referenced as \"Airy\" by name")
+                .doesNotContain("not carried whole");
     }
 
     @Test

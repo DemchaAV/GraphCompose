@@ -367,6 +367,27 @@ class DocxGrownLinesTest {
         }
     }
 
+    @Test
+    void aWordListsMarkerSpellingItsFaceInAnotherCaseIsReadInThatFace() throws Exception {
+        // Word sets a run naming a shipped face in another case in that face (measured with the one
+        // element a holder's spelling declares), so the marker's line and the glyphs asked of it are
+        // read off the shipped face whichever case its level spells the name in. Two lookups, the line and the character map, and both are this route's. The other
+        // case is asked first: the face's file is read once, under the spelling that first asks.
+        try (XWPFDocument numbered = new XWPFDocument()) {
+            DocxGrownLines lines = shipping(numbered::getNumbering, LATO, LATO);
+            XWPFParagraph upper = item(numbered, "•", level -> face(level, "LATO", 20));
+            XWPFParagraph lower = item(numbered, "•", level -> face(level, "lato", 20));
+            XWPFParagraph stated = item(numbered, "•", level -> face(level, "Lato", 20));
+
+            DocxGrownLines.Reach upperReach = lines.reachOf(upper.getCTP());
+            DocxGrownLines.Reach lowerReach = lines.reachOf(lower.getCTP());
+            DocxGrownLines.Reach statedReach = lines.reachOf(stated.getCTP());
+            assertThat(statedReach).as("the premise: the marker is read").isNotNull();
+            assertThat(upperReach).isEqualTo(statedReach);
+            assertThat(lowerReach).isEqualTo(statedReach);
+        }
+    }
+
     /** Sets a paragraph's mark in {@code family}, at 10pt. */
     private static void markIn(XWPFParagraph paragraph, String family) {
         var mark = paragraph.getCTP().getPPr().isSetRPr() ? paragraph.getCTP().getPPr().getRPr()

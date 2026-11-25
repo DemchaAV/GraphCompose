@@ -297,13 +297,12 @@ final class DocxFontTable {
      *
      * <p>Whole, and not face by face the way a face's own terms or an unreadable file are:
      * {@code DocxFontFaces.addFace} gives up that one face and the family ships the rest under its
-     * name. Here a
-     * face bound for a slot the holder left empty does not travel either — measured, a family
-     * declaring only {@code embedBold} built from a different typeface, beside a holder declaring
-     * only {@code embedRegular}, had its bold program ignored by both editors. A free slot is the
-     * only place where the second program could have been read at all: where the two families are
-     * set in text in the same slot, a {@code w:font} has one child for it and an editor has one
-     * program to draw from whatever the two are.</p>
+     * name. Here a face bound for a slot the holder left empty does not travel either — measured,
+     * a family declaring only {@code embedBold} built from a different typeface, beside a holder
+     * declaring only {@code embedRegular}, had its bold program ignored by both editors. A free
+     * slot is the only place where the second program could have been read at all: where the two
+     * families are set in text in the same slot, a {@code w:font} has one child for it and an
+     * editor has one program to draw from whatever the two are.</p>
      *
      * <p>For a free slot, what decides whether that second program is read turns out not to be how
      * it is written.

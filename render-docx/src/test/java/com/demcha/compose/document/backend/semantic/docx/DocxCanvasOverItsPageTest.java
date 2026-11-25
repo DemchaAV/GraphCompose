@@ -70,7 +70,7 @@ class DocxCanvasOverItsPageTest {
 
         assertThat(detailOf(report, "CanvasLayerNode")).isEqualTo("written over its page: its drawings stand "
                 + "where the page draws them and its paragraphs in text boxes where the page sets them, nothing "
-                + "of it in the flow, which holds its room where something follows it");
+                + "of it in the flow but its room");
         List<String> paragraphs = report.bySubject().get("ParagraphNode").stream()
                 .map(DocxExportReport.Note::detail).toList();
         assertThat(paragraphs).as("West and East").hasSize(2).allSatisfy(detail -> assertThat(detail)
@@ -281,6 +281,39 @@ class DocxCanvasOverItsPageTest {
     }
 
     @Test
+    void aPageBreakAfterACanvasAloneOnItsPageGoesInItsLine() throws Exception {
+        // A deck of pages each a canvas, split by page breaks: a break's own paragraph under a line
+        // filling its page stood on the next page and broke it again, a blank page between two
+        // slides in Word 16 and LibreOffice 26.8 (four pages for three).
+        DocxExportReport report = DocxExports.report(400, 400, MARGIN, CanvasDeck::withBreaks);
+        try (XWPFDocument document = DocxExports.withLayout(400, 400, MARGIN, CanvasDeck::withBreaks)) {
+            List<XWPFParagraph> breaks = document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getCTP().xmlText().contains("w:type=\"page\"")).toList();
+            assertThat(breaks).as("two breaks").hasSize(2);
+            assertThat(breaks).as("each in the line holding its canvas's room, which carries its text boxes")
+                    .allSatisfy(line -> {
+                        assertThat(line.getCTP().getPPr().getSpacing().getLineRule().toString()).isEqualTo("exact");
+                        assertThat(boxesIn(line)).isEqualTo(2);
+                    });
+            assertThat(document.getParagraphs()).as("one line a page, no paragraph of a break's own")
+                    .filteredOn(paragraph -> ownText(paragraph).isEmpty() && boxesIn(paragraph) == 0
+                                             && paragraph.getCTP().xmlText().contains("w:type=\"page\""))
+                    .isEmpty();
+        }
+        assertThat(report.notes()).as("nothing dropped")
+                .noneMatch(note -> note.severity() == DocxExportReport.Severity.DROPPED);
+    }
+
+    /** Three canvases each filling a page, split by page breaks. */
+    private static final class CanvasDeck {
+        static void withBreaks(PageFlowBuilder page) {
+            page.add(board(320, 320, "One")).addPageBreak(b -> b.name("ToTwo"))
+                    .add(board(320, 320, "Two")).addPageBreak(b -> b.name("ToThree"))
+                    .add(board(320, 320, "Three"));
+        }
+    }
+
+    @Test
     void lastInTheFlowAfterATableItsDrawingsHangBelowTheClosingParagraphsLine() throws Exception {
         // Nothing in the flow holds it there: the closing paragraph under the table stands below
         // what it draws, as below a block laid over the flow, so typing at the end does not run
@@ -289,12 +322,15 @@ class DocxCanvasOverItsPageTest {
                 .addTable(table -> table.columns(com.demcha.compose.document.table.DocumentTableColumn.auto())
                         .row("Cell"))
                 .add(sideBySide()))) {
-            List<XWPFParagraph> paragraphs = document.getParagraphs();
-            assertThat(paragraphs).as("a line as tall as it hangs below the table, before the closing one")
+            // The canvas is 120pt tall and starts at the table's foot: the line is about that.
+            assertThat(document.getParagraphs())
+                    .as("a line as tall as it hangs below the table, before the closing one")
+                    .filteredOn(paragraph -> paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetSpacing()
+                                             && paragraph.getCTP().getPPr().getSpacing().isSetLine())
                     .anySatisfy(paragraph -> {
                         var spacing = paragraph.getCTP().getPPr().getSpacing();
                         assertThat(spacing.getLineRule().toString()).isEqualTo("exact");
-                        assertThat(DocxTwips.of(spacing.getLine())).isGreaterThan(100 * 20L);
+                        assertThat(DocxTwips.of(spacing.getLine())).isBetween(100 * 20L, 140 * 20L);
                     });
         }
     }

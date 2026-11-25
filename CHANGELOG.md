@@ -18,12 +18,16 @@ follow semantic versioning; release dates are ISO 8601.
     the second page and took the four pages after it one page later.
   - Such a canvas in the body's flow is now written over its page, as a block laid over the flow
     already is: its drawings stand where the page draws them, each paragraph in a text box where
-    the page sets it, and the flow holds the canvas's room where something follows it — in a line
-    of its own where the canvas opens a page, whose top Word and LibreOffice drop a paragraph's
-    space above at: owed as that space, the paragraph under a canvas moved to a new page stood
-    139.8pt high in both, and within 0.3pt held in the line. A canvas alone on its page — a
-    cover, a page of a deck — holds its room in such a line too, which carries its text boxes
-    there: nothing else written on its page, they would be dropped. Measured by baseline against the
+    the page sets it, and the flow holds the canvas's room. Where the canvas opens a page, the
+    room is a line of its own, whose height Word and LibreOffice keep at a page's top where they
+    drop a paragraph's space above: owed as that space, the paragraph under a canvas moved to a
+    new page stood 139.8pt high in both, and within 0.3pt held in the line. A canvas alone on its
+    page — a cover, a page of a deck — holds its room in such a line too, which carries its text
+    boxes there: with nothing else written on its page they were dropped, or carried by a page
+    break's paragraph at the page's top, where Word set a box within that paragraph's line 7pt
+    high. A page break right after the line goes in it, or its own paragraph would stand on the
+    next page and break it again. Elsewhere the room is owed as space to what follows, and nothing
+    is written where nothing follows. Measured by baseline against the
     engine's PDF in Word 16 and LibreOffice 26.8: `TwinOutputExample`'s 41 lines that both
     editors break as the page does within 0.6pt, and the banner's first page within 0.7pt with
     its caption back on it and five pages in both. One paragraph of `TwinOutputExample`, set at

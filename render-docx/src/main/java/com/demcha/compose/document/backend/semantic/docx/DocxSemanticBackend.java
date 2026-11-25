@@ -735,6 +735,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** {@link #blocksWritten} once the last page break was written: equal, nothing has been since. */
     private long blocksAtTheLastBreak = -1;
 
+    /**
+     * The line holding the room of a canvas written over its page that nothing follows on its
+     * page, and {@link #blocksWritten} once it was written: a page break written right after it
+     * goes in that line ({@link #writePageBreak}). {@code null} where there is none.
+     */
+    private XWPFParagraph roomLineBeforeABreak;
+    private long blocksAtTheRoomLine = -1;
+
     /** Space the last body paragraph holds below itself, not yet written — see {@link #owePendingSpacingAfter}. */
     private double pendingSpacingAfter;
 
@@ -1395,6 +1403,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         currentPage = 0;
         lastEndPage = -1;
         blocksAtTheLastBreak = -1;
+        roomLineBeforeABreak = null;
+        blocksAtTheRoomLine = -1;
         topEdgeHeldAbove = null;
         topEdgeHeld = 0;
         topEdgeLine = null;
@@ -21831,20 +21841,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Writes a canvas that places its text side by side or out of reading order over its page:
      * its drawings where the page draws them, and each of its paragraphs in a text box where the
      * page sets it ({@link #writeTextOverTheFlow}). Nothing of it is written in the flow but its
-     * room, where something follows it, or where it opens a page: owed as space to the next block,
-     * as for a canvas that only draws ({@link #holdTheSpaceOf}), or held in an empty line
-     * ({@link #holdItsRoomInALine}) where it opens a page, whose top drops that space, or stands
-     * alone on its page.
+     * room: held in an empty line ({@link #holdItsRoomInALine}) where it opens a page, whose top
+     * drops a space above, or stands alone on its page; owed as space to the next block, as for a
+     * canvas that only draws ({@link #holdTheSpaceOf}), where something follows it on a page it
+     * shares; and nothing at all where nothing follows it there.
      *
-     * <p>Alone on its page, the line is what stands there: a text box is carried by a paragraph
-     * the layout puts on its page ({@link DocxDrawingAnchors}). Owed as space, a canvas filling its
-     * page wrote nothing there, and its text was dropped: a cover filling the first page before a
-     * paragraph on the second, and the first of two pages that are each a canvas. Elsewhere the
-     * line is not written: the line under a canvas in the middle of a page sets the next paragraph
-     * 0.3pt low in Word 16 and LibreOffice 26.8, whose first line, measured, is raised into the
-     * space above it, and the line leaves it none. Where nothing follows it, the paragraphs above
-     * it, the section's closing one — set below what it draws ({@link #hangBelowTheFlow}) — or the
-     * page break's stand on its page.</p>
+     * <p>Alone on its page, the line is what stands there to carry its text boxes
+     * ({@link DocxDrawingAnchors}). Owed as space, a canvas filling its page wrote nothing there,
+     * and its text was dropped: a cover filling the first page before a paragraph on the second,
+     * and the first of two pages that are each a canvas. Carried instead by the paragraph of a
+     * page break after it, or the section's closing paragraph, both set at the page's top, a box
+     * placed from the page's edge whose top stood within that paragraph's line was set on the
+     * line's baseline by Word 16 — 7pt high — and not by LibreOffice 26.8. A page break right after
+     * the line goes in it ({@link #writePageBreak}). Elsewhere the line is not written: under a
+     * canvas in the middle of a page it set the next paragraph 0.3pt low in both editors, whose
+     * first line is raised into the space above it, and the line leaves it none. Where nothing
+     * follows it on a page it shares, the paragraphs above it, the section's closing one — set
+     * below what it draws ({@link #hangBelowTheFlow}) — or the page break's stand there.</p>
      *
      * <p>Written as its contents, its text stood one block under another from its corner: on a
      * 960 by 540pt page that is all one canvas, Word 16 set every one of its 43 lines, and
@@ -21857,11 +21870,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                         boolean followed) throws Exception {
         followedInFlow.remove(canvas);
         reportRewritten(canvas, "written over its page: its drawings stand where the page draws them and "
-                + "its paragraphs in text boxes where the page sets them, nothing of it in the flow, which "
-                + "holds its room where something follows it");
-        if (startsAPageOfItsOwn(canvas) || blocksWritten == blocksAtTheLastBreak
-            || followed && aloneOnItsPage(canvas)) {
-            holdItsRoomInALine(document, canvas);
+                + "its paragraphs in text boxes where the page sets them, nothing of it in the flow but its "
+                + "room");
+        XWPFParagraph roomLine = null;
+        if (startsAPageOfItsOwn(canvas) || blocksWritten == blocksAtTheLastBreak || aloneOnItsPage(canvas)) {
+            roomLine = holdItsRoomInALine(document, canvas);
         } else if (followed) {
             holdTheSpaceOf(canvas);
         } else {
@@ -21882,6 +21895,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             canvasOverItsPageDepth--;
         }
         pendingSpacingAfter = owed;
+        if (roomLine != null && !followed) {
+            // Nothing follows it on its page: a page break next goes in its line (writePageBreak).
+            roomLineBeforeABreak = roomLine;
+            blocksAtTheRoomLine = blocksWritten;
+        }
     }
 
     /**
@@ -21916,7 +21934,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * above that page's top. The line is not kept with what follows: the layout keeps the canvas
      * with nothing.</p>
      */
-    private void holdItsRoomInALine(XWPFDocument document, com.demcha.compose.document.node.CanvasLayerNode canvas) {
+    private XWPFParagraph holdItsRoomInALine(XWPFDocument document,
+                                             com.demcha.compose.document.node.CanvasLayerNode canvas) {
         com.demcha.compose.document.layout.PlacedNode placed = layout.placement(canvas);
         double above = spaceAboveOnItsPage(canvas);
         carriedSpacingBefore += canvas.margin().top();
@@ -21928,6 +21947,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         spacing.setBefore(BigInteger.valueOf(before - held));
         holdInALineKeptWithTheNext(line, held + toTwips(placed.placementHeight() + canvas.margin().bottom()));
         properties.unsetKeepNext();
+        return line;
     }
 
     /**
@@ -24429,7 +24449,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Nor here (leaveThePageAbove).
         settleTheLineAbove();
         flushSpacingAfter();
-        XWPFParagraph para = document.createParagraph();
+        // Right after the line holding a canvas's room, the break goes in that line: a paragraph of
+        // its own, under a line filling its page, stood on the next page and broke it again — a
+        // blank page between two canvases each filling one, in Word 16 and LibreOffice 26.8.
+        boolean inTheRoomLine = roomLineBeforeABreak != null && blocksWritten == blocksAtTheRoomLine
+                                && currentCell == null;
+        XWPFParagraph para = inTheRoomLine ? roomLineBeforeABreak : document.createParagraph();
+        roomLineBeforeABreak = null;
         blocksWritten++;
         blocksAtTheLastBreak = blocksWritten;
         // It stands on the page the break ends, and carries what is drawn there when nothing else

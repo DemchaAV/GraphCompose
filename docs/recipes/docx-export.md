@@ -1319,8 +1319,8 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   written over its page, as a block laid over the flow is: its drawings stand where the page draws
   them, each paragraph in a text box where the page sets it, anchored in a paragraph on its page,
   and the flow holds the canvas's room where something follows it. A canvas alone on its page — a
-  cover, a page of a deck — holds it in an empty line there, which carries its text boxes. Where
-  the canvas opens a page —
+  cover, a page of a deck — holds it in an empty line there, which carries its text boxes, and a
+  page break right after it goes in that line. Where the canvas opens a page —
   one the layout moves it to, or one a page break starts — the room is an empty line as tall as
   the space above it there, its box and its bottom margin: Word and LibreOffice drop a
   paragraph's space above at the top of a page, and the paragraph under a canvas moved to a new

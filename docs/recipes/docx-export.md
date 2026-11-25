@@ -1317,8 +1317,10 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   of the one before it, as on a poster or a slide — and holds only drawing and plain paragraphs
   on one page is
   written over its page, as a block laid over the flow is: its drawings stand where the page draws
-  them, each paragraph in a text box where the page sets it, anchored in a paragraph near it, and
-  the flow holds the canvas's room where something follows it. Where the canvas opens a page —
+  them, each paragraph in a text box where the page sets it, anchored in a paragraph on its page,
+  and the flow holds the canvas's room where something follows it. A canvas alone on its page — a
+  cover, a page of a deck — holds it in an empty line there, which carries its text boxes. Where
+  the canvas opens a page —
   one the layout moves it to, or one a page break starts — the room is an empty line as tall as
   the space above it there, its box and its bottom margin: Word and LibreOffice drop a
   paragraph's space above at the top of a page, and the paragraph under a canvas moved to a new
@@ -1328,10 +1330,11 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   both editors break as the page does stand within 0.6pt of it (Word 16 and LibreOffice 26.8, by
   baseline). A box set with one line is given a quarter again of its width to spare; one of
   several lines keeps its width but for the editor's couple of points, so a paragraph at a size
-  the file rounds to the half point — 12.3pt written as 12.5pt — breaks a word later. A link, a
+  the file rounds to the half point — 12.3pt written as 12.5pt — breaks a word sooner. A link, a
   bookmark, an anchor, a picture, a table, a list, a spacer, a chart, a barcode, a row, a nested
   canvas or a transformed block it holds keeps the canvas written as its contents, as does a
-  canvas in a table cell, a band, another overlay or a stack of one layer; the report names the
+  canvas spanning two pages, or in a table cell, a painted panel, a band, another overlay or a
+  stack of one layer; the report names the
   places those lose. Text in a text box stands outside
   the flow: what is typed into it moves nothing round it, and a reader of the flow alone does not
   reach it. The report names the canvas and each paragraph.

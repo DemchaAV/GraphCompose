@@ -85,10 +85,11 @@ class DocxCanvasOverItsPageTest {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, MARGIN, page -> page
                 .addCanvas(300, 120, canvas -> canvas
                         .position(new ShapeBuilder().size(300, 120).fillColor(INK).build(), 0, 0)
-                        .position(paragraph("Caption"), 0, 0))
+                        .position(paragraph("Caption"), 0, 0)
+                        .position(paragraph("Credit"), 0, 40))
                 .addParagraph("Below"))) {
             assertThat(document.getParagraphs()).extracting(DocxCanvasOverItsPageTest::ownText)
-                    .contains("Caption", "Below");
+                    .contains("Caption", "Credit", "Below");
             assertThat(document.getDocument().getBody().xmlText()).doesNotContain("<w:txbxContent>");
         }
     }
@@ -237,10 +238,79 @@ class DocxCanvasOverItsPageTest {
                 }
                 assertThat(spacing.isSetAfter() ? DocxTwips.of(spacing.getAfter()) : 0L)
                         .as("no room owed below %s", ownText(paragraph)).isLessThan(100 * 20L);
+                assertThat(spacing.isSetBefore() ? DocxTwips.of(spacing.getBefore()) : 0L)
+                        .as("no room owed above %s", ownText(paragraph)).isLessThan(100 * 20L);
                 assertThat(spacing.isSetLine() ? DocxTwips.of(spacing.getLine()) : 0L)
                         .as("no line holding it").isLessThan(100 * 20L);
             }
         }
+    }
+
+    @Test
+    void aCanvasFillingItsPageIsCarriedOnItsPage() throws Exception {
+        // A cover filling the first page, with a paragraph on the second: its room held as space
+        // above that paragraph, nothing stood on the first page to carry its text boxes, and both
+        // were dropped. The line holding its room stands there and carries them.
+        DocxExportReport report = DocxExports.report(400, 400, MARGIN, page -> page
+                .add(board(320, 320, "Cover")).addParagraph("After the cover"));
+        try (XWPFDocument document = DocxExports.withLayout(400, 400, MARGIN, page -> page
+                .add(board(320, 320, "Cover")).addParagraph("After the cover"))) {
+            XWPFParagraph line = paragraphBefore(document, "After the cover");
+            assertThat(DocxTwips.of(line.getCTP().getPPr().getSpacing().getLine())).as("the page's whole height")
+                    .isEqualTo(320 * 20L);
+            assertThat(boxesIn(line)).as("both text boxes carried by the line on the cover's page").isEqualTo(2);
+        }
+        assertThat(report.notes()).as("nothing dropped")
+                .noneMatch(note -> note.severity() == DocxExportReport.Severity.DROPPED);
+    }
+
+    @Test
+    void eachOfTwoCanvasesFillingAPageIsCarriedOnItsOwn() throws Exception {
+        // A deck: the first is followed, the second opens the next page; each holds a line there.
+        DocxExportReport report = DocxExports.report(400, 400, MARGIN, page -> page
+                .add(board(320, 320, "First")).add(board(320, 320, "Second")));
+        try (XWPFDocument document = DocxExports.withLayout(400, 400, MARGIN, page -> page
+                .add(board(320, 320, "First")).add(board(320, 320, "Second")))) {
+            List<XWPFParagraph> lines = document.getParagraphs().stream()
+                    .filter(paragraph -> boxesIn(paragraph) > 0).toList();
+            assertThat(lines).as("one line a page").hasSize(2);
+            assertThat(lines).allSatisfy(line -> assertThat(boxesIn(line)).isEqualTo(2));
+        }
+        assertThat(report.notes()).as("nothing dropped")
+                .noneMatch(note -> note.severity() == DocxExportReport.Severity.DROPPED);
+    }
+
+    @Test
+    void lastInTheFlowAfterATableItsDrawingsHangBelowTheClosingParagraphsLine() throws Exception {
+        // Nothing in the flow holds it there: the closing paragraph under the table stands below
+        // what it draws, as below a block laid over the flow, so typing at the end does not run
+        // under its text boxes.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, MARGIN, page -> page
+                .addTable(table -> table.columns(com.demcha.compose.document.table.DocumentTableColumn.auto())
+                        .row("Cell"))
+                .add(sideBySide()))) {
+            List<XWPFParagraph> paragraphs = document.getParagraphs();
+            assertThat(paragraphs).as("a line as tall as it hangs below the table, before the closing one")
+                    .anySatisfy(paragraph -> {
+                        var spacing = paragraph.getCTP().getPPr().getSpacing();
+                        assertThat(spacing.getLineRule().toString()).isEqualTo("exact");
+                        assertThat(DocxTwips.of(spacing.getLine())).isGreaterThan(100 * 20L);
+                    });
+        }
+    }
+
+    /** How many text boxes a paragraph carries. */
+    private static int boxesIn(XWPFParagraph paragraph) {
+        return paragraph.getCTP().xmlText().split("<w:txbxContent>", -1).length - 1;
+    }
+
+    /** A canvas as large as given, its block drawn and two lines of text side by side. */
+    private static DocumentNode board(double width, double height, String tag) {
+        return new CanvasLayerBuilder(width, height).name("Board" + tag)
+                .position(new ShapeBuilder().size(width, height).fillColor(INK).build(), 0, 0)
+                .position(paragraph("West " + tag), 0, 10)
+                .position(paragraph("East " + tag), 150, 18)
+                .build();
     }
 
     private static void filler(PageFlowBuilder page, int lines) {

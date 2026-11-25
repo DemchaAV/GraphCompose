@@ -39,14 +39,10 @@ class DocxFlowContainerReportTest {
 
     @Test
     void aCanvasNamesThePlacesAndWidthItIsWrittenWithout() throws Exception {
-        // Its room is held under what it writes (DocxCanvasRoomTest). A link is carried by the flow
-        // and not by a text box, so it is written as its contents rather than over its page
-        // (DocxCanvasOverItsPageTest).
+        // Its room is held under what it writes (DocxCanvasRoomTest).
         DocxExportReport report = reportOf(page -> page
                 .addCanvas(200, 120, canvas -> canvas.position(new ParagraphBuilder()
-                        .text("Set forty points in and sixty down, wrapping inside two hundred")
-                        .linkTarget(com.demcha.compose.document.node.DocumentLinkTarget.external("https://example.org"))
-                        .build(), 40, 60))
+                        .text("Set forty points in and sixty down, wrapping inside two hundred").build(), 40, 60))
                 .addParagraph("Below"));
 
         assertThat(detailOf(report, "CanvasLayerNode")).isEqualTo("written as its contents; "

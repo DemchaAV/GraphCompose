@@ -21763,8 +21763,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CanvasWrites writes = canvasWrites(canvas);
         boolean followed = followedInFlow.contains(canvas);
         // One whose blocks read down, one under another, stays in the flow, where a reader of the
-        // flow reaches its text: a CV's name over its title is that. Blocks that do not read down
-        // are placed apart too.
+        // flow reaches its text: a CV's name over its title is that.
         if (!writes.readsDown() && writesOverItsPage(canvas)) {
             writeCanvasOverItsPage(document, canvas, followed);
             return;
@@ -21831,17 +21830,28 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Writes a canvas that places its text side by side or out of reading order over its page:
      * its drawings where the page draws them, and each of its paragraphs in a text box where the
-     * page sets it ({@link #writeTextOverTheFlow}). Nothing of it is written in the flow, which
-     * holds its room as for a canvas that only draws where something follows it: its box and its
-     * margins are owed as space to the next block, or held in a line where it opens a page
-     * ({@link #holdItsRoomInALine}).
+     * page sets it ({@link #writeTextOverTheFlow}). Nothing of it is written in the flow but its
+     * room, where something follows it, or where it opens a page: owed as space to the next block,
+     * as for a canvas that only draws ({@link #holdTheSpaceOf}), or held in an empty line
+     * ({@link #holdItsRoomInALine}) where it opens a page, whose top drops that space, or stands
+     * alone on its page.
+     *
+     * <p>Alone on its page, the line is what stands there: a text box is carried by a paragraph
+     * the layout puts on its page ({@link DocxDrawingAnchors}). Owed as space, a canvas filling its
+     * page wrote nothing there, and its text was dropped: a cover filling the first page before a
+     * paragraph on the second, and the first of two pages that are each a canvas. Elsewhere the
+     * line is not written: the line under a canvas in the middle of a page sets the next paragraph
+     * 0.3pt low in Word 16 and LibreOffice 26.8, whose first line, measured, is raised into the
+     * space above it, and the line leaves it none. Where nothing follows it, the paragraphs above
+     * it, the section's closing one — set below what it draws ({@link #hangBelowTheFlow}) — or the
+     * page break's stand on its page.</p>
      *
      * <p>Written as its contents, its text stood one block under another from its corner: on a
      * 960 by 540pt page that is all one canvas, Word 16 set every one of its 43 lines, and
      * LibreOffice 26.8 every one it set, as much as 820pt across and 222pt down from where the
      * page sets them. Written over its page, the 41 lines both editors break as the page does
      * stand within 0.6pt of it; the other paragraph, set 12.3pt on the page and 12.5pt in the file,
-     * which holds a size to the half point, breaks a word later in both.</p>
+     * which holds a size to the half point, breaks a word sooner in both.</p>
      */
     private void writeCanvasOverItsPage(XWPFDocument document, com.demcha.compose.document.node.CanvasLayerNode canvas,
                                         boolean followed) throws Exception {
@@ -21849,10 +21859,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         reportRewritten(canvas, "written over its page: its drawings stand where the page draws them and "
                 + "its paragraphs in text boxes where the page sets them, nothing of it in the flow, which "
                 + "holds its room where something follows it");
-        if (followed && (startsAPageOfItsOwn(canvas) || blocksWritten == blocksAtTheLastBreak)) {
+        if (startsAPageOfItsOwn(canvas) || blocksWritten == blocksAtTheLastBreak
+            || followed && aloneOnItsPage(canvas)) {
             holdItsRoomInALine(document, canvas);
         } else if (followed) {
             holdTheSpaceOf(canvas);
+        } else {
+            // Nothing in the flow holds it: the section's closing paragraph stands below what it
+            // draws, as below a block laid over the flow (hangBelowTheFlow).
+            writtenOverTheFlow.add(layout.placement(canvas).path());
         }
         // Nothing it holds owes more: what was owed after its room stands after its text boxes.
         double owed = pendingSpacingAfter;
@@ -21870,11 +21885,26 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Holds the room of a canvas written over its page that opens a page — one the layout moves it
-     * to, or one a page break starts — in an empty line as tall as the space the layout leaves
-     * above it there, its box and its bottom margin.
+     * Whether the layout puts nothing on a canvas's page but the canvas and what holds it: no
+     * paragraph written in the flow stands there to carry its text boxes ({@link DocxDrawingAnchors}).
+     */
+    private boolean aloneOnItsPage(com.demcha.compose.document.node.CanvasLayerNode canvas) {
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(canvas);
+        String path = placed.path();
+        return Double.isNaN(layout.lowestContentOn(placed.startPage(),
+                fragment -> !fragment.equals(path) && !fragment.startsWith(path + "/")
+                            && !path.startsWith(fragment + "/")));
+    }
+
+    /**
+     * Holds the room of a canvas written over its page in an empty line as tall as the space owed
+     * above it — its top margin with what the blocks above leave — its box and its bottom margin.
+     * Where it opens a page, one the layout moves it to or one a page break starts, the line holds
+     * only as much of that space as the layout leaves above it there, and the rest is owed above the
+     * line.
      *
-     * <p>Owed as space above the next block, as elsewhere ({@link #holdTheSpaceOf}), it was lost:
+     * <p>Owed as space above the next block, as elsewhere ({@link #holdTheSpaceOf}), it was lost
+     * where the canvas opens a page:
      * Word and LibreOffice drop a paragraph's space above at the top of a page, and the paragraph
      * under a 120pt canvas with a 14pt margin, moved to a new page, stood 139.8pt high in both;
      * after a page break, 119.8pt. A line's height they keep. The rest of the space owed above it

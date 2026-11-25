@@ -179,8 +179,9 @@ What is not written — each one is named in the export report
   by side or out of reading order — a poster or a slide — and holds only drawing and plain
   paragraphs is written over its page: each paragraph in a text box where the page sets it, its
   drawings where the page draws them, the flow holding its room where something follows it; with
-  a link, a picture, a table, a list or any other block in it, or in a table cell or another
-  overlay, it writes its text one block after another and the report names the places lost. One
+  a link, a picture, a table, a list or any other block in it, spanning two pages, or in a table
+  cell, a painted panel or another overlay, it writes its text one block after another and the
+  report names the places lost. One
   whose blocks read down, each at or below the foot of the one before — a CV's name over its
   title — stays in the flow so, where a reader of the flow reaches it. Some stacks take a form
   Word has instead, and the report names the form

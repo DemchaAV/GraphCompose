@@ -21,12 +21,14 @@ follow semantic versioning; release dates are ISO 8601.
     the page sets it, and the flow holds the canvas's room where something follows it — in a line
     of its own where the canvas opens a page, whose top Word and LibreOffice drop a paragraph's
     space above at: owed as that space, the paragraph under a canvas moved to a new page stood
-    139.8pt high in both, and within 0.3pt held in the line. Measured by baseline against the
+    139.8pt high in both, and within 0.3pt held in the line. A canvas alone on its page — a
+    cover, a page of a deck — holds its room in such a line too, which carries its text boxes
+    there: nothing else written on its page, they would be dropped. Measured by baseline against the
     engine's PDF in Word 16 and LibreOffice 26.8: `TwinOutputExample`'s 41 lines that both
     editors break as the page does within 0.6pt, and the banner's first page within 0.7pt with
     its caption back on it and five pages in both. One paragraph of `TwinOutputExample`, set at
     12.3pt, is written at 12.5pt — a Word file holds a size to the half point — and breaks a word
-    later in both.
+    sooner in both.
   - A canvas whose blocks read down — each starting at or below the foot of the one before,
     however far across — stays in the flow and is written as its contents as before, where a
     reader of the flow reaches its text: a CV's name over its title is that, as in
@@ -35,8 +37,8 @@ follow semantic versioning; release dates are ISO 8601.
   - Only a canvas holding nothing but drawing and plain paragraphs on one page is, as for a block
     laid over the flow: a link, a bookmark, an anchor, a picture, a table, a list, a spacer, a
     chart, a barcode, a row, a nested canvas or a transformed block it holds keeps it written as
-    its contents, and so does a canvas in a table cell, a band, another overlay or a stack of one
-    layer. The report names each as before.
+    its contents, and so does a canvas spanning two pages, or in a table cell, a painted panel, a
+    band, another overlay or a stack of one layer. The report names each as before.
   - Text in a text box stands outside the document's flow: each box is anchored in a paragraph
     near it and moves with that paragraph, but what is typed into it moves nothing round it, and
     a reader of the flow alone does not reach it. The report names each such paragraph.

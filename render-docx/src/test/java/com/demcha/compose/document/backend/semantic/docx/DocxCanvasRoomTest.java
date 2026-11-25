@@ -109,6 +109,23 @@ class DocxCanvasRoomTest {
     }
 
     @Test
+    void aCanvasWrittenOverItsPageHoldsItsWholeRoom() throws Exception {
+        // Its text set apart stands in text boxes (DocxCanvasOverItsPageTest), and none of it in
+        // the flow, which holds its box as for a canvas that only draws.
+        Exported exported = export(page -> page
+                .add(paragraph("Above"))
+                .addCanvas(300, 90, canvas -> canvas
+                        .margin(new DocumentInsets(4, 0, 8, 0))
+                        .position(paragraph("West"), 0, 10)
+                        .position(paragraph("East"), 150, 18))
+                .add(paragraph("Below")));
+
+        assertThat(gapInWord(exported.document(), "Above", "Below"))
+                .isCloseTo(gapOnThePage(exported.layout(), "Above", "Below") - RAISE, within(0.1))
+                .isCloseTo(4 + 90 + 8 - RAISE, within(0.1));
+    }
+
+    @Test
     void aCanvasThatOnlyDrawsHoldsItsBoxOnceWhatItDrawsInHasEdgesToo() throws Exception {
         // A marker's recipe is a section of its own; its edges are inside the canvas's box.
         Exported exported = export(page -> page
@@ -630,8 +647,20 @@ class DocxCanvasRoomTest {
         for (XWPFTable table : document.getTables()) {
             collect(table, all);
         }
-        return all.stream().filter(paragraph -> paragraph.getText().equals(text)).findFirst()
-                .orElseThrow(() -> new AssertionError("no paragraph reading " + text));
+        // Its own runs: a text box anchored in it is read by getText too.
+        return all.stream().filter(paragraph -> paragraph.getText().equals(text) || ownText(paragraph).equals(text))
+                .findFirst().orElseThrow(() -> new AssertionError("no paragraph reading " + text));
+    }
+
+    /** The text of a paragraph's own runs, not of the text boxes anchored in it. */
+    private static String ownText(XWPFParagraph paragraph) {
+        StringBuilder text = new StringBuilder();
+        for (var run : paragraph.getCTP().getRList()) {
+            for (var part : run.getTList()) {
+                text.append(part.getStringValue());
+            }
+        }
+        return text.toString();
     }
 
     private static void collect(XWPFTable table, List<XWPFParagraph> all) {

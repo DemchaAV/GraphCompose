@@ -78,7 +78,7 @@ names what it cannot carry. The PPTX and DOCX Java APIs are Experimental
 | [Viewer preferences](backend-capability-details.md#viewer-preferences) | ✅ | ❌ ignored with a warning; PDF-viewer concept | ❌ not written; report names it |
 | [Debug guide lines / node labels](backend-capability-details.md#debug-guide-lines--node-labels) | ✅ | ❌ ignored with a warning; render via PDF | n/a |
 | [Keep a block on one page](backend-capability-details.md#keep-a-block-on-one-page) | ✅ resolved before any backend runs | ✅ same | ⚠️ Word keep flags; Word re-paginates |
-| [Layer stack](backend-capability-details.md#layer-stack) | ✅ | ✅ | ⚠️ layers written one after another, not overlaid |
+| [Layer stack](backend-capability-details.md#layer-stack) | ✅ | ✅ | ⚠️ layers written one after another, not overlaid; a canvas in the body's flow placing plain paragraphs side by side sets them in text boxes where the page sets them |
 
 ## Output surface and lifecycle
 

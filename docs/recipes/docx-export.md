@@ -1297,8 +1297,9 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   [charts.md](charts.md).
 - **A canvas → its contents.** A canvas's drawings stand where it places them; what it
   writes — text, pictures, tables — is written one block after another inside its margin and
-  padding. The places it gives them and the width its text wraps at are not carried, and the
-  report names each one it loses. Its height is held: the room under what it writes is the
+  padding, unless it is written over its page (next item). The places it gives them and the
+  width its text wraps at are not carried, and the report names each one it loses. Its height
+  is held: the room under what it writes is the
   space below it, which the next block takes or the cell it ends holds. One that only draws
   holds its whole box in a flow, a cell, a column, a band's layer or a shape container's
   layer — not before the first block a band's layer writes, nor in drawings held whole round
@@ -1307,9 +1308,33 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   under another, running past its height; a drawing in what it writes, which takes no room in
   Word; and a height not measured, in a table's composed cell or with no layout. A canvas's
   clip policy paints nothing on the page either. So a canvas whose text runs top to bottom in
-  reading order — a name over a title, as `MintEditorial`'s masthead — reads in Word as on the
-  page, and text a canvas places side by side or out of reading order does not: a poster- or
-  slide-like canvas page belongs in PDF or PPTX.
+  reading order from its corner reads in Word as on the page. One whose blocks read down — each
+  at or below the foot of the one before, however far across or apart — is written so too, where
+  a reader of the flow reaches its text, a CV's name over its title included; the places it
+  gives them are named.
+- **A canvas placing its text side by side → over its page.** A canvas in the body's flow that
+  places what it writes side by side or out of reading order — a block starting above the foot
+  of the one before it, as on a poster or a slide — and holds only drawing and plain paragraphs
+  on one page is
+  written over its page, as a block laid over the flow is: its drawings stand where the page draws
+  them, each paragraph in a text box where the page sets it, anchored in a paragraph near it, and
+  the flow holds the canvas's room where something follows it. Where the canvas opens a page —
+  one the layout moves it to, or one a page break starts — the room is an empty line as tall as
+  the space above it there, its box and its bottom margin: Word and LibreOffice drop a
+  paragraph's space above at the top of a page, and the paragraph under a canvas moved to a new
+  page stood 139.8pt high in both while the room was that space. Written as its contents,
+  `TwinOutputExample`'s one-canvas page had its 43 lines stacked at its left edge in Word 16 and
+  LibreOffice, as much as 820pt across and 222pt down from the page; over its page, the lines
+  both editors break as the page does stand within 0.6pt of it (Word 16 and LibreOffice 26.8, by
+  baseline). A box set with one line is given a quarter again of its width to spare; one of
+  several lines keeps its width but for the editor's couple of points, so a paragraph at a size
+  the file rounds to the half point — 12.3pt written as 12.5pt — breaks a word later. A link, a
+  bookmark, an anchor, a picture, a table, a list, a spacer, a chart, a barcode, a row, a nested
+  canvas or a transformed block it holds keeps the canvas written as its contents, as does a
+  canvas in a table cell, a band, another overlay or a stack of one layer; the report names the
+  places those lose. Text in a text box stands outside
+  the flow: what is typed into it moves nothing round it, and a reader of the flow alone does not
+  reach it. The report names the canvas and each paragraph.
 - **Columns drawn as layers → one table row.** A two-column page can lay its
   columns out as the layers of one stack, each inset to its band, so the name
   is drawn before the sidebar. Word has no layers. When every layer is a plain

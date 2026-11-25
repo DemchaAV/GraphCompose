@@ -174,10 +174,16 @@ What is not written — each one is named in the export report
   `page zone content`.
 - **Positioning and effects.** Word has no layers, so a layer stack or a canvas writes its text
   one block after another rather than where the page places it; its drawings still stand where
-  the page draws them. A canvas (`addCanvas`) whose text runs top to bottom in reading order —
-  a name over a title, as `MintEditorial`'s masthead — reads in Word as on the page; text it
-  places side by side or out of reading order does not, so export a poster- or slide-like canvas
-  page as PDF or PPTX. Some stacks take a form Word has instead, and the report names the form
+  the page draws them. A canvas (`addCanvas`) whose text runs top to bottom in reading order
+  from its corner reads in Word as on the page. One in the body's flow that places its text side
+  by side or out of reading order — a poster or a slide — and holds only drawing and plain
+  paragraphs is written over its page: each paragraph in a text box where the page sets it, its
+  drawings where the page draws them, the flow holding its room where something follows it; with
+  a link, a picture, a table, a list or any other block in it, or in a table cell or another
+  overlay, it writes its text one block after another and the report names the places lost. One
+  whose blocks read down, each at or below the foot of the one before — a CV's name over its
+  title — stays in the flow so, where a reader of the flow reaches it. Some stacks take a form
+  Word has instead, and the report names the form
   on the stack: side-by-side columns are one table row, a cell per column; single-line paragraphs
   the page sets on one line share one Word line at tab stops; a stack the page gives no room,
   outside a table cell and holding only drawings and plain paragraphs on one page, is laid over

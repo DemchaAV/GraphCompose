@@ -181,7 +181,7 @@ class DocxCanvasRoomTest {
                    + gapInWord(document, "Title", "Below"))
                 .as("the canvas's height").isCloseTo(100 - RAISE, within(0.1));
         assertThat(detailOf(exported.report())).isEqualTo("written as its contents; a block it places higher than the "
-                + "foot of the one before, or than its corner, is written at that foot");
+                + "foot of the one before, or than its corner, is written at that foot or corner");
     }
 
     @Test
@@ -245,8 +245,65 @@ class DocxCanvasRoomTest {
                 .add(paragraph("Below")));
 
         assertThat(placed(exported.layout(), "Name").startPage()).as("moved to the second page").isEqualTo(1);
+        // The spacer's room above it and the name's 20pt are both owed there, and both dropped.
+        assertThat(before(paragraphOf(exported.document(), "Name"))).as("written above the name, at the page's top")
+                .isCloseTo(500 + 20, within(0.5));
         assertThat(detailOf(exported.report())).isEqualTo("written as its contents; on the page it opens, the space "
                 + "it places above its first block stands at the top of the page, where Word drops it");
+    }
+
+    @Test
+    void aTableOpeningANewPageInACanvasStandsUnderTheLineHoldingItsSpace() throws Exception {
+        // The line holding the canvas's top edge on the page it opens holds the table's 20pt too,
+        // and the table owes none of it again: Word has no space above a table, and paid below the
+        // line it stood that much low.
+        Exported exported = export(page -> page
+                .add(new com.demcha.compose.document.dsl.SpacerBuilder().height(500).build())
+                .addCanvas(360, 120, canvas -> canvas
+                        .position(grid(), 0, 20)
+                        .position(paragraph("Title"), 0, 60))
+                .add(paragraph("Below")));
+        XWPFDocument document = exported.document();
+        List<IBodyElement> body = document.getBodyElements();
+        XWPFParagraph line = (XWPFParagraph) body.get(body.indexOf(document.getTables().get(0)) - 1);
+
+        assertThat(placed(exported.layout(), "Grid").startPage()).as("moved to the second page").isEqualTo(1);
+        assertThat(lineOf(line)).as("the line opening the page holds the table's place")
+                .isCloseTo(600 - 20 - top(exported.layout(), "Grid"), within(0.1)).isGreaterThan(19);
+        // The spacer's room is the line's space above, which Word drops at the page's top.
+        assertThat(after(line)).as("nothing more between the line and the table").isZero();
+    }
+
+    @Test
+    void aPulledUpCanvasOpeningANewPageWithATableIsNotNamedForTheSpaceItsTableHolds() throws Exception {
+        // A table the layout starts on a new page holds the space above it in a line of its own.
+        Exported exported = export(page -> page
+                .add(new com.demcha.compose.document.dsl.SpacerBuilder().height(500).build())
+                .addCanvas(360, 120, canvas -> canvas
+                        .margin(new DocumentInsets(-20, 0, 0, 0))
+                        .position(grid(), 0, 40)
+                        .position(paragraph("Title"), 0, 80))
+                .add(paragraph("Below")));
+
+        assertThat(placed(exported.layout(), "Grid").startPage()).as("moved to the second page").isEqualTo(1);
+        assertThat(exported.report().bySubject()).doesNotContainKey("CanvasLayerNode");
+    }
+
+    @Test
+    void aPullDeeperThanTheSpaceAboveAFirstTableIsNamed() throws Exception {
+        // Pulled up 30pt, its table placed 10pt below its corner: 20pt above where the flow sets
+        // the canvas, which Word, having no space below zero above a table, does not do.
+        Exported exported = export(page -> page
+                .add(paragraph("Above"))
+                .addCanvas(360, 120, canvas -> canvas
+                        .margin(new DocumentInsets(-30, 0, 0, 0))
+                        .position(grid(), 0, 10)
+                        .position(paragraph("Title"), 0, 60))
+                .add(paragraph("Below")));
+
+        assertThat(detailOf(exported.report())).isEqualTo("written as its contents; its negative top margin pulls its "
+                + "first block, which is not a paragraph, further up than it places it below its corner, and Word "
+                + "sets that block as much lower");
     }
 
     @Test
@@ -755,6 +812,12 @@ class DocxCanvasRoomTest {
         assertThat(before(marker.getParagraphs().get(0))).as("the marker's room")
                 .isCloseTo(placed(exported.layout(), "marker").placementHeight(), within(0.1));
         assertThat(exported.report().bySubject()).doesNotContainKey("CanvasLayerNode");
+    }
+
+    /** A table of one cell, named Grid. */
+    private static DocumentNode grid() {
+        return new com.demcha.compose.document.dsl.TableBuilder().name("Grid").columns(DocumentTableColumn.fixed(200))
+                .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(paragraph("Cell"))).build();
     }
 
     private static DocumentNode paragraph(String text) {

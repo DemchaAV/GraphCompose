@@ -73,8 +73,10 @@ follow semantic versioning; release dates are ISO 8601.
   - How far across it places them is still not carried: such a canvas writes its blocks at its
     left edge, and the report names one that places a block elsewhere. It also names a block placed
     higher than the foot of the one before, or than the canvas's corner, which Word sets at that
-    foot, and, for a canvas pulled up past the page's margin that the layout moves to a new page,
-    the space above its first block, which Word drops at the top of that page.
+    foot or corner; a first block other than a paragraph that a negative top margin pulls up
+    further than it places it below the corner, which Word sets that much lower; and, for a canvas
+    pulled up past the page's margin that the layout moves to a new page with a paragraph first,
+    the space above that paragraph, which Word drops at the top of that page.
 
 - **A PPTX font the deck does not carry is announced once, and by what the registered families carry under its name.**
   - The `render.pptx.font.substitution` lines for a registered family were written per

@@ -21871,7 +21871,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         followedInFlow.remove(canvas);
         reportRewritten(canvas, "written over its page: its drawings stand where the page draws them and "
                 + "its paragraphs in text boxes where the page sets them, nothing of it in the flow but its "
-                + "room");
+                + "room, where the flow holds it");
         XWPFParagraph roomLine = null;
         if (startsAPageOfItsOwn(canvas) || blocksWritten == blocksAtTheLastBreak || aloneOnItsPage(canvas)) {
             roomLine = holdItsRoomInALine(document, canvas);

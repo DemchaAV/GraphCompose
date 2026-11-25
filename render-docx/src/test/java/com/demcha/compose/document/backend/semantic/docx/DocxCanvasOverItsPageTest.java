@@ -70,7 +70,7 @@ class DocxCanvasOverItsPageTest {
 
         assertThat(detailOf(report, "CanvasLayerNode")).isEqualTo("written over its page: its drawings stand "
                 + "where the page draws them and its paragraphs in text boxes where the page sets them, nothing "
-                + "of it in the flow but its room");
+                + "of it in the flow but its room, where the flow holds it");
         List<String> paragraphs = report.bySubject().get("ParagraphNode").stream()
                 .map(DocxExportReport.Note::detail).toList();
         assertThat(paragraphs).as("West and East").hasSize(2).allSatisfy(detail -> assertThat(detail)
@@ -295,6 +295,8 @@ class DocxCanvasOverItsPageTest {
                         assertThat(line.getCTP().getPPr().getSpacing().getLineRule().toString()).isEqualTo("exact");
                         assertThat(boxesIn(line)).isEqualTo(2);
                     });
+            assertThat(document.getParagraphs()).as("the three lines, and nothing closing the section after them")
+                    .hasSize(3);
             assertThat(document.getParagraphs()).as("one line a page, no paragraph of a break's own")
                     .filteredOn(paragraph -> ownText(paragraph).isEmpty() && boxesIn(paragraph) == 0
                                              && paragraph.getCTP().xmlText().contains("w:type=\"page\""))

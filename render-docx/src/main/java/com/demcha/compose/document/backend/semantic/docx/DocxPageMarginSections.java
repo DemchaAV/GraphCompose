@@ -476,17 +476,14 @@ final class DocxPageMarginSections {
 
     private static XWPFParagraph carrierOf(XWPFDocument document, Carrier carrier) {
         if (carrier.pageBreak() != null) {
-            for (XWPFRun run : carrier.pageBreak().getRuns()) {
-                List<CTBr> breaks = run.getCTR().getBrList();
-                for (int index = breaks.size() - 1; index >= 0; index--) {
-                    if (breaks.get(index).getType() == STBrType.PAGE) {
-                        run.getCTR().removeBr(index);
-                    }
-                }
-            }
+            removePageBreaks(carrier.pageBreak());
             return hairline(carrier.pageBreak());
         }
         if (carrier.paragraph() != null) {
+            // A page break written at its end — the one after a canvas alone on its page goes in the
+            // line holding its room — is replaced by the section's own, as a break's paragraph's is;
+            // the paragraph keeps its height.
+            removePageBreaks(carrier.paragraph());
             return carrier.paragraph();
         }
         if (carrier.row() >= 0) {
@@ -531,6 +528,18 @@ final class DocxPageMarginSections {
         long twips = toTwips(points);
         long side = opening instanceof Number number ? number.longValue() : twips;
         return side < 0 || zoned && twips < side ? -Math.max(1, twips) : twips;
+    }
+
+    /** Takes the page breaks out of a paragraph's runs. */
+    private static void removePageBreaks(XWPFParagraph paragraph) {
+        for (XWPFRun run : paragraph.getRuns()) {
+            List<CTBr> breaks = run.getCTR().getBrList();
+            for (int index = breaks.size() - 1; index >= 0; index--) {
+                if (breaks.get(index).getType() == STBrType.PAGE) {
+                    run.getCTR().removeBr(index);
+                }
+            }
+        }
     }
 
     private static XWPFParagraph hairline(XWPFParagraph paragraph) {

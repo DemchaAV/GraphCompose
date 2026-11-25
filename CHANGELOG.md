@@ -74,8 +74,8 @@ follow semantic versioning; release dates are ISO 8601.
     left edge, and the report names one that places a block elsewhere. It also names a block placed
     higher than the foot of the one before, or than the canvas's corner, which Word sets at that
     foot or corner; a first block that a negative top margin pulls up further than it places it
-    below the corner and further than the space owed above the canvas, which Word sets up to that
-    much lower; and, for a canvas pulled up past the page's margin that the layout moves to a new
+    below the corner (for a paragraph first, further than the space owed above the canvas too),
+    which Word sets up to that much lower; and, for a canvas pulled up past the page's margin that the layout moves to a new
     page, the space above its first block where a paragraph opens that page with it, which Word
     drops there. A table, a row or a panel first holds that space in a line of its own.
 

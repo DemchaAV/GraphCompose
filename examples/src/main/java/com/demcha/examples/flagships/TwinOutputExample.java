@@ -36,9 +36,8 @@ import java.util.Objects;
  * once against the canonical DSL, advertising the three outputs one
  * {@link DocumentSession} writes — a print-ready PDF via {@code buildPdf()}, a
  * PowerPoint deck via {@code buildPptx(Path)}, and the Word export its code card
- * shows. The page is a free-form canvas, whose text Word sets in reading order
- * rather than where the canvas places it, so the example itself writes the PDF
- * and the deck. The slide carries the page's exact geometry, and every panel,
+ * shows. The page is one free-form canvas; the example writes the PDF and the
+ * deck. The slide carries the page's exact geometry, and every panel,
  * chip and text line on it stays a native, editable PowerPoint shape.
  *
  * <p>The page design reuses the {@link EngineDeckV2Example} hero language

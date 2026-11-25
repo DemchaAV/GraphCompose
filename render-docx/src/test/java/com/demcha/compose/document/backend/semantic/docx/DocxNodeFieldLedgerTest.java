@@ -324,7 +324,9 @@ class DocxNodeFieldLedgerTest {
                 + "drawings held whole, as a layer laid over another or in a block a canvas round it counts "
                 + "as taking no room, the room is theirs; any other is written, as the room under what it "
                 + "writes, or as its whole box where it only draws",
-                "placements:REPORTED:where what it writes stands; its drawings stand where it places them",
+                "placements:REPORTED:where what it writes stands, but in the body's flow, holding only drawing "
+                + "and plain paragraphs it places side by side or out of reading order, whose paragraphs stand "
+                + "in text boxes where it places them; its drawings stand where it places them",
                 "clipPolicy:INERT:the page clips no canvas",
                 "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written",
                 "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written");

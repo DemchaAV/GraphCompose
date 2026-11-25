@@ -73,6 +73,30 @@ class DocxPageMarginSectionsTest {
     }
 
     @Test
+    void aPageBreakInTheLineBeforeOtherMarginsBecomesTheSectionsBreakAndTheLineKeepsItsHeight()
+            throws Exception {
+        // A canvas alone on its page writes its page break in the line holding its room
+        // (DocxCanvasOverItsPageTest). Kept there, the break would open a blank page before the
+        // section's own; the line keeps the canvas's room.
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> {
+            page.add(new com.demcha.compose.document.dsl.CanvasLayerBuilder(328, 200).name("Cover")
+                    .position(new ParagraphBuilder().name("West").text("West").build(), 0, 10)
+                    .position(new ParagraphBuilder().name("East").text("East").build(), 150, 18)
+                    .build());
+            page.addPageBreak(b -> { });
+            lines(page, "Line", 30);
+        });
+
+        assertThat(exported.document().getDocument().xmlText()).doesNotContain("w:type=\"page\"");
+        assertThat(exported.paragraphsEndingASection()).singleElement().satisfies(line -> {
+            assertThat(line.getCTP().getPPr().getSpacing().getLineRule().toString()).isEqualTo("exact");
+            assertThat(DocxTwips.of(line.getCTP().getPPr().getSpacing().getLine())).isEqualTo(200 * 20L);
+            assertThat(line.getCTP().xmlText()).as("the line carries the canvas's text boxes")
+                    .contains("<w:txbxContent>");
+        });
+    }
+
+    @Test
     void aPageStartingAmongATablesRowsSplitsTheTableAtTheRowItStartsWith() throws Exception {
         // The second part opens with the header row, which the layout repeats at the top of page 2.
         Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> page

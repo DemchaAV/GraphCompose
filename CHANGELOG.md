@@ -7,6 +7,48 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A DOCX canvas that places its text side by side or out of reading order sets it where the
+  page does.**
+  - A canvas (`addCanvas`, `CanvasLayerNode`) was written as its contents: its drawings stood
+    where it placed them, and its text one block under another from its corner. A canvas that
+    places its text side by side or out of reading order came out with its text stacked at its
+    left edge. On `TwinOutputExample`'s 960 by 540pt page, which is one canvas, Word 16 set every
+    one of its 43 lines, and LibreOffice every one it set, as much as 820pt across and 222pt down
+    from where the page sets them. On `MavenBannerPptxExample`'s first page the caption went to
+    the second page and took the four pages after it one page later.
+  - Such a canvas in the body's flow is now written over its page, as a block laid over the flow
+    already is: its drawings stand where the page draws them, each paragraph in a text box where
+    the page sets it, and the flow holds the canvas's room. Where the canvas opens a page, the
+    room is a line of its own, whose height Word and LibreOffice keep at a page's top where they
+    drop a paragraph's space above: owed as that space, the paragraph under a canvas moved to a
+    new page stood 139.8pt high in both, and within 0.3pt held in the line. A canvas alone on its
+    page — a cover, a page of a deck — holds its room in such a line too, which carries its text
+    boxes there: with nothing else written on its page they were dropped, or carried by a page
+    break's paragraph at the page's top, where Word set a box within that paragraph's line 7pt
+    high. A page break right after the line goes in it, or its own paragraph would stand on the
+    next page and break it again; where the next page is set against other margins, the section
+    break that starts it takes that page break's place, as it takes the place of the one in a
+    page break's own paragraph. Elsewhere the room is owed as space to what follows, and nothing
+    is written where nothing follows. Measured by baseline against the
+    engine's PDF in Word 16 and LibreOffice 26.8: `TwinOutputExample`'s 41 lines that both
+    editors break as the page does within 0.6pt, and the banner's first page within 0.7pt with
+    its caption back on it and five pages in both. One paragraph of `TwinOutputExample`, set at
+    12.3pt, is written at 12.5pt — a Word file holds a size to the half point — and breaks a word
+    sooner in both.
+  - A canvas whose blocks read down — each starting at or below the foot of the one before,
+    however far across — stays in the flow and is written as its contents as before, where a
+    reader of the flow reaches its text: a CV's name over its title is that, as in
+    `MintEditorial` with a header band. The places it gives them are still not carried there,
+    and the report names them as before.
+  - Only a canvas holding nothing but drawing and plain paragraphs on one page is, as for a block
+    laid over the flow: a link, a bookmark, an anchor, a picture, a table, a list, a spacer, a
+    chart, a barcode, a row, a nested canvas or a transformed block it holds keeps it written as
+    its contents, and so does a canvas spanning two pages, or in a table cell, a painted panel, a
+    band, another overlay or a stack of one layer. The report names each as before.
+  - Text in a text box stands outside the document's flow: each box is anchored in a paragraph
+    near it and moves with that paragraph, but what is typed into it moves nothing round it, and
+    a reader of the flow alone does not reach it. The report names each such paragraph.
+
 - **A PPTX font the deck does not carry is announced once, and by what the registered families carry under its name.**
   - The `render.pptx.font.substitution` lines for a registered family were written per
     registration, so a family registered twice was announced twice; the module README promises one

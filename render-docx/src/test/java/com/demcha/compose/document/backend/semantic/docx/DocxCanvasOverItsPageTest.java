@@ -97,8 +97,8 @@ class DocxCanvasOverItsPageTest {
     @Test
     void aCanvasWhoseTextReadsDownKeepsItInTheFlow() throws Exception {
         // Placed apart, across and down, but one block under another in reading order — a CV's
-        // name over its title — it stays in the flow, where a reader of the flow reaches it; the
-        // places it loses are named as before.
+        // name over its title — it stays in the flow, where a reader of the flow reaches it, each
+        // block as far down as it places it (DocxCanvasRoomTest); how far across is named.
         Consumer<PageFlowBuilder> content = page -> page
                 .addCanvas(300, 120, canvas -> canvas
                         .position(new ShapeBuilder().size(300, 120).fillColor(INK).build(), 0, 0)
@@ -111,8 +111,8 @@ class DocxCanvasOverItsPageTest {
             assertThat(document.getDocument().getBody().xmlText()).doesNotContain("<w:txbxContent>");
         }
         assertThat(detailOf(DocxExports.report(400, 600, MARGIN, content), "CanvasLayerNode"))
-                .contains("what it writes is written from its corner, one block after another, not where it "
-                          + "places it");
+                .contains("what it writes is written at its left edge, each block as far down as it places it but "
+                          + "not as far across");
     }
 
     @Test

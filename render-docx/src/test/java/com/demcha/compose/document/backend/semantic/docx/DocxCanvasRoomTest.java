@@ -51,6 +51,11 @@ import static org.assertj.core.api.Assertions.within;
  * layer laid over another, or in a block a canvas round it counts as taking no room — so the
  * room is not counted twice.</p>
  *
+ * <p>A canvas whose blocks read down sets each as far below the one before as it places it, and
+ * owes the room it leaves under the last: written one block under another from its corner, those
+ * distances were lost, and a canvas pulled up by its margin owed that margin's depth too much
+ * room.</p>
+ *
  * <p>Each expected distance is the page's, read from the layout's placements, or the difference
  * two layouts make; each Word distance is read from the file — the space above and below each
  * paragraph, and its exact line.</p>
@@ -92,6 +97,125 @@ class DocxCanvasRoomTest {
                 .isCloseTo(gapOnThePage(exported.layout(), "Above", "Caption"), within(0.1));
         assertThat(gapInWord(exported.document(), "Caption", "Below")).as("its room, padding and margin below")
                 .isCloseTo(gapOnThePage(exported.layout(), "Caption", "Below") - RAISE, within(0.1));
+    }
+
+    @Test
+    void aCanvasWhoseBlocksReadDownSetsEachAsFarBelowTheOneBeforeAsItPlacesIt() throws Exception {
+        // A name over a title, set apart down the canvas: each stands as far below the one before
+        // as the canvas places it — the first as far below its corner — and the room under the
+        // last is what the canvas leaves below its foot. The name's bottom margin is part of its
+        // foot: the title is placed below it.
+        Exported exported = export(page -> page
+                .add(paragraph("Above"))
+                .addCanvas(360, 120, canvas -> canvas
+                        .position(new ParagraphBuilder().name("Name").text("Name")
+                                .margin(new DocumentInsets(0, 0, 6, 0)).build(), 0, 20)
+                        .position(paragraph("Title"), 0, 50))
+                .add(paragraph("Below")));
+        XWPFDocument document = exported.document();
+        LayoutGraph layout = exported.layout();
+
+        assertThat(gapInWord(document, "Above", "Name")).as("the name as far down its canvas as it places it")
+                .isCloseTo(gapOnThePage(layout, "Above", "Name"), within(0.1)).isGreaterThan(19);
+        assertThat(gapInWord(document, "Name", "Title")).as("the title as far below the name")
+                .isCloseTo(gapOnThePage(layout, "Name", "Title"), within(0.1)).isGreaterThan(6);
+        assertThat(gapInWord(document, "Title", "Below")).as("the room under the title")
+                .isCloseTo(gapOnThePage(layout, "Title", "Below") - RAISE, within(0.1));
+        assertThat(exported.report().bySubject()).doesNotContainKey("CanvasLayerNode");
+    }
+
+    @Test
+    void aCanvasPulledUpByItsMarginOwesItsRoomFromWhereWordSetsItsFirstBlock() throws Exception {
+        // MintEditorial's banded masthead: a canvas pulled up to the page's top edge by a margin as
+        // deep as the page's, its name that far down it. Word starts the name at the page's
+        // margin, which is where the canvas places it; measured from the canvas's corner above
+        // that, the room under the title was the margin's depth too large.
+        Exported exported = export(page -> page
+                .addCanvas(360, 120, canvas -> canvas
+                        .margin(new DocumentInsets(-20, 0, 0, 0))
+                        .position(paragraph("Name"), 0, 20)
+                        .position(paragraph("Title"), 0, 50))
+                .add(paragraph("Below")));
+        XWPFDocument document = exported.document();
+        XWPFParagraph name = paragraphOf(document, "Name");
+        XWPFParagraph title = paragraphOf(document, "Title");
+
+        assertThat(before(name)).as("the name at the page's margin").isZero();
+        assertThat(gapInWord(document, "Name", "Title"))
+                .isCloseTo(gapOnThePage(exported.layout(), "Name", "Title"), within(0.1));
+        assertThat(lineOf(name) + gapInWord(document, "Name", "Title") + lineOf(title)
+                   + gapInWord(document, "Title", "Below"))
+                .as("from the page's margin to the next block: the canvas's height less the margin it is pulled up by")
+                .isCloseTo(120 - 20 - RAISE, within(0.1));
+    }
+
+    @Test
+    void aCanvasPlacingItsFirstBlockAboveItsCornerOwesItsRoomFromWhereWordSetsIt() throws Exception {
+        // Its name 10pt above its corner, where Word cannot set it, and its title under the name:
+        // Word sets the name at the corner and the title as far below the corner as it places it,
+        // so the canvas holds its height, and the place it loses is named.
+        Exported exported = export(page -> page
+                .addCanvas(360, 100, canvas -> canvas
+                        .position(paragraph("Name"), 0, -10)
+                        .position(paragraph("Title"), 0, 30))
+                .add(paragraph("Below")));
+        XWPFDocument document = exported.document();
+        XWPFParagraph name = paragraphOf(document, "Name");
+        XWPFParagraph title = paragraphOf(document, "Title");
+
+        assertThat(before(name)).as("the name at its corner").isZero();
+        assertThat(lineOf(name) + gapInWord(document, "Name", "Title")).as("the title 30pt below its corner")
+                .isCloseTo(30, within(0.1));
+        assertThat(lineOf(name) + gapInWord(document, "Name", "Title") + lineOf(title)
+                   + gapInWord(document, "Title", "Below"))
+                .as("the canvas's height").isCloseTo(100 - RAISE, within(0.1));
+        assertThat(detailOf(exported.report())).contains("what it writes is written from its corner, one block after "
+                + "another, not where it places it");
+    }
+
+    @Test
+    void aCanvasTheLayoutMovesToANewPageHoldsItsFirstBlocksSpaceInTheLineThere() throws Exception {
+        // Word drops a paragraph's space above at the top of a page: the line holding the canvas's
+        // top edge there holds its name's 40pt below its corner too.
+        Exported exported = export(page -> page
+                .add(new com.demcha.compose.document.dsl.SpacerBuilder().height(500).build())
+                .addCanvas(360, 120, canvas -> canvas
+                        .position(paragraph("Name"), 0, 40)
+                        .position(paragraph("Title"), 0, 70))
+                .add(paragraph("Below")));
+        XWPFDocument document = exported.document();
+        XWPFParagraph name = paragraphOf(document, "Name");
+        List<IBodyElement> body = document.getBodyElements();
+        XWPFParagraph line = (XWPFParagraph) body.get(body.indexOf(name) - 1);
+
+        assertThat(placed(exported.layout(), "Name").startPage()).as("moved to the second page").isEqualTo(1);
+        assertThat(before(name)).as("nothing above the name for Word to drop").isZero();
+        assertThat(lineOf(line)).as("the line opening the page holds the name's place")
+                .isCloseTo(600 - 20 - top(exported.layout(), "Name"), within(0.1)).isGreaterThan(39);
+    }
+
+    @Test
+    void aCanvasWhoseBlocksDoNotReadDownStillWritesThemFromItsCorner() throws Exception {
+        // Side by side, and holding a link no text box carries (DocxCanvasOverItsPageTest): written
+        // as its contents, one block under another from its corner, and its room under the last
+        // measured from there.
+        Exported exported = export(page -> page
+                .addCanvas(300, 120, canvas -> canvas
+                        .position(paragraph("West"), 0, 10)
+                        .position(new ParagraphBuilder().name("Site").text("Site").margin(DocumentInsets.zero())
+                                .linkTarget(com.demcha.compose.document.node.DocumentLinkTarget.external(
+                                        "https://example.org")).build(), 150, 12))
+                .add(paragraph("Below")));
+        XWPFDocument document = exported.document();
+        LayoutGraph layout = exported.layout();
+        double stacked = placed(layout, "West").placementHeight() + placed(layout, "Site").placementHeight();
+
+        assertThat(before(paragraphOf(document, "West"))).as("at its corner, not 10pt down").isZero();
+        assertThat(gapInWord(document, "West", "Site")).as("one under the other").isZero();
+        assertThat(gapInWord(document, "Site", "Below")).as("its room under the stack from its corner")
+                .isCloseTo(120 - stacked - RAISE, within(0.1));
+        assertThat(detailOf(exported.report())).contains("what it writes is written from its corner, one block after "
+                + "another, not where it places it");
     }
 
     @Test
@@ -353,11 +477,12 @@ class DocxCanvasRoomTest {
                     .add(paragraph("Below")));
             XWPFParagraph caption = paragraphOf(exported.document(), "Caption");
 
+            assertThat(before(caption)).as("its caption as far down as it places it").isCloseTo(80, within(0.1));
             assertThat(before(caption) + lineOf(caption) + gapInWord(exported.document(), "Caption", "Below"))
-                    .as("the outer canvas's height, its caption written at its corner")
+                    .as("the outer canvas's height")
                     .isCloseTo(placed(exported.layout(), "Outer").placementHeight() - RAISE, within(0.1));
-            assertThat(detailOf(exported.report())).isEqualTo("written as its contents; what it writes is written "
-                    + "from its corner, one block after another, not where it places it");
+            assertThat(exported.report().bySubject()).as("its caption stands where it places it")
+                    .doesNotContainKey("CanvasLayerNode");
         }
     }
 

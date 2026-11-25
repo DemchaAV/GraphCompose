@@ -46,9 +46,9 @@ class DocxFlowContainerReportTest {
                 .addParagraph("Below"));
 
         assertThat(detailOf(report, "CanvasLayerNode")).isEqualTo("written as its contents; "
-                + "what it writes is written from its corner, one block after another, not where it places it; "
-                + "its width is not in the file, so its paragraphs and lists run the width of the column it "
-                + "stands in");
+                + "what it writes is written at its left edge, each block as far down as it places it but not as "
+                + "far across; its width is not in the file, so its paragraphs and lists run the width of the "
+                + "column it stands in");
     }
 
     @Test
@@ -80,7 +80,8 @@ class DocxFlowContainerReportTest {
                 .addParagraph("Below"));
 
         assertThat(detailOf(report, "CanvasLayerNode")).isEqualTo("written as its contents; "
-                + "what it writes is written from its corner, one block after another, not where it places it");
+                + "what it writes is written at its left edge, each block as far down as it places it but not as "
+                + "far across");
     }
 
     @Test

@@ -369,10 +369,13 @@ class DocxGrownLinesTest {
 
     @Test
     void aWordListsMarkerSpellingItsFaceInAnotherCaseIsReadInThatFace() throws Exception {
-        // Word sets a run naming a shipped face in another case in that face (measured with the one
-        // element a holder's spelling declares), so the marker's line and the glyphs asked of it are
-        // read off the shipped face whichever case its level spells the name in. Two lookups, the line and the character map, and both are this route's. The other
-        // case is asked first: the face's file is read once, under the spelling that first asks.
+        // Word 16 sets a body run naming a shipped face in another case in that face (measured with
+        // the one element a holder's spelling declares, under a name no installed font has). A
+        // marker is looked up the same way and was not measured itself, so this pins the lookup:
+        // the marker's line and the glyphs asked of it are read off the shipped face whichever
+        // case its level spells the name in. Two lookups, the line and the character map, and
+        // both are this route's. The other case is asked first: the face's file is read once,
+        // under the spelling that first asks.
         try (XWPFDocument numbered = new XWPFDocument()) {
             DocxGrownLines lines = shipping(numbered::getNumbering, LATO, LATO);
             XWPFParagraph upper = item(numbered, "•", level -> face(level, "LATO", 20));

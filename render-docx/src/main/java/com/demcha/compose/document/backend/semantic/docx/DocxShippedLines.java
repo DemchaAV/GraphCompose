@@ -18,9 +18,10 @@ import java.util.Map;
  * name from another. A run spelling the name in another case is set in the face declared under
  * it: measured in Word 16 with the one element the holder's spelling declares, where runs spelled
  * {@code PROBESHARED} and {@code probeshared} were drawn from the {@code ProbeShared} program at
- * its width and on its line, and in both editors where a document declared both spellings. One
- * family is written per name so compared ({@code DocxFontTable.resolve}), so no two faces can
- * meet over one of these keys.</p>
+ * its width and on its line, and in both editors where a document declared both spellings —
+ * except where the editor has a font of that name itself, whose own font wins (Word 16 drew its
+ * own Lato over a program declared as {@code Lato}). One family is written per name so compared
+ * ({@code DocxFontTable.resolve}), so no two faces can meet over one of these keys.</p>
  *
  * <p>So a run naming a shipped name in another case reads that face's line — a given-up family's,
  * or one that shipped nothing of its own. A family given up for a name another one declares keeps

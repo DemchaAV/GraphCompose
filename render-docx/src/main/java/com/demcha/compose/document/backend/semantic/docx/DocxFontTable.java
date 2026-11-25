@@ -333,7 +333,8 @@ final class DocxFontTable {
      * one element the two children's order was swapped and did not decide.</p>
      *
      * <p>Its runs still name it, so they are set in whatever that name resolves to where the
-     * document is read, which is the holder's face in both editors measured, except where the
+     * document is read, which is the holder's face — in both editors where the runs spell the
+     * holder's name, and in Word 16 where they spell it in another case — except where the
      * editor knows the name itself: Word 16 drew its own Lato for a document declaring Lato over
      * another family's program. What this does not do is make the given-up family's text right —
      * it is still set in a face it was not laid out in. It makes the export say so.</p>

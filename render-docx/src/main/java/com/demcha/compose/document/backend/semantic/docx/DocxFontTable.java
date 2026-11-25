@@ -1,5 +1,7 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.document.backend.semantic.docx.DocxFontFaces.Face;
+import com.demcha.compose.document.backend.semantic.docx.DocxFontFaces.Slot;
 import com.demcha.compose.document.layout.DocumentGraph;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.InlineHighlightRun;
@@ -28,13 +30,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,8 +52,8 @@ import java.util.Set;
  * <p>Only a face the document may be edited in is written. An OpenType face states its
  * terms in {@code OS/2}, and the format takes them seriously enough to distinguish
  * "embeddable for reading and printing" from "embeddable in a document someone will type
- * into" — this writes the second and refuses the first, with a line in the log naming the
- * family rather than a silent omission.</p>
+ * into" — the export writes the second and refuses the first ({@link DocxFontFaces}, which reads
+ * each face's terms), with a line in the log naming the family rather than a silent omission.</p>
  *
  * <p>One face set per name. A document can ask two families to travel under one name —
  * {@link FontFamilyDefinition#wordFamily()} defaults to the name a family is registered under and
@@ -106,15 +106,15 @@ final class DocxFontTable {
      * @return the line an editor sets each shipped face in
      * @throws IOException if a part cannot be written
      */
-    static ShippedLines write(XWPFDocument document,
-                              DocumentGraph graph,
-                              List<DocumentNode> zones,
-                              List<DocumentTextStyle> bands,
-                              Collection<FontFamilyDefinition> custom,
-                              DocxExportReport.Builder report) throws IOException {
+    static DocxShippedLines write(XWPFDocument document,
+                                  DocumentGraph graph,
+                                  List<DocumentNode> zones,
+                                  List<DocumentTextStyle> bands,
+                                  Collection<FontFamilyDefinition> custom,
+                                  DocxExportReport.Builder report) throws IOException {
         Map<FontName, FontFamilyDefinition> families = familiesByName(custom);
         List<Embedded> embedded = resolve(graph, zones, bands, families, report);
-        ShippedLines lines = new ShippedLines(families, embedded);
+        DocxShippedLines lines = new DocxShippedLines(families, embedded);
         if (embedded.isEmpty()) {
             return lines;
         }
@@ -167,125 +167,6 @@ final class DocxFontTable {
     }
 
     /**
-     * The line an editor sets each face the document ships in where nothing fixes the line's
-     * height ({@link DocxNaturalLine}). A face it does not ship — a standard PDF name, one that
-     * may not travel — is set in whatever the reader's machine substitutes, so it has none.
-     *
-     * <p>Kept under the declared name exactly as the runs spell it. One family is written per name
-     * ({@link #resolve}), so no two faces can meet over one of these keys.</p>
-     *
-     * <p>A family given up for a name another one declares keeps no line of its own here. Its runs
-     * read the key their own spelling and slot make, so they read the line of a face the holder
-     * shipped where both of those match one the holder filled, and no line at all where either
-     * does not — a spelling differing in case, or a slot the holder left empty. So there are two
-     * answers, a line or none, by three routes, and the two answers are not the same to the
-     * writer, which can hold a paragraph to a line it has and cannot to one it has not. Recorded
-     * as a limit in the backend capability details, with a test per route.</p>
-     */
-    static final class ShippedLines {
-        /** No face shipped: an export written without a font table. */
-        static final ShippedLines NONE = new ShippedLines(Map.of(), List.of());
-
-        private final Map<FontName, FontFamilyDefinition> families;
-        private final Map<String, DocxNaturalLine> lines = new java.util.HashMap<>();
-        /** The file of each face with a line whose character map is not read yet. */
-        private final Map<String, byte[]> files = new java.util.HashMap<>();
-        /** Each face's character map, read the first time a text is asked of it; empty where unreadable. */
-        private final Map<String, java.util.Optional<org.apache.fontbox.ttf.CmapLookup>> characters =
-                new java.util.HashMap<>();
-
-        private ShippedLines(Map<FontName, FontFamilyDefinition> families, List<Embedded> embedded) {
-            this.families = families;
-            for (Embedded family : embedded) {
-                for (Face face : family.faces()) {
-                    if (face.line() != null) {
-                        lines.put(family.wordFamily() + '\n' + face.element(), face.line());
-                        files.put(family.wordFamily() + '\n' + face.element(), face.font());
-                    }
-                }
-            }
-        }
-
-        /**
-         * Whether a face the document ships, with a line, holds a glyph of its own for every letter
-         * of a text, so that an editor sets the text in it, not in a face it falls back to.
-         *
-         * @param fontName the face a style names
-         * @param slot     which of its family's faces, as {@link #of(FontName, String)}
-         * @param text     the letters
-         * @return whether it does; false where the document does not ship that face, it has no line,
-         *         or its Unicode character map cannot be read
-         */
-        boolean holds(FontName fontName, String slot, String text) {
-            String wordFamily = wordFamilyOf(fontName);
-            return wordFamily != null && holds(wordFamily, slot, text);
-        }
-
-        /**
-         * The same, by the family a run names in Word.
-         *
-         * @param wordFamily the family's name as the font table writes it
-         * @param slot       which of its faces, as {@link #of(FontName, String)}
-         * @param text       the letters
-         * @return whether it does, as {@link #holds(FontName, String, String)}
-         */
-        boolean holds(String wordFamily, String slot, String text) {
-            String face = wordFamily + '\n' + slot;
-            java.util.Optional<org.apache.fontbox.ttf.CmapLookup> map = characters.get(face);
-            if (map == null) {
-                byte[] file = files.remove(face);
-                if (file == null) {
-                    return false;
-                }
-                map = characterMapOf(file);
-                characters.put(face, map);
-            }
-            org.apache.fontbox.ttf.CmapLookup read = map.orElse(null);
-            return read != null && text.codePoints().allMatch(letter -> read.getGlyphId(letter) > 0);
-        }
-
-        /** A face's Unicode character map; empty where it holds none, or cannot be read. */
-        private static java.util.Optional<org.apache.fontbox.ttf.CmapLookup> characterMapOf(byte[] file) {
-            try (org.apache.fontbox.ttf.TrueTypeFont font = new org.apache.fontbox.ttf.TTFParser()
-                    .parse(new org.apache.pdfbox.io.RandomAccessReadBuffer(file))) {
-                return java.util.Optional.ofNullable(font.getUnicodeCmapLookup(true));
-            } catch (IOException | RuntimeException unreadable) {
-                return java.util.Optional.empty();
-            }
-        }
-
-        /**
-         * The line a face is set in.
-         *
-         * @param fontName the face a style names
-         * @param slot     which of its family's faces: {@code embedRegular}, {@code embedBold},
-         *                 {@code embedItalic} or {@code embedBoldItalic}
-         * @return its line, or null where the document does not ship that face
-         */
-        DocxNaturalLine of(FontName fontName, String slot) {
-            String wordFamily = wordFamilyOf(fontName);
-            return wordFamily == null ? null : of(wordFamily, slot);
-        }
-
-        /** The family a style's face is written as in Word, or null where none is known. */
-        private String wordFamilyOf(FontName fontName) {
-            FontFamilyDefinition family = fontName == null ? null : families.get(FontLibrary.resolveFamily(fontName));
-            return family == null ? null : family.wordFamily();
-        }
-
-        /**
-         * The line a face is set in, by the family a run names in Word.
-         *
-         * @param wordFamily the family's name as the font table writes it
-         * @param slot       which of its faces, as {@link #of(FontName, String)}
-         * @return its line, or null where the document does not ship that face
-         */
-        DocxNaturalLine of(String wordFamily, String slot) {
-            return lines.get(wordFamily + '\n' + slot);
-        }
-    }
-
-    /**
      * Every family an export can name, by the logical name a style asks for.
      *
      * <p>A family the session registered wins over a bundled one of the same name: it was
@@ -317,50 +198,7 @@ final class DocxFontTable {
      * @param wordFamily the name the font table declares the family under
      * @param faces      the faces of it the document ships
      */
-    private record Embedded(FontName registered, String wordFamily, List<Face> faces) {
-    }
-
-    /**
-     * One face of a family: which slot it fills, its file and the bytes the part stores, how the
-     * part refers to it, and the line an editor sets it in.
-     */
-    private static final class Face {
-        private final String element;
-        private final byte[] font;
-        private final byte[] bytes;
-        private final String fontKey;
-        private final DocxNaturalLine line;
-        private String relationshipId;
-
-        Face(String element, byte[] font, byte[] bytes, String fontKey, DocxNaturalLine line) {
-            this.element = element;
-            this.font = font;
-            this.bytes = bytes;
-            this.fontKey = fontKey;
-            this.line = line;
-        }
-
-        String element() {
-            return element;
-        }
-
-        /** The face's own file, as read. */
-        byte[] font() {
-            return font;
-        }
-
-        /** The file as the part stores it, obfuscated. */
-        byte[] bytes() {
-            return bytes;
-        }
-
-        DocxNaturalLine line() {
-            return line;
-        }
-
-        void relationshipId(String id) {
-            this.relationshipId = id;
-        }
+    record Embedded(FontName registered, String wordFamily, List<Face> faces) {
     }
 
     /**
@@ -426,7 +264,7 @@ final class DocxFontTable {
                 refuseForASharedName(family, holder, report);
                 continue;
             }
-            List<Face> faces = facesOf(family, entry.getValue(), report);
+            List<Face> faces = DocxFontFaces.facesOf(family, entry.getValue(), report);
             if (!faces.isEmpty()) {
                 embedded.add(new Embedded(family.name(), family.wordFamily(), faces));
             }
@@ -458,13 +296,13 @@ final class DocxFontTable {
      * Gives up a family whose name another one already declares, and says so.
      *
      * <p>Whole, and not face by face the way a face's own terms or an unreadable file are:
-     * {@link #addFace} gives up that one face and the family ships the rest under its name. Here a
-     * face bound for a slot the holder left empty does not travel either — measured, a family
-     * declaring only {@code embedBold} built from a different typeface, beside a holder declaring
-     * only {@code embedRegular}, had its bold program ignored by both editors. A free slot is the
-     * only place where the second program could have been read at all: where the two families are
-     * set in text in the same slot, a {@code w:font} has one child for it and an editor has one
-     * program to draw from whatever the two are.</p>
+     * {@code DocxFontFaces.addFace} gives up that one face and the family ships the rest under its
+     * name. Here a face bound for a slot the holder left empty does not travel either — measured,
+     * a family declaring only {@code embedBold} built from a different typeface, beside a holder
+     * declaring only {@code embedRegular}, had its bold program ignored by both editors. A free
+     * slot is the only place where the second program could have been read at all: where the two
+     * families are set in text in the same slot, a {@code w:font} has one child for it and an
+     * editor has one program to draw from whatever the two are.</p>
      *
      * <p>For a free slot, what decides whether that second program is read turns out not to be how
      * it is written.
@@ -525,235 +363,6 @@ final class DocxFontTable {
                 + "runs, which carry its own name, are set in whatever that name resolves to — the "
                 + "face '" + holder.registered().name() + "' ships under it, or, where the editor "
                 + "knows the name itself, its own");
-    }
-
-    /** Which of a family's four faces a document asked for. */
-    private enum Slot {
-        REGULAR("embedRegular"),
-        BOLD("embedBold"),
-        ITALIC("embedItalic"),
-        BOLD_ITALIC("embedBoldItalic");
-
-        private final String element;
-
-        Slot(String element) {
-            this.element = element;
-        }
-
-        String element() {
-            return element;
-        }
-
-        /**
-         * The face a style is set in.
-         *
-         * <p>An underline or a strikethrough is drawn over the regular face rather than
-         * being a face of its own, so they answer the same as no decoration at all.</p>
-         */
-        static Slot of(DocumentTextStyle style) {
-            if (style.decoration() == null) {
-                return REGULAR;
-            }
-            return switch (style.decoration()) {
-                case BOLD -> BOLD;
-                case ITALIC -> ITALIC;
-                case BOLD_ITALIC -> BOLD_ITALIC;
-                default -> REGULAR;
-            };
-        }
-    }
-
-    /**
-     * The faces the document uses, minus the ones that may not travel in an edited file.
-     *
-     * <p>Only what is used: the four faces of one family are two and a half megabytes, and
-     * a document setting one line in a family has no use for the other three. A reader who
-     * later bolds a word gets whatever their machine does for a missing bold face, which is
-     * what happens in any document that does not carry one.</p>
-     */
-    private static List<Face> facesOf(FontFamilyDefinition family, Set<Slot> slots,
-                                      DocxExportReport.Builder report) {
-        FontFamilyDefinition.FontSourceSet sources = family.fontSourceSet().orElseThrow();
-        List<Face> faces = new ArrayList<>(slots.size());
-        for (Slot slot : Slot.values()) {
-            if (!slots.contains(slot)) {
-                continue;
-            }
-            addFace(faces, family, slot, report, switch (slot) {
-                case REGULAR -> sources.regular();
-                case BOLD -> sources.bold();
-                case ITALIC -> sources.italic();
-                case BOLD_ITALIC -> sources.boldItalic();
-            });
-        }
-        nameTheFacesAnEditorWillNotDraw(family, faces, report);
-        return faces;
-    }
-
-    /**
-     * Says which of a family's faces an editor will not draw, because its program is of another
-     * typeface than the one the family's regular slot holds.
-     *
-     * <p>A family's slots are filled one file at a time, so a caller can put a program of one
-     * typeface in {@code embedRegular} and a program of another in {@code embedBold}. The export
-     * writes both, and the PDF backend draws each paragraph in the program its slot holds — but an
-     * editor reading the document draws the family from the one in {@code embedRegular} and leaves
-     * the other unread, so it travels for nothing and its runs are set in a face they were not
-     * measured in. Measured with a bold run on one such pair, Lato beside IBM Plex Mono, in Word
-     * 16.0.20527 and LibreOffice 24.2; the figures and what they cost are in the backend capability
-     * details. Nothing said so; this does.</p>
-     *
-     * <p>Not a refusal, and not reported as one: both faces are written, and the family is not
-     * turned away. It is the document being the nearest thing an editor will read
-     * ({@link DocxExportReport.Severity#APPROXIMATED}), which is what the note says.</p>
-     *
-     * <p>Whether two programs are of one typeface is read off the programs themselves
-     * ({@link #typefaceOf}), compared with {@link String#equalsIgnoreCase}, which folds the same
-     * way wherever the export runs — unlike {@code toLowerCase()} and its default locale. No
-     * family a document here is set in draws this note: read as that method reads them, all 188
-     * pairs of faces within the 35 bundled families state one typeface, and so do the two files the
-     * {@code OrangeOps} preset pairs, whose bold face states {@code Oswald SemiBold} as its family
-     * and {@code Oswald} as its typographic one — a family read by its family record alone would be
-     * told, falsely, that its own bold face is of another typeface.</p>
-     *
-     * <p>Said only where the family ships a regular face and both programs name their typeface:
-     * what was measured is an editor drawing a family from the face it reads for the regular slot,
-     * and a program whose name cannot be read is one this cannot compare. Silence there is a
-     * missing warning rather than a false one. Said for every other slot the family ships and every
-     * pair of typefaces it holds, though one pair and one slot were measured: what the editors read
-     * the sameness off was not, so neither the slot nor the two names can be the thing that decides
-     * what is said.</p>
-     *
-     * <p>What this does not do is make the document right. The program still travels unread and the
-     * lines still fall where the page did not put them — what the export can do without writing
-     * different bytes is say so. Carrying such a family as two declared names, which both editors
-     * were measured to draw, is the alternative not taken.</p>
-     */
-    private static void nameTheFacesAnEditorWillNotDraw(FontFamilyDefinition family,
-                                                        List<Face> faces,
-                                                        DocxExportReport.Builder report) {
-        if (faces.size() < 2) {
-            return;
-        }
-        Face regular = null;
-        for (Face face : faces) {
-            if (face.element().equals(Slot.REGULAR.element())) {
-                regular = face;
-                break;
-            }
-        }
-        if (regular == null) {
-            return;
-        }
-        String drawn = typefaceOf(regular.font());
-        if (drawn == null) {
-            return;
-        }
-        for (Face face : faces) {
-            if (face == regular) {
-                continue;
-            }
-            String own = typefaceOf(face.font());
-            if (own == null || own.equalsIgnoreCase(drawn)) {
-                continue;
-            }
-            LOG.warn("DocxSemanticBackend: the '{}' face of '{}' is a face of '{}' where its "
-                     + "regular face is a face of '{}'; an editor draws the family from the regular "
-                     + "face, so this program travels in the document and is drawn by neither "
-                     + "editor", face.element(), family.wordFamily(), own, drawn);
-            report.add(DocxExportReport.Severity.APPROXIMATED, "embedded font", null,
-                    "the " + face.element() + " face of '" + family.wordFamily() + "' is a face of '"
-                    + own + "', where its embedRegular face is a face of '" + drawn + "'; measured "
-                    + "with a bold run on one such pair, Lato beside IBM Plex Mono, in Word "
-                    + "16.0.20527 and LibreOffice 24.2: an editor drew the name from the program in "
-                    + "embedRegular and read the other for neither paragraph, so this program "
-                    + "travels in the document unread and those runs are set in the regular face — "
-                    + "where the line is this face's own, at the height it measured rather than the "
-                    + "height of the face they are drawn in. What the editors read the sameness off "
-                    + "was not measured, so this is said of every pair of typefaces a family holds");
-        }
-    }
-
-    /**
-     * What a program calls its own typeface: the typographic family ({@code name} id 16) where it
-     * states one, the family (id 1) otherwise, or null where it states neither or cannot be read.
-     *
-     * <p>Both are read from one record — Windows, Unicode BMP, en-US — and only that one, so two
-     * faces are never compared across two namings of one typeface. Taking whichever id 16 a file
-     * happens to state first would read a localized record on one face against an English one on
-     * its sibling; falling back to {@code NamingTable.getFontFamily()} would do the same, since it
-     * searches the Unicode and Macintosh platforms too. Either way the answer is a name read under
-     * terms its sibling's was not, and a difference between two such names says nothing. A face
-     * that states this record for neither id is one this cannot compare, and says so with null.</p>
-     *
-     * @param program the face's own file, as read
-     * @return the typeface's name, or null
-     */
-    static String typefaceOf(byte[] program) {
-        try (org.apache.fontbox.ttf.TrueTypeFont font = new org.apache.fontbox.ttf.TTFParser()
-                .parse(new org.apache.pdfbox.io.RandomAccessReadBuffer(program))) {
-            org.apache.fontbox.ttf.NamingTable naming = font.getNaming();
-            if (naming == null) {
-                return null;
-            }
-            String typographic = stated(naming.getName(16, 3, 1, 0x409));
-            return typographic != null ? typographic : stated(naming.getName(1, 3, 1, 0x409));
-        } catch (IOException | RuntimeException unreadable) {
-            return null;
-        }
-    }
-
-    /** A name a face states, or null where it states none worth comparing. */
-    private static String stated(String name) {
-        return name == null || name.isBlank() ? null : name;
-    }
-
-    private static void addFace(List<Face> faces,
-                                FontFamilyDefinition family,
-                                Slot slot,
-                                DocxExportReport.Builder report,
-                                FontFamilyDefinition.FontBinarySource source) {
-        if (source == null) {
-            return;
-        }
-        byte[] bytes;
-        // Any source may fail unchecked; the classpath one does for a missing resource.
-        try (InputStream in = source.openStream()) {
-            bytes = in.readAllBytes();
-        } catch (IOException | RuntimeException failure) {
-            LOG.warn("DocxSemanticBackend: '{}' face of '{}' could not be read ({}); the "
-                     + "document declares the family and ships this face without it",
-                    slot.element(), family.wordFamily(), failure.toString());
-            report.add(DocxExportReport.Severity.DROPPED, "embedded font", null,
-                    "the " + slot.element() + " face of '" + family.wordFamily()
-                    + "' could not be read (" + failure + "), so a reader without it "
-                    + "installed sees a substituted face");
-            return;
-        }
-        switch (DocxFontEmbedding.permissionOf(bytes)) {
-            case RESTRICTED -> {
-                LOG.warn("DocxSemanticBackend: '{}' does not permit embedding (OS/2 fsType), so "
-                         + "it is named but not shipped; a reader without it installed sees a "
-                         + "substituted face", family.wordFamily());
-                report.add(DocxExportReport.Severity.DROPPED, "embedded font", null,
-                        "'" + family.wordFamily() + "' does not permit embedding (OS/2 fsType), "
-                        + "so a reader without it installed sees a substituted face");
-                return;
-            }
-            case PREVIEW_ONLY -> {
-                LOG.warn("DocxSemanticBackend: '{}' permits embedding for reading and printing "
-                         + "only, which a document meant to be edited cannot rely on, so it is "
-                         + "named but not shipped", family.wordFamily());
-                report.add(DocxExportReport.Severity.DROPPED, "embedded font", null,
-                        "'" + family.wordFamily() + "' permits embedding for reading and "
-                        + "printing only, which a document meant to be edited cannot rely on");
-                return;
-            }
-            default -> {
-            }
-        }
-        DocxFontEmbedding.Obfuscated obfuscated = DocxFontEmbedding.obfuscate(bytes);
-        faces.add(new Face(slot.element(), bytes, obfuscated.bytes(), obfuscated.fontKey(), DocxNaturalLine.of(bytes)));
     }
 
     /**
@@ -845,8 +454,8 @@ final class DocxFontTable {
             xml.append("<w:font w:name=\"").append(escape(family.wordFamily())).append("\">");
             for (Face face : family.faces()) {
                 xml.append("<w:").append(face.element())
-                        .append(" r:id=\"").append(face.relationshipId)
-                        .append("\" w:fontKey=\"").append(face.fontKey)
+                        .append(" r:id=\"").append(face.relationshipId())
+                        .append("\" w:fontKey=\"").append(face.fontKey())
                         .append("\"/>");
             }
             xml.append("</w:font>");

@@ -75,6 +75,17 @@ follow semantic versioning; release dates are ISO 8601.
   family) and the `PptxFontFace` enum the first two share. The environment keeps every public
   method; the font ones delegate. No behaviour changes: decks rendered with `deterministic(...)`
   are the same bytes, and the render log carries the same lines in the same order.
+- **`DocxFontTable` is split in four.** The class (868 lines, now 477) keeps the font table
+  itself — which faces the document asks for, which family keeps a declared name and the refusal
+  of the one that does not, and the parts and XML it writes — and three package-private classes
+  beside it take the rest of what it held: `DocxShippedLines` (the line an editor
+  sets each shipped face in, formerly `DocxFontTable.ShippedLines`), `DocxFontFaces` (a family's
+  faces: the slot each fills, reading each one's file and terms, and the note on a face an editor
+  will not draw) and `DocxTypeface` (the typeface a program states). The font lines are logged
+  under the same category as before. No behaviour changes: the 105 documents of the DOCX fidelity
+  corpus are the same bytes, with the same report notes. The shared-name cases of
+  `DocxFontTableTest` moved to `DocxSharedFontNameTest`, and the helpers both use to
+  `DocxFontTableFixtures`.
 
 ### Build
 

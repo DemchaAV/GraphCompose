@@ -65,7 +65,7 @@ import java.util.function.Supplier;
 final class DocxGrownLines {
 
     /** No face shipped, and no default style: every line is read as exact or not at all. */
-    static final DocxGrownLines NONE = new DocxGrownLines(DocxFontTable.ShippedLines.NONE, null, () -> null);
+    static final DocxGrownLines NONE = new DocxGrownLines(DocxShippedLines.NONE, null, () -> null);
 
     /** What a paragraph may hold besides its runs and still be read. */
     private static final Set<String> PARAGRAPH_PARTS = Set.of("pPr", "r", "hyperlink", "bookmarkStart", "bookmarkEnd");
@@ -99,7 +99,7 @@ final class DocxGrownLines {
     /** What a run holding pictures set in the line may hold besides them. */
     private static final Set<String> PICTURE_RUN_PARTS = Set.of("rPr", "drawing");
 
-    private final DocxFontTable.ShippedLines faces;
+    private final DocxShippedLines faces;
     private final DocumentTextStyle defaults;
     private final Supplier<XWPFNumbering> numbering;
     /**
@@ -116,7 +116,7 @@ final class DocxGrownLines {
      *                  Word list's item takes its marker from; it supplies null where the document
      *                  holds none yet
      */
-    DocxGrownLines(DocxFontTable.ShippedLines faces, DocumentTextStyle defaults, Supplier<XWPFNumbering> numbering) {
+    DocxGrownLines(DocxShippedLines faces, DocumentTextStyle defaults, Supplier<XWPFNumbering> numbering) {
         this.faces = faces;
         this.defaults = defaults;
         this.numbering = numbering;

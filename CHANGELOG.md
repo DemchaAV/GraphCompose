@@ -38,8 +38,9 @@ follow semantic versioning; release dates are ISO 8601.
   - A canvas whose blocks read down — each starting at or below the foot of the one before,
     however far across — stays in the flow and is written as its contents as before, where a
     reader of the flow reaches its text: a CV's name over its title is that, as in
-    `MintEditorial` with a header band. The places it gives them are still not carried there,
-    and the report names them as before.
+    `MintEditorial` with a header band. It keeps each block as far down as it places it (see
+    "A DOCX canvas whose text reads down keeps each block where the page sets it down"); how far
+    across is still not carried, and the report names it.
   - Only a canvas holding nothing but drawing and plain paragraphs on one page is, as for a block
     laid over the flow: a link, a bookmark, an anchor, a picture, a table, a list, a spacer, a
     chart, a barcode, a row, a nested canvas or a transformed block it holds keeps it written as
@@ -48,6 +49,35 @@ follow semantic versioning; release dates are ISO 8601.
   - Text in a text box stands outside the document's flow: each box is anchored in a paragraph
     near it and moves with that paragraph, but what is typed into it moves nothing round it, and
     a reader of the flow alone does not reach it. The report names each such paragraph.
+
+- **A DOCX canvas whose text reads down keeps each block where the page sets it down.**
+  - A canvas written as its contents (`addCanvas`, `CanvasLayerNode`) wrote what it holds one
+    block under another from its corner, and owed under the last the room its height left below
+    that stack. Where it placed a block lower than the foot of the one before, the distance was
+    lost, and where its corner stood higher than Word sets its first block — a canvas pulled up by
+    a negative top margin — the room owed below was too large by that much. `MintEditorial` with a
+    header band, a canvas pulled 48pt up to the page's top edge with its name 48pt down it and its
+    title 3pt under the name, set its title 2.9pt high in Word 16 and 3.3pt high in LibreOffice
+    26.8, its rule 3pt high, and owed 48pt more room under the masthead than the page holds: the
+    row under it no longer fitted the first page, and the CV took three pages in both where the
+    page takes two. The paired cover letter's lines stood 48pt low.
+  - A canvas whose blocks read down — each starting at or below the foot of the one before — now
+    sets each as far below the one before as it places it, the first as far below its corner,
+    and owes the room it leaves under the foot of the last. A negative top margin's pull comes out
+    of the space above its first block, so a table first stands where the page sets it too; on a
+    page the canvas opens, the line holding its top edge holds that space. Measured by baseline against the
+    engine's PDF: the banded `MintEditorial` CV is two pages in both editors, its 102 lines within
+    0.24pt in Word 16 and 1.3pt in LibreOffice 26.8 — as the CV without a band measures — and its
+    rule where the page draws it; the banded cover letter's lines, 48pt low, are within 0.18pt and
+    1.3pt.
+  - How far across it places them is still not carried: such a canvas writes its blocks at its
+    left edge, and the report names one that places a block elsewhere. It also names a block placed
+    higher than the foot of the one before, or than the canvas's corner, which Word sets at that
+    foot or corner; a first block that a negative top margin pulls up further than it places it
+    below the corner (for a paragraph first, further than the space owed above the canvas too),
+    which Word sets up to that much lower; and, for a canvas pulled up past the page's margin that the layout moves to a new
+    page, the space above its first block where a paragraph opens that page with it, which Word
+    drops there. A table, a row or a panel first holds that space in a line of its own.
 
 - **A PPTX font the deck does not carry is announced once, and by what the registered families carry under its name.**
   - The `render.pptx.font.substitution` lines for a registered family were written per

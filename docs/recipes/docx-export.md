@@ -1310,8 +1310,23 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   clip policy paints nothing on the page either. So a canvas whose text runs top to bottom in
   reading order from its corner reads in Word as on the page. One whose blocks read down — each
   at or below the foot of the one before, however far across or apart — is written so too, where
-  a reader of the flow reaches its text, a CV's name over its title included; the places it
-  gives them are named.
+  a reader of the flow reaches its text, a CV's name over its title included, and each block
+  stands as far below the one before as it places it, the first as far below its corner; the
+  room owed under it is what it leaves below the foot of the last. Written one block under
+  another from its corner, `MintEditorial`'s banded masthead — a canvas pulled up to the page's
+  top edge by its margin — lost the 3pt between its name and its title and owed 48pt too much
+  room under them, and the CV took three pages in Word 16 and LibreOffice 26.8 where the page
+  takes two; its lines now stand within 0.24pt and 1.3pt of the page's, as without the band. A
+  negative top margin's pull comes out of the space above the first block, so a table first stands
+  where the page sets it, and on a page the canvas opens the line holding its top edge holds that
+  space. How far across it places them is not carried: such a canvas writes its blocks at its left
+  edge, and the report names one that places a block elsewhere, one it places higher than the foot
+  of the one before or than its corner, which Word sets at that foot or corner, a first block that
+  a negative top margin pulls up further than it places it below the corner (for a paragraph
+  first, further than the space owed above the canvas too), which Word sets up to that much lower, and — for a canvas pulled up
+  past the page's margin that opens a later page — the space above its first block where a
+  paragraph opens that page with it, which Word drops there; a table, a row or a panel first holds
+  it in a line of its own.
 - **A canvas placing its text side by side → over its page.** A canvas in the body's flow that
   places what it writes side by side or out of reading order — a block starting above the foot
   of the one before it, as on a poster or a slide — and holds only drawing and plain paragraphs

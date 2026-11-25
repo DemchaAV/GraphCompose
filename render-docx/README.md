@@ -183,7 +183,8 @@ What is not written — each one is named in the export report
   cell, a painted panel or another overlay, it writes its text one block after another and the
   report names the places lost. One
   whose blocks read down, each at or below the foot of the one before — a CV's name over its
-  title — stays in the flow so, where a reader of the flow reaches it. Some stacks take a form
+  title — stays in the flow, where a reader of the flow reaches it, each block as far below the
+  one before as the canvas places it, though not as far across. Some stacks take a form
   Word has instead, and the report names the form
   on the stack: side-by-side columns are one table row, a cell per column; single-line paragraphs
   the page sets on one line share one Word line at tab stops; a stack the page gives no room,

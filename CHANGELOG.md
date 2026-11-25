@@ -27,7 +27,8 @@ follow semantic versioning; release dates are ISO 8601.
     break's paragraph at the page's top, where Word set a box within that paragraph's line 7pt
     high. A page break right after the line goes in it, or its own paragraph would stand on the
     next page and break it again; where the next page is set against other margins, the section
-    break that starts it replaces that page break, as it replaces a page break's own paragraph. Elsewhere the room is owed as space to what follows, and nothing
+    break that starts it takes that page break's place, as it takes the place of the one in a
+    page break's own paragraph. Elsewhere the room is owed as space to what follows, and nothing
     is written where nothing follows. Measured by baseline against the
     engine's PDF in Word 16 and LibreOffice 26.8: `TwinOutputExample`'s 41 lines that both
     editors break as the page does within 0.6pt, and the banner's first page within 0.7pt with

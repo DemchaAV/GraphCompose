@@ -442,7 +442,8 @@ final class DocxPageMarginSections {
     /**
      * What ends the section before the element at a start: a page break written there, which the
      * section's own break replaces — kept, it would open a blank page; the hairline between two
-     * tables; or else the paragraph before it, or a hairline put before it.
+     * tables; or else the paragraph before it, whose own page break, if it holds one, the
+     * section's break replaces as well ({@link #carrierOf}), or a hairline put before it.
      */
     private static Carrier carrierBefore(int at, List<IBodyElement> elements, Map<IBodyElement, Owner> owners,
                                          Set<XWPFParagraph> separators) {
@@ -480,9 +481,9 @@ final class DocxPageMarginSections {
             return hairline(carrier.pageBreak());
         }
         if (carrier.paragraph() != null) {
-            // A page break written at its end — the one after a canvas alone on its page goes in the
-            // line holding its room — is replaced by the section's own, as a break's paragraph's is;
-            // the paragraph keeps its height.
+            // A page break written in it — the one after a canvas alone on its page goes in the line
+            // holding its room — is replaced by the section's own, as the one in a break's own
+            // paragraph is; the paragraph keeps its height.
             removePageBreaks(carrier.paragraph());
             return carrier.paragraph();
         }

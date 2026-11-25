@@ -316,9 +316,10 @@ class DocxSharedFontNameTest {
         // document of this shape, its one element in the holder's spelling, where upper- and
         // lower-case runs were drawn from the holder's program at its width and on its line — so a
         // given-up family's runs are set in the holder's face whether they spell the name as the
-        // holder did or not, and read the holder's line either way. Two registrations of one face, so the line the holder ships is
-        // a line those runs may grow to, and the written line says which of the two routes found
-        // it: a least line where the holder's line was read, an exact one where none was. The
+        // holder did or not, and read the holder's line either way.
+        // Two registrations of one face, so the line the holder ships is a line those runs may grow
+        // to, and the written line says which of the two routes found it: a least line where the
+        // holder's line was read, an exact one where none was. The
         // holder's own spelling writes no font on the run, the document's default face being that
         // name, so that row is read through the default; the other two through the run's spelling.
         FontName again = FontName.of("shipped-lato-again");

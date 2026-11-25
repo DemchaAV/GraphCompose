@@ -41,9 +41,11 @@ final class PptxFontEmbedder {
      * that cannot be read, one whose licence bits forbid embedding, a header the presentation
      * could not read back, two of the family's faces reading back as one style slot, a face
      * arriving into a slot another family holds, the viewer metrics — and leaves nothing of the
-     * family: {@link #NONE}. Only the presentation refusing a face it
-     * has been handed leaves what it took before the refusal, which is {@link #PART}, and what is
-     * left of that refusal is POI's own part store failing (see {@link #handOverPrograms}).</p>
+     * family: {@link #NONE}. Only the presentation refusing a face it has been handed leaves
+     * what it took before the refusal, which is {@link #PART}, and what is left of that refusal
+     * is POI's own part store failing (see {@link #handOverPrograms}): the presentation's first
+     * read of a face, {@code FontHeader.bufferInit}, reads only the header, which
+     * {@link PptxEmbeddedFont} has already measured against it.</p>
      */
     enum Carried {
         /** Every face the family was offered with is in the deck. */
@@ -89,9 +91,11 @@ final class PptxFontEmbedder {
      * POI's part store — see {@link #handOverPrograms}.</p>
      *
      * <p>A fourth refuses the family too: a face arriving into a style slot another family
-     * already holds under the same declared name. The caller does not tell the four apart by
-     * cause: every one of them is {@link Carried#NONE}, the presentation being untouched when
-     * it arrives. Which line the caller writes for such a family is decided by what the deck
+     * already holds under the same declared name. The caller does not tell those that answer here
+     * apart by cause: an unreadable or forbidden face, the viewer metrics and the slot are each
+     * {@link Carried#NONE}, the presentation being untouched when they arrive, and the
+     * presentation refusing a face is {@link Carried#PART}. Which line the caller writes for a
+     * family not carried whole is decided by what the deck
      * carries under the family's declared name once every registration has been read — see
      * {@code PptxDeckFonts.warnRegisteredFamilyNotCarried} — so a family sharing a name in a
      * <em>free</em> slot and then given up by the metrics read is told the same as one refused

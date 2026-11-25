@@ -265,8 +265,8 @@ final class PptxDeckFonts {
      * any, is told no program for it travels while the earlier registration's program is in the
      * deck — text drawn from a program the page was not measured in, which no line here
      * describes. Registered again with sources that are not carried, it is told the family is
-     * not carried whole, which is true of that deck and still does not describe it. And "another family" is another
-     * <em>registered</em> family, because this runs while the environment is built: a bundled
+     * not carried whole, which is true of that deck and still does not describe it. And
+     * "another family" is another <em>registered</em> family, because this runs while the environment is built: a bundled
      * family carried under the same declared name is handed over after the last slide, so a
      * registration declaring a bundled family's name that is not carried is told it needs its
      * font installed while the bundled program travels under that name.</p>
@@ -319,8 +319,8 @@ final class PptxDeckFonts {
         } else {
             // Something of the name is in the deck: the presentation refused a face it had been
             // handed and keeps what it took before that — the declaration at least — or an
-            // earlier registration of the name travelled and this last one did not. "Not carried whole" because what the reader
-            // has to act on is that some face did not travel, and this line says what the text
+            // earlier registration of the name travelled and this last one did not. "Not carried
+            // whole" because what the reader has to act on is that some face did not travel, and this line says what the text
             // drawn in that face needs rather than what a viewer will do with it: where a face
             // of the family is in the deck, what a viewer draws a run of a missing face from — a
             // synthetic face, or another family — is the viewer's to decide, and nobody here
@@ -422,8 +422,8 @@ final class PptxDeckFonts {
             PptxFontEmbedder.Carried carried = PptxFontEmbedder.embedFontFamily(
                     show, family, sources.orElseThrow(), faces, slotLedger);
             if (carried != PptxFontEmbedder.Carried.NONE) {
-                // A family the presentation took part of has had the subsetting flag set by the
-                // faces it took, as a whole one has, so it counts here too.
+                // A family whose presentation refused a face it had been handed may have had the
+                // subsetting flag set on the way, as a whole one has, so it counts here too.
                 embeddedAny = true;
             }
             if (carried == PptxFontEmbedder.Carried.WHOLE) {

@@ -203,6 +203,8 @@ class DocxCanvasRoomTest {
         assertThat(before(name)).as("nothing above the name for Word to drop").isZero();
         assertThat(lineOf(line)).as("the line opening the page holds the name's place")
                 .isCloseTo(600 - 20 - top(exported.layout(), "Name"), within(0.1)).isGreaterThan(39);
+        assertThat(exported.report().bySubject()).as("nothing dropped, the line holding it")
+                .doesNotContainKey("CanvasLayerNode");
     }
 
     @Test
@@ -301,10 +303,43 @@ class DocxCanvasRoomTest {
                         .position(paragraph("Title"), 0, 60))
                 .add(paragraph("Below")));
 
-        assertThat(detailOf(exported.report())).isEqualTo("written as its contents; its negative top margin pulls its "
-                + "first block, which is not a paragraph, further up than it places it below its corner, and Word "
-                + "sets that block as much lower");
+        assertThat(detailOf(exported.report())).isEqualTo(DEEPER_PULL);
     }
+
+    @Test
+    void aPullDeeperThanTheSpaceAboveAFirstParagraphIsNamedToo() throws Exception {
+        // A paragraph takes the rest of the pull out of the space owed above it, as far as that goes:
+        // here nothing is owed between the two blocks, so it stands as much lower.
+        Exported exported = export(page -> page
+                .add(paragraph("Above"))
+                .addCanvas(360, 120, canvas -> canvas
+                        .margin(new DocumentInsets(-30, 0, 0, 0))
+                        .position(paragraph("Name"), 0, 10)
+                        .position(paragraph("Title"), 0, 60))
+                .add(paragraph("Below")));
+
+        assertThat(detailOf(exported.report())).isEqualTo(DEEPER_PULL);
+    }
+
+    @Test
+    void aPulledUpCanvasOpeningANewPageWithASectionFirstNamesTheSpaceWordDropsThere() throws Exception {
+        // A section's first paragraph opens the page with the space above it, as a paragraph does.
+        Exported exported = export(page -> page
+                .add(new com.demcha.compose.document.dsl.SpacerBuilder().height(500).build())
+                .addCanvas(360, 120, canvas -> canvas
+                        .margin(new DocumentInsets(-20, 0, 0, 0))
+                        .position(new SectionBuilder().name("Block").add(paragraph("Name")).build(), 0, 40)
+                        .position(paragraph("Title"), 0, 80))
+                .add(paragraph("Below")));
+
+        assertThat(placed(exported.layout(), "Name").startPage()).as("moved to the second page").isEqualTo(1);
+        assertThat(detailOf(exported.report())).isEqualTo("written as its contents; on the page it opens, the space "
+                + "it places above its first block stands at the top of the page, where Word drops it");
+    }
+
+    private static final String DEEPER_PULL = "written as its contents; its negative top margin pulls its first "
+            + "block further up than it places it below its corner, and Word sets that block up to as much lower: "
+            + "no space below zero stands above a table, and above a paragraph only as much as the space owed there";
 
     @Test
     void aCanvasWhoseBlocksReadDownInARowsCellSetsEachAsFarDownAsItPlacesIt() throws Exception {

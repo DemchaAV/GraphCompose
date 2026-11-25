@@ -21828,15 +21828,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // comes out of that space, so nothing below zero is carried down to the block. Carried, a
         // table first dropped it, Word having no space above a table, and stood that much low.
         double pulled = Math.min(firstSpace, Math.max(0, -edge));
-        DocumentNode first = firstWrittenIn(canvas);
+        // A pull deeper than the space above the first block is still carried as a negative edge: a
+        // paragraph takes it out of the space owed above the canvas as far as that goes, and
+        // anything else drops it.
+        double pullPastItsSpace = spacedAsPlaced ? Math.max(0, -edge) - pulled : 0;
+        if (firstWrittenIn(canvas) instanceof ParagraphNode) {
+            pullPastItsSpace -= Math.max(0, pendingSpacingAfter + carriedSpacingBefore);
+        }
         // On a page it opens, Word drops the space above its first paragraph: the line holding its
         // top edge there holds the space above its first block too, which then owes none of it.
         // Owed, and the line's share carried back as a negative edge, a table first dropped the
         // edge and stood that space low. The line holds nothing above the page's margin, so not
-        // where a negative edge pulls it up past it.
+        // where a negative edge pulls it up past it: there the space left above its first block,
+        // its padding included, is written above that block, where a table or a row holds it in a
+        // line of its own, and a paragraph's, read back below, is named.
         boolean opensItsPage = !writes.nothing() && opensItsPageAsAnOverlay(canvas, overlayDepth - 1);
-        boolean lineHeld = opensItsPage
-                       && holdAParagraphsTopEdgeOnItsPage(document, canvas, edge >= 0 ? firstSpace : 0);
+        boolean lineHeld = opensItsPage && (edge >= 0 || !spacedAsPlaced)
+                           && holdAParagraphsTopEdgeOnItsPage(document, canvas, edge >= 0 ? firstSpace : 0);
         double heldInTheLine = 0;
         if (lineHeld) {
             // Its first paragraph is an overlay's, which holds no edge of its own there.
@@ -21846,19 +21854,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 topEdgeHeld -= firstSpace;
             }
         }
-        // Where no line holds it, its first paragraph opens the page with that space above it, and
-        // Word drops it there; a table first holds the space above it in a line of its own
-        // (newTable).
-        boolean droppedAtThePageTop = opensItsPage && !lineHeld
-                                      && !(first instanceof com.demcha.compose.document.node.TableNode)
-                                      && firstSpace - pulled > 0.5;
-        // A pull deeper than the space above the first block is still carried as a negative edge: a
-        // paragraph takes it out of the space owed above it as far as that goes, and a table drops
-        // it.
-        double pullPastItsSpace = spacedAsPlaced ? Math.max(0, -edge) - pulled : 0;
         reportWrittenWithout(canvas, "written as its contents",
-                canvasLosses(canvas, writes, followed, moves, room, droppedAtThePageTop, pullPastItsSpace));
+                canvasLosses(canvas, writes, followed, moves, room, pullPastItsSpace));
         if (!writes.nothing()) {
+            int bodyBefore = document.getBodyElements().size();
             try {
                 if (spacedAsPlaced) {
                     spaceItsBlocksAsPlaced(canvas, writes, pulled + heldInTheLine);
@@ -21866,6 +21865,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // The pull taken out of the first block's space is not carried down to it either.
                 carriedSpacingBefore += pulled;
                 writeContainerBody(document, canvas);
+                // Where no line holds it, the space left above its first block is written above the
+                // first thing it writes on the page, where Word drops a paragraph's space above. What
+                // it writes first is read back: a table, a row or a panel, or a line one of them
+                // writes to hold that space, keeps it, and only a paragraph opening the page with it
+                // is named.
+                if (opensItsPage && !lineHeld && firstSpace - pulled > 0.5
+                    && opensThePageWithSpaceAbove(document, bodyBefore)) {
+                    reportWrittenWithout(canvas, "written as its contents", List.of("on the page it opens, the "
+                            + "space it places above its first block stands at the top of the page, where Word "
+                            + "drops it"));
+                }
             } finally {
                 for (com.demcha.compose.document.node.CanvasChild child : canvas.placements()) {
                     spaceAboveInItsCanvas.remove(child.node());
@@ -21920,6 +21930,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             spaceAboveInItsCanvas.putIfAbsent(child.node(), spaces.next() - taken);
             taken = 0;
         }
+    }
+
+    /**
+     * Whether the first thing written to the body from {@code from} on is a paragraph with space
+     * above it: not a table, and not an empty exact line kept with what follows, which holds space
+     * where Word would drop it ({@link #holdInALineKeptWithTheNext}).
+     */
+    private boolean opensThePageWithSpaceAbove(XWPFDocument document, int from) {
+        List<IBodyElement> body = document.getBodyElements();
+        if (from >= body.size() || !(body.get(from) instanceof XWPFParagraph paragraph)
+            || !paragraph.getCTP().isSetPPr() || !paragraph.getCTP().getPPr().isSetSpacing()) {
+            return false;
+        }
+        CTPPr properties = paragraph.getCTP().getPPr();
+        CTSpacing spacing = properties.getSpacing();
+        boolean holdsSpace = paragraph.getText().isEmpty() && properties.isSetKeepNext()
+                             && spacing.getLineRule() == STLineSpacingRule.EXACT;
+        return !holdsSpace && spacing.isSetBefore() && twipsOf(spacing.getBefore()) > 10;
     }
 
     /** The first block a canvas writes rather than draws, or {@code null} where it writes none. */
@@ -22108,8 +22136,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param followed whether something follows it in its flow
      * @param moves    whether its room moves anything (see {@link #writeCanvas})
      * @param room     the width its margins leave it where it is written, or NaN when not known
-     * @param droppedAtThePageTop whether, on a page it opens, the space above its first block stands
-     *                 at the page's top, where Word drops it ({@link #writeCanvas})
      * @param pullPastItsSpace how much a negative top edge pulls its first block up past the space
      *                 it places above it: carried as a negative edge, which a paragraph takes out of
      *                 the space owed above it as far as that goes, and a table drops
@@ -22118,8 +22144,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *         the column it stands in
      */
     private List<String> canvasLosses(com.demcha.compose.document.node.CanvasLayerNode canvas, CanvasWrites writes,
-                                      boolean followed, boolean moves, double room, boolean droppedAtThePageTop,
-                                      double pullPastItsSpace) {
+                                      boolean followed, boolean moves, double room, double pullPastItsSpace) {
         List<String> lost = new ArrayList<>(4);
         if (writes.readsDown() && writes.measured()) {
             // Each block stands as far down as it places it (spaceItsBlocksAsPlaced); across, not.
@@ -22135,10 +22160,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 lost.add("its negative top margin pulls its first block further up than it places it below its "
                          + "corner, and Word sets that block up to as much lower: no space below zero stands above "
                          + "a table, and above a paragraph only as much as the space owed there");
-            }
-            if (droppedAtThePageTop) {
-                lost.add("on the page it opens, the space it places above its first block stands at the top of the "
-                         + "page, where Word drops it");
             }
         } else if (writes.placedApart()) {
             lost.add("what it writes is written from its corner, one block after another, not where it places it");

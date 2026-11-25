@@ -1322,9 +1322,11 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   space. How far across it places them is not carried: such a canvas writes its blocks at its left
   edge, and the report names one that places a block elsewhere, one it places higher than the foot
   of the one before or than its corner, which Word sets at that foot or corner, a first block that
-  a negative top margin pulls up further than it places it below the corner, which Word sets up to
-  that much lower, and — for a canvas pulled up past the page's margin that opens a later page with
-  anything but a table first — the space above that block, which Word drops there.
+  a negative top margin pulls up further than it places it below the corner and further than the
+  space owed above the canvas, which Word sets up to that much lower, and — for a canvas pulled up
+  past the page's margin that opens a later page — the space above its first block where a
+  paragraph opens that page with it, which Word drops there; a table, a row or a panel first holds
+  it in a line of its own.
 - **A canvas placing its text side by side → over its page.** A canvas in the body's flow that
   places what it writes side by side or out of reading order — a block starting above the foot
   of the one before it, as on a poster or a slide — and holds only drawing and plain paragraphs

@@ -288,7 +288,33 @@ class DocxCanvasRoomTest {
                 .add(paragraph("Below")));
 
         assertThat(placed(exported.layout(), "Grid").startPage()).as("moved to the second page").isEqualTo(1);
+        XWPFDocument document = exported.document();
+        List<IBodyElement> body = document.getBodyElements();
+        XWPFParagraph line = (XWPFParagraph) body.get(body.indexOf(document.getTables().get(0)) - 1);
+        assertThat(lineOf(line)).as("the table's own line holds its place below the page's margin")
+                .isCloseTo(600 - 20 - top(exported.layout(), "Grid"), within(0.1)).isGreaterThan(19);
+        assertThat(after(line)).isZero();
         assertThat(exported.report().bySubject()).doesNotContainKey("CanvasLayerNode");
+    }
+
+    @Test
+    void aPulledUpCanvasWithPaddingOpeningANewPageNamesTheSpaceWordDropsThere() throws Exception {
+        // Pulled up 30pt and padded 10pt, its name 40pt down: 20pt below the page's margin, written
+        // above the name at the page's top, where Word drops it.
+        Exported exported = export(page -> page
+                .add(new com.demcha.compose.document.dsl.SpacerBuilder().height(500).build())
+                .addCanvas(360, 120, canvas -> canvas
+                        .margin(new DocumentInsets(-30, 0, 0, 0))
+                        .padding(new DocumentInsets(10, 0, 0, 0))
+                        .position(paragraph("Name"), 0, 40)
+                        .position(paragraph("Title"), 0, 70))
+                .add(paragraph("Below")));
+        assertThat(placed(exported.layout(), "Name").startPage()).as("moved to the second page").isEqualTo(1);
+        assertThat(before(paragraphOf(exported.document(), "Name")))
+                .as("the spacer's room and the name's 20pt, written above it at the page's top")
+                .isCloseTo(500 + 20, within(0.5));
+        assertThat(detailOf(exported.report())).isEqualTo("written as its contents; on the page it opens, the space "
+                + "it places above its first block stands at the top of the page, where Word drops it");
     }
 
     @Test
@@ -318,7 +344,41 @@ class DocxCanvasRoomTest {
                         .position(paragraph("Title"), 0, 60))
                 .add(paragraph("Below")));
 
+        assertThat(before(paragraphOf(exported.document(), "Name"))).as("no space left to take the pull from")
+                .isZero();
         assertThat(detailOf(exported.report())).isEqualTo(DEEPER_PULL);
+    }
+
+    @Test
+    void aPullDeeperThanItsSpaceThatTheSpaceAboveTheCanvasTakesIsNotNamed() throws Exception {
+        // 20pt owed above the canvas covers the 20pt its margin pulls the name past its place.
+        Exported exported = export(page -> page
+                .add(new ParagraphBuilder().name("Above").text("Above").margin(new DocumentInsets(0, 0, 20, 0)).build())
+                .addCanvas(360, 120, canvas -> canvas
+                        .margin(new DocumentInsets(-30, 0, 0, 0))
+                        .position(paragraph("Name"), 0, 10)
+                        .position(paragraph("Title"), 0, 60))
+                .add(paragraph("Below")));
+
+        assertThat(gapInWord(exported.document(), "Above", "Name")).as("the name where the page sets it")
+                .isCloseTo(gapOnThePage(exported.layout(), "Above", "Name"), within(0.1));
+        assertThat(exported.report().bySubject()).doesNotContainKey("CanvasLayerNode");
+    }
+
+    @Test
+    void aPulledUpCanvasOpeningANewPageWithARowFirstIsNotNamedForTheSpaceItsRowHolds() throws Exception {
+        Exported exported = export(page -> page
+                .add(new com.demcha.compose.document.dsl.SpacerBuilder().height(500).build())
+                .addCanvas(360, 120, canvas -> canvas
+                        .margin(new DocumentInsets(-20, 0, 0, 0))
+                        .position(new com.demcha.compose.document.dsl.RowBuilder().name("Pair")
+                                .columns(DocumentRowColumn.fixed(150), DocumentRowColumn.fixed(150))
+                                .add(paragraph("Left")).add(paragraph("Right")).build(), 0, 40)
+                        .position(paragraph("Title"), 0, 80))
+                .add(paragraph("Below")));
+
+        assertThat(placed(exported.layout(), "Left").startPage()).as("moved to the second page").isEqualTo(1);
+        assertThat(exported.report().bySubject()).doesNotContainKey("CanvasLayerNode");
     }
 
     @Test
@@ -333,6 +393,8 @@ class DocxCanvasRoomTest {
                 .add(paragraph("Below")));
 
         assertThat(placed(exported.layout(), "Name").startPage()).as("moved to the second page").isEqualTo(1);
+        assertThat(before(paragraphOf(exported.document(), "Name"))).as("written above the name, at the page's top")
+                .isGreaterThan(520 - 0.5);
         assertThat(detailOf(exported.report())).isEqualTo("written as its contents; on the page it opens, the space "
                 + "it places above its first block stands at the top of the page, where Word drops it");
     }

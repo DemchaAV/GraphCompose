@@ -98,7 +98,7 @@ follow semantic versioning; release dates are ISO 8601.
     text is drawn from the program that travelled under the shared viewer family, whatever the reason it is not carried and in either
     order of registration; a face that was refused is still named, with the reason, by
     `render.pptx.font.embed.skipped`, once per registration. A family whose viewer name nothing
-    else carries keeps the line it had. Only the log changed: a deck rendered for each of these
+    else carries keeps a line of its own. Only the log changed: a deck rendered for each of these
     arrangements, in both orders where there are two registrations, is the same bytes before and
     after.
   - The carrier has to be another registered family. A registration declaring a *bundled*

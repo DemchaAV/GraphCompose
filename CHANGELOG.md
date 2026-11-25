@@ -63,13 +63,18 @@ follow semantic versioning; release dates are ISO 8601.
     page takes two. The paired cover letter's lines stood 48pt low.
   - A canvas whose blocks read down — each starting at or below the foot of the one before — now
     sets each as far below the one before as it places it, the first as far below its corner,
-    and owes the room it leaves under the foot of the last. Measured by baseline against the
+    and owes the room it leaves under the foot of the last. A negative top margin's pull comes out
+    of the space above its first block, so a table first stands where the page sets it too; on a
+    page the canvas opens, the line holding its top edge holds that space. Measured by baseline against the
     engine's PDF: the banded `MintEditorial` CV is two pages in both editors, its 102 lines within
     0.24pt in Word 16 and 1.3pt in LibreOffice 26.8 — as the CV without a band measures — and its
     rule where the page draws it; the banded cover letter's lines, 48pt low, are within 0.18pt and
     1.3pt.
   - How far across it places them is still not carried: such a canvas writes its blocks at its
-    left edge, and the report names one that places a block elsewhere.
+    left edge, and the report names one that places a block elsewhere. It also names a block placed
+    higher than the foot of the one before, or than the canvas's corner, which Word sets at that
+    foot, and, for a canvas pulled up past the page's margin that the layout moves to a new page,
+    the space above its first block, which Word drops at the top of that page.
 
 - **A PPTX font the deck does not carry is announced once, and by what the registered families carry under its name.**
   - The `render.pptx.font.substitution` lines for a registered family were written per

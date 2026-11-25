@@ -147,6 +147,17 @@ class DocxCanvasRoomTest {
                    + gapInWord(document, "Title", "Below"))
                 .as("from the page's margin to the next block: the canvas's height less the margin it is pulled up by")
                 .isCloseTo(120 - 20 - RAISE, within(0.1));
+
+        // Under a paragraph, the pull and the name's place cancel there too.
+        Exported underAParagraph = export(page -> page
+                .add(paragraph("Above"))
+                .addCanvas(360, 120, canvas -> canvas
+                        .margin(new DocumentInsets(-12, 0, 0, 0))
+                        .position(paragraph("Name"), 0, 20)
+                        .position(paragraph("Title"), 0, 50))
+                .add(paragraph("Below")));
+        assertThat(gapInWord(underAParagraph.document(), "Above", "Name"))
+                .isCloseTo(gapOnThePage(underAParagraph.layout(), "Above", "Name"), within(0.1)).isGreaterThan(7);
     }
 
     @Test
@@ -169,8 +180,8 @@ class DocxCanvasRoomTest {
         assertThat(lineOf(name) + gapInWord(document, "Name", "Title") + lineOf(title)
                    + gapInWord(document, "Title", "Below"))
                 .as("the canvas's height").isCloseTo(100 - RAISE, within(0.1));
-        assertThat(detailOf(exported.report())).contains("what it writes is written from its corner, one block after "
-                + "another, not where it places it");
+        assertThat(detailOf(exported.report())).isEqualTo("written as its contents; a block it places higher than the "
+                + "foot of the one before, or than its corner, is written at that foot");
     }
 
     @Test
@@ -192,6 +203,65 @@ class DocxCanvasRoomTest {
         assertThat(before(name)).as("nothing above the name for Word to drop").isZero();
         assertThat(lineOf(line)).as("the line opening the page holds the name's place")
                 .isCloseTo(600 - 20 - top(exported.layout(), "Name"), within(0.1)).isGreaterThan(39);
+    }
+
+    @Test
+    void aCanvasPulledUpByItsMarginOverATableStartsTheTableWhereItPlacesIt() throws Exception {
+        // Word has no space above a table, and none below zero anywhere: the margin's pull comes
+        // out of the space above the table rather than being dropped beside it.
+        Exported exported = export(page -> page
+                .addCanvas(360, 120, canvas -> canvas
+                        .margin(new DocumentInsets(-20, 0, 0, 0))
+                        .position(new com.demcha.compose.document.dsl.TableBuilder().name("Grid")
+                                .columns(DocumentTableColumn.fixed(200))
+                                .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(paragraph("Cell")))
+                                .build(), 0, 20)
+                        .position(paragraph("Title"), 0, 60))
+                .add(paragraph("Below")));
+        XWPFDocument document = exported.document();
+        List<IBodyElement> body = document.getBodyElements();
+        double above = 0;
+        for (IBodyElement element : body.subList(0, body.indexOf(document.getTables().get(0)))) {
+            XWPFParagraph paragraph = (XWPFParagraph) element;
+            above += before(paragraph) + after(paragraph) + (spacingOf(paragraph) != null
+                    && spacingOf(paragraph).getLineRule() == STLineSpacingRule.EXACT ? lineOf(paragraph) : 0);
+        }
+
+        assertThat(above).as("the table at the page's margin, where the canvas places it").isLessThan(0.5);
+        assertThat(exported.report().bySubject()).doesNotContainKey("CanvasLayerNode");
+    }
+
+    @Test
+    void aCanvasPulledUpByItsMarginOpeningANewPageNamesTheSpaceWordDropsThere() throws Exception {
+        // Its name 20pt below the page's margin on the page the layout moves it to: the line that
+        // holds a canvas's top edge there holds nothing above the margin, and the space above the
+        // name, at the page's top, Word drops.
+        Exported exported = export(page -> page
+                .add(new com.demcha.compose.document.dsl.SpacerBuilder().height(500).build())
+                .addCanvas(360, 120, canvas -> canvas
+                        .margin(new DocumentInsets(-20, 0, 0, 0))
+                        .position(paragraph("Name"), 0, 40)
+                        .position(paragraph("Title"), 0, 70))
+                .add(paragraph("Below")));
+
+        assertThat(placed(exported.layout(), "Name").startPage()).as("moved to the second page").isEqualTo(1);
+        assertThat(detailOf(exported.report())).isEqualTo("written as its contents; on the page it opens, the space "
+                + "it places above its first block stands at the top of the page, where Word drops it");
+    }
+
+    @Test
+    void aCanvasWhoseBlocksReadDownInARowsCellSetsEachAsFarDownAsItPlacesIt() throws Exception {
+        Exported exported = export(page -> page
+                .addRow(row -> row.columns(DocumentRowColumn.fixed(200), DocumentRowColumn.weight(1))
+                        .addSection("Card", cell -> cell.add(new CanvasLayerBuilder(180, 100)
+                                .position(paragraph("Name"), 0, 10)
+                                .position(paragraph("Title"), 0, 50).build()))
+                        .add(paragraph("Beside"))));
+        XWPFDocument document = exported.document();
+
+        assertThat(gapInWord(document, "Name", "Title")).as("the title as far below the name as it places it")
+                .isCloseTo(gapOnThePage(exported.layout(), "Name", "Title"), within(0.1)).isGreaterThan(20);
+        assertThat(before(paragraphOf(document, "Name"))).as("the name 10pt down its canvas").isCloseTo(10, within(0.1));
     }
 
     @Test

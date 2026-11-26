@@ -14,16 +14,24 @@ import java.util.Map;
  * height ({@link DocxNaturalLine}). A face it does not ship — a standard PDF name, one that
  * may not travel — is set in whatever the reader's machine substitutes, so it has none.
  *
- * <p>Kept under the declared name exactly as the runs spell it. One family is written per name
+ * <p>Kept under the declared name ignoring case, the way {@code DocxFontTable} tells one declared
+ * name from another. A run spelling the name in another case is set in the face declared under
+ * it: measured in Word 16 with the one element the holder's spelling declares, where runs spelled
+ * {@code PROBESHARED} and {@code probeshared} were drawn from the {@code ProbeShared} program at
+ * its width and on its line (LibreOffice was not measured on that shape), and in both editors
+ * where a document declared both spellings —
+ * except where the editor has a font of that name itself, whose own font wins (Word 16 drew its
+ * own Lato over a program declared as {@code Lato}). One family is written per name so compared
  * ({@code DocxFontTable.resolve}), so no two faces can meet over one of these keys.</p>
  *
- * <p>A family given up for a name another one declares keeps no line of its own here. Its runs
- * read the key their own spelling and slot make, so they read the line of a face the holder
- * shipped where both of those match one the holder filled, and no line at all where either
- * does not — a spelling differing in case, or a slot the holder left empty. So there are two
- * answers, a line or none, by three routes, and the two answers are not the same to the
- * writer, which can hold a paragraph to a line it has and cannot to one it has not. Recorded
- * as a limit in the backend capability details, with a test per route.</p>
+ * <p>So a run naming a shipped name in another case reads that face's line — a given-up family's,
+ * or one that shipped nothing of its own. A family given up for a name another one declares keeps
+ * no line of its own here: its runs read the key their slot makes under the shared name, so they
+ * read the line of a face the holder shipped where the holder filled that slot, in whichever case
+ * the runs spell the name, and no line at all where the holder left the slot empty. The two
+ * answers are not the same to the writer, which can hold a paragraph to a line it has and cannot
+ * to one it has not. Recorded as a limit in the backend capability details, with a test per
+ * route.</p>
  *
  * @author Artem Demchyshyn
  */
@@ -32,12 +40,18 @@ final class DocxShippedLines {
     static final DocxShippedLines NONE = new DocxShippedLines(Map.of(), List.of());
 
     private final Map<FontName, FontFamilyDefinition> families;
-    private final Map<String, DocxNaturalLine> lines = new java.util.HashMap<>();
+    /**
+     * Each shipped face's line, by name and slot. Ordered with {@link String#CASE_INSENSITIVE_ORDER},
+     * which compares a character the way {@link String#equalsIgnoreCase} does — the comparison
+     * {@code DocxFontTable} decides a shared name with — and so folds the same way wherever the
+     * export runs, unlike {@code toLowerCase()} and its default locale.
+     */
+    private final Map<String, DocxNaturalLine> lines = new java.util.TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     /** The file of each face with a line whose character map is not read yet. */
-    private final Map<String, byte[]> files = new java.util.HashMap<>();
+    private final Map<String, byte[]> files = new java.util.TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     /** Each face's character map, read the first time a text is asked of it; empty where unreadable. */
     private final Map<String, java.util.Optional<org.apache.fontbox.ttf.CmapLookup>> characters =
-            new java.util.HashMap<>();
+            new java.util.TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     DocxShippedLines(Map<FontName, FontFamilyDefinition> families, List<DocxFontTable.Embedded> embedded) {
         this.families = families;

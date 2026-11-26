@@ -136,12 +136,11 @@ class DocxSharedFontNameTest {
                     .as("the bold face of the family given up does not travel either")
                     .doesNotContain("<w:embedBold");
             assertShipsOneFace(shipped.document(), latoRegular());
-            // The route into the line map where the spelling matches and the slot does not, which
-            // only this arrangement reaches: the two families spell the name the same way, so the
-            // given-up family's runs would read the key the holder filled — but their slot is one
-            // the holder left empty, so there is no
-            // such key and they read no line, which is the answer a spelling the map does not hold
-            // gives as well. The paragraph is then written at its own face's line.
+            // The route into the line map where the name matches and the slot does not, which
+            // only this arrangement reaches: the two families declare one name, so the given-up
+            // family's runs would read the key the holder filled — but their slot is one the
+            // holder left empty, so there is no such key and they read no line. The paragraph is
+            // then written at its own face's line.
             DocxNaturalLine monoBold = DocxNaturalLine.of(resource(MONO_BOLD));
             assertThat(Math.round((monoBold.ascent() + monoBold.descent()) * 10 * 20))
                     .as("the premise the written height rests on, as the sibling test pins its own")
@@ -273,28 +272,29 @@ class DocxSharedFontNameTest {
             // The given-up family's runs spell the same name, so they read the key the holder
             // filled rather than a line of their own. Where that stands their text more than a
             // quarter point off the page's baseline — the premise above — the written line stays
-            // exact. The sibling test below reaches this map the other way, by a spelling it does
-            // not hold at all, and lands on the same line for a reason of its own.
+            // exact. The sibling test below reaches the same key by a spelling in another case.
             assertThat(lineOf(shared.document(), 1)).isEqualTo("364 exact");
         }
     }
 
     @Test
-    void aGivenUpFamilySpelledAnotherWayClaimsNoLineOfItsOwn() throws Exception {
-        // The route into the line map where the spelling itself does not match: the runs of the
-        // family given up spell the name their own way, and that spelling is not a key in it at
-        // all. The paragraph lands
-        // at the height the page measured with no least-height claim, which is where the free-slot
-        // route lands too — each route is pinned because reaching that answer one way says nothing
-        // about reaching it another.
+    void aGivenUpFamilySpelledInAnotherCaseReadsTheHoldersLine() throws Exception {
+        // The route into the line map where the spelling differs in case: the runs of the family
+        // given up spell the name their own way, and an editor sets them in the face declared
+        // under it all the same, so they read the line the holder shipped, as runs spelling it
+        // the holder's way do. With these two faces that line stands the text more than a
+        // quarter point off the page's baseline, so the paragraph is held exact, at the height
+        // the page measured — which is where the free-slot route lands too, by no line at all.
+        // Each route is pinned because reaching that answer one way says nothing about reaching
+        // it another; the test of a holder's line a paragraph may grow to is the one that tells
+        // this route from the free slot's.
         DocumentTextStyle lato = DocumentTextStyle.builder().fontName(SHIPPED_LATO).size(14).build();
         DocumentTextStyle mono = DocumentTextStyle.builder().fontName(SHIPPED_MONO).size(14).build();
         try (Shipped shared = exportSetIn(List.of(latoAs("CaseShared"), monoAs("CASESHARED")),
                 List.of(lato, mono))) {
 
             // The route, read off the document: the table declares the holder's spelling alone,
-            // and the given-up family's runs carry theirs, so the line kept under the declared
-            // spelling is not a line those runs can read.
+            // and the given-up family's runs carry theirs.
             assertThat(families(shared.document())).containsExactly("CaseShared");
             assertThat(asciiOf(shared.document(), 1)).isEqualTo("CASESHARED");
 
@@ -302,12 +302,51 @@ class DocxSharedFontNameTest {
                     .as("the family that keeps the name is unaffected")
                     .isEqualTo("336 atLeast");
             // Where the written height comes from, so the figure below is not a bare one: the
-            // page's own measurement of the face those runs are set in, which is the whole of
-            // what the paragraph can say once no line is read for it.
+            // page's own measurement of the face those runs are set in, which is what an exact
+            // line holds the paragraph to.
             DocxNaturalLine monoLine = DocxNaturalLine.of(monoRegular());
             assertThat(Math.round((monoLine.ascent() + monoLine.descent()) * 14 * 20)).isEqualTo(364);
             assertThat(lineOf(shared.document(), 1)).isEqualTo("364 exact");
         }
+    }
+
+    @Test
+    void aGivenUpFamilyReadsTheHoldersLineWhicheverCaseItSpellsTheNameIn() throws Exception {
+        // Word draws a run from the face declared under its name in another case — measured on a
+        // document of this shape, its one element in the holder's spelling, where upper- and
+        // lower-case runs were drawn from the holder's program at its width and on its line — so a
+        // given-up family's runs are set in the holder's face whether they spell the name as the
+        // holder did or not, and read the holder's line either way.
+        // Two registrations of one face, so the line the holder ships is a line those runs may grow
+        // to, and the written line says which of the two routes found it: a least line where the
+        // holder's line was read, an exact one where none was. The
+        // holder's own spelling writes no font on the run, the document's default face being that
+        // name, so that row is read through the default; the other two through the run's spelling.
+        FontName again = FontName.of("shipped-lato-again");
+        DocumentTextStyle holder = DocumentTextStyle.builder().fontName(SHIPPED_LATO).size(14).build();
+        DocumentTextStyle givenUp = DocumentTextStyle.builder().fontName(again).size(14).build();
+
+        List<String> lines = new java.util.ArrayList<>();
+        for (String spelling : List.of("FoldShared", "FOLDSHARED", "foldshared")) {
+            try (Shipped shared = exportSetIn(List.of(latoAs("FoldShared"),
+                            FontFamilyDefinition.classpath(again, LATO_REGULAR).wordFamily(spelling).build()),
+                    List.of(holder, givenUp))) {
+                assertThat(families(shared.document()))
+                        .as("the premise: one family keeps the name, in the holder's spelling")
+                        .containsExactly("FoldShared");
+                if (!spelling.equals("FoldShared")) {
+                    // A run spelling the name as the document's default face does writes no
+                    // font of its own, so only the other spellings can be read off the run.
+                    assertThat(asciiOf(shared.document(), 1))
+                            .as("the premise: the given-up family's runs spell it their own way")
+                            .isEqualTo(spelling);
+                }
+                lines.add(lineOf(shared.document(), 1));
+            }
+        }
+        assertThat(lines)
+                .as("the holder's line, read by every spelling of the name")
+                .containsExactly("336 atLeast", "336 atLeast", "336 atLeast");
     }
 
     @Test

@@ -79,6 +79,22 @@ follow semantic versioning; release dates are ISO 8601.
     page, the space above its first block where a paragraph opens that page with it, which Word
     drops there. A table, a row or a panel first holds that space in a line of its own.
 
+- **A DOCX paragraph in a family given up for a shared Word name reads the holder's line in whichever
+  case it spells the name.**
+  - A family whose `wordFamily()` asks for a name another family already ships a face set under is
+    given up, and its runs are set in the holder's faces — where a run spells the name in another
+    case too: measured in Word 16 on a document declaring the name once, runs spelled in upper and
+    in lower case were drawn from the holder's program, at its width and on its line. Where the
+    editor has a font of that name itself, its own font wins, as before.
+  - The line each shipped face is set in was kept under the exact spelling, so such a run read no
+    line, and its paragraph was held to an exact height where one spelling the name the holder's
+    way could grow to a least one, as it does for two registrations of one face: Lato Regular at
+    14pt wrote `336 atLeast` for `FoldShared` and `336 exact` for `FOLDSHARED` and `foldshared`.
+  - The line is now kept under the name matched without case, the way `DocxFontTable` decides that
+    two families share one. So a run naming a shipped name in another case reads that face's line
+    — a given-up family's, or one that shipped nothing of its own — where the face fills the slot,
+    and none where it leaves the slot empty. LibreOffice was not measured on this shape.
+
 - **A PPTX font the deck does not carry is announced once, and by what the registered families carry under its name.**
   - The `render.pptx.font.substitution` lines for a registered family were written per
     registration, so a family registered twice was announced twice; the module README promises one

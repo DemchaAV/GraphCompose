@@ -235,12 +235,12 @@ follow semantic versioning; release dates are ISO 8601.
   holding one prints. No behaviour changes: the 105 documents of the DOCX fidelity corpus are
   the same bytes, with the same report notes.
 - **The templates module's CodeQL alerts are cleared.** 28 of the 48 open in `templates` are
-  cleared in code. The CV, invoice, proposal and receipt presets made 24 calls of the deprecated
-  `RowBuilder.gap`, which only passes the value on to `spacing`: 19 now call `spacing`, and 5
-  that followed a `spacing(0)` with `gap(0)` on the same row are dropped. A javadoc block that
-  a removed method left in `TerracottaRailWidgets` is removed too. Two private methods lose a
-  parameter they never read, along with the width `MonogramSidebar` computed only to pass to one
-  of them. The other 20 are left: tests that pin a deprecated method on purpose
+  cleared in code. The CV, invoice and proposal presets and a receipt component made 24 calls of
+  the deprecated `RowBuilder.gap`, which only passes the value on to `spacing`: 19 now call
+  `spacing`, and 5 that followed a `spacing(0)` with `gap(0)` on the same row are dropped. A
+  javadoc block that a removed method left in `TerracottaRailWidgets` is removed too. Two private
+  methods lose a parameter they never read, along with the width `MonogramSidebar` computed only
+  to pass to one of them. The other 20 are left: tests that pin a deprecated method on purpose
   (`TextOrnaments.spacedUpper`, the three-argument `BrandTheme` constructor and
   `CvDocument.ofMainSections`, each kept until a major release removes it), a record whose lists
   are an immutable copy, and `parseDouble` on the viewBox of the icons the Orange Ops CV preset

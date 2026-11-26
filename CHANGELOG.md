@@ -5,6 +5,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.5.2 — Planned
 
+- **Side-by-side text on a simple canvas of shapes and paragraphs lands in Word where the PDF puts
+  it.**
+- **A Mint Editorial CV with a header band now fits on two pages in Word**, as in the PDF.
+- **Large tables export to Word about 1.5× faster**, and with less memory.
+- **A PowerPoint deck in your own single-file font exports faster.**
+- **PowerPoint's warning about a font the deck does not carry now comes once per family.**
+
+No API changes: a drop-in upgrade from 2.5.1. The entries below give the detail.
+
 ### Fixed
 
 - **A DOCX canvas that places its text side by side or out of reading order sets it where the
@@ -178,9 +187,27 @@ follow semantic versioning; release dates are ISO 8601.
   - Measured byte-identical: the 105 documents of the DOCX fidelity corpus, every part of each, with
     the same 1,718 report notes; and the benchmark's four documents, every part but the creation
     time in `docProps/core.xml`.
+  - Measured again against the published 2.5.1 with a plain harness, not JMH, on a machine with
+    other work running: the benchmark's `table1000`, `report20` and `small` documents, each built
+    and exported in a fresh session, logging quiet, the median of 25 runs, each timed from building
+    the session to closing it, after 15 warm-ups, in two alternating rounds. `table1000` took 722
+    and 680 → 463 ms and allocated 232–233 → 155–157 MB on its thread; `report20` allocated 10.3 →
+    9.5–9.6 MB and `small` 1.91 → 1.71 MB, their time within the noise. The same three documents'
+    PDF export did not move: `table1000` took 59–63 ms before and 58–62 ms after, and allocated
+    24–25 MB on both builds.
 
 ### Internal
 
+- **The PPTX backend's internal javadoc says what a render built with `embedBundledFonts(false)`
+  is warned about.** It said such a render must not be told to register what it declined. It is
+  told: a bundled family it draws in that ships a binary and is not registered gets the name-only
+  warning, which points at `registerFontFamily`, because a family registered with binary sources
+  goes to the embedder whatever that flag says. (Where a registered family carries a face under
+  the name its runs are written with, the line says instead that its text is drawn from that
+  program; see "A PPTX font the deck does not carry is announced once" above.) A test now follows
+  that advice on such a backend and finds the family carried and no longer reported.
+  `TemplateTestSupport.assertPdfUsesFont`, which nothing called, is removed from the `qa` test
+  sources.
 - **`PptxRenderEnvironment` no longer carries the PPTX backend's font embedding.** Embedding had
   grown into most of the class (1,426 lines), and now lives in package-private classes beside it:
   `PptxDeckFonts` (which families a render carries, the viewer family a run is written with, and

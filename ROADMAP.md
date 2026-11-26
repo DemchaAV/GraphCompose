@@ -22,7 +22,8 @@ Word and PowerPoint outputs stays Experimental (`@Beta`); the formats are full o
 The release train reaches Maven Central as **one deployment** of its eight components, and
 a line copied out of a PDF keeps its emoji.
 
-Full detail in [CHANGELOG.md](CHANGELOG.md) under `v2.5.0`.
+Full detail in [CHANGELOG.md](CHANGELOG.md) under `v2.5.0`, and what each patch of the line
+changed under its own version.
 
 ## Previously — 2.4
 

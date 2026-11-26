@@ -5,6 +5,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.5.2 — Planned
 
+A patch of the 2.5 line for anyone exporting to Word or PowerPoint; the public API is unchanged.
+A DOCX canvas sets its text where the page sets it: side by side in text boxes, and reading down at
+each block's height, so a `MintEditorial` CV with a header band is two pages in Word and LibreOffice,
+as on the page, instead of three. A 1,000-row table exports to DOCX faster and with about a third
+less memory. A PPTX deck reads each registered font file once, and its font log names each family
+once without contradicting what the deck carries. The rest is internal, with the same output.
+
 ### Fixed
 
 - **A DOCX canvas that places its text side by side or out of reading order sets it where the
@@ -202,6 +209,13 @@ follow semantic versioning; release dates are ISO 8601.
   corpus are the same bytes, with the same report notes. The shared-name cases of
   `DocxFontTableTest` moved to `DocxSharedFontNameTest`, and the helpers both use to
   `DocxFontTableFixtures`.
+- **The PPTX backend's internal javadoc says what a render built with `embedBundledFonts(false)`
+  is warned about.** It said such a render must not be told to register what it declined. It is
+  told: each bundled family it draws in that ships a binary and is not registered gets the
+  name-only warning, which points at `registerFontFamily`, because a family registered with binary
+  sources travels whatever that flag says. A test now follows that advice on such a backend and
+  finds the family carried and no longer reported. `TemplateTestSupport.assertPdfUsesFont`, which
+  nothing called, is removed from the `qa` test sources.
 - **The render backends' CodeQL alerts are cleared.** 23 of the 38 open in `render-docx`,
   `render-pdf` and `render-pptx` are cleared in code: a never-read local in the DOCX writer (its
   call, which owes the canvas's space, kept), a javadoc block moved back onto the method it

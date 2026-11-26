@@ -20,7 +20,7 @@
 
 > **Release status** &mdash;
 > 🟢 **Latest stable**: [v2.5.1](https://github.com/DemchaAV/GraphCompose/releases/tag/v2.5.1) &mdash; **PDF, PowerPoint and Word as three full outputs**: the **DOCX export writes the page the engine laid out**, with a report naming every node it could not carry; and the **fonts a deck or document carries are checked**: a PPTX run asks for the face its family holds, a font name two families share is reported, a face or family that cannot be read or carried no longer stops a PPTX export, and a carried face a viewer may not draw is named. See [CHANGELOG.md](./CHANGELOG.md).
-> &nbsp;·&nbsp; 🟡 **In development**: v2.5.2 on `develop` &mdash; see [CHANGELOG.md](./CHANGELOG.md).
+> &nbsp;·&nbsp; 🟡 **In development**: v2.5.2 on `develop` &mdash; **PDF, PowerPoint and Word as three full outputs**: the **DOCX export writes the page the engine laid out**, with a report naming every node it could not carry; a **DOCX canvas keeps its text where the page sets it**, side by side in text boxes and reading down at each block's height, so a banded CV no longer gains a page in Word; a 1,000-row table exports to DOCX faster and with a third less memory; and a deck's font log names each family once, and no longer contradicts what the deck carries. See [CHANGELOG.md](./CHANGELOG.md).
 
 <p align="center">
   <img src="./assets/readme/repository_showcase_render.png" alt="Documents rendered with GraphCompose" width="780"/>

@@ -67,7 +67,6 @@ final class SerifHeadlineMasthead {
     static void compose(PageFlowBuilder page, CvIdentity identity, ParagraphSection summary) {
         page.addRow("Masthead", row -> {
             row.spacing(0);
-            row.gap(0);
             row.weights(IDENTITY_WEIGHT, 1.0 - IDENTITY_WEIGHT);
             row.verticalAlign(RowVerticalAlign.TOP);
             row.margin(new DocumentInsets(0, 0, MASTHEAD_TO_SUMMARY, 0));

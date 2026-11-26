@@ -126,7 +126,7 @@ public final class FieldRowRenderer {
         double baselineLift = labelStyle.size() * LEADER_BASELINE_LIFT_RATIO;
 
         host.addRow("ReceiptFieldRow", row -> row
-                .gap(LEADER_GAP)
+                .spacing(LEADER_GAP)
                 // Bottom-aligned so the leader lands on the row's baseline rather
                 // than riding along the top of the line.
                 .verticalAlign(RowVerticalAlign.BOTTOM)

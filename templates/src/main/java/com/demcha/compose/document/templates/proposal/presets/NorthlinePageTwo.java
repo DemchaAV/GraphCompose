@@ -92,7 +92,7 @@ final class NorthlinePageTwo {
                     deliverables.heading(), deliverables.icon(), CONTENT_WIDTH));
             section.addRow("DeliverableColumns", row -> {
                 row.verticalAlign(RowVerticalAlign.TOP)
-                        .gap(0)
+                        .spacing(0)
                         .padding(DocumentInsets.top(GAP_HEADING))
                         .weights(DELIVERABLES_LEFT_WEIGHT, DELIVERABLES_RIGHT_WEIGHT);
                 row.addSection("DeliverablesLeft", column -> {
@@ -196,7 +196,7 @@ final class NorthlinePageTwo {
         page.addRow("MoneyBand", row -> {
             row.margin(DocumentInsets.top(BAND_TOP));
             row.verticalAlign(RowVerticalAlign.TOP)
-                    .gap(MONEY_GAP)
+                    .spacing(MONEY_GAP)
                     .weights(INVESTMENT_WEIGHT, TERMS_WEIGHT);
             row.addSection("InvestmentColumn",
                     column -> renderInvestmentTable(column, data.investment()));
@@ -310,7 +310,7 @@ final class NorthlinePageTwo {
             }
             card.addRow("SignatureFields", row -> {
                 row.verticalAlign(RowVerticalAlign.BOTTOM)
-                        .gap(6)
+                        .spacing(6)
                         .padding(DocumentInsets.top(ACCEPTANCE_FIELD_GAP))
                         .columns(signatureColumns(fields.size()));
                 for (String field : fields) {

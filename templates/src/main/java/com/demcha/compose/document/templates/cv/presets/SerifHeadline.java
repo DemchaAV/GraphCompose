@@ -214,7 +214,6 @@ public final class SerifHeadline {
                 if (hasBody) {
                     page.addRow("BodyColumns", row -> {
                         row.spacing(0);
-                        row.gap(0);
                         row.weights(MAIN_CELL_WEIGHT, ASIDE_CELL_WEIGHT);
                         // The row splits on the gutter's midline, so the
                         // divider the right column hangs off lands in the

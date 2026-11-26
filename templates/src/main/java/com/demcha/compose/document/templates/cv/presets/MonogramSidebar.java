@@ -359,14 +359,6 @@ public final class MonogramSidebar {
             double sidebarHorizontalPadding = 13.0 * 2.0;
             double sidebarInnerWidth = Math.max(0.0,
                     sidebarOuterWidth - sidebarHorizontalPadding);
-            double mainOuterWidth = pageInnerWidth - sidebarOuterWidth;
-            // Main section has 20pt left + 18pt right padding (see addMain).
-            // Spacer width must be the content-area width so the inner
-            // content fills exactly the section's allocated outer width
-            // (= mainOuterWidth) — passing the outer width directly
-            // would overflow because outer = content + padding.
-            double mainContentWidth = Math.max(0.0,
-                    mainOuterWidth - (20.0 + 18.0));
             List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
 
             // Paint the two-column chrome via pageBackgrounds — the
@@ -393,7 +385,7 @@ public final class MonogramSidebar {
                                             sidebarInnerWidth))
                             .addSection("CvV2MonogramSidebarMain",
                                     section -> addMain(section, doc.identity(),
-                                            sections, mainContentWidth)))
+                                            sections)))
                     .build();
         }
 
@@ -571,7 +563,7 @@ public final class MonogramSidebar {
         // -- Main column ---------------------------------------------------
 
         private void addMain(SectionBuilder section, CvIdentity identity,
-                             List<CvSection> sections, double anchorWidth) {
+                             List<CvSection> sections) {
             // No fillColor — the page background defaults to white, so
             // the right column is naturally white from top to bottom.
             section.spacing(5)

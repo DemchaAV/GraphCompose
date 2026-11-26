@@ -72,7 +72,7 @@ final class EditorialWidgets {
             masthead.keepWithNext();
             masthead.addRow("MastheadRow", row -> {
                 row.verticalAlign(RowVerticalAlign.CENTER)
-                        .gap(LOGO_GAP)
+                        .spacing(LOGO_GAP)
                         // Not auto(): a section's natural width is the width
                         // it is offered, so two auto columns would each claim
                         // the whole row. Both ends are measured strips.

@@ -65,7 +65,7 @@ final class NorthlineWidgets {
         header.spacing(0);
         header.addRow("HeaderRow", row -> {
             row.verticalAlign(RowVerticalAlign.CENTER)
-                    .gap(LOGO_SIZE * 0.25)
+                    .spacing(LOGO_SIZE * 0.25)
                     // Not auto(): a section's natural width is the width it
                     // is offered, so two auto columns each claim the whole
                     // row. Both ends are measured strips instead.

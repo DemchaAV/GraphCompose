@@ -92,7 +92,7 @@ final class EditorialPageTwo {
             section.add(sectionHeading(deliverables.heading()));
             section.addRow("DeliverableColumns", row -> {
                 row.verticalAlign(RowVerticalAlign.TOP)
-                        .gap(0)
+                        .spacing(0)
                         .padding(DocumentInsets.top(GAP_AFTER_RULE))
                         // Fixed, not weights: weights would divide the whole
                         // band between the two columns and neither would wrap
@@ -204,7 +204,7 @@ final class EditorialPageTwo {
         page.addRow("MoneyBand", row -> {
             row.margin(DocumentInsets.top(BAND_TOP));
             row.verticalAlign(RowVerticalAlign.TOP)
-                    .gap(MONEY_GAP)
+                    .spacing(MONEY_GAP)
                     .weights(INVESTMENT_WEIGHT, TERMS_WEIGHT);
             row.addSection("InvestmentColumn",
                     column -> renderInvestmentTable(column, data.investment()));
@@ -335,7 +335,7 @@ final class EditorialPageTwo {
             columns[at++] = DocumentRowColumn.weight(signatureRuleWeight(i, fields.size()));
         }
         row.verticalAlign(RowVerticalAlign.BOTTOM)
-                .gap(SIGNATURE_LABEL_GAP)
+                .spacing(SIGNATURE_LABEL_GAP)
                 .padding(DocumentInsets.top(ACCEPTANCE_FIELD_GAP))
                 .columns(columns);
         for (int i = 0; i < fields.size(); i++) {

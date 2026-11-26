@@ -82,7 +82,7 @@ final class MerchantLines {
             table.columns(columns.toArray(new DocumentTableColumn[0]));
             renderHeader(table, serviceLines.columns(), currencyCode);
             for (int i = 0; i < lines.size(); i++) {
-                table.rowCells(List.of(rowCell(lines.get(i), i, currencyCode)));
+                table.rowCells(List.of(rowCell(lines.get(i), i)));
             }
         });
     }
@@ -128,8 +128,7 @@ final class MerchantLines {
     }
 
     /** One service line: a bordered cell across every column, holding a row of five. */
-    private static DocumentTableCell rowCell(InvoiceServiceLines.Line line, int index,
-                                             String currencyCode) {
+    private static DocumentTableCell rowCell(InvoiceServiceLines.Line line, int index) {
         double pad = (TABLE_ROW_H - descriptionHeight()) / 2.0;
         DocumentTableStyle cellStyle = DocumentTableStyle.builder()
                 .padding(DocumentInsets.zero())

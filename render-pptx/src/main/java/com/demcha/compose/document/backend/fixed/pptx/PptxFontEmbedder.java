@@ -33,6 +33,45 @@ final class PptxFontEmbedder {
     }
 
     /**
+     * How much of a family the presentation ended up holding.
+     *
+     * <p>Three answers rather than whether the family travelled, because the two ways of not
+     * travelling leave different decks and the reader is told different things about them.
+     * Every refusal a font can provoke arrives while the presentation is still untouched — a face
+     * that cannot be read, one whose licence bits forbid embedding, a header the presentation
+     * could not read back, two of the family's faces reading back as one style slot, a face
+     * arriving into a slot another family holds, the viewer metrics — and leaves nothing of the
+     * family: {@link #NONE}. Only the presentation refusing a face it has been handed leaves
+     * what it took before the refusal, which is {@link #PART}, and what is left of that refusal
+     * is POI's own part store failing (see {@link #handOverPrograms}): the presentation's first
+     * read of a face, {@code FontHeader.bufferInit}, reads only the header, which
+     * {@link PptxEmbeddedFont} has already measured against it.</p>
+     */
+    enum Carried {
+        /** Every face the family was offered with is in the deck. */
+        WHOLE,
+        /** Nothing of the family is: it was refused before the presentation was handed a face. */
+        NONE,
+        /**
+         * The presentation refused a face it was handed, and keeps what it took before that — the
+         * declaration at least, and any face handed over first.
+         */
+        PART
+    }
+
+    /**
+     * What carrying a registered family came to.
+     *
+     * @param carried how much of the family the deck holds
+     * @param metrics the viewer metrics its text is seated by; {@code null} unless the family
+     *                travelled whole
+     */
+    record Embedding(Carried carried, PptxViewerMetrics.ViewerFontMetrics metrics) {
+        private static final Embedding NONE = new Embedding(Carried.NONE, null);
+        private static final Embedding PART = new Embedding(Carried.PART, null);
+    }
+
+    /**
      * Carries one registered font family into the presentation, with the viewer
      * metrics its text is seated by. Embedding is best-effort: a font whose
      * license bits forbid embedding, or whose bytes cannot be read at all — a
@@ -40,8 +79,8 @@ final class PptxFontEmbedder {
      * parse — costs the deck the font program rather than the render: page
      * geometry is unaffected, and text drawn in the family needs that font on the
      * machine the deck is opened on. None of those fails the export here, however
-     * the refusal arrives; this answers {@code null} instead, and names the family
-     * in the log.
+     * the refusal arrives; this answers how much of the family the deck holds
+     * instead, and names the face in the log.
      *
      * <p>One answer covers the program and the metrics, because a family that
      * travels without them is seated from the PDF descriptor's ascent instead,
@@ -51,17 +90,21 @@ final class PptxFontEmbedder {
      * and what is left of it after the name check in {@link PptxEmbeddedFont} is
      * POI's part store — see {@link #handOverPrograms}.</p>
      *
-     * <p>A fourth answers {@code null} here too: a face arriving into a style slot another
-     * family already holds under the same declared name. The caller does not tell the four
-     * apart. Which line it writes for a family this answers {@code null} for is decided by
-     * what the deck carries under the family's declared name once every registration has been
-     * read — see {@code PptxDeckFonts.warnRegisteredFamilyNotCarried} — so a family sharing a
-     * name in a <em>free</em> slot and then given up by the metrics read is told the same as one
-     * refused for the slot, and in either order of registration.</p>
+     * <p>A fourth refuses the family too: a face arriving into a style slot another family
+     * already holds under the same declared name. The caller does not tell those that answer here
+     * apart by cause: an unreadable or forbidden face, the viewer metrics and the slot are each
+     * {@link Carried#NONE}, the presentation being untouched when they arrive, and the
+     * presentation refusing a face is {@link Carried#PART}. Which line the caller writes for a
+     * family not carried whole is decided by what the deck
+     * carries under the family's declared name once every registration has been read — see
+     * {@code PptxDeckFonts.warnRegisteredFamilyNotCarried} — so a family sharing a name in a
+     * <em>free</em> slot and then given up by the metrics read is told the same as one refused
+     * for the slot, and in either order of registration.</p>
      *
-     * @return the family's viewer metrics, or {@code null} where it is not carried
+     * @return how much of the family the deck holds, with its viewer metrics where it travelled
+     *         whole
      */
-    static PptxViewerMetrics.ViewerFontMetrics embedFontFamilyWithMetrics(
+    static Embedding embedFontFamilyWithMetrics(
             XMLSlideShow show,
             FontFamilyDefinition family,
             FontFamilyDefinition.FontSourceSet sources,
@@ -70,7 +113,7 @@ final class PptxFontEmbedder {
         FamilyPrograms read =
                 readPrograms(family, sources, EnumSet.allOf(PptxFontFace.class), ledger);
         if (read == null) {
-            return null;
+            return Embedding.NONE;
         }
         // The other read of the same programs, and the last one before the presentation is
         // touched: a font whose tail is missing passes fontbox's header parse, which skips
@@ -103,18 +146,18 @@ final class PptxFontEmbedder {
                             + "metrics: {}",
                     family.name().name(), exception.source(),
                     String.valueOf(exception.getCause()));
-            return null;
+            return Embedding.NONE;
         }
         claimSlotsAndReportSharing(ledger, family, read.slots());
         if (!handOverPrograms(show, family, read.programs())) {
-            return null;
+            return Embedding.PART;
         }
         // Recorded here and not at the read, for the reason the slot claim is: a family that did
         // not make it into the presentation carries nothing, and a run of it has nothing but the
         // family's name to go by. An absent entry says exactly that, so nothing has to be undone
         // on the way out of a refusal.
         carriedSlots.put(family.name(), Set.copyOf(read.slots().keySet()));
-        return viewerMetrics;
+        return new Embedding(Carried.WHOLE, viewerMetrics);
     }
 
     /**
@@ -128,7 +171,7 @@ final class PptxFontEmbedder {
      *
      * <p>Embedding is best-effort here as it is for a registered family: a face whose
      * licence bits forbid embedding, or whose bytes cannot be read, costs the deck the
-     * font program rather than the render, and this answers {@code false} with the face
+     * font program rather than the render, and this answers {@link Carried#NONE} with the face
      * named in the log.</p>
      *
      * <p>The bundled families take this road, and deliberately get no metrics: see
@@ -136,19 +179,19 @@ final class PptxFontEmbedder {
      * {@link #embedFontFamilyWithMetrics} instead, which reads its metrics in the same
      * pre-flight.</p>
      *
-     * @return whether the family made it into the presentation
+     * @return how much of the family the presentation holds
      */
-    static boolean embedFontFamily(XMLSlideShow show,
+    static Carried embedFontFamily(XMLSlideShow show,
                                    FontFamilyDefinition family,
                                    FontFamilyDefinition.FontSourceSet sources,
                                    Set<PptxFontFace> faces,
                                    PptxSlotLedger ledger) {
         FamilyPrograms read = readPrograms(family, sources, faces, ledger);
         if (read == null) {
-            return false;
+            return Carried.NONE;
         }
         claimSlotsAndReportSharing(ledger, family, read.slots());
-        return handOverPrograms(show, family, read.programs());
+        return handOverPrograms(show, family, read.programs()) ? Carried.WHOLE : Carried.PART;
     }
 
     /**
@@ -184,8 +227,9 @@ final class PptxFontEmbedder {
      * refusals here have on the registered path — keeping the first would leave the family
      * its viewer metrics while a face of it did not travel — and, on the bundled path,
      * which has no metrics to keep, because this method answers whole-or-nothing for a
-     * family either way and a deck that carries some of one is what the caller's
-     * substitution warning cannot describe.</p>
+     * family either way: a refusal here leaves nothing of it, which is what the caller's
+     * substitution warning then says, and a deck carrying some of a family is left to the
+     * one refusal that can still arrive after the presentation is handed it.</p>
      *
      * <p>The slot's capacity belongs to the <em>declared</em> family name rather than to a
      * definition, so the same refusal answers for two definitions that share one. Two

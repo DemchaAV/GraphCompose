@@ -140,13 +140,16 @@ class PptxUnreadableFontSourceTest {
                 .filteredOn(warning -> warning.contains("Absent"))
                 .singleElement(InstanceOfAssertFactories.STRING)
                 .doesNotContain("the deck references")
-                .contains("\"Absent\" is not carried whole")
-                // Whole, not up to "referenced by name": that much is common to this line
-                // and to the one it replaced, so a tail that goes back to predicting what a
-                // viewer does would leave this green.
-                .contains("text drawn in a face that did not travel is referenced by name, "
-                        + "and needs that font installed where the deck is opened for "
-                        + "identical glyphs");
+                // Nothing of the family is in the deck — the premise above — so the line says
+                // so rather than that the family is not carried whole.
+                .contains("could not be embedded, so no face of it travels with the deck")
+                .doesNotContain("not carried whole")
+                // Whole, not up to "by name": that much is common to this line and to the one
+                // it replaced, so a tail that goes back to predicting what a viewer does would
+                // leave this green.
+                .contains("any text drawn with it is referenced as \"Absent\" by name, and "
+                        + "needs that font installed where the deck is opened for identical "
+                        + "glyphs");
     }
 
     @Test
@@ -197,7 +200,7 @@ class PptxUnreadableFontSourceTest {
 
         assertThat(deck).as("the deck is written").isNotEmpty();
         assertThat(PptxDeck.fontParts(deck))
-                .as("the readable face of a family that could not be carried whole")
+                .as("the readable face of a family no face of which travels")
                 .isEmpty();
         assertThat(PptxDeck.part(deck, "ppt/presentation.xml"))
                 .as("and the presentation declares no embedded font it has not got")
@@ -211,12 +214,12 @@ class PptxUnreadableFontSourceTest {
         assertThat(log.messages("render.pptx.font.substitution"))
                 .filteredOn(warning -> warning.contains("Half"))
                 .singleElement(InstanceOfAssertFactories.STRING)
-                .as("and the reader is told the deck does not carry the family whole, and "
-                        + "what the text drawn in the face that stayed behind needs")
-                .contains("\"Half\" is not carried whole")
-                .contains("text drawn in a face that did not travel is referenced by name, "
-                        + "and needs that font installed where the deck is opened for "
-                        + "identical glyphs");
+                .as("and the reader is told no face of the family travels — the regular one "
+                        + "included, which could be read — and what its text needs")
+                .contains("no face of it travels with the deck")
+                .doesNotContain("not carried whole")
+                .contains("referenced as \"Half\" by name, and needs that font installed "
+                        + "where the deck is opened for identical glyphs");
     }
 
     @Test
@@ -264,12 +267,13 @@ class PptxUnreadableFontSourceTest {
         assertThat(log.messages("render.pptx.font.substitution"))
                 .filteredOn(warning -> warning.contains("Truncated"))
                 .singleElement(InstanceOfAssertFactories.STRING)
-                .as("and the reader is told the family is not carried, as for any other "
-                        + "face that could not be read")
-                .contains("\"Truncated\" is not carried whole")
-                .contains("text drawn in a face that did not travel is referenced by name, "
-                        + "and needs that font installed where the deck is opened for "
-                        + "identical glyphs");
+                .as("and the reader is told no face of the family travels, as for any other "
+                        + "face that could not be read: the metrics are read while the "
+                        + "presentation is still untouched")
+                .contains("no face of it travels with the deck")
+                .doesNotContain("not carried whole")
+                .contains("referenced as \"Truncated\" by name, and needs that font installed "
+                        + "where the deck is opened for identical glyphs");
     }
 
     @Test

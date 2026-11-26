@@ -5,12 +5,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.5.2 — Planned
 
-A patch of the 2.5 line for anyone exporting to Word or PowerPoint; the public API is unchanged.
-A DOCX canvas sets its text where the page sets it: side by side in text boxes, and reading down at
-each block's height, so a `MintEditorial` CV with a header band is two pages in Word and LibreOffice,
-as on the page, instead of three. A 1,000-row table exports to DOCX faster and with about a third
-less memory. A PPTX deck reads each registered font file once, and its font log names each family
-once without contradicting what the deck carries. The rest is internal, with the same output.
+- **Text set side by side on a canvas lands in Word where the PDF puts it**, and a CV with a header
+  band no longer runs onto an extra page.
+- **Large tables export to Word about 1.5× faster**, allocating about a third less memory.
+- **A PowerPoint deck in your own single-file font exports faster.**
+- **Clearer PowerPoint font messages**, one per font family.
+
+No API changes: a drop-in upgrade from 2.5.1. The entries below give the detail.
 
 ### Fixed
 
@@ -185,9 +186,26 @@ once without contradicting what the deck carries. The rest is internal, with the
   - Measured byte-identical: the 105 documents of the DOCX fidelity corpus, every part of each, with
     the same 1,718 report notes; and the benchmark's four documents, every part but the creation
     time in `docProps/core.xml`.
+  - Measured again against the published 2.5.1 with a plain harness, not JMH, on a machine with
+    other work running: the benchmark's `table1000`, `report20` and `small` documents, each built
+    and exported in a fresh session, logging quiet, the median of 25 exports after 15 warm-ups, in
+    two alternating rounds. `table1000` took 722 and 680 → 463 ms and allocated 222 → 148–150 MB
+    on its thread; `report20` allocated 9.8–9.9 → 9.1–9.2 MB and `small` 1.82 → 1.63 MB, their
+    time within the noise. The same three documents' PDF export did not move: `table1000` took
+    59–63 ms before and 58–62 ms after, and about 23 MB on both builds.
 
 ### Internal
 
+- **The PPTX backend's internal javadoc says what a render built with `embedBundledFonts(false)`
+  is warned about.** It said such a render must not be told to register what it declined. It is
+  told: a bundled family it draws in that ships a binary and is not registered gets the name-only
+  warning, which points at `registerFontFamily`, because a family registered with binary sources
+  goes to the embedder whatever that flag says. (Where a registered family carries a face under
+  the name its runs are written with, the line says instead that its text is drawn from that
+  program; see "A PPTX font the deck does not carry is announced once" above.) A test now follows
+  that advice on such a backend and finds the family carried and no longer reported.
+  `TemplateTestSupport.assertPdfUsesFont`, which nothing called, is removed from the `qa` test
+  sources.
 - **`PptxRenderEnvironment` no longer carries the PPTX backend's font embedding.** Embedding had
   grown into most of the class (1,426 lines), and now lives in package-private classes beside it:
   `PptxDeckFonts` (which families a render carries, the viewer family a run is written with, and
@@ -209,13 +227,6 @@ once without contradicting what the deck carries. The rest is internal, with the
   corpus are the same bytes, with the same report notes. The shared-name cases of
   `DocxFontTableTest` moved to `DocxSharedFontNameTest`, and the helpers both use to
   `DocxFontTableFixtures`.
-- **The PPTX backend's internal javadoc says what a render built with `embedBundledFonts(false)`
-  is warned about.** It said such a render must not be told to register what it declined. It is
-  told: each bundled family it draws in that ships a binary and is not registered gets the
-  name-only warning, which points at `registerFontFamily`, because a family registered with binary
-  sources travels whatever that flag says. A test now follows that advice on such a backend and
-  finds the family carried and no longer reported. `TemplateTestSupport.assertPdfUsesFont`, which
-  nothing called, is removed from the `qa` test sources.
 - **The render backends' CodeQL alerts are cleared.** 23 of the 38 open in `render-docx`,
   `render-pdf` and `render-pptx` are cleared in code: a never-read local in the DOCX writer (its
   call, which owes the canvas's space, kept), a javadoc block moved back onto the method it

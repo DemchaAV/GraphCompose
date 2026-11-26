@@ -10,7 +10,7 @@ follow semantic versioning; release dates are ISO 8601.
 - **A Mint Editorial CV with a header band now fits on two pages in Word**, as in the PDF.
 - **Large tables export to Word about 1.5× faster**, and with less memory.
 - **A PowerPoint deck in your own single-file font exports faster.**
-- **A font a PowerPoint deck does not carry is reported once per family.**
+- **PowerPoint's warning about a font the deck does not carry now comes once per family.**
 
 No API changes: a drop-in upgrade from 2.5.1. The entries below give the detail.
 

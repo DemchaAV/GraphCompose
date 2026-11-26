@@ -210,8 +210,9 @@ follow semantic versioning; release dates are ISO 8601.
   `@Override` on `PdfFont`, the tiled watermark's loop bounds made explicit (Java already widened
   the float position to compare it with the double canvas size; the bytecode is the same), an
   unused private parameter, and four test files — among them a PPTX test helper that took a
-  filter argument it never used. The other 15 are left: type-test chains over the closed node and
-  payload sets, `parseInt` on text a pattern has already matched as hex, and tests parsing what
+  filter argument it never used. The other 15 are left: type-test chains over the node kinds the
+  DOCX writer handles (a kind it does not know takes its fallback) and over the sealed
+  `ShapeOutline` permits, `parseInt` on text a pattern has already matched as hex, and tests parsing what
   the exporter wrote. No behaviour changes: the 105 documents of the DOCX fidelity corpus are the
   same bytes, with the same report notes.
 

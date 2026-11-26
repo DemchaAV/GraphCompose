@@ -1105,7 +1105,7 @@ public final class TextFlowSupport {
         for (int index = 0; index < logicalLines.size(); index++) {
             String line = logicalLines.get(index);
             String shapedLine = ArabicShaper.shape(line);
-            if (shapedLine != line && shaped == null) {
+            if (shaped == null && !shapedLine.equals(line)) {
                 shaped = new ArrayList<>(logicalLines);
             }
             if (shaped != null) {

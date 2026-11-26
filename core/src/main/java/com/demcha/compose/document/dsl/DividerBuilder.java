@@ -25,6 +25,7 @@ public final class DividerBuilder extends ShapeBuilder {
      * @param width width in points
      * @return this builder
      */
+    @Override
     public DividerBuilder width(double width) {
         super.width(width);
         return this;
@@ -36,6 +37,7 @@ public final class DividerBuilder extends ShapeBuilder {
      * @param height height in points
      * @return this builder
      */
+    @Override
     public DividerBuilder height(double height) {
         super.height(height);
         return this;

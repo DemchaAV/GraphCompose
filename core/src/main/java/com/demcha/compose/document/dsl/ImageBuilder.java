@@ -133,6 +133,7 @@ public final class ImageBuilder implements Transformable<ImageBuilder> {
      * @param scale scale factor
      * @return this builder
      */
+    @Override
     public ImageBuilder scale(double scale) {
         this.scale = scale;
         return this;

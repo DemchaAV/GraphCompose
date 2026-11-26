@@ -441,7 +441,7 @@ public final class NodeDefinitionSupport {
                 total += w;
             }
             for (int i = 0; i < n; i++) {
-                slotWidths[i] = total > 0.0 ? slotsTotal * (node.weights().get(i) / total) : (n > 0 ? slotsTotal / n : 0.0);
+                slotWidths[i] = total > 0.0 ? slotsTotal * (node.weights().get(i) / total) : slotsTotal / n;
             }
         }
 
@@ -641,7 +641,7 @@ public final class NodeDefinitionSupport {
             // size (emitComposedCellFragments).
             List<TableResolvedCell> rowCells = layout.rows().get(rowIndex);
             for (TableResolvedCell cell : rowCells) {
-                int columnIndex = locateCellColumn(layout, rowIndex, cell);
+                int columnIndex = locateCellColumn(layout, cell);
                 TableLayoutSupport.CellKey key = new TableLayoutSupport.CellKey(rowIndex, columnIndex);
                 PreparedNode<?> child = preparedLayout.preparedContents().get(key);
                 if (child == null) {
@@ -672,7 +672,6 @@ public final class NodeDefinitionSupport {
      * looked up.
      */
     private static int locateCellColumn(TableLayoutSupport.ResolvedTableLayout layout,
-                                        int rowIndex,
                                         TableResolvedCell cell) {
         double cumulative = 0.0;
         List<Double> widths = layout.columnWidths();

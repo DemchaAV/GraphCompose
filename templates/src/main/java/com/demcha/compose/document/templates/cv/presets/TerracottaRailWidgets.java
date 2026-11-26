@@ -51,18 +51,6 @@ final class TerracottaRailWidgets {
 
     // -- headings ----------------------------------------------------------
 
-    /**
-     * A letter-spaced heading.
-     *
-     * <p>A text style carries no tracking, so the gap between letters is a
-     * space character — which one is the whole choice, and the caller makes
-     * it. The word gap stays clearly wider than the letter gap, or a tracked
-     * heading reads as one long word.</p>
-     *
-     * @param text   the heading
-     * @param spacer the space to set between letters
-     * @return the tracked string
-     */
     /** {@code style} tracked by {@code trackingEm}, the letters left whole. */
     static DocumentTextStyle spacedBy(DocumentTextStyle style, double trackingEm) {
         return style.withLetterSpacing(DocumentLetterSpacing.ofFontSize(trackingEm));

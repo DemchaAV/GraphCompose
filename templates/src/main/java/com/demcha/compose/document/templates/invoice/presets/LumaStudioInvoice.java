@@ -125,7 +125,6 @@ public final class LumaStudioInvoice {
 
                 page.addRow("Masthead", row -> row
                         .spacing(0)
-                        .gap(0)
                         .weights(MASTHEAD_LEFT_WEIGHT, MASTHEAD_RIGHT_WEIGHT)
                         .addSection("SupplierHeader",
                                 section -> LumaStudioMasthead.renderSupplier(section, data.supplier()))
@@ -139,7 +138,6 @@ public final class LumaStudioInvoice {
                 // place at a page break and leave the gap stranded.
                 page.addRow("Parties", row -> row
                         .spacing(0)
-                        .gap(0)
                         .weights(PARTIES_LEFT_WEIGHT, 1.0 - PARTIES_LEFT_WEIGHT)
                         .margin(new DocumentInsets(RULE_TO_PARTIES, 0, PARTIES_TO_TABLE, 0))
                         .addSection("BillTo",
@@ -156,7 +154,6 @@ public final class LumaStudioInvoice {
 
                 page.addRow("Closing", row -> row
                         .spacing(0)
-                        .gap(0)
                         .weights(CLOSING_LEFT_WEIGHT, 1.0 - CLOSING_LEFT_WEIGHT)
                         .margin(new DocumentInsets(RULE_TO_CLOSING, 0, 0, 0))
                         .addSection("Notes",

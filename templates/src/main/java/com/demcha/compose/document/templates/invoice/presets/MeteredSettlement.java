@@ -75,7 +75,7 @@ final class MeteredSettlement {
         body.addRow("ClosingRow", row -> row
                 .margin(SEAM_TABLE_TO_CLOSING)
                 .verticalAlign(RowVerticalAlign.BOTTOM)
-                .gap(CLOSING_GUTTER)
+                .spacing(CLOSING_GUTTER)
                 .columns(DocumentRowColumn.fixed(CLOSING_LEFT_W),
                         DocumentRowColumn.fixed(CLOSING_RIGHT_W))
                 .addSection("PaymentColumn", left -> renderPaymentDetails(left, payment))

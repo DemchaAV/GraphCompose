@@ -114,7 +114,7 @@ public final class ConsultingInvoice {
                     .name("ConsultingInvoice")
                     .spacing(0)
                     .addRow("Masthead", row -> row
-                            .gap(HEADER_GAP)
+                            .spacing(HEADER_GAP)
                             .weights(HEADER_LEFT_WEIGHT, HEADER_RIGHT_WEIGHT)
                             .verticalAlign(RowVerticalAlign.TOP)
                             .addSection("SupplierHeader",
@@ -123,7 +123,7 @@ public final class ConsultingInvoice {
                                     section -> ConsultingMasthead.renderInvoiceHeader(section, data)))
                     .addSpacer(spacer -> spacer.height(16))
                     .addRow("PartiesAndSummary", row -> row
-                            .gap(35)
+                            .spacing(35)
                             .weights(PARTIES_LEFT_WEIGHT, 1.0 - PARTIES_LEFT_WEIGHT)
                             .verticalAlign(RowVerticalAlign.TOP)
                             .addSection("BilledTo",
@@ -139,7 +139,7 @@ public final class ConsultingInvoice {
                             .color(HAIRLINE)
                             .margin(DocumentInsets.symmetric(5, 0)))
                     .addRow("PaymentAndNotes", row -> row
-                            .gap(LOWER_GAP)
+                            .spacing(LOWER_GAP)
                             .weights(LOWER_LEFT_WEIGHT, 1.0 - LOWER_LEFT_WEIGHT)
                             .verticalAlign(RowVerticalAlign.TOP)
                             .addSection("PaymentInformation",

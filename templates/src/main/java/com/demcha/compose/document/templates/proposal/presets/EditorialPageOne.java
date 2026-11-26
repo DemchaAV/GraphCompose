@@ -118,7 +118,7 @@ final class EditorialPageOne {
         page.addRow("SummaryBand", row -> {
             row.margin(DocumentInsets.top(BAND_TOP));
             row.verticalAlign(RowVerticalAlign.TOP)
-                    .gap(SUMMARY_GAP)
+                    .spacing(SUMMARY_GAP)
                     .weights(SUMMARY_WEIGHT, GLANCE_WEIGHT);
             row.addSection("SummaryColumn", column -> {
                 renderExecutiveSummary(column, data.executiveSummary());
@@ -224,7 +224,7 @@ final class EditorialPageOne {
         double dividerHeight = GOAL_TEXT_LINES * lineHeight(TABLE_SIZE);
         page.addRow("GoalCells", row -> {
             row.margin(DocumentInsets.top(BAND_TOP));
-            row.verticalAlign(RowVerticalAlign.TOP).gap(GOAL_GAP);
+            row.verticalAlign(RowVerticalAlign.TOP).spacing(GOAL_GAP);
             row.columns(goalColumns(items.size()));
             for (int i = 0; i < items.size(); i++) {
                 if (i > 0) {
@@ -286,7 +286,7 @@ final class EditorialPageOne {
                 ProposalScope.Item item = items.get(i);
                 section.addRow("ScopeRow" + item.number(), row -> {
                     row.verticalAlign(RowVerticalAlign.TOP)
-                            .gap(SCOPE_GAP)
+                            .spacing(SCOPE_GAP)
                             .padding(DocumentInsets.symmetric(SCOPE_ROW_PAD, 0))
                             .columns(DocumentRowColumn.fixed(SCOPE_NUMBER_WIDTH),
                                     DocumentRowColumn.fixed(titleWidth),

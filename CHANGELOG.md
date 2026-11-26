@@ -141,6 +141,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Performance
 
+- **A PPTX deck reads a registered font's viewer metrics from each font file once.** The deck it
+  writes is the same bytes.
+  - Before a slide is drawn, the export reads the ascent of each of a registered family's four
+    faces through `Font.createFont`. It read each slot's file afresh, so a family registered from
+    one file, which fills all four slots with it, was parsed four times. Each file is now read
+    once, keyed by its source's description, as the font programs read beside it are.
+  - Measured outside the build, logging quiet, a family registered from one file: the metrics read
+    took Cousine (301 KB) 9.8 → 2.3 ms and Gothic A1 (2.2 MB) 26 → 5.9 ms; a one-page deck in
+    that family, median of 400 exports in each of two alternating rounds, 51–54 → 43–45 ms and
+    131 → 111–112 ms. A family registered from four files reads four files, as before.
+  - Measured byte-identical: every part of six decks — a family from one, two and four files, two
+    registered families, and a bundled font alone.
+
 - **A large table's DOCX export no longer reads its rows quadratically, nor makes XMLBeans throw
   for every colour.** The file it writes is the same bytes.
   - POI's `XWPFTable.getRow(int)` and `getNumberOfRows()` count the table's rows on every call, and

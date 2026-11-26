@@ -159,7 +159,7 @@ public final class TocBuilder {
         // Bottom-align so the leader sits on the entries' baseline rather than
         // riding along the top of the line.
         RowBuilder row = new RowBuilder()
-                .gap(6)
+                .spacing(6)
                 .verticalAlign(RowVerticalAlign.BOTTOM)
                 .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1), DocumentRowColumn.auto());
         row.addParagraph(p -> p.text(entry.label()).textStyle(entryStyle).linkTo(entry.anchor()));

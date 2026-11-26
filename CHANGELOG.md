@@ -215,6 +215,23 @@ follow semantic versioning; release dates are ISO 8601.
   `ShapeOutline` permits, `parseInt` on text a pattern has already matched as hex, and tests parsing what
   the exporter wrote. No behaviour changes: the 105 documents of the DOCX fidelity corpus are the
   same bytes, with the same report notes.
+- **The core module's CodeQL alerts are cleared.** 21 of the 43 open in `core` are cleared in
+  code: two never-read locals in `LayoutCompiler`, unused parameters of five private methods, a
+  fallback in the row's weight split that tested `n > 0` inside a loop over `n`, a string compared
+  by reference where `equals` says the same thing, an unqualified `size()` in `BoundedLruCache`'s
+  eviction hook spelled `this.size()`, a Lombok `@NonNull` on `StrokeColor` whose check ran only
+  after the argument was already dereferenced, `@Override` where `FontBase`, `ImageBuilder` and
+  `DividerBuilder` override (the `FontBase` getters Lombok generated are now written out, so they
+  carry it), and `TocBuilder` calling `RowBuilder.spacing` over the deprecated `gap`. The other 22
+  are left: record-component `@param` tags that CodeQL matches against generated members,
+  parameters of interface methods that implementations are handed (`NodeDefinition`, the beta
+  node SPI, and the internal `ResolvedLayoutPass`), records whose lists are an immutable
+  copy or shared on purpose, a type-test chain over the sealed `ShapeOutline` permits,
+  `parseInt` over the constant table of SVG colour names, a test helper `qa` uses through the
+  core test jar, tests parsing text a pattern has already matched, and four calls that print
+  `DocumentColor` or `DocumentPageNumbering`, which have no `toString` of their own; giving them
+  one is new public API. No behaviour changes: the 105 documents of the DOCX fidelity corpus are
+  the same bytes, with the same report notes.
 
 ### Build
 

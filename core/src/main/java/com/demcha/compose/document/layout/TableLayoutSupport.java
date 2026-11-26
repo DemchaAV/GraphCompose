@@ -52,7 +52,7 @@ final class TableLayoutSupport {
         List<TableColumnLayout> normalizedSpecs = normalizeSpecs(node, columnCount);
         TableCellLayoutStyle[][] stylesGrid = buildStylesGrid(node, logicalRows, columnCount);
         double innerAvailableWidth = Math.max(0.0, availableWidth - node.padding().horizontal());
-        double[] naturalWidths = resolveNaturalColumnWidths(node, normalizedSpecs, logicalRows, stylesGrid,
+        double[] naturalWidths = resolveNaturalColumnWidths(normalizedSpecs, logicalRows, stylesGrid,
                 columnCount, measurement, prepareContext, innerAvailableWidth);
         double naturalWidth = sum(naturalWidths);
         double[] finalWidths = resolveFinalColumnWidths(node, normalizedSpecs, naturalWidths, naturalWidth);
@@ -500,8 +500,7 @@ final class TableLayoutSupport {
                 .build();
     }
 
-    private static double[] resolveNaturalColumnWidths(TableNode node,
-                                                       List<TableColumnLayout> normalizedSpecs,
+    private static double[] resolveNaturalColumnWidths(List<TableColumnLayout> normalizedSpecs,
                                                        List<List<LogicalCell>> logicalRows,
                                                        TableCellLayoutStyle[][] stylesGrid,
                                                        int columnCount,

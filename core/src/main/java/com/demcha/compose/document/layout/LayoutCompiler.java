@@ -142,8 +142,6 @@ public final class LayoutCompiler {
         NodeDefinition<DocumentNode> definition = (NodeDefinition<DocumentNode>) registry.definitionFor(node);
         String path = pathFor(node, parentPath, childIndex);
         String semanticName = semanticName(node);
-        Margin margin = toMargin(node.margin());
-        Padding padding = toPadding(node.padding());
         double availableWidth = childAvailableWidth(regionWidth, node);
 
         if (node instanceof PageBreakNode) {
@@ -191,7 +189,7 @@ public final class LayoutCompiler {
         }
 
         compileAtomicLeaf(prepared, definition, path, semanticName, parentPath, childIndex, depth, regionX,
-                availableWidth, state, prepareContext, fragmentContext, nodes, fragments);
+                state, prepareContext, fragmentContext, nodes, fragments);
     }
 
     private void compilePageBreak(String path,
@@ -255,7 +253,7 @@ public final class LayoutCompiler {
 
         if (layoutSpec.axis() == CompositeLayoutSpec.Axis.HORIZONTAL) {
             compileHorizontalRow(prepared, definition, path, semanticName, parentPath, childIndex, depth,
-                    regionX, regionWidth, state, prepareContext, fragmentContext, nodes, fragments,
+                    regionX, state, prepareContext, fragmentContext, nodes, fragments,
                     margin, padding, availableWidth, layoutSpec, naturalMeasure);
             return;
         }
@@ -484,7 +482,6 @@ public final class LayoutCompiler {
                                       int childIndex,
                                       int depth,
                                       double regionX,
-                                      double regionWidth,
                                       CompilerState state,
                                       PrepareContext prepareContext,
                                       FragmentContext fragmentContext,
@@ -698,7 +695,6 @@ public final class LayoutCompiler {
                                    int childIndex,
                                    int depth,
                                    double regionX,
-                                   double availableWidth,
                                    CompilerState state,
                                    PrepareContext prepareContext,
                                    FragmentContext fragmentContext,

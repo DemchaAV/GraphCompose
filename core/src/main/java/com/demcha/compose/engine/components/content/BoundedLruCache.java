@@ -34,7 +34,7 @@ final class BoundedLruCache<K, V> {
         this.entries = new LinkedHashMap<>(16, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
-                return size() > BoundedLruCache.this.maxEntries;
+                return this.size() > BoundedLruCache.this.maxEntries;
             }
         };
     }

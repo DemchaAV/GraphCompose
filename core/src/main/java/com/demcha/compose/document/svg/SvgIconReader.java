@@ -199,7 +199,7 @@ final class SvgIconReader {
             };
 
             if (d != null && !d.isBlank()) {
-                emitLayer(element, d, paint, matrix, activeClip, box, gradients, skipped, out);
+                emitLayer(d, paint, matrix, activeClip, box, gradients, skipped, out);
             } else if (DROPS_CONTENT.contains(name)) {
                 // A shape kind we deliberately don't render — count it so the icon
                 // surfaces one warning per kind instead of silently losing pixels.
@@ -231,7 +231,7 @@ final class SvgIconReader {
     }
 
     /** Builds and appends the layer for a drawable element (curve geometry + paint). */
-    private static void emitLayer(Element element, String d, Paint paint,
+    private static void emitLayer(String d, Paint paint,
                                   double[] matrix, SvgPath clip, double[] box, Map<String, Element> gradients,
                                   SkipTally skipped, List<SvgIcon.Layer> out) {
         // Group opacity multiplies into both paint slots; fill-opacity and

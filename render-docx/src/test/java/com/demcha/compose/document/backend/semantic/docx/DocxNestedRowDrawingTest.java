@@ -57,9 +57,9 @@ class DocxNestedRowDrawingTest {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, nested(row -> row.weights(1, 3)
                 .addSection("Icon", icon -> icon.spacing(0).add(disc()))
                 .addParagraph("Bank details")))) {
-            XWPFTableCell icon = paragraphHolding(document, "Bank details").getBody() instanceof XWPFTableCell cell
-                    ? cell.getTableRow().getCell(0)
-                    : null;
+            var body = paragraphHolding(document, "Bank details").getBody();
+            assertThat(body).isInstanceOf(XWPFTableCell.class);
+            XWPFTableCell icon = ((XWPFTableCell) body).getTableRow().getCell(0);
 
             assertThat(icon).isNotNull();
             for (XWPFParagraph paragraph : icon.getParagraphs()) {

@@ -162,8 +162,10 @@ public final class PptxChromeRenderer {
             // start; tiles that cannot reach the slide are skipped instead of
             // stored as invisible off-slide shapes (the PDF just overdraws).
             float reach = textWidth + fontSize;
-            for (float y = (float) -canvas.height(); y < canvas.height() * 2; y += spacingY) {
-                for (float x = (float) -canvas.width(); x < canvas.width() * 2; x += spacingX) {
+            // Positions step in float, as the frames take them; each bound is compared
+            // at the canvas's double precision, as it always was.
+            for (float y = (float) -canvas.height(); (double) y < canvas.height() * 2; y += spacingY) {
+                for (float x = (float) -canvas.width(); (double) x < canvas.width() * 2; x += spacingX) {
                     if (x + reach < 0 || x - reach > canvas.width()
                             || y + reach < 0 || y - reach > canvas.height()) {
                         continue;
@@ -240,8 +242,9 @@ public final class PptxChromeRenderer {
         if (position == DocumentWatermarkPosition.TILE) {
             float spacingX = imageWidth + 60;
             float spacingY = imageHeight + 60;
-            for (float y = 0; y < canvas.height(); y += spacingY) {
-                for (float x = 0; x < canvas.width(); x += spacingX) {
+            // Float positions against double bounds, as for a text watermark's tiles.
+            for (float y = 0; (double) y < canvas.height(); y += spacingY) {
+                for (float x = 0; (double) x < canvas.width(); x += spacingX) {
                     placeWatermarkImage(environment, localPageIndex, bytes,
                             x, y, imageWidth, imageHeight, watermark.getOpacity());
                 }

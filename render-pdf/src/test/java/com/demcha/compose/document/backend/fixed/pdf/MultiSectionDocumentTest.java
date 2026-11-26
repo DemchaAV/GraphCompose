@@ -13,7 +13,6 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
 import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.action.PDActionGoTo;
 import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
@@ -30,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -332,10 +332,7 @@ class MultiSectionDocumentTest {
     }
 
     private static int patternCount(PDDocument doc, int zeroBasedPage) throws IOException {
-        int count = 0;
-        for (COSName ignored : doc.getPage(zeroBasedPage).getResources().getPatternNames()) {
-            count++;
-        }
-        return count;
+        return (int) StreamSupport.stream(
+                doc.getPage(zeroBasedPage).getResources().getPatternNames().spliterator(), false).count();
     }
 }

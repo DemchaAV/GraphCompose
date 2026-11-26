@@ -93,7 +93,7 @@ final class PdfTrackedFontView extends PDFont {
             if (second instanceof COSArray run) {
                 COSArray widenedRun = new COSArray();
                 for (int i = 0; i < run.size(); i++) {
-                    widenedRun.add(COSInteger.get(widened(run.getObject(i))));
+                    widenedRun.add(COSInteger.get(widenedWidth(run.getObject(i))));
                 }
                 result.add(first);
                 result.add(widenedRun);
@@ -101,7 +101,7 @@ final class PdfTrackedFontView extends PDFont {
             } else if (index + 2 < widths.size()) {
                 result.add(first);
                 result.add(second);
-                result.add(COSInteger.get(widened(widths.getObject(index + 2))));
+                result.add(COSInteger.get(widenedWidth(widths.getObject(index + 2))));
                 index += 3;
             } else {
                 break;
@@ -110,7 +110,7 @@ final class PdfTrackedFontView extends PDFont {
         return result;
     }
 
-    private long widened(COSBase width) {
+    private long widenedWidth(COSBase width) {
         return Math.round(((COSNumber) width).floatValue()) + (long) extraPerMille;
     }
 

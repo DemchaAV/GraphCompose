@@ -7,6 +7,8 @@ import java.awt.FontFormatException;
 import java.awt.font.FontRenderContext;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Reads the ascent the viewer's font engine will use for an embedded family,
@@ -121,31 +123,44 @@ final class PptxViewerMetrics {
      * {@code createFont} never reads the style record at all. That one is
      * {@link PptxEmbeddedFont}'s to catch.</p>
      *
+     * <p>Each program is read once, however many slots it fills: a family registered from one
+     * file repeats that file in all four slots. Keyed by
+     * {@link FontFamilyDefinition.FontBinarySource#description()}, as the program reading beside
+     * this one keys its programs, so the two reads agree on which slots share a program.</p>
+     *
      * @throws UnreadableFaceException naming the first face that cannot be read
      */
     static ViewerFontMetrics load(FontFamilyDefinition family,
                                   FontFamilyDefinition.FontSourceSet sources)
             throws UnreadableFaceException {
+        Map<String, Double> read = new HashMap<>(4);
         return new ViewerFontMetrics(
-                ascentRatio(family, sources.regular()),
-                ascentRatio(family, sources.bold()),
-                ascentRatio(family, sources.italic()),
-                ascentRatio(family, sources.boldItalic()));
+                ascentRatio(family, sources.regular(), read),
+                ascentRatio(family, sources.bold(), read),
+                ascentRatio(family, sources.italic(), read),
+                ascentRatio(family, sources.boldItalic(), read));
     }
 
     private static double ascentRatio(FontFamilyDefinition family,
-                                      FontFamilyDefinition.FontBinarySource source)
+                                      FontFamilyDefinition.FontBinarySource source,
+                                      Map<String, Double> read)
             throws UnreadableFaceException {
         // Named inside the same try, so that asking the source what it is cannot throw out
         // of the failure path itself.
         String description = "<unnamed>";
         try {
             description = source.description();
+            Double known = read.get(description);
+            if (known != null) {
+                return known;
+            }
             try (InputStream stream = source.openStream()) {
                 Font font = Font.createFont(Font.TRUETYPE_FONT, stream)
                         .deriveFont(FONT_METRICS_SIZE);
-                return font.getLineMetrics("Hg", FONT_RENDER_CONTEXT).getAscent()
+                double ratio = font.getLineMetrics("Hg", FONT_RENDER_CONTEXT).getAscent()
                         / FONT_METRICS_SIZE;
+                read.put(description, ratio);
+                return ratio;
             }
         } catch (IOException | FontFormatException | RuntimeException exception) {
             // Unchecked as well as checked, deliberately and without a case of its own:

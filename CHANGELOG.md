@@ -5,11 +5,12 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.5.2 — Planned
 
-- **Text set side by side on a canvas lands in Word where the PDF puts it**, and a CV with a header
-  band no longer runs onto an extra page.
-- **Large tables export to Word about 1.5× faster**, allocating about a third less memory.
+- **Side-by-side text on a simple canvas of shapes and paragraphs lands in Word where the PDF puts
+  it.**
+- **A Mint Editorial CV with a header band now fits on two pages in Word**, as in the PDF.
+- **Large tables export to Word about 1.5× faster**, and with less memory.
 - **A PowerPoint deck in your own single-file font exports faster.**
-- **Clearer PowerPoint font messages**, one per font family.
+- **A font a PowerPoint deck does not carry is reported once per family.**
 
 No API changes: a drop-in upgrade from 2.5.1. The entries below give the detail.
 
@@ -188,11 +189,12 @@ No API changes: a drop-in upgrade from 2.5.1. The entries below give the detail.
     time in `docProps/core.xml`.
   - Measured again against the published 2.5.1 with a plain harness, not JMH, on a machine with
     other work running: the benchmark's `table1000`, `report20` and `small` documents, each built
-    and exported in a fresh session, logging quiet, the median of 25 exports after 15 warm-ups, in
-    two alternating rounds. `table1000` took 722 and 680 → 463 ms and allocated 222 → 148–150 MB
-    on its thread; `report20` allocated 9.8–9.9 → 9.1–9.2 MB and `small` 1.82 → 1.63 MB, their
-    time within the noise. The same three documents' PDF export did not move: `table1000` took
-    59–63 ms before and 58–62 ms after, and about 23 MB on both builds.
+    and exported in a fresh session, logging quiet, the median of 25 runs, each timed from building
+    the session to closing it, after 15 warm-ups, in two alternating rounds. `table1000` took 722
+    and 680 → 463 ms and allocated 232–233 → 155–157 MB on its thread; `report20` allocated 10.3 →
+    9.5–9.6 MB and `small` 1.91 → 1.71 MB, their time within the noise. The same three documents'
+    PDF export did not move: `table1000` took 59–63 ms before and 58–62 ms after, and allocated
+    24–25 MB on both builds.
 
 ### Internal
 

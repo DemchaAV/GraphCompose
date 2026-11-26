@@ -83,6 +83,7 @@ public class PdfFont extends FontBase<PDFont> {
         return fontType(style.decoration()).getName();
     }
 
+    @Override
     public double getTextHeight(TextStyle style) {
         double size = style.size();
         try {
@@ -285,6 +286,7 @@ public class PdfFont extends FontBase<PDFont> {
      * @param text  already-sanitised text
      * @return rendered width in points
      */
+    @Override
     public double getTextWidthNoSanitize(TextStyle style, String text) {
         double size = style.size();
         try {
@@ -336,6 +338,7 @@ public class PdfFont extends FontBase<PDFont> {
      * Line height based on font metrics (recommended for baseline-to-baseline step).
      * Uses ascent, descent (usually negative), and optional leading if present.
      */
+    @Override
     public double getLineHeight(TextStyle style) {
         return verticalMetrics(style).lineHeight();
     }
@@ -360,6 +363,7 @@ public class PdfFont extends FontBase<PDFont> {
     }
 
     // Scale once: PDF units are per 1000 EM
+    @Override
     public double scale(double size) {
         return (float) size / 1000f;
     }
@@ -368,6 +372,7 @@ public class PdfFont extends FontBase<PDFont> {
      * Tight per-string bounds (slow but exact for hit-areas/links).
      * Computes the glyph path bounds for THIS string.
      */
+    @Override
     public ContentSize getTightBounds(String text, TextStyle style) {
         if (text == null || text.isEmpty()) return new ContentSize(0, 0);
         GeneralPath path = defaultFont().getFontDescriptor().getFontBoundingBox().toGeneralPath();

@@ -489,7 +489,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                             instanceof PptxShapeClipBeginRenderHandler) {
                 // A custom clip handler registered via Builder.addHandler keeps
                 // normal dispatch; only the built-in degrade path is replaced.
-                index = renderClippedComposite(graph, fragments, index, environment, context);
+                index = renderClippedComposite(fragments, index, environment, context);
                 continue;
             }
             renderFragment(fragment, environment);
@@ -511,8 +511,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
      * content never reaches the corners — the raster fallback is skipped
      * entirely and the children render as native, editable shapes.</p>
      */
-    private int renderClippedComposite(LayoutGraph graph,
-                                       List<PlacedFragment> fragments,
+    private int renderClippedComposite(List<PlacedFragment> fragments,
                                        int beginIndex,
                                        PptxRenderEnvironment environment,
                                        FixedLayoutRenderContext context) throws Exception {

@@ -43,7 +43,7 @@ class PageReferenceTest {
                 .margin(DocumentInsets.of(24))
                 .create()) {
             session.pageFlow(page -> {
-                page.addRow(r -> r.gap(4).columns(com.demcha.compose.document.style.DocumentRowColumn.auto(),
+                page.addRow(r -> r.spacing(4).columns(com.demcha.compose.document.style.DocumentRowColumn.auto(),
                                 com.demcha.compose.document.style.DocumentRowColumn.auto())
                         .addParagraph("Appendix on page")
                         .addPageReference("appendix", DocumentTextStyle.DEFAULT, TextAlign.LEFT));
@@ -73,9 +73,9 @@ class PageReferenceTest {
                 .margin(DocumentInsets.of(24))
                 .create()) {
             session.pageFlow(page -> {
-                page.addRow(r -> r.gap(4).addParagraph("Appendix")
+                page.addRow(r -> r.spacing(4).addParagraph("Appendix")
                         .addPageReference("appendix", DocumentTextStyle.DEFAULT, TextAlign.RIGHT));
-                page.addRow(r -> r.gap(4).addParagraph("Glossary")
+                page.addRow(r -> r.spacing(4).addParagraph("Glossary")
                         .addPageReference("glossary", DocumentTextStyle.DEFAULT, TextAlign.RIGHT));
                 page.addPageBreak(b -> b.name("b1"));
                 page.addSection(s -> s.anchor("appendix").addParagraph("Appendix"));

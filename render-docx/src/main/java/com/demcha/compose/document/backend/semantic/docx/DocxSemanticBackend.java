@@ -19410,8 +19410,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         long margins = 0;
         if (properties.isSetTcMar()) {
             org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcMar mar = properties.getTcMar();
-            margins = twipsOf(mar.isSetTop() ? mar.getTop() : null)
-                      + twipsOf(mar.isSetBottom() ? mar.getBottom() : null);
+            margins = widthTwipsOf(mar.isSetTop() ? mar.getTop() : null)
+                      + widthTwipsOf(mar.isSetBottom() ? mar.getBottom() : null);
         }
         if (properties.isSetTcBorders()) {
             org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcBorders borders = properties.getTcBorders();
@@ -19429,7 +19429,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return eighthsInTwips(border.getSz().doubleValue());
     }
 
-    private static long twipsOf(org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblWidth width) {
+    private static long widthTwipsOf(org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblWidth width) {
         return width == null || !(width.getW() instanceof Number number) ? 0 : number.longValue();
     }
 
@@ -21891,8 +21891,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // A band sets the page's distance down to its first block past the drawing; a layer
         // stack's column, to its first leaf, drawing and all (DocxLayerColumns).
         boolean measuredByABand = bandDepth > 0 && !Double.isNaN(resumeSpacing);
-        boolean held = moves && !measuredByABand && roomHeldAround == 0 && !roomMeasuredRound(canvas)
-                       && holdTheSpaceOf(canvas);
+        if (moves && !measuredByABand && roomHeldAround == 0 && !roomMeasuredRound(canvas)) {
+            holdTheSpaceOf(canvas);
+        }
         // Held or not, nothing it holds owes more: what was owed before its drawings stands.
         double owed = pendingSpacingAfter;
         for (DocumentNode child : canvas.children()) {
@@ -22187,8 +22188,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /** Whether a node is a paragraph of text or holds one. */
-    private static boolean holdsText(DocumentNode node) {
-        return node instanceof ParagraphNode || node.children().stream().anyMatch(DocxSemanticBackend::holdsText);
+    private static boolean holdsAParagraph(DocumentNode node) {
+        return node instanceof ParagraphNode || node.children().stream().anyMatch(DocxSemanticBackend::holdsAParagraph);
     }
 
     /** Whether a node is a badge holding a glyph drawn over it (see {@link #drawnOverItsBadge}). */
@@ -22253,7 +22254,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // An icon, at most twice as tall as the text it labels: a photo beside a line of
             // text is what the flow is written round, and stays in it; so is a logo beside
             // another picture, a barcode or a spacer, which label nothing.
-            if (holdsText(layer)) {
+            if (holdsAParagraph(layer)) {
                 besideText |= icon.placementHeight() <= 2 * placed.placementHeight() + edge;
             }
         }
@@ -23595,19 +23596,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Creates a table where the writer is currently pointing — the body, or a cell.
-     *
-     * <p>A table inside a cell is a real nested {@code w:tbl}, not a flattened copy of its
-     * text. Word requires a cell to end with a paragraph, and a table is not one, so an
-     * empty paragraph follows it: without that the cell is malformed and Word refuses the
-     * file rather than showing the table.</p>
-     *
-     * @param document the document being written
-     * @param rows     row count
-     * @param columns  column count of the first row
-     * @return the created table, already attached where it belongs
-     */
-    /**
      * How wide content can be inside one cell: the columns it spans, less its own margins.
      *
      * <p>Both are read back from what this export just wrote — the grid for the width and
@@ -23653,6 +23641,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return currentCellWidth - Math.max(0, insetLeft) - Math.max(0, insetRight);
     }
 
+    /**
+     * Creates a table where the writer is currently pointing — the body, or a cell.
+     *
+     * <p>A table inside a cell is a real nested {@code w:tbl}, not a flattened copy of its
+     * text. Word requires a cell to end with a paragraph, and a table is not one, so an
+     * empty paragraph follows it: without that the cell is malformed and Word refuses the
+     * file rather than showing the table.</p>
+     *
+     * @param document the document being written
+     * @param rows     row count
+     * @param columns  column count of the first row
+     * @return the created table, already attached where it belongs
+     */
     private XWPFTable newTable(XWPFDocument document, int rows, int columns) {
         resumeHere();
         nameAHangLeftOver();

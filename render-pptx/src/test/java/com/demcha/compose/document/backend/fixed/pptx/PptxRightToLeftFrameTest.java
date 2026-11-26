@@ -188,7 +188,7 @@ class PptxRightToLeftFrameTest {
         // a left-to-right base, so it belongs to the Hebrew run rather than to the Latin
         // one — and that run, being uniformly right-to-left, is the kind the viewer
         // reverses itself, so its comparison is mirrored on the way over.
-        assertThat(chipRunsOf("a בית > ספר", "בית"))
+        assertThat(chipRunsOf("a בית > ספר"))
                 .describedAs("Latin first, then one right-to-left run carrying the neutral")
                 .containsExactly("a ", "בית < ספר");
     }
@@ -199,7 +199,7 @@ class PptxRightToLeftFrameTest {
         // PowerPoint as a fragment with no line around it, its engine re-resolved it on
         // its own terms, and the deck disagreed with the PDF about where the Latin sat.
         // One frame per directional run leaves it nothing to re-resolve.
-        assertThat(chipRunsOf("a בית (ספר)", "בית"))
+        assertThat(chipRunsOf("a בית (ספר)"))
                 .describedAs("Latin first, then the Hebrew run with its pair mirrored")
                 .containsExactly("a ", "בית )ספר(");
     }
@@ -207,14 +207,10 @@ class PptxRightToLeftFrameTest {
     /**
      * The chip's frames, left to right — a chip is one frame per directional run.
      *
-     * <p>Filtered by a marker where the line's own words would otherwise be picked up
-     * too; the chip's runs are the frames that are not the surrounding text.</p>
+     * <p>A chip's frames are told from the line's own text by their shape name, so the
+     * surrounding words are never picked up.</p>
      */
     private static List<String> chipRunsOf(String chipText) throws Exception {
-        return chipRunsOf(chipText, null);
-    }
-
-    private static List<String> chipRunsOf(String chipText, String marker) throws Exception {
         byte[] pptx = renderHighlightLine(chipText);
         try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptx))) {
             List<XSLFTextShape> chipBoxes = new ArrayList<>();

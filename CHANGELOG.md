@@ -202,6 +202,18 @@ follow semantic versioning; release dates are ISO 8601.
   corpus are the same bytes, with the same report notes. The shared-name cases of
   `DocxFontTableTest` moved to `DocxSharedFontNameTest`, and the helpers both use to
   `DocxFontTableFixtures`.
+- **The render backends' CodeQL alerts are cleared.** 23 of the 38 open in `render-docx`,
+  `render-pdf` and `render-pptx` are cleared in code: a never-read local in the DOCX writer (its
+  call, which owes the canvas's space, kept), a javadoc block moved back onto the method it
+  describes, private overloads that dispatched on the argument's static type renamed
+  (`twipsOf(CTTblWidth)`, `holdsText(DocumentNode)`, `PdfTrackedFontView.widened(COSBase)`),
+  `@Override` on `PdfFont`, the tiled watermark's loop bounds made explicit (Java already widened
+  the float position to compare it with the double canvas size; the bytecode is the same), an
+  unused private parameter, and four test files — among them a PPTX test helper that took a
+  filter argument it never used. The other 15 are left: type-test chains over the closed node and
+  payload sets, `parseInt` on text a pattern has already matched as hex, and tests parsing what
+  the exporter wrote. No behaviour changes: the 105 documents of the DOCX fidelity corpus are the
+  same bytes, with the same report notes.
 
 ### Build
 

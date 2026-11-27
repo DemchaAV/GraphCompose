@@ -16,9 +16,9 @@ follow semantic versioning; release dates are ISO 8601.
     one.**
   - Only that face is held back. The family's other faces travel as before, and a registered
     family keeps the viewer metrics its text is seated by. The log names the face
-    (`render.pptx.font.embed.skipped`, with its source and its `fsType`) and says the family could
-    not be embedded whole (`render.pptx.font.substitution`). A family whose every face is held back
-    is not declared embedded at all.
+    (`render.pptx.font.embed.skipped`, with its source and its `fsType`), and says a family carried
+    short of the face is not carried whole (`render.pptx.font.substitution`). A family whose every
+    face is held back is not declared embedded at all.
   - Of the 130 bundled faces, `ZillaSlab-BoldItalic` is the only one this reaches. A deck that
     draws Zilla Slab in bold italic now carries three Zilla Slab faces, not four. A deck that draws
     Zilla Slab only in its other styles is unchanged, and no example or committed preview draws it.

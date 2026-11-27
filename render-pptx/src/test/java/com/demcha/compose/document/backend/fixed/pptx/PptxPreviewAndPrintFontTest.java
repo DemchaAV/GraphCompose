@@ -251,6 +251,74 @@ class PptxPreviewAndPrintFontTest {
         assertThat(fonts.viewerMetrics(FontName.of("Slab"))).isNull();
     }
 
+    @Test
+    void aFamilyWhoseFreedSlotAnotherFamilyFillsIsToldItIsNotCarriedWhole() throws Exception {
+        // Holding a face back leaves its slot free, and a second family declaring the same name
+        // can fill it. The first family's other faces are in the deck, so it must not be told
+        // that no program of it travels.
+        FontFamilyDefinition slab = FontFamilyDefinition
+                .files("SlabFour", copy(ZILLA + "Regular.ttf"))
+                .boldPath(copy(ZILLA + "Bold.ttf"))
+                .italicPath(copy(ZILLA + "Italic.ttf"))
+                .boldItalicPath(copy(ZILLA + "BoldItalic.ttf"))
+                .wordFamily("Slab")
+                .build();
+        FontFamilyDefinition editableBoldItalic = FontFamilyDefinition
+                .files("SlabOne", write("Editable-BoldItalic.ttf",
+                        FontEmbeddingType.with(PptxDeck.face(ZILLA + "BoldItalic.ttf"), 0x0000)))
+                .wordFamily("Slab")
+                .build();
+
+        byte[] deck = PptxDeck.registering(List.of(slab, editableBoldItalic),
+                page -> page.addParagraph(paragraph -> paragraph.text("Drawn in the default face")));
+
+        assertThat(PptxDeck.fontParts(deck)).as("three of the first family, one of the second")
+                .hasSize(4);
+        assertThat(PptxDeck.part(deck, "ppt/presentation.xml")).contains("<p:boldItalic");
+        assertThat(log.messages("render.pptx.font.substitution"))
+                .filteredOn(line -> line.contains("family=SlabFour"))
+                .singleElement()
+                .asString()
+                .contains("not carried whole")
+                .doesNotContain("no program of this family travels");
+        assertThat(log.messages("render.pptx.font.substitution"))
+                .as("the second family travelled whole")
+                .noneMatch(line -> line.contains("family=SlabOne"));
+        assertThat(log.messages("render.pptx.font.shared.family"))
+                .as("and the shared name is said once")
+                .singleElement()
+                .asString()
+                .contains("\"Slab\"");
+    }
+
+    @Test
+    void aBundledFamilyWhoseFreedSlotARegistrationFillsIsToldItIsNotCarriedWhole() throws Exception {
+        // The same arrangement on the bundled road: a registration declaring "Zilla Slab" with an
+        // editable bold italic holds that slot, and the bundled family carries the other three.
+        FontFamilyDefinition editableBoldItalic = FontFamilyDefinition
+                .files("SlabOne", write("Editable-BoldItalic.ttf",
+                        FontEmbeddingType.with(PptxDeck.face(ZILLA + "BoldItalic.ttf"), 0x0000)))
+                .wordFamily("Zilla Slab")
+                .build();
+
+        byte[] deck = PptxDeck.registering(editableBoldItalic, page -> {
+            for (DocumentTextDecoration decoration : List.of(DocumentTextDecoration.DEFAULT,
+                    DocumentTextDecoration.BOLD, DocumentTextDecoration.ITALIC,
+                    DocumentTextDecoration.BOLD_ITALIC)) {
+                page.addParagraph(paragraph -> paragraph.text("Set in Zilla Slab")
+                        .textStyle(zilla(decoration)));
+            }
+        });
+
+        assertThat(PptxDeck.fontParts(deck)).hasSize(4);
+        assertThat(log.messages("render.pptx.font.substitution"))
+                .filteredOn(line -> line.contains("family=Zilla Slab"))
+                .singleElement()
+                .asString()
+                .contains("not carried whole")
+                .doesNotContain("no program of this family travels");
+    }
+
     @ParameterizedTest
     @ValueSource(ints = {0x0002, 0x0200})
     void aRestrictedOrBitmapOnlyFaceStillCostsTheFamily(int fsType) throws Exception {

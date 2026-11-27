@@ -455,8 +455,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private int slotDepth;
     // The blocks something is written after in the flow they stand in.
     private final java.util.Set<DocumentNode> followedInFlow = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
-    // The space a canvas whose blocks read down places above each block it writes (spaceItsBlocksAsPlaced).
-    private final java.util.Map<DocumentNode, Double> spaceAboveInItsCanvas = new java.util.IdentityHashMap<>();
+    // The space a canvas whose blocks read down places above each block it writes, one entry for
+    // each place in turn (spaceItsBlocksAsPlaced).
+    private final java.util.Map<DocumentNode, java.util.Deque<Double>> spaceAboveInItsCanvas =
+            new java.util.IdentityHashMap<>();
+    // How far in from its left and right edges a canvas whose blocks read down places each block it
+    // writes, one entry for each place in turn (holdItsBlocksAcross).
+    private final java.util.Map<DocumentNode, java.util.Deque<double[]>> edgesInItsCanvas =
+            new java.util.IdentityHashMap<>();
     // Where the blocks are placed whose space below a band or a column measures from the page,
     // their own margin and padding below them included (DocxLayerColumns.Band#closing).
     private final java.util.Set<com.demcha.compose.document.layout.PlacedNode> closingBlocks =
@@ -10176,7 +10182,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Writes a flow's children one after another, each held in across where its shape sets it
-     * when they are the layers of a shape written as a panel ({@link #holdInItsPanel}).
+     * when they are the layers of a shape written as a panel ({@link #holdInItsPanel}), and where
+     * its canvas places it when they are the blocks of a canvas whose blocks read down
+     * ({@link #holdItsBlocksAcross}).
      *
      * @param panel the shape whose layers they are, or {@code null}
      */
@@ -10187,7 +10195,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (index > 0 && spacing > 0 && !breaksThePage(child)) {
                 owePendingSpacingAfter(spacing);
             }
-            Double placedBelow = spaceAboveInItsCanvas.remove(child);
+            java.util.Deque<Double> spacesAbove = spaceAboveInItsCanvas.get(child);
+            Double placedBelow = spacesAbove == null ? null : spacesAbove.poll();
             if (placedBelow != null) {
                 owePendingSpacingAfter(placedBelow);
             }
@@ -10197,13 +10206,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (index + 1 < children.size() && keepGoesUnheld(child, children.get(index + 1))) {
                 keepsUnheld.add(child);
             }
-            if (panel == null) {
+            java.util.Deque<double[]> places = edgesInItsCanvas.get(child);
+            double[] canvasEdges = places == null ? null : places.poll();
+            if (panel == null && canvasEdges == null) {
                 writeNode(document, child);
                 continue;
             }
             double outerLeft = insetLeft;
             double outerRight = insetRight;
-            holdInItsPanel(panel, child);
+            if (panel != null) {
+                holdInItsPanel(panel, child);
+            } else {
+                holdInItsCanvas(canvasEdges);
+            }
             try {
                 writeNode(document, child);
             } finally {
@@ -21867,8 +21882,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * writes only paragraphs a text box holds as the page sets them, is written over its page
      * instead ({@link #writeCanvasOverItsPage}). One whose blocks read down stays in the flow,
      * where a reader of the flow reaches its text, each block as far below the one before as it
-     * places it ({@link #spaceItsBlocksAsPlaced}), and the room it owes below is what it leaves
-     * under the foot of the last.</p>
+     * places it ({@link #spaceItsBlocksAsPlaced}) and held in across to where it places it
+     * ({@link #holdItsBlocksAcross}), and the room it owes below is what it leaves under the foot
+     * of the last.</p>
      *
      * @param room the width its margins leave it where it is written, or NaN when not known
      */
@@ -21925,6 +21941,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             try {
                 if (spacedAsPlaced) {
                     spaceItsBlocksAsPlaced(canvas, writes, pulled + heldInTheLine);
+                    if (holdsItsBlocksAcross()) {
+                        holdItsBlocksAcross(canvas, room);
+                    }
                 }
                 // The pull taken out of the first block's space is not carried down to it either.
                 carriedSpacingBefore += pulled;
@@ -21943,6 +21962,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             } finally {
                 for (com.demcha.compose.document.node.CanvasChild child : canvas.placements()) {
                     spaceAboveInItsCanvas.remove(child.node());
+                    edgesInItsCanvas.remove(child.node());
                 }
             }
             double left = canvas.height() - writes.reach();
@@ -21991,9 +22011,81 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (onlyDrawn(child.node())) {
                 continue;
             }
-            // A block placed twice takes the space above its first place, the one written first.
-            spaceAboveInItsCanvas.putIfAbsent(child.node(), spaces.next() - taken);
+            // A block placed twice is written at each place, each copy with its own space above:
+            // taken as one, the second stood as much higher as it is placed below the first.
+            spaceAboveInItsCanvas.computeIfAbsent(child.node(), written -> new java.util.ArrayDeque<>())
+                    .add(spaces.next() - taken);
             taken = 0;
+        }
+    }
+
+    /**
+     * Holds each block a canvas whose blocks read down writes ({@link CanvasWrites#readsDown}) in
+     * across to where it places it and as wide as it lays it out ({@link #holdInItsCanvas}),
+     * between the edge its padding leaves on the left and the right edge the column it stands in
+     * leaves it, its margin and padding taken off.
+     *
+     * <p>Written from the canvas's left edge, each block stood as far left of where the page sets it
+     * as the canvas places it across, in Word 16 and LibreOffice 26.8 alike, and its paragraphs ran
+     * to the column's right edge: a paragraph placed 40pt in stood 40pt left, a canvas 200pt wide
+     * broke its text at the column's width, and a centred or right-aligned line stood where that
+     * width set it. Not in a table cell or a painted panel, whose text Word keeps inside it, as a
+     * stack's one layer moved across is not held there either (writeContainerBody): there how far
+     * across is named ({@link #canvasLosses}).</p>
+     *
+     * <p>Each place is the canvas's own, {@link com.demcha.compose.document.node.CanvasChild#x}: the
+     * layout sets each block at its top left at that offset from the canvas's padding
+     * (CanvasLayerDefinition), and keeps one place of a node, its last, so a block placed twice, in
+     * the canvas or in one beside it, is held at each place it is written.</p>
+     *
+     * @param room the width its margins leave it where it is written, or NaN when not known, where
+     *             each block is held in on the left alone
+     */
+    private void holdItsBlocksAcross(com.demcha.compose.document.node.CanvasLayerNode canvas, double room) {
+        double inside = room - canvas.padding().horizontal();
+        for (com.demcha.compose.document.node.CanvasChild child : canvas.placements()) {
+            DocumentNode block = child.node();
+            if (onlyDrawn(block)) {
+                continue;
+            }
+            // The width the canvas lays it out in, where the page breaks its lines: its own, its
+            // margins taken off, or the width the block sets itself (LayoutCompiler.placeStackLayer).
+            double laidOut = block.flowWidth().resolve(Math.max(0, canvas.width() - block.margin().horizontal()));
+            double right = inside - (child.x() + block.margin().horizontal() + laidOut);
+            edgesInItsCanvas.computeIfAbsent(block, written -> new java.util.ArrayDeque<>())
+                    .add(new double[]{child.x(), right});
+        }
+    }
+
+    /**
+     * Whether a canvas whose blocks read down holds them across ({@link #holdItsBlocksAcross}): not
+     * in a table cell or a painted panel — a row's column and a layer stack's column among them —
+     * whose text Word keeps inside it, so a block the page sets past the cell's edge stands at it.
+     * There they are written at the canvas's left edge, as a stack's one layer moved across is, and
+     * how far across is named ({@link #canvasLosses}).
+     */
+    private boolean holdsItsBlocksAcross() {
+        return currentCell == null;
+    }
+
+    /**
+     * Holds a block of a canvas whose blocks read down in across ({@link #holdItsBlocksAcross}): as
+     * far in from the canvas's padding as it places it, as wide as the canvas lays it out, wherever
+     * it places it, past the column's edge included. Held on the left alone where the right edge is
+     * not known.
+     *
+     * <p>That width, not the box the block comes to, is where the page breaks its lines and sets
+     * them at their alignment. Held to the box, as a stack's layer is ({@link #holdIn}), a paragraph
+     * set past the column's edge and a section's paragraph, each with a line filling it, broke a
+     * word early in Word 16 and LibreOffice 26.8.</p>
+     *
+     * @param across how far in from the canvas's left edge, and how far in from its right edge
+     *               (below zero, out past it), NaN where that edge is not known
+     */
+    private void holdInItsCanvas(double[] across) {
+        insetLeft += across[0];
+        if (!Double.isNaN(across[1])) {
+            insetRight += across[1];
         }
     }
 
@@ -22225,7 +22317,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * (drawOwnFragments); what it writes — text, pictures, tables — is written one block after
      * another inside its margin and padding, so the places it gives them and the width its text
      * wraps at are not in the file. Where its blocks read down, each stands as far down as it places
-     * it ({@link #spaceItsBlocksAsPlaced}), and only how far across is lost. Its room is written
+     * it ({@link #spaceItsBlocksAsPlaced}) and, but in a table cell or a painted panel, as far
+     * across and as wide ({@link #holdItsBlocksAcross}); there how far across is lost. Its room is
+     * written
      * ({@link #writeCanvas}), except where what
      * it writes, one block under another, runs past it, where a drawing in what it writes takes no
      * room in Word, and where it is not measured — composed in a table cell, or with no layout.
@@ -22245,11 +22339,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private List<String> canvasLosses(com.demcha.compose.document.node.CanvasLayerNode canvas, CanvasWrites writes,
                                       boolean followed, boolean moves, double room, double pullPastItsSpace) {
         List<String> lost = new ArrayList<>(4);
+        // Each block stands as far down as it places it (spaceItsBlocksAsPlaced), and as far across
+        // and as wide where it holds its blocks across (holdsItsBlocksAcross).
+        boolean heldAcross = writes.readsDown() && writes.measured() && holdsItsBlocksAcross();
         if (writes.readsDown() && writes.measured()) {
-            // Each block stands as far down as it places it (spaceItsBlocksAsPlaced); across, not.
-            if (writes.placedAcross()) {
-                lost.add("what it writes is written at its left edge, each block as far down as it places it but "
-                         + "not as far across");
+            if (writes.placedAcross() && !heldAcross) {
+                lost.add("in a table cell or a painted panel, what it writes is written at its left edge, each "
+                         + "block as far down as it places it but not as far across");
             }
             if (!writes.downKept()) {
                 lost.add("a block it places higher than the foot of the one before, or than its corner, is written "
@@ -22277,7 +22373,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             lost.add("a drawing in what it writes takes no room in Word, so what stands below the drawing stands "
                      + "higher by its room");
         }
-        if (Double.isFinite(room) && writes.wrapsText()
+        if (Double.isFinite(room) && writes.wrapsText() && !heldAcross
             && canvas.width() < room - canvas.padding().horizontal() - EDITOR_COLUMN_SLACK_POINTS - 0.5) {
             lost.add("its width is not in the file, so its paragraphs and lists run the width of the column "
                      + "it stands in");

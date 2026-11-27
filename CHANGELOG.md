@@ -40,6 +40,30 @@ follow semantic versioning; release dates are ISO 8601.
     it again, three pages for two in both editors.
   - A table sharing the page still counts. Its cell's paragraph carries the text boxes, placed
     from the page's edge, and both editors set them where the page does.
+- **A DOCX canvas whose text reads down sets each block as far across as it places it.**
+  - A canvas written as its contents in the flow, whose blocks read down — each at or below the
+    foot of the one before, as a CV's name over its title — kept each block as far down as it
+    places it but wrote every block at its left edge, its paragraphs running to the column's
+    right edge, and the report named it. In Word 16 and LibreOffice 26.8 a paragraph, a list, a
+    picture, a table or a section placed 20 to 120pt across stood that far left of where the
+    page sets it. A padded canvas 200pt wide broke its text at the width of a 328pt column, and
+    its centred and right-aligned lines stood 14pt and 78pt right of the page's.
+  - Each block is now held in from where the layout places it, as wide as the canvas lays it
+    out: the canvas's width less the block's margins, or the width the block sets itself. That
+    is where the page breaks its lines and sets them at their alignment, past the column's edge
+    included. Held instead to the box its widest line comes to, as a stack's layer is, a section's
+    paragraph and a paragraph set past the column's edge each broke a word early in both editors.
+  - Measured against the engine's PDF, every block of those canvases now stands within 0.2pt of
+    the page across in Word 16 and LibreOffice 26.8, and every line breaks where the page breaks
+    it. A list item's second line is the exception: both editors set it under the item's text,
+    11.7pt right of the page's, which this change does not touch.
+  - The templates and the DOCX fidelity corpus hold no such canvas placing a block across: the
+    masthead canvas of `MintEditorial` places every block at its left edge, and the corpus's 105
+    documents export byte for byte as before.
+  - Each place is the canvas's own, so a block placed twice, in one canvas or in two beside each
+    other, stands at each place it is written, across and down.
+  - In a table cell or a painted panel, whose text Word keeps inside it, such a canvas still
+    writes its blocks at its left edge, and the report names one that places a block elsewhere.
 
 ### Documentation
 

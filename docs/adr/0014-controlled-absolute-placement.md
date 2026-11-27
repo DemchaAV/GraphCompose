@@ -218,10 +218,14 @@ the `DocxExportReport` carries what it costs as an
   Where its blocks read down, each starting at or below the
   foot of the one before, each keeps the distance below the one
   before that the canvas places it at, so a CV's name over its
-  title keeps its spacing. A note names what this route loses
-  where it loses something, such as the places across, the
-  width its text wraps at, text running past the canvas's
-  height, a drawing that takes no room in Word, or a room it
+  title keeps its spacing, and outside a table cell or a
+  painted panel its place
+  across and the width its text wraps at. A note names what this
+  route loses where it loses something, such as the places
+  across and the width its text wraps at where its blocks do not
+  read down or it stands in a table cell or a painted panel,
+  text running past the
+  canvas's height, a drawing that takes no room in Word, or a room it
   could not measure. A canvas that loses nothing gets no note.
 - **Written over its page.** A canvas in the body's flow that
   places its text side by side or out of reading order, and

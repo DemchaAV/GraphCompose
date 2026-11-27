@@ -129,11 +129,13 @@ the flow stays declarative.
 ### DOCX backend behaviour
 
 The Apache POI Word model has no canvas abstraction. The DOCX
-semantic backend (planned for v1.6 stretch / v1.7) emits a
+semantic backend (planned for v1.6 stretch / v1.7) was to emit a
 one-time `docx.export.canvas-layer-fallback` capability
-warning and renders the canvas's children inline (losing the
-explicit placement). The PDF backend honours the explicit
-coordinates via the existing `PlacedFragment` pipeline.
+warning and render the canvas's children inline (losing the
+explicit placement). That warning never shipped; what the DOCX
+backend does with a canvas is in the amendment below. The PDF
+backend honours the explicit coordinates via the existing
+`PlacedFragment` pipeline.
 
 ### `ClipPolicy` field
 
@@ -177,10 +179,10 @@ diagram authors who want overflow can opt into
   wrap the canvas in a `LayerStackNode` with explicit
   `zIndex` per layer. A future v1.7 follow-up could expose
   `position(child, x, y, z)` if the demand is real.
-- **DOCX fidelity is lost.** A canvas in a DOCX export becomes
-  inline children. This is consistent with how DOCX handles
-  every PDF-only primitive (transforms, clip paths) and the
-  capability-warning channel surfaces it cleanly.
+- **DOCX fidelity is partial.** Word has no canvas, so a DOCX
+  export keeps only part of the explicit placement, and says
+  which part per node in its export report (see the amendment
+  below).
 - **Author can place children beyond the bounding box.**
   `CLIP_BOUNDS` (the default) hides the overflow at render
   time; the layout graph still records the original
@@ -200,6 +202,43 @@ diagram authors who want overflow can opt into
   authors think in screen-y-down and every modern UI tool
   uses that convention. Forcing PDF coordinates would create
   a constant translation tax at the call site.
+
+## Amendment — 2026-11-27
+
+The DOCX behaviour described in Decision is not what shipped.
+There is no `docx.export.canvas-layer-fallback` warning, and a
+canvas is not simply written as inline children.
+`DocxSemanticBackend.writeCanvas` takes one of two routes, and
+the `DocxExportReport` carries what it costs as an
+`APPROXIMATED` note on the canvas's own path:
+
+- **Written as its contents.** The canvas's blocks go into the
+  flow one after another and its drawings stand where it places
+  them. It holds its height as space below what it writes.
+  Where its blocks read down, each starting at or below the
+  foot of the one before, each keeps the distance below the one
+  before that the canvas places it at, so a CV's name over its
+  title keeps its spacing. A note names what this route loses
+  where it loses something, such as the places across, the
+  width its text wraps at, text running past the canvas's
+  height, a drawing that takes no room in Word, or a room it
+  could not measure. A canvas that loses nothing gets no note.
+- **Written over its page.** A canvas in the body's flow that
+  places its text side by side or out of reading order, and
+  holds only drawings and plain paragraphs, has its drawings
+  where the page draws them and each paragraph in a text box
+  where the page sets it. The flow holds its room as a line of
+  its own or as space owed to what follows. This route is
+  always named in a note, with each paragraph it sets in a text
+  box. A canvas over two
+  pages, in a table cell, a painted panel, a band, a stack of
+  one layer or another overlay, holding anything else, or
+  exported with no layout, takes the first route.
+
+The PDF behaviour, the node and the decision itself are
+unchanged. The DOCX routes in full are in the layer-stack entry
+of
+[`docs/architecture/backend-capability-details.md`](../architecture/backend-capability-details.md#layer-stack).
 
 ## References
 

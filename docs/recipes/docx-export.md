@@ -1342,11 +1342,19 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   paragraph's space above at the top of a page, and the paragraph under a canvas moved to a new
   page stood 139.8pt high in both while the room was that space. Written as its contents,
   `TwinOutputExample`'s one-canvas page had its 43 lines stacked at its left edge in Word 16 and
-  LibreOffice, as much as 820pt across and 222pt down from the page; over its page, the lines
-  both editors break as the page does stand within 0.6pt of it (Word 16 and LibreOffice 26.8, by
-  baseline). A box set with one line is given a quarter again of its width to spare; one of
-  several lines keeps its width but for the editor's couple of points, so a paragraph at a size
-  the file rounds to the half point — 12.3pt written as 12.5pt — breaks a word sooner. A link, a
+  LibreOffice, as much as 820pt across and 222pt down from the page; over its page, all 43
+  stand within 0.6pt of it (Word 16 and LibreOffice 26.8, by baseline). A box set with one line
+  is given a quarter again of its width to spare; one of several lines is given room for its
+  lines as Word sets them and, where it can, none to take up another word. Set from its left,
+  its box is its widest line at the size Word sets — a size the file rounds to the half point,
+  12.3pt written as 12.5pt, comes out that much wider or narrower — and two points more, held a
+  point short of a line the page broke with the word it broke before, but never narrower than
+  that widest line. Centred or right-aligned, it keeps the measure the page broke it in, its
+  letters spaced to the page's width where Word sets them a point or more off, as in the flow.
+  A block of the canvas's own flow laid over that flow on its page — a sidebar its margins give
+  no room — writes no paragraph there either, so a canvas that shares its page only with such
+  blocks still holds its room in a line of its own, which carries their text boxes too, and a
+  page break after them on that page goes in the line. A link, a
   bookmark, an anchor, a picture, a table, a list, a spacer, a chart, a barcode, a row, a nested
   canvas or a transformed block it holds keeps the canvas written as its contents, as does a
   canvas spanning two pages, or in a table cell, a painted panel, a band, another overlay or a

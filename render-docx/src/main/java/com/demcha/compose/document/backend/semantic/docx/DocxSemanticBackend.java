@@ -738,12 +738,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private long blocksAtTheLastBreak = -1;
 
     /**
-     * The line holding the room of a canvas written over its page that nothing follows on its
-     * page, and {@link #blocksWritten} once it was written: a page break written right after it
-     * goes in that line ({@link #writePageBreak}). {@code null} where there is none.
+     * The line holding the room of a canvas written over its page, {@link #blocksWritten} once it
+     * was written, and the page it stands on: a page break written right after it, with no block
+     * written between and nothing placed on a later page, goes in that line
+     * ({@link #writePageBreak}). {@code null} where there is none.
      */
     private XWPFParagraph roomLineBeforeABreak;
     private long blocksAtTheRoomLine = -1;
+    private int pageOfTheRoomLine = -1;
 
     /** Space the last body paragraph holds below itself, not yet written — see {@link #owePendingSpacingAfter}. */
     private double pendingSpacingAfter;
@@ -4941,8 +4943,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private boolean laidOverTheFlow(DocumentNode node) {
         // In a cell — a panel's, whose shading both editors paint over a box behind the text —
         // it is written as before.
-        if (overlayDepth != 0 || currentCell != null || surfaceBehind != null || !isOverlay(node)
-            || Double.isNaN(canvasHeight)) {
+        return overlayDepth == 0 && currentCell == null && surfaceBehind == null && givesNoRoomAndFloats(node);
+    }
+
+    /**
+     * Whether a node, standing in the body's flow, is laid over it ({@link #laidOverTheFlow}): an
+     * overlay the page gives no room, on one page, holding text, and nothing a text box cannot
+     * hold.
+     */
+    private boolean givesNoRoomAndFloats(DocumentNode node) {
+        if (!isOverlay(node) || Double.isNaN(canvasHeight)) {
             return false;
         }
         // No room at all: margins taking back more than the box pull the flow up, which nothing
@@ -5358,12 +5368,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>The box is the paragraph's content box. A line set in one is given a quarter again of
      * the box's width, and a few points, away from the side it is aligned to — both ways for a
      * centred one: an editor sets text a little wider than the page, and the line would
-     * otherwise break inside the box. A paragraph of several lines keeps its width but for the
-     * editor's couple of points, as it breaks where the page breaks it — and the box is a line
-     * taller than its lines, as a text box shows nothing past its foot and a word the editor
-     * sets on one more line would be lost. The box draws nothing, so the room it has past the
-     * text is nowhere to be seen, and it stands in front of the text: a fill or a panel's
-     * shading the page lays under it cannot cover it.</p>
+     * otherwise break inside the box. A paragraph of several lines is given room for its lines and
+     * no room to take up another word ({@link #breaksAsThePage}) — and the box is a line taller
+     * than its lines, as a text box shows nothing past its foot and a word the editor sets on one
+     * more line would be lost. The
+     * box draws nothing, so the room it has past the text is nowhere to be seen, and it stands in
+     * front of the text: a fill or a panel's shading the page lays under it cannot cover it.</p>
      */
     private void writeTextOverTheFlow(XWPFDocument document, ParagraphNode node) {
         com.demcha.compose.document.layout.PlacedNode placed = layout.placement(node);
@@ -5380,7 +5390,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double height = Math.max(1, placed.placementHeight() - node.padding().vertical());
         double top = canvasHeight - placed.placementY() - placed.placementHeight() + node.padding().top();
         int lines = Math.max(1, layout.lineCount(node));
-        double spare = lines == 1 ? width * TEXT_BOX_SLACK_RATIO + EDITOR_SLACK_POINTS : EDITOR_SLACK_POINTS;
+        double spare = lines == 1 ? width * TEXT_BOX_SLACK_RATIO + EDITOR_SLACK_POINTS
+                : breaksAsThePage(para, node, width);
         height += height / lines;
         // The alignment is a side of the page's, whichever way the text runs (see toAlignment).
         if (node.align() == TextAlign.CENTER) {
@@ -5400,6 +5411,58 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         lost.addAll(paragraphLost(node, roomLostInItsBox(node), null));
         report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
                 String.join("; ", lost));
+    }
+
+    /**
+     * Sets a paragraph of several lines in a text box so Word breaks its lines where the page
+     * breaks them, and returns how much wider than its box the text box is, in points (below
+     * zero for narrower).
+     *
+     * <p>A paragraph set from its left is placed as wide as its widest line. Its box is that line
+     * as wide as Word sets it, at its size to the half point ({@link #widthAtWordsSize}), and
+     * {@value #EDITOR_SLACK_POINTS}pt more for an editor's face — but a point short of the
+     * narrowest line the page broke for its width, with the space and the word it broke before,
+     * as Word sets them ({@link #nextWordAtWordsSize}), so no line takes up the next one's first
+     * word, and never narrower than that widest line. A line the page ended at a line break,
+     * whose next word fits beside it within the widest line, sets no such limit. Word
+     * sets {@code TwinOutputExample}'s 12.3pt lead at 12.5pt: in a box two points wider than the
+     * page's widest line, Word 16 and LibreOffice 26.8 broke "panels" onto the last line.</p>
+     *
+     * <p>A centred or right-aligned one is placed as wide as the measure the page broke it in, and
+     * keeps it, its letters spaced so Word sets its lines as wide as the page does
+     * ({@link #setTheLineAsWideAsThePage}), as in the flow: {@code CanvasLayerExample}'s centred
+     * citation, whose first line the page broke 1.2pt short of the next word, took "wrapped" onto
+     * it in Word 16 and LibreOffice 26.8 when its box was two points wider.</p>
+     *
+     * @param width the width the page placed the paragraph's text at, in points
+     */
+    private double breaksAsThePage(XWPFParagraph para, ParagraphNode node, double width) {
+        if (node.align() == TextAlign.CENTER || node.align() == TextAlign.RIGHT) {
+            setTheLineAsWideAsThePage(para, node, width);
+            return 0;
+        }
+        List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines = layout.lines(node);
+        double[] set = new double[lines.size()];
+        double fits = 0;
+        for (int index = 0; index < lines.size(); index++) {
+            set[index] = widthAtWordsSize(lines.get(index));
+            fits = Math.max(fits, set[index]);
+        }
+        if (!(fits > 0)) {
+            // No line the page measured: the editor's couple of points, as before.
+            return EDITOR_SLACK_POINTS;
+        }
+        double takesTheNextWord = Double.POSITIVE_INFINITY;
+        for (int index = 0; index + 1 < lines.size(); index++) {
+            double next = nextWordAtWordsSize(lines.get(index + 1), 0);
+            // A line the next word fits beside within the widest line was not broken for its
+            // width but at a line break, which Word writes as one and never fills up.
+            if (next > 0 && set[index] + next > fits) {
+                takesTheNextWord = Math.min(takesTheNextWord, set[index] + next);
+            }
+        }
+        double box = Math.max(fits, Math.min(fits + EDITOR_SLACK_POINTS, takesTheNextWord - WORDS_MEASURE_CLEARANCE));
+        return box - width;
     }
 
     /**
@@ -12512,8 +12575,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * of taking up the next line's first word ({@link #twentiethsToThePage}) — and so is a short
      * line, whose
      * box has room for it: measured, {@code MerchantInvoice}'s centred amounts, their cells'
-     * indents taken past the cells' edges, stood 0.12pt off their place. A list's items, a line pair, text over the flow and
-     * a header's or footer's line are written elsewhere and keep the page's measure.</p>
+     * indents taken past the cells' edges, stood 0.12pt off their place. A list's items, a line pair
+     * and a header's or footer's line are written elsewhere and keep the page's measure; text over
+     * the flow is set in a text box sized for it ({@link #writeTextOverTheFlow}).</p>
      *
      * @param room the width the paragraph's text is written in, in points
      */
@@ -22014,9 +22078,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Written as its contents, its text stood one block under another from its corner: on a
      * 960 by 540pt page that is all one canvas, Word 16 set every one of its 43 lines, and
      * LibreOffice 26.8 every one it set, as much as 820pt across and 222pt down from where the
-     * page sets them. Written over its page, the 41 lines both editors break as the page does
-     * stand within 0.6pt of it; the other paragraph, set 12.3pt on the page and 12.5pt in the file,
-     * which holds a size to the half point, breaks a word sooner in both.</p>
+     * page sets them. Written over its page, all 43 stand within 0.6pt of it in both: a paragraph
+     * of several lines is given room for its lines as Word sets them, and none to take up another
+     * word ({@link #breaksAsThePage}).</p>
      */
     private void writeCanvasOverItsPage(XWPFDocument document, com.demcha.compose.document.node.CanvasLayerNode canvas,
                                         boolean followed) throws Exception {
@@ -22047,23 +22111,57 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             canvasOverItsPageDepth--;
         }
         pendingSpacingAfter = owed;
-        if (roomLine != null && !followed) {
-            // Nothing follows it on its page: a page break next goes in its line (writePageBreak).
+        if (roomLine != null) {
+            // A page break next goes in its line (writePageBreak), unless a block is written in
+            // between, which the count of blocks tells, or something is placed on a later page — a
+            // canvas of drawings alone there writes no block. Followed by a sidebar laid over the
+            // flow, which writes none, the break was a paragraph of its own under the line and stood
+            // on the next page: a blank page in Word 16 and LibreOffice 26.8.
             roomLineBeforeABreak = roomLine;
             blocksAtTheRoomLine = blocksWritten;
+            pageOfTheRoomLine = layout.placement(canvas).endPage();
         }
     }
 
     /**
-     * Whether the layout puts nothing on a canvas's page but the canvas and what holds it: no
-     * paragraph written in the flow stands there to carry its text boxes ({@link DocxDrawingAnchors}).
+     * Whether the layout puts nothing on a canvas's page but the canvas, what holds it, and blocks
+     * of its flow laid over that flow ({@link #laidOverTheFlowFrom}): no paragraph written in the
+     * flow stands there to carry its text boxes ({@link DocxDrawingAnchors}).
+     *
+     * <p>A block laid over the flow writes no paragraph there either. Counted, a sidebar laid over
+     * the flow on a page that is otherwise one canvas — before it or after it — left the canvas's
+     * room owed as space above the paragraph opening the next page, and nothing on its own page
+     * to carry what both draw: Word 16 and LibreOffice 26.8 dropped the canvas's two text boxes,
+     * the block it draws and the sidebar's text box, and set that paragraph on the first page, one
+     * page short. A table sharing its page is still counted: the cell paragraph that then carries
+     * the text boxes, placed from the page's edge, has both editors set them where the page does.</p>
      */
     private boolean aloneOnItsPage(com.demcha.compose.document.node.CanvasLayerNode canvas) {
         com.demcha.compose.document.layout.PlacedNode placed = layout.placement(canvas);
         String path = placed.path();
+        DocumentNode flow = layout.parentOf(canvas);
+        java.util.Map<DocumentNode, Boolean> laidOver = new java.util.IdentityHashMap<>();
         return Double.isNaN(layout.lowestContentOn(placed.startPage(),
                 fragment -> !fragment.equals(path) && !fragment.startsWith(path + "/")
-                            && !path.startsWith(fragment + "/")));
+                            && !path.startsWith(fragment + "/")
+                            && !laidOverTheFlowFrom(layout.nodeOf(fragment), flow, canvas, laidOver)));
+    }
+
+    /**
+     * Whether a node is drawn by a block of a canvas's flow that is laid over that flow
+     * ({@link #givesNoRoomAndFloats}): the block holding it whose parent is the flow's, other than
+     * the canvas. The canvas is written over its page, so its flow is the body's own, where such a
+     * block is laid over it whether it is written before the canvas or after.
+     *
+     * @param flow     the node the canvas stands in, or {@code null} where it is one of the roots
+     * @param laidOver what was found for each block, so a block's fragments ask once
+     */
+    private boolean laidOverTheFlowFrom(DocumentNode node, DocumentNode flow, DocumentNode canvas,
+                                        java.util.Map<DocumentNode, Boolean> laidOver) {
+        while (node != null && layout.parentOf(node) != flow) {
+            node = layout.parentOf(node);
+        }
+        return node != null && node != canvas && laidOver.computeIfAbsent(node, this::givesNoRoomAndFloats);
     }
 
     /**
@@ -24625,7 +24723,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // its own, under a line filling its page, stood on the next page and broke it again — a
         // blank page between two canvases each filling one, in Word 16 and LibreOffice 26.8.
         boolean inTheRoomLine = roomLineBeforeABreak != null && blocksWritten == blocksAtTheRoomLine
-                                && currentCell == null;
+                                && lastEndPage == pageOfTheRoomLine && currentCell == null;
         XWPFParagraph para = inTheRoomLine ? roomLineBeforeABreak : document.createParagraph();
         roomLineBeforeABreak = null;
         blocksWritten++;

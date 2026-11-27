@@ -6,6 +6,7 @@ import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.ShapeBuilder;
 import com.demcha.compose.document.node.DocumentLinkTarget;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import org.apache.poi.util.Units;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /**
  * A canvas that places its text elsewhere than one block under another from its corner is
@@ -335,6 +337,196 @@ class DocxCanvasOverItsPageTest {
                         assertThat(DocxTwips.of(spacing.getLine())).isBetween(100 * 20L, 140 * 20L);
                     });
         }
+    }
+
+    @Test
+    void aSidebarLaidOverTheFlowBeforeItLeavesItAloneOnItsPage() throws Exception {
+        // The sidebar writes no paragraph on the page: counted, the canvas's room was owed as
+        // space above the paragraph opening the next page, nothing on its own page carried what
+        // either draws, and Word 16 and LibreOffice 26.8 dropped all of it, one page short.
+        assertTheLineCarriesThemAll(page -> page.add(sidebar()).add(board(320, 310, "Board"))
+                .addParagraph("After"));
+    }
+
+    @Test
+    void aSidebarLaidOverTheFlowAfterItLeavesItAloneOnItsPage() throws Exception {
+        // Written after the canvas, the sidebar is laid over the flow all the same.
+        assertTheLineCarriesThemAll(page -> page.add(board(320, 310, "Board")).add(sidebar())
+                .addParagraph("After"));
+    }
+
+    @Test
+    void aPageBreakAfterASidebarLaidOverTheFlowGoesInTheCanvassLine() throws Exception {
+        // The sidebar writes no block between the line and the break: in a paragraph of its own
+        // under the line filling the page, the break stood on the next page and broke it again,
+        // three pages for two in Word 16 and LibreOffice 26.8.
+        Consumer<PageFlowBuilder> content = page -> page.add(board(320, 310, "Board")).add(sidebar())
+                .addPageBreak(b -> b.name("Break")).addParagraph("After");
+        try (XWPFDocument document = DocxExports.withLayout(400, 400, MARGIN, content)) {
+            XWPFParagraph line = paragraphBefore(document, "After");
+            assertThat(line.getCTP().xmlText()).as("the break in the line").contains("w:type=\"page\"");
+            assertThat(boxesIn(line)).as("which carries every text box on its page").isEqualTo(3);
+            assertThat(document.getParagraphs()).as("the line and the paragraph after it, nothing else").hasSize(2);
+        }
+    }
+
+    @Test
+    void aPageBreakAfterACanvasOnALaterPageKeepsItsOwnParagraph() throws Exception {
+        // A canvas of drawings alone, on the next page, writes no block between the line and the
+        // break: taken into the line on the first page, the break left the next page's drawing to a
+        // paragraph standing on the first. In its own paragraph it carries that drawing on its page.
+        try (XWPFDocument document = DocxExports.withLayout(400, 400, MARGIN, page -> page
+                .add(board(320, 310, "Board"))
+                .add(new CanvasLayerBuilder(320, 200).name("Drawn")
+                        .position(new ShapeBuilder().name("Disc").size(120, 120).fillColor(INK).build(), 40, 40)
+                        .build())
+                .addPageBreak(b -> b.name("Break")).addParagraph("After"))) {
+            XWPFParagraph line = document.getParagraphs().get(0);
+            assertThat(boxesIn(line)).as("the line carries the first canvas's text").isEqualTo(2);
+            assertThat(line.getCTP().xmlText()).as("but not the break").doesNotContain("w:type=\"page\"");
+            XWPFParagraph pageBreak = paragraphBefore(document, "After");
+            assertThat(pageBreak.getCTP().xmlText()).as("the break in a paragraph of its own")
+                    .contains("w:type=\"page\"").contains("<wp:anchor");
+        }
+    }
+
+    @Test
+    void aTableSharingItsPageStillCounts() throws Exception {
+        // A table's cell paragraph carries the text boxes, placed from the page's edge, and both
+        // editors set them where the page does: the canvas holds no line of its own there.
+        try (XWPFDocument document = DocxExports.withLayout(400, 400, MARGIN, page -> page
+                .addParagraph("Intro").addPageBreak(b -> b.name("ToTwo"))
+                .addTable(table -> table.columns(com.demcha.compose.document.table.DocumentTableColumn.auto())
+                        .row("Cell"))
+                .add(board(320, 290, "Board")).addParagraph("After"))) {
+            assertThat(document.getParagraphs()).as("no paragraph carries its text boxes")
+                    .allSatisfy(paragraph -> assertThat(boxesIn(paragraph)).isZero());
+            assertThat(document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0))
+                    .as("the table's cell does").satisfies(cell -> assertThat(boxesIn(cell)).isEqualTo(2));
+        }
+    }
+
+    private static void assertTheLineCarriesThemAll(Consumer<PageFlowBuilder> content) throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 400, MARGIN, content)) {
+            XWPFParagraph line = paragraphBefore(document, "After");
+            assertThat(line.getCTP().getPPr().getSpacing().getLineRule().toString()).isEqualTo("exact");
+            assertThat(DocxTwips.of(line.getCTP().getPPr().getSpacing().getLine())).as("the canvas's whole height")
+                    .isEqualTo(310 * 20L);
+            assertThat(boxesIn(line)).as("the canvas's two text boxes and the sidebar's, on their page")
+                    .isEqualTo(3);
+            assertThat(before(paragraphNamed(document, "After"))).as("no room owed above the next page's paragraph")
+                    .isZero();
+        }
+        assertThat(DocxExports.report(400, 400, MARGIN, content).notes()).as("nothing dropped")
+                .noneMatch(note -> note.severity() == DocxExportReport.Severity.DROPPED);
+    }
+
+    @Test
+    void aParagraphOfSeveralLinesIsGivenRoomForItsWidestLineAsWordSetsIt() throws Exception {
+        // The layout places a paragraph set from its left as wide as its widest line: 192.77pt at
+        // 12pt, 197.59pt at 12.3pt, which the file writes as 12.5pt and Word sets wider. In a box
+        // two points wider than the page's widest line, Word 16 and LibreOffice 26.8 broke
+        // TwinOutputExample's 12.3pt lead a word sooner.
+        CTAnchor box = leadBox(leadIn(TextAlign.LEFT, 12.3, LEAD));
+        assertThat(box.getPositionH().getPosOffset()).as("set from where the page starts it")
+                .isEqualTo(Units.toEMU(MARGIN));
+        assertThat(widthOf(box)).as("its widest line as Word sets it, and the editor's couple of points")
+                .isCloseTo(197.5872 * 12.5 / 12.3 + 2, within(0.01));
+        assertThat(widthOf(leadBox(leadIn(TextAlign.LEFT, 12, LEAD)))).as("at a size Word sets as the page does")
+                .isCloseTo(192.768 + 2, within(0.01));
+    }
+
+    @Test
+    void aParagraphOfSeveralLinesIsGivenNoRoomForANextWord() throws Exception {
+        // Set in 142pt, its widest line is 140.85pt, and one line the page broke stands 143.19pt
+        // with the space and the word after it: the box stops a point short of that, not two
+        // points past the widest line. Two points more took "wrapped" onto a line the page broke
+        // 1.2pt short of it (CanvasLayerExample's citation, in Word 16 and LibreOffice 26.8).
+        assertThat(widthOf(leadBox(leadIn(TextAlign.LEFT, Double.NaN, 142)))).isCloseTo(143.192 - 1, within(0.01));
+    }
+
+    @Test
+    void aLineEndedAtALineBreakSetsNoLimit() throws Exception {
+        // "Short" ends at a line break, which Word writes as one: the next word fits beside it,
+        // and taken as a line the page broke short of that word, it held the box to the widest
+        // line with no room for an editor's face.
+        assertThat(widthOf(leadBox(leadIn(TextAlign.LEFT, 12, LEAD, "Lead short\n" + LEAD_TEXT))))
+                .as("as without the short line: the widest line and two points")
+                .isCloseTo(192.768 + 2, within(0.01));
+    }
+
+    @Test
+    void aCentredParagraphOfSeveralLinesKeepsItsWidthAndSpacesItsLetters() throws Exception {
+        assertThat(widthOf(leadBox(leadIn(TextAlign.RIGHT, 12.3, LEAD)))).as("a right-aligned one too")
+                .isEqualTo(LEAD);
+        CTAnchor box = leadBox(leadIn(TextAlign.CENTER, 12.3, LEAD));
+        assertThat(widthOf(box)).as("the measure the page broke it in, so no line takes another word")
+                .isEqualTo(LEAD);
+        assertThat(box.getPositionH().getPosOffset()).as("not moved to centre a wider box")
+                .isEqualTo(Units.toEMU(MARGIN));
+        assertThat(box.xmlText()).as("its letters drawn together to the page's width").contains("<w:spacing w:val=\"-");
+        assertThat(leadBox(leadIn(TextAlign.CENTER, 12, LEAD)).xmlText()).as("not at a size Word sets as the page does")
+                .doesNotContain("<w:spacing w:val=");
+    }
+
+    /** The width the lead's lines are broken in, in points. */
+    private static final double LEAD = 200;
+
+    /**
+     * A side-by-side canvas 400pt wide holding a lead of several lines, broken in the given
+     * width, at its corner, and a label right of it that starts above its foot.
+     *
+     * @param size its type size, or NaN for the default style's
+     */
+    private static XWPFDocument leadIn(TextAlign align, double size, double measure) throws Exception {
+        return leadIn(align, size, measure, LEAD_TEXT);
+    }
+
+    /** The lead's text, which opens with "Lead " for {@link #leadBox} to find it. */
+    private static final String LEAD_TEXT = "Lead one composition, one resolved layout graph, three backends: a "
+                                            + "print-ready file, a slide of the same geometry and a document "
+                                            + "written from it";
+
+    private static XWPFDocument leadIn(TextAlign align, double size, double measure, String text) throws Exception {
+        ParagraphBuilder builder = new ParagraphBuilder().name("Lead").align(align);
+        if (!Double.isNaN(size)) {
+            builder.textStyle(com.demcha.compose.document.style.DocumentTextStyle.builder().size(size).build());
+        }
+        DocumentNode lead = builder.text(text).margin(new DocumentInsets(0, 400 - measure, 0, 0)).build();
+        return DocxExports.withLayout(500, 400, MARGIN, page -> page.add(new CanvasLayerBuilder(400, 160).name("Board")
+                .position(new ShapeBuilder().name("Block").size(400, 160).fillColor(INK).build(), 0, 0)
+                .position(lead, 0, 10)
+                .position(paragraph("Label"), 250, 14)
+                .build()));
+    }
+
+    /** The text box holding the lead, read from a document closed once it is found. */
+    private static CTAnchor leadBox(XWPFDocument document) throws Exception {
+        try (document) {
+            return anchors(document).stream()
+                    .filter(anchor -> anchor.xmlText().contains("<w:txbxContent>") && anchor.xmlText().contains(">Lead "))
+                    .findFirst().orElseThrow();
+        }
+    }
+
+    private static double widthOf(CTAnchor anchor) {
+        return Math.round(anchor.getExtent().getCx() / (double) Units.EMU_PER_POINT * 100) / 100.0;
+    }
+
+    private static long before(XWPFParagraph paragraph) {
+        var properties = paragraph.getCTP().getPPr();
+        return properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetBefore()
+                ? 0 : DocxTwips.of(properties.getSpacing().getBefore());
+    }
+
+    private static XWPFParagraph paragraphNamed(XWPFDocument document, String text) {
+        return document.getParagraphs().stream().filter(paragraph -> ownText(paragraph).equals(text))
+                .findFirst().orElseThrow();
+    }
+
+    /** A sidebar laid over the flow, holding a line of its own. */
+    private static DocumentNode sidebar() {
+        return DocxExports.laidOverTheFlow(paragraph("Side"));
     }
 
     /** How many text boxes a paragraph carries. */

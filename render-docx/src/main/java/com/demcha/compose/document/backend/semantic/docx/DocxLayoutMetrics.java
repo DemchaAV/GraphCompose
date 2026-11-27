@@ -1914,6 +1914,24 @@ final class DocxLayoutMetrics {
         return nodesByPath().get(fragment.path()) instanceof com.demcha.compose.document.node.RowNode;
     }
 
+    /**
+     * The node a fragment belongs to: the node at its path, or at the nearest path holding it
+     * where the fragment draws a part of a node.
+     *
+     * @return the node, or {@code null} where no path holding the fragment's names a node
+     */
+    DocumentNode nodeOf(String fragmentPath) {
+        for (String path = fragmentPath; path != null; ) {
+            DocumentNode node = nodesByPath().get(path);
+            if (node != null) {
+                return node;
+            }
+            int cut = path.lastIndexOf('/');
+            path = cut > 0 ? path.substring(0, cut) : null;
+        }
+        return null;
+    }
+
     /** The nodes this index knows, by path, built when first asked. */
     private Map<String, DocumentNode> nodesByPath() {
         if (nodesByPath == null) {

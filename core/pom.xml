@@ -47,7 +47,7 @@
 
         <!-- Runtime / library dependencies -->
         <flexmark.version>0.64.8</flexmark.version>
-        <logback.version>1.6.6</logback.version>
+        <logback.version>1.6.8</logback.version>
         <lombok.version>1.18.48</lombok.version>
         <slf4j.version>2.0.20</slf4j.version>
 

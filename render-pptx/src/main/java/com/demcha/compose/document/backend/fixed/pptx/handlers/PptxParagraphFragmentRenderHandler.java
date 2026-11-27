@@ -79,7 +79,7 @@ public final class PptxParagraphFragmentRenderHandler
         // PowerPoint seats one shared baseline per paragraph using its largest
         // run, so one shared frame is only safe while every plain run agrees on
         // font size; chips, inline graphics, and mixed sizes go through
-        // per-span absolute frames whose tops already encode their own ascent.
+        // per-span absolute frames whose tops already encode their own seat.
         // A right-to-left line also goes per-span. The shared frame appends its runs and
         // lets PowerPoint flow them, which puts the words back in reading order and
         // undoes the ordering the layout resolved; an absolute frame per span pins each
@@ -139,9 +139,9 @@ public final class PptxParagraphFragmentRenderHandler
     }
 
     /**
-     * Returns the viewer ascent that will seat the shared frame's first
-     * baseline: PowerPoint uses the tallest run, so the frame top compensates
-     * with the largest viewer ascent among the line's plain runs.
+     * Returns the seat that will place the shared frame's first baseline:
+     * PowerPoint uses the tallest run, so the frame top compensates with the
+     * largest seat among the line's plain runs.
      */
     private static double sharedBoxViewerAscent(ParagraphLine line,
                                                 PptxRenderEnvironment environment) {

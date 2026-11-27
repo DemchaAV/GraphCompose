@@ -239,9 +239,9 @@ class PptxTableGeometryTest {
             case BOTTOM, DEFAULT -> innerY;
         };
         PdfFont.VerticalMetrics metrics = font.verticalMetrics(cell.style().textStyle());
-        // No custom metrics here, so the flags decide nothing: the mapped ratio is the same for
-        // either face. Passed explicitly because the formula no longer reads the face itself.
-        double viewerAscent = PptxViewerMetrics.ascentPoints(
+        // No custom metrics here, so the flags decide nothing: the seat comes from the face the
+        // page measured the style with. Passed explicitly because the formula takes the face.
+        double viewerAscent = PptxViewerMetrics.seatPoints(
                 cell.style().textStyle(), font, null, false, false);
         for (int lineIndex = 0; lineIndex < safeLines.size(); lineIndex++) {
             String line = safeLines.get(lineIndex);

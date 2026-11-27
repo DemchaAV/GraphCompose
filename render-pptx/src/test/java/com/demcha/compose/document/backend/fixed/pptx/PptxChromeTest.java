@@ -96,10 +96,11 @@ class PptxChromeTest {
     @Test
     void theWatermarkFrameOrbitsThePdfBaselineRotationPivot() throws Exception {
         // Hand-derived for DRAFT @ Helvetica-Bold 72pt, CENTER, 45° on a
-        // 480x320 page: text width = 3388/1000*72 = 243.936pt, Arial viewer
-        // ascent = 72*1854/2048 = 65.180pt, PDF baseline start
+        // 480x320 page: text width = 3388/1000*72 = 243.936pt, Arial's seat
+        // below the frame top = 72*1.2*1854/(1854 + 2288*7/32) = 68.034pt
+        // (PptxViewerMetricsTest works the rule), PDF baseline start
         // (118.032, 124) y-up. Orbiting the unrotated frame centre
-        // counter-clockwise about that point lands it at (191.315, 96.724)
+        // counter-clockwise about that point lands it at (189.297, 94.706)
         // in slide space; PowerPoint then rotates the frame -45 about its
         // own centre. A sign flip in the orbit math moves the centre by
         // tens of points, so this pins the placement, not just the angle.
@@ -116,8 +117,8 @@ class PptxChromeTest {
                 XSLFTextBox watermark = (XSLFTextBox) show.getSlides().get(0).getShapes().get(0);
                 assertThat(watermark.getShapeName()).isEqualTo("GraphCompose Watermark");
                 var anchor = watermark.getAnchor();
-                assertThat(anchor.getCenterX()).isCloseTo(191.315, within(0.05));
-                assertThat(anchor.getCenterY()).isCloseTo(96.724, within(0.05));
+                assertThat(anchor.getCenterX()).isCloseTo(189.297, within(0.05));
+                assertThat(anchor.getCenterY()).isCloseTo(94.706, within(0.05));
                 assertThat(watermark.getRotation()).isEqualTo(-45.0);
             }
         }

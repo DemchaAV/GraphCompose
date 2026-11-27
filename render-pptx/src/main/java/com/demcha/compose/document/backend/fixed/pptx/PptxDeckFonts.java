@@ -110,7 +110,7 @@ final class PptxDeckFonts {
             if (embedding != null && embedding.metrics() != null) {
                 // A family carried whole, or short only of a face held back for its licence:
                 // either way every face it carries is in the deck as it was handed over. The
-                // held-back style keeps that face's own ascent (PptxFontEmbedder says why).
+                // held-back style keeps that face's own seat (PptxFontEmbedder says why).
                 metrics.put(family.name(), embedding.metrics());
             }
             if (carried == PptxFontEmbedder.Carried.WHOLE) {
@@ -422,10 +422,11 @@ final class PptxDeckFonts {
      * offering all of them would be tens of megabytes and one offering a face it never
      * drew would pay megabytes for glyphs no slide contains.</p>
      *
-     * <p>Metrics are deliberately untouched. A registered family also contributes viewer
-     * metrics, which participate in layout; taking those from a bundled family now would
-     * move text in every deck that already renders correctly. This changes what the file
-     * carries, not where anything sits.</p>
+     * <p>No metrics are read here: this runs after the last slide is drawn, too late to seat
+     * anything. A bundled family's frames were seated as it was drawn, from the program the page
+     * measured it with ({@code PptxViewerMetrics.seatPoints}), which is the program this
+     * carries when it carries one. This changes what the file carries, not where anything
+     * sits.</p>
      *
      * <p>Call after the last run is drawn — the recorded face set is only complete then.</p>
      */

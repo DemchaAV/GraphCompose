@@ -149,18 +149,27 @@ class PptxViewerMetricsTest {
     /**
      * Arial's Windows metrics are 1854 over 434 units of 2048, above the share: the part below
      * is raised to 7/32 of 2288 = 500.5, so a 22pt Helvetica run, drawn in Arial, stands
-     * 22 × 1.2 × 1854 / 2354.5 = 20.788107878530475pt below its frame's top.
+     * 22 × 1.2 × 1854 / 2354.5 = 20.788107878530475pt below its frame's top. Times New Roman,
+     * 1825 over 443, also above: 22 × 1.2 × 1825 / (1825 + 2268 × 7/32) = 20.757175938391942pt.
+     * Courier New, 1705 over 615, is below the share, so its ascent is raised to 25/32 of 2320 =
+     * 1812.5: 22 × 1.2 × 1812.5 / 2427.5 = 19.711637487126673pt.
      */
     @Test
     void aStandardFourteenRunIsSeatedFromTheFacePowerPointDrawsItIn() throws Exception {
         try (PdfMeasurementResources measurement = PdfMeasurementResources.open(List.of())) {
-            PdfFont font = measurement.fontLibrary()
-                    .getFont(FontName.HELVETICA, PdfFont.class).orElseThrow();
-            TextStyle style = TextStyle.builder().fontName(FontName.HELVETICA).size(22).build();
-
-            assertThat(PptxViewerMetrics.seatPoints(style, font, null, false, false))
+            assertThat(standardSeat(measurement, FontName.HELVETICA))
                     .isCloseTo(20.788107878530475, Offset.offset(1e-9));
+            assertThat(standardSeat(measurement, FontName.TIMES_ROMAN))
+                    .isCloseTo(20.757175938391942, Offset.offset(1e-9));
+            assertThat(standardSeat(measurement, FontName.COURIER))
+                    .isCloseTo(19.711637487126673, Offset.offset(1e-9));
         }
+    }
+
+    private static double standardSeat(PdfMeasurementResources measurement, FontName name) {
+        PdfFont font = measurement.fontLibrary().getFont(name, PdfFont.class).orElseThrow();
+        TextStyle style = TextStyle.builder().fontName(name).size(22).build();
+        return PptxViewerMetrics.seatPoints(style, font, null, false, false);
     }
 
     /**

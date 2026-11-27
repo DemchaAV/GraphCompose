@@ -79,7 +79,7 @@ public final class PptxParagraphFragmentRenderHandler
         // PowerPoint seats one shared baseline per paragraph using its largest
         // run, so one shared frame is only safe while every plain run agrees on
         // font size; chips, inline graphics, and mixed sizes go through
-        // per-span absolute frames whose tops already encode their own ascent.
+        // per-span absolute frames whose tops already encode their own seat.
         // A right-to-left line also goes per-span. The shared frame appends its runs and
         // lets PowerPoint flow them, which puts the words back in reading order and
         // undoes the ordering the layout resolved; an absolute frame per span pins each

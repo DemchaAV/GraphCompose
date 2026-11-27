@@ -220,8 +220,9 @@ class PptxPreviewAndPrintFontTest {
                 .asString()
                 .contains("not carried whole");
 
-        // The faces it carries are in the deck as handed over, so the ascents they are seated by
-        // are kept; without them the family's text would be seated from the PDF descriptor.
+        // The faces it carries are in the deck as handed over, so the metrics they are seated by
+        // are kept; without them the family's text would be seated from the program the page
+        // measured it with, in the style's own face rather than the run's.
         PptxDeckFonts fonts = new PptxDeckFonts(new XMLSlideShow(), List.of(family));
         assertThat(fonts.viewerMetrics(FontName.of("Slab"))).isNotNull();
     }

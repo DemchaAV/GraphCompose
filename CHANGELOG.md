@@ -21,8 +21,8 @@ follow semantic versioning; release dates are ISO 8601.
     nor the glyph bounds move it. The rule puts every one of the 428 lines measured, 10pt to
     80pt, within 0.11pt of where PowerPoint drew it. In decks rendered with this change,
     PowerPoint's PDF export draws every line measured within 0.10pt of the page, and its slide
-    raster within a pixel. Across the 38 faces at
-    20pt, the mean distance falls from 2.18pt to 0.03pt.
+    raster within 0.35pt, about a pixel. Across the 38 faces at 20pt, the rule puts the mean
+    distance at 0.03pt, where the old seat was 2.18pt off.
   - A bundled family is seated from the program the page measured it with, which is the program
     the deck carries when it carries one. It used to be seated from the PDF descriptor's ascent,
     which is the `hhea` one.

@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 /** Builds the uncompressed EOT container required by PowerPoint font parts. */
 final class PptxEmbeddedFont {
@@ -25,6 +26,10 @@ final class PptxEmbeddedFont {
     private static final int MAC_STYLE_ITALIC_BIT = 0x0002;
     private static final int RESTRICTED_LICENSE_EMBEDDING = 0x0002;
     private static final int BITMAP_EMBEDDING_ONLY = 0x0200;
+    /** {@code fsType} bit 2: the face may be embedded to read and print, but not to edit. */
+    private static final int PREVIEW_AND_PRINT_EMBEDDING = 0x0004;
+    /** {@code fsType} bit 3: the face may be embedded in a document that is edited. */
+    private static final int EDITABLE_EMBEDDING = 0x0008;
     /**
      * The most of a container's header, in bytes, a presentation will read.
      *
@@ -396,12 +401,48 @@ final class PptxEmbeddedFont {
         return value == null || value.isBlank() ? fallback : value;
     }
 
+    /**
+     * Refuses a face whose own licence bits keep it out of a deck.
+     *
+     * <p>Three readings, in this order. Restricted ({@code 0x0002}) and bitmap-only
+     * ({@code 0x0200}) refuse the face as a plain {@link IOException}, which costs the caller
+     * the family. Preview-and-print ({@code 0x0004} without {@code 0x0008}) is the reading the
+     * DOCX backend makes of the same bits: such a face may travel in a file that is only read
+     * and printed, and a deck is a file people edit. It is refused as a
+     * {@link PreviewAndPrintOnlyException}, so the caller can hold back that one face and still
+     * carry the rest of its family. A font that sets none of these restricts nothing, and
+     * neither does zero.</p>
+     *
+     * @see <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/os2#fstype">
+     *      OpenType OS/2 fsType</a>
+     */
     private static void validateEmbeddingRights(int fsType) throws IOException {
         if ((fsType & RESTRICTED_LICENSE_EMBEDDING) != 0) {
             throw new IOException("Font license flags prohibit embedding in PPTX");
         }
         if ((fsType & BITMAP_EMBEDDING_ONLY) != 0) {
             throw new IOException("Font license flags permit bitmap embedding only");
+        }
+        if ((fsType & PREVIEW_AND_PRINT_EMBEDDING) != 0 && (fsType & EDITABLE_EMBEDDING) == 0) {
+            throw new PreviewAndPrintOnlyException(fsType);
+        }
+    }
+
+    /**
+     * A face whose licence lets it be embedded for reading and printing only, which a deck,
+     * being a file people edit, does not carry.
+     *
+     * <p>A type of its own because it refuses only that face. The other refusals
+     * {@link #wrap} makes cost the caller the whole family.</p>
+     */
+    static final class PreviewAndPrintOnlyException extends IOException {
+
+        private static final long serialVersionUID = 1L;
+
+        private PreviewAndPrintOnlyException(int fsType) {
+            super(String.format(Locale.ROOT, "Font license flags (OS/2 fsType 0x%04X) "
+                    + "permit embedding for preview and print only, which an editable deck "
+                    + "does not carry", fsType));
         }
     }
 

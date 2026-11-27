@@ -7,6 +7,26 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A PPTX deck no longer carries a font face whose licence allows embedding for preview and
+  print only.**
+  - A face whose `OS/2` `fsType` sets bit `0x0004` (preview and print) without `0x0008`
+    (editable) may travel in a file that is read and printed, not in one people edit. The DOCX
+    export has never shipped such a face. A PPTX deck carried it, and now holds it back: **this
+    changes the bytes of every deck that draws such a bundled face or registers a family holding
+    one.**
+  - Only that face is held back. The family's other faces travel as before, and a registered
+    family keeps the viewer metrics its text is seated by. The log names the face
+    (`render.pptx.font.embed.skipped`, with its source and its `fsType`) and says the family could
+    not be embedded whole (`render.pptx.font.substitution`). A family whose every face is held back
+    is not declared embedded at all.
+  - Of the 130 bundled faces, `ZillaSlab-BoldItalic` is the only one this reaches. A deck that
+    draws Zilla Slab in bold italic now carries three Zilla Slab faces, not four. A deck that draws
+    Zilla Slab only in its other styles is unchanged, and no example or committed preview draws it.
+  - Measured in PowerPoint 16 on a machine without Zilla Slab, at 24pt: the bold-italic line was
+    drawn from its own face at 428.06pt, against the page's 428.35pt. It is now drawn from the
+    italic face, emboldened by PowerPoint, at 414.34pt. The other three styles did not move.
+  - A face whose bits forbid embedding (`0x0002`) or allow bitmaps only (`0x0200`) is refused as
+    before, and still costs the whole family.
 - **A DOCX text box of several lines breaks its lines where the page does.**
   - A paragraph of several lines that a canvas written over its page, or a node laid over the
     flow, sets in a text box had a box two points wider than the page placed it. Two cases broke

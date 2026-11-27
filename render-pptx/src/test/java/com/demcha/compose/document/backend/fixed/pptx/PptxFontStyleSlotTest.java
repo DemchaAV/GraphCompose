@@ -413,7 +413,15 @@ class PptxFontStyleSlotTest {
                 try (InputStream stream = source.openStream()) {
                     face = stream.readAllBytes();
                 }
-                String taken = bySlot.putIfAbsent(slotOf(face), source.description());
+                String slot;
+                try {
+                    slot = slotOf(face);
+                } catch (PptxEmbeddedFont.PreviewAndPrintOnlyException heldBack) {
+                    // Not a face the embedder can take: it is held back before it reaches a
+                    // slot, so it cannot collide (PptxPreviewAndPrintFontTest counts it).
+                    continue;
+                }
+                String taken = bySlot.putIfAbsent(slot, source.description());
                 if (taken != null) {
                     colliding.computeIfAbsent(family.name().name(), key -> new ArrayList<>())
                             .add(taken + " and " + source.description());

@@ -13,12 +13,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Carries font families into a presentation: reads every face a family is to travel with,
- * refuses it whole where a face cannot travel, claims its style slots in the render's
+ * refuses it whole where a face cannot travel (holding back only the face where its licence
+ * is preview-and-print), claims its style slots in the render's
  * {@link PptxSlotLedger} and hands the programs to the presentation.
  *
  * <p>Stateless: what a render remembers between families lives in the ledger and in
@@ -37,15 +39,17 @@ final class PptxFontEmbedder {
      *
      * <p>Three answers rather than whether the family travelled, because the two ways of not
      * travelling leave different decks and the reader is told different things about them.
-     * Every refusal a font can provoke arrives while the presentation is still untouched — a face
+     * One refusal a font can provoke costs a face and not the family: a face whose licence allows
+     * embedding for preview and print only is held back, and the family travels without it, which
+     * is {@link #PART}. Every other one arrives while the presentation is still untouched — a face
      * that cannot be read, one whose licence bits forbid embedding, a header the presentation
      * could not read back, two of the family's faces reading back as one style slot, a face
      * arriving into a slot another family holds, the viewer metrics — and leaves nothing of the
-     * family: {@link #NONE}. Only the presentation refusing a face it has been handed leaves
-     * what it took before the refusal, which is {@link #PART}, and what is left of that refusal
-     * is POI's own part store failing (see {@link #handOverPrograms}): the presentation's first
-     * read of a face, {@code FontHeader.bufferInit}, reads only the header, which
-     * {@link PptxEmbeddedFont} has already measured against it.</p>
+     * family: {@link #NONE}. The presentation refusing a face it has been handed is the
+     * other {@link #PART}: it keeps what it took before the refusal, and what is left of that
+     * refusal is POI's own part store failing (see {@link #handOverPrograms}). The
+     * presentation's first read of a face, {@code FontHeader.bufferInit}, reads only the header,
+     * which {@link PptxEmbeddedFont} has already measured against it.</p>
      */
     enum Carried {
         /** Every face the family was offered with is in the deck. */
@@ -53,8 +57,10 @@ final class PptxFontEmbedder {
         /** Nothing of the family is: it was refused before the presentation was handed a face. */
         NONE,
         /**
-         * The presentation refused a face it was handed, and keeps what it took before that — the
-         * declaration at least, and any face handed over first.
+         * Some of the family is in the deck and not all of it. Either a face was held back for a
+         * preview-and-print licence and every other face travelled, or the presentation refused
+         * a face it was handed and keeps what it took before that: the declaration at least, and
+         * any face handed over first.
          */
         PART
     }
@@ -64,7 +70,8 @@ final class PptxFontEmbedder {
      *
      * @param carried how much of the family the deck holds
      * @param metrics the viewer metrics its text is seated by; {@code null} unless the family
-     *                travelled whole
+     *                travelled whole, or travelled short only of a face held back for its
+     *                licence
      */
     record Embedding(Carried carried, PptxViewerMetrics.ViewerFontMetrics metrics) {
         private static final Embedding NONE = new Embedding(Carried.NONE, null);
@@ -82,6 +89,10 @@ final class PptxFontEmbedder {
      * the refusal arrives; this answers how much of the family the deck holds
      * instead, and names the face in the log.
      *
+     * <p>A face whose licence allows embedding for preview and print only costs the deck that
+     * face and nothing else: the family travels without it, with its metrics, as
+     * {@link Carried#PART}. See {@link #readPrograms}.</p>
+     *
      * <p>One answer covers the program and the metrics, because a family that
      * travels without them is seated from the PDF descriptor's ascent instead,
      * which for some faces is not the ascent the viewer uses. A family the page
@@ -92,9 +103,10 @@ final class PptxFontEmbedder {
      *
      * <p>A fourth refuses the family too: a face arriving into a style slot another family
      * already holds under the same declared name. The caller does not tell those that answer here
-     * apart by cause: an unreadable or forbidden face, the viewer metrics and the slot are each
-     * {@link Carried#NONE}, the presentation being untouched when they arrive, and the
-     * presentation refusing a face is {@link Carried#PART}. Which line the caller writes for a
+     * apart by cause: an unreadable face, a restricted or bitmap-only one, the viewer metrics and
+     * the slot are each {@link Carried#NONE}, the presentation being untouched when they arrive,
+     * while a face held back for a preview-and-print licence and the presentation refusing a face
+     * are each {@link Carried#PART}. Which line the caller writes for a
      * family not carried whole is decided by what the deck
      * carries under the family's declared name once every registration has been read — see
      * {@code PptxDeckFonts.warnRegisteredFamilyNotCarried} — so a family sharing a name in a
@@ -102,7 +114,7 @@ final class PptxFontEmbedder {
      * for the slot, and in either order of registration.</p>
      *
      * @return how much of the family the deck holds, with its viewer metrics where it travelled
-     *         whole
+     *         whole or short only of a face held back for its licence
      */
     static Embedding embedFontFamilyWithMetrics(
             XMLSlideShow show,
@@ -157,7 +169,12 @@ final class PptxFontEmbedder {
         // family's name to go by. An absent entry says exactly that, so nothing has to be undone
         // on the way out of a refusal.
         carriedSlots.put(family.name(), Set.copyOf(read.slots().keySet()));
-        return new Embedding(Carried.WHOLE, viewerMetrics);
+        // A family short of a face held back for its licence keeps its metrics: every face it
+        // carries is in the deck as handed over, so for those faces they are the ascents its
+        // text is drawn with. The held-back style is still seated from that face's own ascent;
+        // how far that is from the face a viewer draws instead was not measured in general
+        // (Zilla Slab's italic and bold-italic faces state the same ascents).
+        return new Embedding(read.whole() ? Carried.WHOLE : Carried.PART, viewerMetrics);
     }
 
     /**
@@ -172,7 +189,8 @@ final class PptxFontEmbedder {
      * <p>Embedding is best-effort here as it is for a registered family: a face whose
      * licence bits forbid embedding, or whose bytes cannot be read, costs the deck the
      * font program rather than the render, and this answers {@link Carried#NONE} with the face
-     * named in the log.</p>
+     * named in the log. A face held back for a preview-and-print licence costs only that face,
+     * and this answers {@link Carried#PART} for a family that carries the rest.</p>
      *
      * <p>The bundled families take this road, and deliberately get no metrics: see
      * {@link PptxDeckFonts#embedBundledFontsUsed()}. A family a caller registered goes through
@@ -191,7 +209,8 @@ final class PptxFontEmbedder {
             return Carried.NONE;
         }
         claimSlotsAndReportSharing(ledger, family, read.slots());
-        return handOverPrograms(show, family, read.programs()) ? Carried.WHOLE : Carried.PART;
+        return handOverPrograms(show, family, read.programs()) && read.whole()
+                ? Carried.WHOLE : Carried.PART;
     }
 
     /**
@@ -212,6 +231,16 @@ final class PptxFontEmbedder {
      * restricted face carries neither, where it used to carry the first. It does not hold
      * for the presentation refusing a face it is handed: see {@link #handOverPrograms}.</p>
      *
+     * <p>Nor for a face whose licence allows embedding for preview and print only
+     * ({@code fsType} bit {@code 0x0004} without {@code 0x0008}), which is held back on its own
+     * and named in the log, while the family's other faces are read and carried. That is the
+     * DOCX backend's reading of the same bits, and it refuses per face there too. Nothing is
+     * wrong with such a face except that a deck is a file people edit, so it is not a reason to
+     * keep its family's other faces out. Of the 130 bundled faces, {@code ZillaSlab-BoldItalic}
+     * is the only one this reaches. A family all of whose offered faces are held back answers
+     * {@code null}, as a refusal does, so the presentation never declares a family it carries
+     * no face of.</p>
+     *
      * <p>One refusal is the family's rather than a face's, and belongs here for that
      * reason: a presentation seats a face in one of four style slots, chosen off the
      * container, and holds one face in each. Two faces of a family that read back as the
@@ -226,10 +255,11 @@ final class PptxFontEmbedder {
      * is read from. Refused for the family rather than the face for the reason the other
      * refusals here have on the registered path — keeping the first would leave the family
      * its viewer metrics while a face of it did not travel — and, on the bundled path,
-     * which has no metrics to keep, because this method answers whole-or-nothing for a
-     * family either way: a refusal here leaves nothing of it, which is what the caller's
-     * substitution warning then says, and a deck carrying some of a family is left to the
-     * one refusal that can still arrive after the presentation is handed it.</p>
+     * which has no metrics to keep, because a refusal here answers nothing for a family
+     * either way: it leaves nothing of it, which is what the caller's substitution warning
+     * then says. A deck carrying some of a family is left to a face held back for its licence,
+     * which is not a fault of the family's, and to the one refusal that can still arrive
+     * after the presentation is handed it.</p>
      *
      * <p>The slot's capacity belongs to the <em>declared</em> family name rather than to a
      * definition, so the same refusal answers for two definitions that share one. Two
@@ -284,7 +314,7 @@ final class PptxFontEmbedder {
      * their bytes as well.</p>
      *
      * @return the wrapped programs and the slots they would take, or {@code null} where a
-     *         face refused
+     *         face refused or every face was held back
      */
     private static FamilyPrograms readPrograms(FontFamilyDefinition family,
                                                FontFamilyDefinition.FontSourceSet sources,
@@ -294,6 +324,9 @@ final class PptxFontEmbedder {
         FontName familyName = family.name();
         Map<String, byte[]> programs = new LinkedHashMap<>();
         Map<String, Seated> bySlot = new LinkedHashMap<>();
+        // The faces held back for their licence, by source description, so a source the
+        // family repeats across faces is named once, as one it carries is embedded once.
+        Set<String> heldBack = new LinkedHashSet<>();
         for (FontFamilyDefinition.FontBinarySource source
                 : faces.stream().map(face -> face.in(sources)).toList()) {
             // Named before it is read, so a source that cannot even say what it is still
@@ -306,7 +339,7 @@ final class PptxFontEmbedder {
             String description = "<unnamed>";
             try {
                 description = source.description();
-                if (programs.containsKey(description)) {
+                if (programs.containsKey(description) || heldBack.contains(description)) {
                     continue;
                 }
                 byte[] program;
@@ -404,6 +437,15 @@ final class PptxFontEmbedder {
                 }
                 bySlot.put(style.slot(), new Seated(familyName, description, style.weight()));
                 programs.put(description, container);
+            } catch (PptxEmbeddedFont.PreviewAndPrintOnlyException previewOnly) {
+                // The one refusal that costs the face and not the family, as the DOCX backend
+                // reads the same bits: nothing about the face is wrong for the deck except its
+                // licence, so the family's other faces travel and only this one is named. It
+                // is caught before it reaches a slot, so it claims none, and the faces read
+                // after it are checked against the slots the carried faces take.
+                LOG.warn("render.pptx.font.embed.skipped family={} source={} reason={}",
+                        family.name().name(), description, previewOnly.getMessage());
+                heldBack.add(description);
             } catch (IOException | RuntimeException exception) {
                 // A source may fail unchecked: the classpath one reports a missing resource
                 // with an IllegalArgumentException. Named here and the family degrades, as
@@ -414,7 +456,13 @@ final class PptxFontEmbedder {
                 return null;
             }
         }
-        return new FamilyPrograms(programs, bySlot);
+        if (programs.isEmpty()) {
+            // Every face offered was held back. Handing over nothing would still make the
+            // presentation declare the family, through the XSLFFontInfo constructor, so this
+            // answers as a refusal does and the deck is left untouched.
+            return null;
+        }
+        return new FamilyPrograms(programs, bySlot, heldBack.isEmpty());
     }
 
     /**
@@ -472,8 +520,11 @@ final class PptxFontEmbedder {
      *
      * @param programs the containers by source description, in the order they were read
      * @param slots    the face taking each style slot, for the ledger the caller claims in
+     * @param whole    whether every face offered is among {@code programs}, which is false
+     *                 where a face was held back for a preview-and-print licence
      */
-    private record FamilyPrograms(Map<String, byte[]> programs, Map<String, Seated> slots) {
+    private record FamilyPrograms(Map<String, byte[]> programs, Map<String, Seated> slots,
+                                  boolean whole) {
     }
 
     /**

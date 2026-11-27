@@ -41,7 +41,7 @@
         <junit.bom.version>6.1.3</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
         <mockito.version>5.24.0</mockito.version>
-        <logback.version>1.6.6</logback.version>
+        <logback.version>1.6.8</logback.version>
         <pdfbox.version>3.0.8</pdfbox.version>
         <javafx.version>21.0.13</javafx.version>
         <!-- ArchUnit for the cross-module boundary guards below. Roughly in step

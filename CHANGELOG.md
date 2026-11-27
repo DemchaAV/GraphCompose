@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v2.5.2 — Planned
+## v2.5.2 — 2026-11-26
 
 - **Side-by-side text on a simple canvas of shapes and paragraphs lands in Word where the PDF puts
   it.**

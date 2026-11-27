@@ -2,10 +2,10 @@
 skillId: graphcompose-api-surface
 targetLibrary: GraphCompose
 targetVersion: 2.5.x
-verifiedAgainst: 2.5.2-SNAPSHOT
+verifiedAgainst: 2.5.2
 status: active
 generator: knowledge/tools/api-surface/extract-api.mjs
-generatedFrom: "io.github.demchaav:graph-compose-core:2.5.2-SNAPSHOT, io.github.demchaav:graph-compose-templates:2.5.2-SNAPSHOT, io.github.demchaav:graph-compose-render-pdf:2.5.2-SNAPSHOT, io.github.demchaav:graph-compose-render-docx:2.5.2-SNAPSHOT, io.github.demchaav:graph-compose-render-pptx:2.5.2-SNAPSHOT, io.github.demchaav:graph-compose-testing:2.5.2-SNAPSHOT"
+generatedFrom: "io.github.demchaav:graph-compose-core:2.5.2, io.github.demchaav:graph-compose-templates:2.5.2, io.github.demchaav:graph-compose-render-pdf:2.5.2, io.github.demchaav:graph-compose-render-docx:2.5.2, io.github.demchaav:graph-compose-render-pptx:2.5.2, io.github.demchaav:graph-compose-testing:2.5.2"
 note: "Generated from the pinned artifact's class files. Authoritative closed set: a symbol absent here does not exist for this version. Regenerate, do not hand-edit."
 ---
 
@@ -26,7 +26,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 > Ask it a question instead of reading it:
 > `node knowledge/tools/api-query/api-query.mjs --search <term>`.
 
-**GraphCompose version:** 2.5.2-SNAPSHOT
+**GraphCompose version:** 2.5.2
 
 Types: 266 · methods: 1475 · constants: 201 · compiler-generated members: 807
 

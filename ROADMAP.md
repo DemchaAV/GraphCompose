@@ -8,7 +8,7 @@ The live threads are tracked in [issues](https://github.com/DemchaAV/GraphCompos
 
 ## Current stable — 2.5
 
-**2.5.1** is the current release. From this line **PDF, PowerPoint and Word are three full
+**2.5.2** is the current release. From this line **PDF, PowerPoint and Word are three full
 outputs** of one document. It leads with a **DOCX export that writes the page the engine
 laid out**: the line heights, column widths and space round each block the page has, real
 Word lists, drawings anchored so they move with the text above them, rules, icons,

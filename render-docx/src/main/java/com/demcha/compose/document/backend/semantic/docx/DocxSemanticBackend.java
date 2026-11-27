@@ -455,8 +455,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private int slotDepth;
     // The blocks something is written after in the flow they stand in.
     private final java.util.Set<DocumentNode> followedInFlow = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
-    // The space a canvas whose blocks read down places above each block it writes (spaceItsBlocksAsPlaced).
-    private final java.util.Map<DocumentNode, Double> spaceAboveInItsCanvas = new java.util.IdentityHashMap<>();
+    // The space a canvas whose blocks read down places above each block it writes, one entry for
+    // each place in turn (spaceItsBlocksAsPlaced).
+    private final java.util.Map<DocumentNode, java.util.Deque<Double>> spaceAboveInItsCanvas =
+            new java.util.IdentityHashMap<>();
     // How far in from its left and right edges a canvas whose blocks read down places each block it
     // writes, one entry for each place in turn (holdItsBlocksAcross).
     private final java.util.Map<DocumentNode, java.util.Deque<double[]>> edgesInItsCanvas =
@@ -10193,7 +10195,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (index > 0 && spacing > 0 && !breaksThePage(child)) {
                 owePendingSpacingAfter(spacing);
             }
-            Double placedBelow = spaceAboveInItsCanvas.remove(child);
+            java.util.Deque<Double> spacesAbove = spaceAboveInItsCanvas.get(child);
+            Double placedBelow = spacesAbove == null ? null : spacesAbove.poll();
             if (placedBelow != null) {
                 owePendingSpacingAfter(placedBelow);
             }
@@ -22008,8 +22011,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (onlyDrawn(child.node())) {
                 continue;
             }
-            // A block placed twice takes the space above its first place, the one written first.
-            spaceAboveInItsCanvas.putIfAbsent(child.node(), spaces.next() - taken);
+            // A block placed twice is written at each place, each copy with its own space above:
+            // taken as one, the second stood as much higher as it is placed below the first.
+            spaceAboveInItsCanvas.computeIfAbsent(child.node(), written -> new java.util.ArrayDeque<>())
+                    .add(spaces.next() - taken);
             taken = 0;
         }
     }
@@ -22054,7 +22059,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Whether a canvas whose blocks read down holds them across ({@link #holdItsBlocksAcross}): not
-     * in a table cell or a painted panel, whose text Word keeps inside it.
+     * in a table cell or a painted panel — a row's column and a layer stack's column among them —
+     * whose text Word keeps inside it, so a block the page sets past the cell's edge stands at it.
+     * There they are written at the canvas's left edge, as a stack's one layer moved across is, and
+     * how far across is named ({@link #canvasLosses}).
      */
     private boolean holdsItsBlocksAcross() {
         return currentCell == null;

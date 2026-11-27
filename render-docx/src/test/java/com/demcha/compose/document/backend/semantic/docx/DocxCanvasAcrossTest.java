@@ -42,10 +42,10 @@ import static org.assertj.core.api.Assertions.within;
  *
  * <p>Written from the canvas's left edge, each block stood as far left of where the page sets it
  * as the canvas placed it across, and its text broke at the width of the column the canvas
- * stands in rather than at the canvas's own. Each block is now held in from where the layout
- * places it to the width the canvas lays it out in — the canvas's own, its margins taken off, or
- * the width the block sets itself — where the page breaks its lines. In a table cell it is
- * written at the canvas's left edge, as before, and named.</p>
+ * stands in rather than at the canvas's own. Each block is now held in as far as the canvas
+ * places it, to the width the canvas lays it out in — the canvas's own, its margins taken off, or
+ * the width the block sets itself — where the page breaks its lines. In a table cell or a painted
+ * panel it is written at the canvas's left edge, as before, and named.</p>
  *
  * <p>Each expected place is the page's, read from the layout's placements, or the difference two
  * layouts make; each Word place is read from the file — a paragraph's indents, a table's.</p>
@@ -185,6 +185,17 @@ class DocxCanvasAcrossTest {
                         second -> assertThat(second).isCloseTo(60, within(0.05)),
                         third -> assertThat(third).isCloseTo(150, within(0.05)));
         assertThat(exported.report().bySubject()).doesNotContainKey("CanvasLayerNode");
+
+        // And as far down: the second copy keeps the space above its own place, as a second block
+        // set there does. Taken as one with the first's, it stood that much higher.
+        Exported apart = export(page -> page
+                .addCanvas(300, 120, canvas -> canvas
+                        .position(paragraph("Once", "Twice", TextAlign.LEFT), 30, 0)
+                        .position(paragraph("Again", "Again", TextAlign.LEFT), 60, 60))
+                .addParagraph("Below"));
+        double apartAbove = before(paragraphOf(apart.document(), "Again"));
+        assertThat(apartAbove).as("a block 60pt down the canvas, under one line").isGreaterThan(40);
+        assertThat(before(copies.get(1))).as("the second copy's space above").isCloseTo(apartAbove, within(0.05));
     }
 
     @Test
@@ -280,6 +291,13 @@ class DocxCanvasAcrossTest {
     private static double right(XWPFParagraph paragraph) {
         CTInd ind = indOf(paragraph);
         return ind == null || !ind.isSetRight() ? 0 : DocxTwips.of(ind.getRight()) / 20.0;
+    }
+
+    /** A paragraph's space above, in points. */
+    private static double before(XWPFParagraph paragraph) {
+        var properties = paragraph.getCTP().getPPr();
+        return properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetBefore() ? 0
+                : DocxTwips.of(properties.getSpacing().getBefore()) / 20.0;
     }
 
     private static CTInd indOf(XWPFParagraph paragraph) {

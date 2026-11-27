@@ -1351,9 +1351,10 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   point short of a line the page broke with the word it broke before, but never narrower than
   that widest line. Centred or right-aligned, it keeps the measure the page broke it in, its
   letters spaced to the page's width where Word sets them a point or more off, as in the flow.
-  A node laid over the flow on the canvas's page — a sidebar its margins give no room —
-  writes no paragraph there either, so a canvas that shares its page only with such nodes still
-  holds its room in a line of its own, which carries their text boxes too. A link, a
+  A block of the canvas's own flow laid over that flow on its page — a sidebar its margins give
+  no room — writes no paragraph there either, so a canvas that shares its page only with such
+  blocks still holds its room in a line of its own, which carries their text boxes too, and a
+  page break after them on that page goes in the line. A link, a
   bookmark, an anchor, a picture, a table, a list, a spacer, a chart, a barcode, a row, a nested
   canvas or a transformed block it holds keeps the canvas written as its contents, as does a
   canvas spanning two pages, or in a table cell, a painted panel, a band, another overlay or a

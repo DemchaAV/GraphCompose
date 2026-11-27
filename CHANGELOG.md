@@ -18,7 +18,7 @@ follow semantic versioning; release dates are ISO 8601.
     box as wide as that line as Word sets it, at its size to the half point. The box keeps two
     points more for an editor's face, but stops a point short of a line the page broke with the
     word it broke before, and is never narrower than that widest line. A line ended at a line
-    break sets no such limit.
+    break, whose next word fits beside it within the widest line, sets no such limit.
   - A centred or right-aligned one keeps the measure the page broke it in. Its letters are spaced
     so Word sets its lines as wide as the page does, as they are in the flow.
   - Both examples now set every line where the page does, within 0.6pt by baseline: all 43 of
@@ -31,11 +31,12 @@ follow semantic versioning; release dates are ISO 8601.
     paragraph opening the next page, and nothing on the canvas's own page carried what it draws.
     Word 16 and LibreOffice 26.8 dropped the canvas's text boxes, the shape it draws and the
     sidebar's text box, and the document came out a page short.
-  - Such a node, written before the canvas or after it, no longer counts. The line holds the
+  - Such a node in the canvas's own flow, written before the canvas or after it, no longer
+    counts. The line holds the
     canvas's room and carries every text box on the page, and both editors set them within 0.3pt
     of the page.
-  - A page break after such a sidebar now goes in the canvas's line, as it already did right
-    after the canvas. In a paragraph of its own under the line it stood on the next page and broke
+  - A page break after such a sidebar on the canvas's page now goes in the canvas's line, as it
+    already did right after the canvas. In a paragraph of its own under the line it stood on the next page and broke
     it again, three pages for two in both editors.
   - A table sharing the page still counts. Its cell's paragraph carries the text boxes, placed
     from the page's edge, and both editors set them where the page does.

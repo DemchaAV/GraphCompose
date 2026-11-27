@@ -232,8 +232,8 @@ the `DocxExportReport` carries what it costs as an
   always named in a note, with each paragraph it sets in a text
   box. A canvas over two
   pages, in a table cell, a painted panel, a band, a stack of
-  one layer or another overlay, or holding anything else, takes
-  the first route.
+  one layer or another overlay, holding anything else, or
+  exported with no layout, takes the first route.
 
 The PDF behaviour, the node and the decision itself are
 unchanged. The DOCX routes in full are in the layer-stack entry

@@ -371,6 +371,26 @@ class DocxCanvasOverItsPageTest {
     }
 
     @Test
+    void aPageBreakAfterACanvasOnALaterPageKeepsItsOwnParagraph() throws Exception {
+        // A canvas of drawings alone, on the next page, writes no block between the line and the
+        // break: taken into the line on the first page, the break left the next page's drawing to a
+        // paragraph standing on the first. In its own paragraph it carries that drawing on its page.
+        try (XWPFDocument document = DocxExports.withLayout(400, 400, MARGIN, page -> page
+                .add(board(320, 310, "Board"))
+                .add(new CanvasLayerBuilder(320, 200).name("Drawn")
+                        .position(new ShapeBuilder().name("Disc").size(120, 120).fillColor(INK).build(), 40, 40)
+                        .build())
+                .addPageBreak(b -> b.name("Break")).addParagraph("After"))) {
+            XWPFParagraph line = document.getParagraphs().get(0);
+            assertThat(boxesIn(line)).as("the line carries the first canvas's text").isEqualTo(2);
+            assertThat(line.getCTP().xmlText()).as("but not the break").doesNotContain("w:type=\"page\"");
+            XWPFParagraph pageBreak = paragraphBefore(document, "After");
+            assertThat(pageBreak.getCTP().xmlText()).as("the break in a paragraph of its own")
+                    .contains("w:type=\"page\"").contains("<wp:anchor");
+        }
+    }
+
+    @Test
     void aTableSharingItsPageStillCounts() throws Exception {
         // A table's cell paragraph carries the text boxes, placed from the page's edge, and both
         // editors set them where the page does: the canvas holds no line of its own there.

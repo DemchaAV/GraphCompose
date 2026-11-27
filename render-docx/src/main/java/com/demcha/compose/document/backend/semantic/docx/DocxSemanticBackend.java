@@ -738,12 +738,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private long blocksAtTheLastBreak = -1;
 
     /**
-     * The line holding the room of a canvas written over its page, and {@link #blocksWritten}
-     * once it was written: a page break written right after it, with no block between, goes in
-     * that line ({@link #writePageBreak}). {@code null} where there is none.
+     * The line holding the room of a canvas written over its page, {@link #blocksWritten} once it
+     * was written, and the page it stands on: a page break written right after it, with no block
+     * written between and nothing placed on a later page, goes in that line
+     * ({@link #writePageBreak}). {@code null} where there is none.
      */
     private XWPFParagraph roomLineBeforeABreak;
     private long blocksAtTheRoomLine = -1;
+    private int pageOfTheRoomLine = -1;
 
     /** Space the last body paragraph holds below itself, not yet written — see {@link #owePendingSpacingAfter}. */
     private double pendingSpacingAfter;
@@ -12573,8 +12575,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * of taking up the next line's first word ({@link #twentiethsToThePage}) — and so is a short
      * line, whose
      * box has room for it: measured, {@code MerchantInvoice}'s centred amounts, their cells'
-     * indents taken past the cells' edges, stood 0.12pt off their place. A list's items, a line pair, text over the flow and
-     * a header's or footer's line are written elsewhere and keep the page's measure.</p>
+     * indents taken past the cells' edges, stood 0.12pt off their place. A list's items, a line pair
+     * and a header's or footer's line are written elsewhere and keep the page's measure; text over
+     * the flow is set in a text box sized for it ({@link #writeTextOverTheFlow}).</p>
      *
      * @param room the width the paragraph's text is written in, in points
      */
@@ -22110,11 +22113,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         pendingSpacingAfter = owed;
         if (roomLine != null) {
             // A page break next goes in its line (writePageBreak), unless a block is written in
-            // between, which the count of blocks tells. Followed by a sidebar laid over the flow,
-            // which writes none, the break was a paragraph of its own under the line and stood on
-            // the next page: a blank page in Word 16 and LibreOffice 26.8.
+            // between, which the count of blocks tells, or something is placed on a later page — a
+            // canvas of drawings alone there writes no block. Followed by a sidebar laid over the
+            // flow, which writes none, the break was a paragraph of its own under the line and stood
+            // on the next page: a blank page in Word 16 and LibreOffice 26.8.
             roomLineBeforeABreak = roomLine;
             blocksAtTheRoomLine = blocksWritten;
+            pageOfTheRoomLine = layout.placement(canvas).endPage();
         }
     }
 
@@ -24718,7 +24723,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // its own, under a line filling its page, stood on the next page and broke it again — a
         // blank page between two canvases each filling one, in Word 16 and LibreOffice 26.8.
         boolean inTheRoomLine = roomLineBeforeABreak != null && blocksWritten == blocksAtTheRoomLine
-                                && currentCell == null;
+                                && lastEndPage == pageOfTheRoomLine && currentCell == null;
         XWPFParagraph para = inTheRoomLine ? roomLineBeforeABreak : document.createParagraph();
         roomLineBeforeABreak = null;
         blocksWritten++;

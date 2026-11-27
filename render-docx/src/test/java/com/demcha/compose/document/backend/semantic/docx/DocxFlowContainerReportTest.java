@@ -39,16 +39,22 @@ class DocxFlowContainerReportTest {
 
     @Test
     void aCanvasNamesThePlacesAndWidthItIsWrittenWithout() throws Exception {
-        // Its room is held under what it writes (DocxCanvasRoomTest).
+        // Its room is held under what it writes (DocxCanvasRoomTest). Its second block starts above
+        // the foot of the first, out of reading order, and a list keeps it from being written over
+        // its page: written as its contents, one block after another from its corner. A canvas
+        // whose blocks read down sets each where it places it (DocxCanvasAcrossTest).
         DocxExportReport report = reportOf(page -> page
-                .addCanvas(200, 120, canvas -> canvas.position(new ParagraphBuilder()
-                        .text("Set forty points in and sixty down, wrapping inside two hundred").build(), 40, 60))
+                .addCanvas(200, 120, canvas -> canvas
+                        .position(new com.demcha.compose.document.dsl.ListBuilder().items("First", "Second")
+                                .build(), 0, 0)
+                        .position(new ParagraphBuilder()
+                                .text("Set forty points in and ten down, wrapping inside two hundred").build(), 40, 10))
                 .addParagraph("Below"));
 
         assertThat(detailOf(report, "CanvasLayerNode")).isEqualTo("written as its contents; "
-                + "what it writes is written at its left edge, each block as far down as it places it but not as "
-                + "far across; its width is not in the file, so its paragraphs and lists run the width of the "
-                + "column it stands in");
+                + "what it writes is written from its corner, one block after another, not where it places it; "
+                + "its width is not in the file, so its paragraphs and lists run the width of the column it "
+                + "stands in");
     }
 
     @Test
@@ -79,9 +85,8 @@ class DocxFlowContainerReportTest {
                         .build(), LayerAlign.TOP_LEFT))
                 .addParagraph("Below"));
 
-        assertThat(detailOf(report, "CanvasLayerNode")).isEqualTo("written as its contents; "
-                + "what it writes is written at its left edge, each block as far down as it places it but not as "
-                + "far across");
+        // Its one block reads down, and stands where it places it (DocxCanvasAcrossTest).
+        assertThat(report.bySubject()).doesNotContainKey("CanvasLayerNode");
     }
 
     @Test

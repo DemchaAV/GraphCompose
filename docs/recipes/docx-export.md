@@ -1319,9 +1319,16 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   takes two; its lines now stand within 0.24pt and 1.3pt of the page's, as without the band. A
   negative top margin's pull comes out of the space above the first block, so a table first stands
   where the page sets it, and on a page the canvas opens the line holding its top edge holds that
-  space. How far across it places them is not carried: such a canvas writes its blocks at its left
-  edge, and the report names one that places a block elsewhere, one it places higher than the foot
-  of the one before or than its corner, which Word sets at that foot or corner, a first block that
+  space. Each block also stands as far across as it places it, and as wide as it lays it out —
+  the canvas's width less the block's margins, or the width the block sets itself — where the
+  page breaks its lines: a paragraph placed 40pt across stood 40pt left, and a canvas narrower
+  than its column broke its text at the column's width; paragraphs, a list, a picture, a table
+  and a section placed across now stand within 0.2pt of the page in Word 16 and LibreOffice 26.8,
+  their lines breaking where the page breaks them. In a table cell, whose text
+  Word keeps inside it, such a canvas still writes its blocks at its left edge, as does one that
+  places the same block twice, whose one place in the layout is its last; the report names
+  either where it places a block elsewhere. The report names a block it places higher than
+  the foot of the one before or than its corner, which Word sets at that foot or corner, a first block that
   a negative top margin pulls up further than it places it below the corner (for a paragraph
   first, further than the space owed above the canvas too), which Word sets up to that much lower, and — for a canvas pulled up
   past the page's margin that opens a later page — the space above its first block where a

@@ -165,25 +165,45 @@ class DocxCanvasAcrossTest {
     }
 
     @Test
-    void aCanvasPlacingABlockTwiceWritesItsBlocksAtItsLeftEdgeAndIsNamed() throws Exception {
-        // One node at two places is written at each, but the layout keeps its last place only:
-        // held there, its first copy would stand where its second does.
+    void aBlockPlacedTwiceStandsAtEachPlaceItIsWritten() throws Exception {
+        // The layout keeps one place of a node, its last: each copy is held at its own canvas's
+        // place for it, in one canvas and across two.
         DocumentNode twice = paragraph("Twice", "Twice", TextAlign.LEFT);
         Exported exported = export(page -> page
                 .addCanvas(300, 120, canvas -> canvas
                         .position(twice, 30, 0)
                         .position(twice, 60, 60))
+                .addCanvas(300, 40, canvas -> canvas.position(twice, 150, 0))
                 .addParagraph("Below"));
 
         List<XWPFParagraph> copies = exported.document().getParagraphs().stream()
                 .filter(paragraph -> paragraph.getText().equals("Twice")).toList();
-        assertThat(copies).as("written at each place").hasSize(2);
-        assertThat(copies).as("both at the canvas's left edge")
-                .allSatisfy(copy -> assertThat(left(copy)).isCloseTo(0, within(0.05)));
+        assertThat(copies).as("written at each place").hasSize(3);
+        assertThat(copies).extracting(DocxCanvasAcrossTest::left).as("each where its canvas places it")
+                .satisfiesExactly(
+                        first -> assertThat(first).isCloseTo(30, within(0.05)),
+                        second -> assertThat(second).isCloseTo(60, within(0.05)),
+                        third -> assertThat(third).isCloseTo(150, within(0.05)));
+        assertThat(exported.report().bySubject()).doesNotContainKey("CanvasLayerNode");
+    }
+
+    @Test
+    void inAPaintedPanelWhatItWritesStandsAtItsLeftEdgeAndIsNamed() throws Exception {
+        // A painted panel is a table cell of its own, whose text Word keeps inside it.
+        Exported exported = export(page -> page
+                .add(new SectionBuilder().name("Card").fillColor(INK).add(new CanvasLayerBuilder(200, 80)
+                        .position(paragraph("CardName", "Card at thirty", TextAlign.LEFT), 30, 10)
+                        .position(paragraph("CardTitle", "Below at ten", TextAlign.LEFT), 10, 40)
+                        .build()).build())
+                .addParagraph("Below"));
+
+        assertThat(left(paragraphOf(exported.document(), "Card at thirty"))).as("at the canvas's left edge")
+                .isCloseTo(left(paragraphOf(exported.document(), "Below at ten")), within(0.05));
         List<DocxExportReport.Note> notes = exported.report().bySubject().get("CanvasLayerNode");
         assertThat(notes).as("the canvas named").isNotNull().hasSize(1);
-        assertThat(notes.get(0).detail()).contains("placing a block twice, what it writes is written at its left "
-                                                   + "edge, not as far across as it places it");
+        assertThat(notes.get(0).detail()).contains("in a table cell or a painted panel, what it writes is written at "
+                                                   + "its left edge, each block as far down as it places it but not "
+                                                   + "as far across");
     }
 
     @Test
@@ -201,8 +221,9 @@ class DocxCanvasAcrossTest {
                 .isCloseTo(left(paragraphOf(exported.document(), "Below at ten")), within(0.05));
         List<DocxExportReport.Note> notes = exported.report().bySubject().get("CanvasLayerNode");
         assertThat(notes).as("the canvas named").isNotNull().hasSize(1);
-        assertThat(notes.get(0).detail()).contains("in a table cell, what it writes is written at its left edge, "
-                                                   + "each block as far down as it places it but not as far across");
+        assertThat(notes.get(0).detail()).contains("in a table cell or a painted panel, what it writes is written at "
+                                                   + "its left edge, each block as far down as it places it but not "
+                                                   + "as far across");
     }
 
     /**

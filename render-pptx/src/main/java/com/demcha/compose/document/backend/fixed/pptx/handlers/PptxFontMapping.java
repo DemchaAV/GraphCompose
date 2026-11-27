@@ -58,10 +58,6 @@ public final class PptxFontMapping {
      */
     public static final Set<String> ANY_TOKEN = Set.of("bold", "italic", "oblique");
 
-    private static final double ARIAL_ASCENT_RATIO = 1854.0 / 2048.0;
-    private static final double TIMES_NEW_ROMAN_ASCENT_RATIO = 1825.0 / 2048.0;
-    private static final double COURIER_NEW_ASCENT_RATIO = 1705.0 / 2048.0;
-
     private PptxFontMapping() {
     }
 
@@ -108,28 +104,6 @@ public final class PptxFontMapping {
             return "Courier New";
         }
         return null;
-    }
-
-    /**
-     * Returns the viewer ascent ratio for a standard-14 replacement font.
-     *
-     * @param fontName logical document font
-     * @param fallback ratio to return for a non-standard family
-     * @return viewer-font ascent divided by em size
-     */
-    public static double viewerAscentRatio(FontName fontName, double fallback) {
-        String name = (fontName == null ? FontName.HELVETICA : fontName).name();
-        String lower = name.toLowerCase(Locale.ROOT);
-        if (lower.startsWith("helvetica")) {
-            return ARIAL_ASCENT_RATIO;
-        }
-        if (lower.startsWith("times")) {
-            return TIMES_NEW_ROMAN_ASCENT_RATIO;
-        }
-        if (lower.startsWith("courier")) {
-            return COURIER_NEW_ASCENT_RATIO;
-        }
-        return fallback;
     }
 
     /**
@@ -198,9 +172,9 @@ public final class PptxFontMapping {
      *
      * <p>Three things take this flag, not one: the run's {@code b} or {@code i} attribute, the
      * record of which faces a family was drawn in — which decides what a bundled family is
-     * embedded with — and the viewer ascent that seats the frame
-     * ({@code PptxViewerMetrics.ascentPoints}). The first is what the measurements above read; the
-     * ascent arm was not demonstrated, the line top being identical in every deck measured.</p>
+     * embedded with — and the face whose metrics seat the frame
+     * ({@code PptxViewerMetrics.seatPoints}). The first is what the measurements above read; the
+     * seat arm was not demonstrated, the line top being identical in every deck measured.</p>
      *
      * <p><b>And only where the family's own faces cannot say it.</b> {@code nameMaySpeak} is that
      * permission, worked out by {@code PptxDeckFonts} from the faces a registered family

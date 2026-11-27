@@ -263,18 +263,18 @@ class PptxParagraphFragmentRenderHandlerTest {
     }
 
     /**
-     * A carried family is seated by the ascent its own program reports, not the PDF
+     * A carried family is seated from the OS/2 metrics PowerPoint reads, not from the PDF
      * descriptor's.
      *
-     * <p>The test above cannot see the difference: Lato's two ascents are the same number,
-     * which is why it can note that identical metrics need no synthetic shift. Alegreya
-     * Sans is the family in the bundled set where they differ — a tenth of the em — so it is
-     * the only one on which dropping the metrics a family embeds with is observable at all.
-     * Without this case, reading the metrics and then not keeping them would move every
-     * top-anchored frame of such a family and no test would notice.</p>
+     * <p>The test above cannot see the difference: Lato's two sets of metrics divide the same
+     * way, which is why it can note that identical metrics need no synthetic shift. Alegreya
+     * Sans is the family in the bundled set where they do not — its descriptor says 900 over
+     * 300, its typographic metrics 800 plus a 200 line gap over 200 — so it is the one on which
+     * seating a family from the wrong fields is observable at all.</p>
      */
     @Test
-    void seatsARegisteredFamilyByItsOwnViewerAscentRatherThanTheDescriptors() throws Exception {
+    void seatsARegisteredFamilyByTheMetricsPowerPointReadsRatherThanTheDescriptors()
+            throws Exception {
         FontName customName = FontName.of("AscentGap");
         FontFamilyDefinition family = FontFamilyDefinition.classpath(
                         customName, "fonts/google/alegreyasans/AlegreyaSans-Regular.ttf")
@@ -282,10 +282,10 @@ class PptxParagraphFragmentRenderHandlerTest {
                 .build();
         DocumentTextStyle style = DocumentTextStyle.builder().fontName(customName).size(20).build();
 
-        // The premise, measured here rather than assumed, and hand-checkable: this family's
-        // two ascent ratios are 0.8 and 0.9, so at 20pt the seats are 2pt apart. A family
-        // whose readers agreed would make the assertion below pass whatever the backend did
-        // with the metrics.
+        // The premise, measured here rather than assumed, and hand-checkable: seated from the
+        // descriptor this family would stand at 20 × 1.2 × 937.5 / 1237.5 = 18.18pt below the
+        // frame top, from its typographic metrics at 20 × 96/101 = 19.01pt. A family whose
+        // two sets agreed would make the assertion below pass whatever the backend read.
         try (PdfMeasurementResources measurement =
                      PdfMeasurementResources.open(List.of(family))) {
             PdfFont font = measurement.fontLibrary()
@@ -294,15 +294,18 @@ class PptxParagraphFragmentRenderHandlerTest {
             // A plain run of a family whose name carries no style suffix: both flags false
             // whichever way the face is worked out, so the premise below is about the metrics
             // and not about the face.
-            double seated = PptxViewerMetrics.ascentPoints(resolved, font,
+            double seated = PptxViewerMetrics.seatPoints(resolved, font,
                     PptxViewerMetrics.load(family, family.fontSourceSet().orElseThrow()),
                     false, false);
-            double fromDescriptor = PptxViewerMetrics.ascentPoints(resolved, font, null,
-                    false, false);
-            assertThat(fromDescriptor - seated)
-                    .as("the premise: the viewer's ascent and the descriptor's are 2pt apart "
-                            + "for this family at 20pt")
-                    .isCloseTo(2.0, org.assertj.core.data.Offset.offset(0.01));
+            PdfFont.VerticalMetrics descriptor = font.verticalMetrics(resolved);
+            double fromDescriptor = 20 * PptxViewerMetrics.seatRatio(
+                    descriptor.ascent(), descriptor.descent());
+            assertThat(seated)
+                    .isCloseTo(20 * 96.0 / 101.0, org.assertj.core.data.Offset.offset(1e-9));
+            assertThat(seated - fromDescriptor)
+                    .as("the premise: the two readings are 0.83pt apart for this family at 20pt")
+                    .isCloseTo(20 * (96.0 / 101.0 - 1.2 * 937.5 / 1237.5),
+                            org.assertj.core.data.Offset.offset(1e-6));
         }
 
         try (DocumentSession session = GraphCompose.document()
@@ -316,7 +319,7 @@ class PptxParagraphFragmentRenderHandlerTest {
             byte[] pptx = session.render(new PptxFixedLayoutBackend());
 
             // The mirror seats its expectation from the metrics the family embeds with, so
-            // this fails by the 2pt above if the backend ever seats such a family from the
+            // this fails by the 0.83pt above if the backend ever seats such a family from the
             // descriptor instead.
             PptxGeometryAssertions.assertTextGeometryMatches(graph, pptx, List.of(family));
             assertThat(PptxDeck.fontParts(pptx)).as("and the program travels").isNotEmpty();

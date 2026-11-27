@@ -93,9 +93,9 @@ final class PptxFontEmbedder {
      * face and nothing else: the family travels without it, with its metrics, as
      * {@link Carried#PART}. See {@link #readPrograms}.</p>
      *
-     * <p>One answer covers the program and the metrics, because a family that
-     * travels without them is seated from the PDF descriptor's ascent instead,
-     * which for some faces is not the ascent the viewer uses. A family the page
+     * <p>One answer covers the program and the metrics: a program the metrics
+     * reader rejects is not handed to the presentation either (see the comment
+     * where the metrics are read). A family the page
      * had to <em>measure</em> is a different matter and fails the render before a
      * slide is built. The presentation refusing a face it is handed is a third,
      * and what is left of it after the name check in {@link PptxEmbeddedFont} is
@@ -133,18 +133,13 @@ final class PptxFontEmbedder {
         // reader below.
         //
         // It runs before the presentation is handed anything because one answer has to
-        // gate both halves. What is left to seat a family whose metrics would not read is
-        // the PDF descriptor's ascent (PptxFontMapping.viewerAscentRatio answers a
-        // non-standard family with the fallback it is given) — the same number the viewer
-        // reports for most faces, but not for all: across the 130 bundled faces, 126 agree
-        // to within 0.0001pt at 10pt text while the four Alegreya Sans faces differ by a
-        // full point — 8.0pt from the viewer's reader against 9.0pt from the descriptor,
-        // a tenth of the em. Which of the two a refused font would have been
-        // cannot be known here, because the reader that would say is the one that refused.
-        // So carrying the program and seating it from the descriptor risks putting every
-        // top-anchored frame's text a tenth of the em off its measured line with nothing
-        // said, where not carrying it is the degradation the backend already has a warning
-        // for.
+        // gate both halves. The seat is no longer what speaks against carrying a family
+        // whose metrics would not read: one without metrics of its own is seated from the
+        // program the page measured it with (PptxViewerMetrics.seatPoints), the same OS/2
+        // fields PowerPoint reads. What does is the program: one reader rejecting it says
+        // it is damaged, and which of the two readers is right about such a file was not
+        // measured, so it is not handed to a viewer. Not carrying it is the degradation
+        // the backend already has a warning for.
         PptxViewerMetrics.ViewerFontMetrics viewerMetrics;
         try {
             viewerMetrics = PptxViewerMetrics.load(family, sources);
@@ -170,10 +165,11 @@ final class PptxFontEmbedder {
         // on the way out of a refusal.
         carriedSlots.put(family.name(), Set.copyOf(read.slots().keySet()));
         // A family short of a face held back for its licence keeps its metrics: every face it
-        // carries is in the deck as handed over, so for those faces they are the ascents its
-        // text is drawn with. The held-back style is still seated from that face's own ascent;
+        // carries is in the deck as handed over, so for those faces they are the metrics its
+        // text is drawn with. The held-back style is still seated from that face's own metrics;
         // how far that is from the face a viewer draws instead was not measured in general
-        // (Zilla Slab's italic and bold-italic faces state the same ascents).
+        // (Zilla Slab's italic and bold-italic faces state the same Windows and typographic
+        // metrics, so they seat alike).
         return new Embedding(read.whole() ? Carried.WHOLE : Carried.PART, viewerMetrics);
     }
 

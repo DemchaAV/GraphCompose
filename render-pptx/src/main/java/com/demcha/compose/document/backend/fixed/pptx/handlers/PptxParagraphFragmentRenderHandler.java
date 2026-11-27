@@ -139,9 +139,9 @@ public final class PptxParagraphFragmentRenderHandler
     }
 
     /**
-     * Returns the viewer ascent that will seat the shared frame's first
-     * baseline: PowerPoint uses the tallest run, so the frame top compensates
-     * with the largest viewer ascent among the line's plain runs.
+     * Returns the seat that will place the shared frame's first baseline:
+     * PowerPoint uses the tallest run, so the frame top compensates with the
+     * largest seat among the line's plain runs.
      */
     private static double sharedBoxViewerAscent(ParagraphLine line,
                                                 PptxRenderEnvironment environment) {

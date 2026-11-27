@@ -252,7 +252,7 @@ public final class PptxRenderEnvironment {
      * <p>The span's decoration, and the family's registered name only where the family's own faces
      * cannot name one — see {@code PptxDeckFonts.tokensTheNameMaySpeak}. Every writer that needs
      * the flag asks here, so the attribute a run carries, the face recorded as drawn and the
-     * ascent the frame is seated on are one answer rather than three readings of the same
+     * face whose seat the frame is placed by are one answer rather than three readings of the same
      * style.</p>
      *
      * @param style the span's style
@@ -276,14 +276,16 @@ public final class PptxRenderEnvironment {
     }
 
     /**
-     * Returns the ascent, in points, that the viewer's font engine uses to seat
-     * this run's first baseline below a top-anchored frame. PowerPoint positions
-     * text by frame, not by baseline: the first baseline lands at
-     * {@code frameTop + viewerAscent}, so frames anchor at
-     * {@code baseline − viewerAscent}. Embedded fonts report their real font
-     * program ascent per facet; standard-14 replacements use the known Arial /
-     * Times New Roman / Courier New ratios; anything else assumes the PDF
-     * descriptor ascent.
+     * Returns how far below a top-anchored frame's top PowerPoint stands this
+     * run's first baseline, in points. PowerPoint positions text by frame, not
+     * by baseline: the first baseline lands at {@code frameTop + viewerAscent},
+     * so frames anchor at {@code baseline − viewerAscent}. The distance is not
+     * the font's ascent but PowerPoint's own seat, worked out per face from how
+     * the face's OS/2 metrics divide (see {@code PptxViewerMetrics}): embedded
+     * fonts from their own programs, standard-14 replacements from Arial's /
+     * Times New Roman's / Courier New's, anything else from the TrueType program
+     * the page measured it with, or the PDF descriptor's ascent and descent where
+     * it is not one.
      *
      * <p>Deliberately never written to the run's DrawingML {@code baseline}
      * property: PowerPoint treats any non-zero baseline as super/subscript and
@@ -291,7 +293,7 @@ public final class PptxRenderEnvironment {
      *
      * @param style          resolved text style
      * @param fallbackAscent ascent to assume when the style cannot be resolved
-     * @return viewer ascent in points
+     * @return the distance from the frame top to the first baseline, in points
      */
     @Internal
     public double viewerAscent(TextStyle style, double fallbackAscent) {
@@ -302,7 +304,7 @@ public final class PptxRenderEnvironment {
         if (font == null) {
             return fallbackAscent;
         }
-        return PptxViewerMetrics.ascentPoints(
+        return PptxViewerMetrics.seatPoints(
                 style, font, deckFonts.viewerMetrics(style.fontName()),
                 runIsBold(style), runIsItalic(style));
     }

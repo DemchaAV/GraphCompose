@@ -7,6 +7,28 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **Text in a PPTX deck now stands where PowerPoint draws it.**
+  - Every text frame is placed so that PowerPoint puts its first baseline on the line the page
+    measured. The backend took that baseline to stand one font ascent below the frame top, and
+    PowerPoint 16 stands it elsewhere: at 20pt, Arial 0.74pt and Gothic A1 3.02pt lower,
+    Spectral 3.89pt and Trirong 6.81pt higher. **This changes the bytes of every deck that sets text.**
+  - Measured in PowerPoint 16, in its PDF export and in its own raster of the slide, on the 35
+    bundled families, Arial, Times New Roman and Courier New, and faces that differ in one font
+    field at a time. The baseline stands 1.2 em × A / (A + D) below the frame top. A and D are the
+    face's ascent and descent, each raised to at least its share of their sum — 25/32 above,
+    7/32 below. The ascent and descent are the `OS/2` typographic ones, the line gap counted above,
+    when the face sets `USE_TYPO_METRICS`, and the Windows ones when it does not. Neither `hhea`
+    nor the glyph bounds move it. The rule puts every one of the 428 lines measured, 10pt to
+    80pt, within 0.11pt of where PowerPoint drew it. In decks rendered with this change,
+    PowerPoint's PDF export draws every line measured within 0.10pt of the page, and its slide
+    raster within a pixel. Across the 38 faces at
+    20pt, the mean distance falls from 2.18pt to 0.03pt.
+  - A bundled family is seated from the program the page measured it with, which is the program
+    the deck carries when it carries one. It used to be seated from the PDF descriptor's ascent,
+    which is the `hhea` one.
+  - LibreOffice Impress 26.8 stands the first baseline a whole em below the frame top for every
+    face, so it draws a deck's text 0.9 to 2.8pt lower than PowerPoint at 20pt. It was 0 to 4.4pt
+    off before, in either direction.
 - **A PPTX deck no longer carries a font face whose licence allows embedding for preview and
   print only.**
   - A face whose `OS/2` `fsType` sets bit `0x0004` (preview and print) without `0x0008`

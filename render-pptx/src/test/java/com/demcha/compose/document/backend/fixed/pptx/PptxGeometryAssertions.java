@@ -409,7 +409,7 @@ final class PptxGeometryAssertions {
         return metrics;
     }
 
-    /** Mirrors the production seat: frame top = baseline − viewer ascent (largest plain run). */
+    /** Mirrors the production seat: frame top = baseline − seat (largest plain run). */
     private static double sharedViewerAscent(
             ParagraphLine line,
             PdfMeasurementResources measurement,
@@ -433,9 +433,9 @@ final class PptxGeometryAssertions {
         if (font == null || style.size() <= 0) {
             return fallbackAscent;
         }
-        // Same resolver as production (PptxViewerMetrics.ascentPoints); the
-        // anti-tautology check is the hand-computed constant pinned in
-        // PptxFontMappingTest. Note the mirror loads metrics for every family
+        // Same resolver as production (PptxViewerMetrics.seatPoints); the
+        // anti-tautology check is the hand-computed seats pinned in
+        // PptxViewerMetricsTest. Note the mirror loads metrics for every family
         // with sources while production gates on a successful embed — test
         // fonts must be embeddable.
         //
@@ -444,7 +444,7 @@ final class PptxGeometryAssertions {
         // ANY_TOKEN is the answer for a family that carries none; it yields the production flags
         // for every fixture here, whose families are registered under names with no style
         // suffix — so only the decoration speaks, whatever permission the family would grant.
-        return PptxViewerMetrics.ascentPoints(style, font, embedded.get(style.fontName()),
+        return PptxViewerMetrics.seatPoints(style, font, embedded.get(style.fontName()),
                 PptxFontMapping.isBold(style, PptxFontMapping.ANY_TOKEN),
                 PptxFontMapping.isItalic(style, PptxFontMapping.ANY_TOKEN));
     }

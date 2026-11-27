@@ -113,6 +113,16 @@ final class PptxSlotLedger {
     }
 
     /**
+     * Whether that declared name carries a face of this family: a family that holds a slot of
+     * its own travels, however much of the name another family also holds.
+     */
+    boolean carriesAFaceOf(String typeface, FontName family) {
+        return entry(typeface).stream()
+                .flatMap(found -> found.bySlot.values().stream())
+                .anyMatch(seated -> seated.family().equals(family));
+    }
+
+    /**
      * Whether the sharing of that declared name is still to be reported, marking it
      * reported if so — once for the name, however many families join it.
      *

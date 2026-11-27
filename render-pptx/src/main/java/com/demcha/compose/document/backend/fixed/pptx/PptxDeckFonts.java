@@ -41,7 +41,8 @@ final class PptxDeckFonts {
      * its <em>name</em> may contribute a run flag (see {@link #tokensTheNameMaySpeak}).
      *
      * <p>Written where the faces are handed to the presentation, so an entry stands for a
-     * registered family the presentation took whole. Everything else is absent, and absent means
+     * registered family the presentation took whole, or took short only of a face held back for
+     * its licence, whose entry then holds the elements it does fill. Everything else is absent, and absent means
      * "the name is all a run has": a family registered without sources, one refused or given up,
      * one whose hand-over failed part way — which leaves what it took, so such a family does carry
      * a face the name then speaks over — and every bundled family, which travels by another road
@@ -106,8 +107,13 @@ final class PptxDeckFonts {
             if (carried != PptxFontEmbedder.Carried.NONE) {
                 anyCarried.add(family.name());
             }
-            if (carried == PptxFontEmbedder.Carried.WHOLE) {
+            if (embedding != null && embedding.metrics() != null) {
+                // A family carried whole, or short only of a face held back for its licence:
+                // either way every face it carries is in the deck as it was handed over. The
+                // held-back style keeps that face's own ascent (PptxFontEmbedder says why).
                 metrics.put(family.name(), embedding.metrics());
+            }
+            if (carried == PptxFontEmbedder.Carried.WHOLE) {
                 notCarried.remove(family.name());
             } else {
                 notCarried.put(family.name(), family);
@@ -127,8 +133,9 @@ final class PptxDeckFonts {
             // an embedded face down on a save (docs/recipes/docx-export.md), which is why
             // a document never writes it; PowerPoint's own handling of the pair has not
             // been measured. A deck that carries nothing leaves the template's value alone,
-            // where embedding is off and it decides nothing; one whose presentation refused a face
-            // it had been handed may have had the flag set on the way, and is cleared too.
+            // where embedding is off and it decides nothing; one carried short of a face, held
+            // back or refused by the presentation, may have had the flag set on the way, and is
+            // cleared too.
             show.getCTPresentation().setSaveSubsetFonts(false);
         }
         this.customFontFamilies = Map.copyOf(familyNames);
@@ -259,22 +266,33 @@ final class PptxDeckFonts {
      * program, whether this family was registered without sources, could not be read, or was
      * refused for the slot — and in whichever order the two were registered.</p>
      *
-     * <p>Two arrangements are not seen, and keep the line the cause alone would give. "Another
+     * <p>Three arrangements are not seen, and keep the line the cause alone would give. "Another
      * family" is another {@link FontName}, because the ledger does not count slots the same
      * name holds: a name registered first with sources that travelled, and then again without
      * any, is told no program for it travels while the earlier registration's program is in the
      * deck — text drawn from a program the page was not measured in, which no line here
      * describes. Registered again with sources that are not carried, it is told the family is
-     * not carried whole, which is true of that deck and still does not describe it. And
+     * not carried whole, which is true of that deck and still does not describe it. The same
+     * holds for a name registered again with sources one face of which is held back for its
+     * licence: the earlier registration's program for that style stays in the deck under the
+     * name, where the later one's would have written over it, so that style's text is drawn from
+     * a program the page was not measured in while the line says the font is needed. And
      * "another family" is another <em>registered</em> family, because this runs while the
      * environment is built: a bundled family carried under the same declared name is handed over after the last slide, so a
      * registration declaring a bundled family's name that is not carried is told it needs its
      * font installed while the bundled program travels under that name.</p>
      *
      * <p>Where the family's own sources could not be carried, the line says how much of it is in
-     * the deck: none of it, which is what every refusal a font can provoke leaves, or not all of
-     * it, where the presentation refused a face it had been handed, or an earlier registration
-     * of the name did travel.</p>
+     * the deck: none of it, which is what every refusal that costs a family leaves, or not all of
+     * it, where a face was held back for a preview-and-print licence, the presentation refused a
+     * face it had been handed, or an earlier registration of the name did travel.</p>
+     *
+     * <p>A family that holds a slot of its own under a name another family also holds is told it
+     * is not carried whole, not that no program of it travels. That is a family held short of a
+     * face for its licence, whose free slot another family declaring the same name then filled:
+     * its other faces are in the deck, and the text in the style it lacks is drawn from the
+     * other family's program, which {@code render.pptx.font.shared.family} has already said of
+     * the name.</p>
      *
      * @param family     the last registration of a family name the deck does not carry
      * @param anyCarried whether some registration of that name travelled, or was handed to the
@@ -284,7 +302,11 @@ final class PptxDeckFonts {
     private static void warnRegisteredFamilyNotCarried(FontFamilyDefinition family,
                                                        boolean anyCarried,
                                                        PptxSlotLedger ledger) {
-        if (ledger.alreadyDeclaredByAnother(family.wordFamily(), family.name())) {
+        // A family that holds a slot of its own under the name is told it is not carried whole
+        // below, not that nothing of it travels, however much of the name another family holds:
+        // a family held short of a face for its licence leaves that slot free for another one.
+        if (ledger.alreadyDeclaredByAnother(family.wordFamily(), family.name())
+                && !ledger.carriesAFaceOf(family.wordFamily(), family.name())) {
             warnDrawnFromAnotherFamilysProgram(family.name(), family.wordFamily());
         } else if (family.fontSourceSet().isEmpty()) {
             // Said of the text, not of the deck: this runs before a single run is drawn,
@@ -305,7 +327,7 @@ final class PptxDeckFonts {
                     family.name().name(), family.wordFamily());
         } else if (!anyCarried) {
             // Same key as every other substitution so one log filter catches them all; the
-            // embed-skip warning carries the cause. Every refusal a font can provoke arrives
+            // embed-skip warning carries the cause. Every refusal that costs a family arrives
             // while the presentation is still untouched (PptxFontEmbedder.Carried), so nothing
             // of the family is in the deck, and this says so rather than hedging. It says what
             // the text needs rather than what a viewer will do with it, since with no program
@@ -317,16 +339,18 @@ final class PptxDeckFonts {
                             + "the deck is opened for identical glyphs",
                     family.name().name(), family.wordFamily());
         } else {
-            // Something of the name is in the deck: the presentation refused a face it had been
-            // handed and keeps what it took before that — the declaration at least — or an
-            // earlier registration of the name travelled and this last one did not. "Not carried
+            // Something of the name is in the deck: a face was held back for a preview-and-print
+            // licence and the family's other faces travelled, the presentation refused a face it
+            // had been handed and keeps what it took before that — the declaration at least — or
+            // an earlier registration of the name travelled and this last one did not. "Not carried
             // whole" because what the reader has to act on is that some face did not travel, and
             // this line says what the text drawn in that face needs rather than what a viewer will do with it: where a face
             // of the family is in the deck, what a viewer draws a run of a missing face from — a
-            // synthetic face, or another family — is the viewer's to decide, and nobody here
-            // has watched one decide it.
-            LOG.warn("render.pptx.font.substitution family={} — could not be embedded, "
-                            + "so \"{}\" is not carried whole; text drawn in a face "
+            // synthetic face, or another family — is the viewer's to decide. It was watched once:
+            // PowerPoint 16 drew a bold-italic run whose face was held back from the carried
+            // italic face, emboldened, which is one viewer and one family.
+            LOG.warn("render.pptx.font.substitution family={} — not every face of it could "
+                            + "be embedded, so \"{}\" is not carried whole; text drawn in a face "
                             + "that did not travel is referenced by name, and needs "
                             + "that font installed where the deck is opened for "
                             + "identical glyphs",
@@ -422,14 +446,16 @@ final class PptxDeckFonts {
             PptxFontEmbedder.Carried carried = PptxFontEmbedder.embedFontFamily(
                     show, family, sources.orElseThrow(), faces, slotLedger);
             if (carried != PptxFontEmbedder.Carried.NONE) {
-                // A family whose presentation refused a face it had been handed may have had the
-                // subsetting flag set on the way, as a whole one has, so it counts here too.
+                // A family carried short of a face, held back or refused by the presentation,
+                // may have had the subsetting flag set on the way, as a whole one has, so it
+                // counts here too.
                 embeddedAny = true;
             }
             if (carried == PptxFontEmbedder.Carried.WHOLE) {
                 continue;
             }
-            if (slotLedger.alreadyDeclaredByAnother(family.wordFamily(), family.name())) {
+            if (slotLedger.alreadyDeclaredByAnother(family.wordFamily(), family.name())
+                    && !slotLedger.carriesAFaceOf(family.wordFamily(), family.name())) {
                 // The reachable half of this: a caller registers their own family under a
                 // bundled one's viewer name. The bundled pass runs after the last slide, so
                 // the caller's family holds the slot by now and this one is the refused one
@@ -450,11 +476,12 @@ final class PptxDeckFonts {
                                 + "glyphs",
                         family.name().name(), family.wordFamily());
             } else {
-                // The presentation refused a face it had been handed and keeps what it took
-                // before that, so the line says what is not carried and what the text drawn in
-                // the face that did not travel needs.
-                LOG.warn("render.pptx.font.substitution family={} — a bundled family that "
-                                + "could not be embedded, so \"{}\" is not carried whole; text "
+                // A face drawn with was held back for a preview-and-print licence, or the
+                // presentation refused a face it had been handed and keeps what it took before
+                // that, so the line says what is not carried and what the text drawn in the face
+                // that did not travel needs.
+                LOG.warn("render.pptx.font.substitution family={} — a bundled family not every "
+                                + "face of which could be embedded, so \"{}\" is not carried whole; text "
                                 + "drawn in a face that did not travel is referenced by name, "
                                 + "and needs that font installed where the deck is opened for "
                                 + "identical glyphs",

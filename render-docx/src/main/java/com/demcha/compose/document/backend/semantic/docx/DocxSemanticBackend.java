@@ -22035,8 +22035,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>Each place is the canvas's own, {@link com.demcha.compose.document.node.CanvasChild#x}: the
      * layout sets each block at its top left at that offset from the canvas's padding
-     * (CanvasLayerDefinition), and keeps one place of a node, its last, so a block the canvas — or
-     * another — places twice is held at each place it is written.</p>
+     * (CanvasLayerDefinition), and keeps one place of a node, its last, so a block placed twice, in
+     * the canvas or in one beside it, is held at each place it is written.</p>
      *
      * @param room the width its margins leave it where it is written, or NaN when not known, where
      *             each block is held in on the left alone

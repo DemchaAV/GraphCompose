@@ -60,8 +60,8 @@ follow semantic versioning; release dates are ISO 8601.
   - The templates and the DOCX fidelity corpus hold no such canvas placing a block across: the
     masthead canvas of `MintEditorial` places every block at its left edge, and the corpus's 105
     documents export byte for byte as before.
-  - Each place is the canvas's own, so a block it places twice, or another canvas places too,
-    stands at each place it is written.
+  - Each place is the canvas's own, so a block placed twice, in one canvas or in two beside each
+    other, stands at each place it is written, across and down.
   - In a table cell or a painted panel, whose text Word keeps inside it, such a canvas still
     writes its blocks at its left edge, and the report names one that places a block elsewhere.
 

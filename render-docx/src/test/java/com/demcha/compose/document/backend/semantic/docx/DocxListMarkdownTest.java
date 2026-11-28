@@ -108,33 +108,34 @@ class DocxListMarkdownTest {
 
     @Test
     void aMarkerWrittenAsCharactersIsWrittenInTheFaceThePageSetsItIn() throws Exception {
-        // The page's parser sets the marker of a bold list's tree of items, read with the item,
-        // regular. Written as characters, the marker takes the face the page sets it in.
+        // The page's parser sets the marker of a bold list's tree of items, read with the item, in
+        // the list's face, as it starts every piece. Written as characters, the marker takes the
+        // face the page sets it in.
         Export text = export(true, list -> list.textStyle(BOLD).markerFor(1, ListMarker.none())
                 .addItem("**Lead** item", child -> child.addItem("sub")));
-        assertThat(text.paragraphWith("Lead").getRuns()).extracting(XWPFRun::text).containsExactly("• ", "Lead", " item");
-        assertThat(text.paragraphWith("Lead").getRuns()).extracting(XWPFRun::isBold).containsExactly(false, true, false);
+        assertThat(text.paragraphWith("Lead").getRuns()).extracting(XWPFRun::text).containsExactly("• ", "Lead item");
+        assertThat(text.paragraphWith("Lead").getRuns()).extracting(XWPFRun::isBold).containsExactly(true, true);
         assertThat(text.notes()).noneMatch(note -> note.contains("markdown"));
         // A flat list sets its marker before the item's text, in the list's face, as Word draws it;
-        // the text the parser keeps every mark of it sets regular, as it sets every piece.
+        // the text the parser keeps every mark of it keeps the list's face, as every piece does.
         Export flat = export(true, list -> list.textStyle(BOLD).items("**Lead** item", "node_js"));
-        assertThat(flat.paragraphWith("Lead").getRuns()).extracting(XWPFRun::isBold).containsExactly(true, false);
-        assertThat(flat.paragraphWith("node_js").getRuns()).extracting(XWPFRun::isBold).containsExactly(false);
+        assertThat(flat.paragraphWith("Lead").getRuns()).extracting(XWPFRun::isBold).containsOnly(true);
+        assertThat(flat.paragraphWith("node_js").getRuns()).extracting(XWPFRun::isBold).containsExactly(true);
         assertThat(flat.notes()).isEmpty();
     }
 
     @Test
     void aBoldWordListsTreeItemsAreWrittenInThePiecesThePageSetsThemIn() throws Exception {
-        // The page's parser sets the marker of a bold list's tree of items, read with the item,
-        // regular, and Word draws the bullets of such a list regular: the item's own text is
-        // written in its pieces, a mark the parser keeps set regular too.
+        // The page's parser starts every piece of a bold list's tree of items from the list's
+        // face: the item's own text is written in its pieces, all bold, and a mark the parser
+        // keeps stays bold too.
         Export word = export(true, list -> list.textStyle(BOLD).addItem("**Lead** item",
                 child -> child.addItem("Kot_lin").addItem("Plain")));
         XWPFParagraph lead = word.paragraphWith("Lead");
         assertThat(lead.getNumID()).isNotNull();
-        assertThat(lead.getRuns()).extracting(XWPFRun::text).containsExactly("Lead", " item");
-        assertThat(lead.getRuns()).extracting(XWPFRun::isBold).containsExactly(true, false);
-        assertThat(word.paragraphWith("Kot_lin").getRuns()).extracting(XWPFRun::isBold).containsExactly(false);
+        assertThat(lead.getRuns()).extracting(XWPFRun::text).containsExactly("Lead item");
+        assertThat(lead.getRuns()).extracting(XWPFRun::isBold).containsExactly(true);
+        assertThat(word.paragraphWith("Kot_lin").getRuns()).extracting(XWPFRun::isBold).containsExactly(true);
         // An item the page does not read keeps the list's face.
         assertThat(word.paragraphWith("Plain").getRuns()).extracting(XWPFRun::isBold).containsExactly(true);
         assertThat(word.notes()).noneMatch(note -> note.contains("markdown"));
@@ -248,12 +249,14 @@ class DocxListMarkdownTest {
         assertThat(partXml(flat.document(), "/word/fontTable")).contains("<w:embedBold")
                 .doesNotContain("<w:embedItalic");
         // Read as the page reads it: a tree's marker, read with the item, in the face the page sets
-        // it in; a marker typed before an item taken off, and nothing read off what is left.
+        // it in — the list's, bold — so a bold list ships no regular face; a marker typed before an
+        // item taken off, and nothing read off what is left.
         DocumentTextStyle boldLato = DocumentTextStyle.builder().fontName(FontName.LATO)
                 .decoration(DocumentTextDecoration.BOLD).build();
         Export lead = export(true, list -> list.textStyle(boldLato).markerFor(1, ListMarker.none())
                 .addItem("**Lead**", child -> child.addItem("sub")));
-        assertThat(partXml(lead.document(), "/word/fontTable")).contains("<w:embedRegular").contains("<w:embedBold");
+        assertThat(partXml(lead.document(), "/word/fontTable")).contains("<w:embedBold")
+                .doesNotContain("<w:embedRegular");
         Export typed = export(true, list -> list.textStyle(boldLato).items("* Java", "* Kotlin"));
         assertThat(partXml(typed.document(), "/word/fontTable")).contains("<w:embedBold")
                 .doesNotContain("<w:embedRegular");

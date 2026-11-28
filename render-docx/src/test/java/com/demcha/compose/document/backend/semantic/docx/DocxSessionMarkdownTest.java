@@ -209,15 +209,30 @@ class DocxSessionMarkdownTest {
 
     @Test
     void thePiecesStandInTheFacesThePageSetsThemIn() throws Exception {
-        // The page reads the text of a bold paragraph holding a mark into faces of the parser's
-        // own, the paragraph's left aside: it sets Senior_Engineer regular, and the file follows.
-        // Should the page come to keep the paragraph's face, this fails, and the docs that say so
-        // are to change with it.
+        // The page starts every piece of a paragraph it reads as markdown from the paragraph's
+        // face: a bold paragraph's Senior_Engineer stands bold, its underscore being text, and the
+        // file follows. Should the page come to set it in another face, this fails, and the docs
+        // that say so are to change with it.
         DocumentTextStyle bold = DocumentTextStyle.builder().decoration(DocumentTextDecoration.BOLD).build();
         Export export = export(true, page -> page.addParagraph(p -> p.name("Role").text("Senior_Engineer").textStyle(bold)));
-        assertThat(export.firstSpanFace("Role")).isEqualTo(TextDecoration.DEFAULT);
+        assertThat(export.firstSpanFace("Role")).isEqualTo(TextDecoration.BOLD);
         assertThat(export.paragraphWith("Senior_Engineer").getRuns()).singleElement()
-                .satisfies(run -> assertThat(run.isBold()).isFalse());
+                .satisfies(run -> assertThat(run.isBold()).isTrue());
+        assertThat(export.notes("ParagraphNode")).isEmpty();
+    }
+
+    @Test
+    void emphasisInADecoratedParagraphIsWrittenAddedToItsFace() throws Exception {
+        // Emphasis adds to the paragraph's face: Java is bold italic in a bold paragraph, the text
+        // around it bold. The file writes the faces the page sets.
+        DocumentTextStyle bold = DocumentTextStyle.builder().decoration(DocumentTextDecoration.BOLD).build();
+        Export export = export(true, page -> page.addParagraph(p -> p.name("Lead").text("Lead *Java* dev").textStyle(bold)));
+        assertThat(export.firstSpanFace("Lead")).isEqualTo(TextDecoration.BOLD);
+        assertThat(export.paragraphWith("dev").getRuns())
+                .extracting(XWPFRun::text, XWPFRun::isBold, XWPFRun::isItalic)
+                .containsExactly(org.assertj.core.groups.Tuple.tuple("Lead ", true, false),
+                        org.assertj.core.groups.Tuple.tuple("Java", true, true),
+                        org.assertj.core.groups.Tuple.tuple(" dev", true, false));
         assertThat(export.notes("ParagraphNode")).isEmpty();
     }
 

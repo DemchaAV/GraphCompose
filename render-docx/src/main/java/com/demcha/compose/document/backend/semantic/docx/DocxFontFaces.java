@@ -13,7 +13,7 @@ import java.util.Set;
 
 /**
  * The faces of one family a document ships: which of its four slots the text asks for, each
- * face's file read and checked against its terms, and the note on a face an editor will not draw.
+ * face's file read and checked against its terms, and the note on a face LibreOffice will not draw.
  *
  * <p>What the font table writes them into, and which family keeps a name, is
  * {@link DocxFontTable}'s.</p>
@@ -140,22 +140,31 @@ final class DocxFontFaces {
                 case BOLD_ITALIC -> sources.boldItalic();
             });
         }
-        nameTheFacesAnEditorWillNotDraw(family, faces, report);
+        nameTheFacesLibreOfficeWillNotDraw(family, faces, report);
         return faces;
     }
 
     /**
-     * Says which of a family's faces an editor will not draw, because its program is of another
+     * Says which of a family's faces LibreOffice will not draw, because its program is of another
      * typeface than the one the family's regular slot holds.
      *
      * <p>A family's slots are filled one file at a time, so a caller can put a program of one
      * typeface in {@code embedRegular} and a program of another in {@code embedBold}. The export
-     * writes both, and the PDF backend draws each paragraph in the program its slot holds — but an
-     * editor reading the document draws the family from the one in {@code embedRegular} and leaves
-     * the other unread, so it travels for nothing and its runs are set in a face they were not
-     * measured in. Measured with a bold run on one such pair, Lato beside IBM Plex Mono, in Word
-     * 16.0.20527 and LibreOffice 24.2; the figures and what they cost are in the backend capability
-     * details. Nothing said so; this does.</p>
+     * writes both, and the PDF backend draws each paragraph in the program its slot holds. The
+     * editors part there, measured with a bold run; the figures and what they cost are in the
+     * backend capability details:</p>
+     * <ul>
+     *   <li>LibreOffice draws neither paragraph from the other program, and draws its runs from the
+     *   regular one: 24.2 on Lato beside IBM Plex Mono, and 26.8, under a name no font on the
+     *   machine answers, on Arsenal beside Volkhov, emboldening the regular program. 26.8 read the
+     *   program once its family record ({@code name} id 1) was rewritten to the family name the
+     *   regular program states — in that probe also the declared name.</li>
+     *   <li>Word 16 draws it where no font on the machine answers the name, whether or not the
+     *   program's names were rewritten. The Lato document showed Word's own Lato — a name Office
+     *   also serves from its cloud font cache — and not which embedded program Word reads.</li>
+     * </ul>
+     * <p>So in LibreOffice the program travels for nothing and those runs are set in a face they
+     * were not measured in. Nothing said so; this does.</p>
      *
      * <p>Not a refusal, and not reported as one: both faces are written, and the family is not
      * turned away. It is the document being the nearest thing an editor will read
@@ -174,18 +183,17 @@ final class DocxFontFaces {
      * what was measured is an editor drawing a family from the face it reads for the regular slot,
      * and a program whose name cannot be read is one this cannot compare. Silence there is a
      * missing warning rather than a false one. Said for every other slot the family ships and every
-     * pair of typefaces it holds, though one pair and one slot were measured: what the editors read
-     * the sameness off was not, so neither the slot nor the two names can be the thing that decides
-     * what is said.</p>
+     * pair of typefaces it holds: only the bold slot was measured, so the slot cannot be the thing
+     * that decides what is said.</p>
      *
-     * <p>What this does not do is make the document right. The program still travels unread and the
-     * lines still fall where the page did not put them — what the export can do without writing
-     * different bytes is say so. Carrying such a family as two declared names, which both editors
-     * were measured to draw, is the alternative not taken.</p>
+     * <p>What this does not do is make the document right. In LibreOffice the program still travels
+     * unread and the lines still fall where the page did not put them — what the export can do
+     * without writing different bytes is say so. Carrying such a family as two declared names,
+     * which LibreOffice was measured to draw, is the alternative not taken.</p>
      */
-    private static void nameTheFacesAnEditorWillNotDraw(FontFamilyDefinition family,
-                                                        List<Face> faces,
-                                                        DocxExportReport.Builder report) {
+    private static void nameTheFacesLibreOfficeWillNotDraw(FontFamilyDefinition family,
+                                                           List<Face> faces,
+                                                           DocxExportReport.Builder report) {
         if (faces.size() < 2) {
             return;
         }
@@ -212,19 +220,20 @@ final class DocxFontFaces {
                 continue;
             }
             LOG.warn("DocxSemanticBackend: the '{}' face of '{}' is a face of '{}' where its "
-                     + "regular face is a face of '{}'; an editor draws the family from the regular "
-                     + "face, so this program travels in the document and is drawn by neither "
-                     + "editor", face.element(), family.wordFamily(), own, drawn);
+                     + "regular face is a face of '{}'; LibreOffice draws the runs that reach this "
+                     + "face from the regular program and leaves this one unread, while Word 16 draws "
+                     + "it where no font on the machine answers the name",
+                     face.element(), family.wordFamily(), own, drawn);
             report.add(DocxExportReport.Severity.APPROXIMATED, "embedded font", null,
                     "the " + face.element() + " face of '" + family.wordFamily() + "' is a face of '"
                     + own + "', where its embedRegular face is a face of '" + drawn + "'; measured "
-                    + "with a bold run on one such pair, Lato beside IBM Plex Mono, in Word "
-                    + "16.0.20527 and LibreOffice 24.2: an editor drew the name from the program in "
-                    + "embedRegular and read the other for neither paragraph, so this program "
-                    + "travels in the document unread and those runs are set in the regular face — "
-                    + "where the line is this face's own, at the height it measured rather than the "
-                    + "height of the face they are drawn in. What the editors read the sameness off "
-                    + "was not measured, so this is said of every pair of typefaces a family holds");
+                    + "with a bold run: LibreOffice (24.2 and 26.8) drew this program for neither "
+                    + "paragraph and drew those runs from the regular program — where the line is "
+                    + "this face's own, at the height it measured rather than the height of the face "
+                    + "they are drawn in — while Word 16 drew it where no font on the machine "
+                    + "answered the name. LibreOffice 26.8 read such a program once its family "
+                    + "record (name id 1) named the regular program's family; one slot was "
+                    + "measured, so this is said of every pair of typefaces a family holds");
         }
     }
 

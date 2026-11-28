@@ -7343,10 +7343,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Writes an item's text: as authored in one run, or in the pieces the page sets it in, and
      * records it for the list's note.
      *
-     * <p>Where Word draws the marker of a tree's item the page reads with it, it draws it as the
-     * page's parser sets it: a list built as a tree of items without {@code hangingIndent} states
-     * no face on its levels, and Word draws their bullets regular, a bold list's included
-     * (measured in Word 16), where the parser sets the marker it reads regular.</p>
+     * <p>Where Word draws the marker of a tree's item the page reads with it, it draws it in a face
+     * of its own: a list built as a tree of items without {@code hangingIndent} states no face on
+     * its levels, and Word draws their bullets regular, a bold list's included (measured in Word
+     * 16). The page's parser sets the marker it reads in the list's face, as it starts every piece,
+     * so a bold list's bullet stands bold on the page and regular in Word.</p>
      *
      * @param before  what the file writes before the item's own text — its indent and marker,
      *                where Word does not draw the marker — in the lead's style where the page sets
@@ -14236,9 +14237,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * kept, every piece in the paragraph's own style, as an underscore inside a word is — leave the
      * text to be written as it stands.
      *
-     * <p>The pieces are the page's own: where its session reads markdown, the parser sets each
-     * one in its own face, the paragraph's left aside — a bold paragraph's {@code file_name}
-     * stands regular on the page, and is written so. An auto-sized paragraph's are read at the
+     * <p>The pieces are the page's own: where its session reads markdown, the parser starts each
+     * one from the paragraph's face and adds its emphasis to it — a bold paragraph's
+     * {@code file_name} stands bold on the page, and is written so. An auto-sized paragraph's are read at the
      * size the page fits its text to ({@link #writtenStyle}), a heading's at its multiple of it.</p>
      *
      * @param lines the lines the page laid the paragraph out in, empty where they are not read

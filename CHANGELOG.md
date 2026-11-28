@@ -106,6 +106,53 @@ follow semantic versioning; release dates are ISO 8601.
     other, stands at each place it is written, across and down.
   - In a table cell or a painted panel, whose text Word keeps inside it, such a canvas still
     writes its blocks at its left edge, and the report names one that places a block elsewhere.
+- **A bold paragraph containing `_`, `*` or a backtick no longer loses its bold.**
+  - A session reads a paragraph's text as markdown by default, and does so as soon as the text
+    holds one of those marks. Each piece was then set in the face its emphasis gave it and nothing
+    else, so the paragraph's own decoration was dropped: a bold paragraph reading
+    `snake_case_name` came out regular, a bold-italic one regular, an italic one with `*star*`
+    in it italic only on `star`, and an underlined one without its underline. The mark itself was
+    read correctly — an underscore inside a word stays text, as CommonMark has it — the face was
+    not. PDF, PPTX and DOCX all lost it, the DOCX export because it writes the faces the page sets.
+  - The paragraph's face is now where the reading starts. Text with no emphasis keeps it;
+    emphasis adds to it, so `*word*` in a bold paragraph is bold italic and `**word**` in an
+    italic one is bold italic too. An underlined or struck-through paragraph keeps its
+    decoration on the text outside emphasis; emphasised text there takes the emphasis face
+    alone, since a run carries one decoration. A heading line (`# …`) is still set bold
+    whatever the paragraph's face, as before.
+  - A bold list built as a tree of items without `hangingIndent` now sets the bullet the page
+    reads with a marked item bold, as it already set the bullet of an unmarked one. Word draws
+    those levels' bullets regular whatever the list's face (measured in Word 16), so in DOCX such
+    a bullet stands bold on the page and regular in Word; before, it was regular in both.
+  - **This changes what the page has done since its markdown reading began in 1.x**, and what
+    2.5.0 documented as the page's behaviour, which the DOCX export wrote as such. A styled paragraph containing `_`, `*`
+    or a backtick now keeps its face on the page, and the PPTX and DOCX exports follow it.
+    Of the 105 documents of the DOCX fidelity corpus one changes, `TimelineMinimal`'s: its
+    sidebar sets body text bold, and the project line ending `*(Open source)*` was the one
+    sidebar line drawn regular. It is now bold like the lines beside it, `(Open source)` bold
+    italic. Three committed README previews are re-rendered for the same reason: that CV, the
+    canvas showcase, whose italic notes paragraph names `CLIP_BOUNDS`, and the feature catalog,
+    whose bold line `SVG-path clip … (CLIP_PATH)` names one — each drawn regular before.
+  - A paragraph in the default face reads as before: its pieces, their faces and the bytes
+    written are unchanged.
+- **The DOCX note on a family of two typefaces says what each editor draws.**
+  - Since 2.5.1 a family whose bold, italic or bold-italic slot holds a program of another
+    typeface than its regular one is named in the report (`embedded font`, `APPROXIMATED`). The
+    note and its log line said that neither editor draws that program. That holds for
+    LibreOffice and not for Word.
+  - LibreOffice draws neither paragraph from it. In 24.2 both paragraphs were drawn from the
+    regular program (the 2.5.1 measurement). In 26.8, under a name no font on the machine
+    answers, Arsenal regular beside Volkhov bold, the bold paragraph was emboldened from the
+    regular program: 310.96pt wide where the page sets 387.84pt. It read the bold program once
+    the program's family record (`name` id 1) was rewritten to the family name the regular
+    program states, which in that probe was also the declared name.
+  - Word 16 draws it where no font on the machine answers the name: 387.97pt against the
+    page's 387.84pt, whether or not the program's names were rewritten. The 2.5.1 measurement
+    was taken under `Lato`, which Office also serves from its cloud font cache, so it showed
+    Word's own Lato rather than which embedded program Word reads.
+  - The note, its log line, the DOCX recipe and the backend-capability details now say this,
+    editor by editor. Nothing else changes: the note fires on the same families, and the
+    document's bytes are the same.
 
 ### Documentation
 

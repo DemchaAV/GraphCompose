@@ -258,11 +258,12 @@ class DocxFontTableTest {
     }
 
     @Test
-    void aFaceOfAnotherTypefaceThanTheFamilysRegularOneIsNamedAsUndrawn() throws Exception {
-        // One family, its two slots holding programs of two typefaces. Measured in Word 16.0.20527
-        // and LibreOffice 24.2: both paragraphs are drawn from the regular program and the bold one
-        // is read by neither editor, so the document says so. It still ships — the export writes
-        // the bytes it was given — which is why this is APPROXIMATED and not a refusal.
+    void aFaceOfAnotherTypefaceThanTheFamilysRegularOneIsNamedEditorByEditor() throws Exception {
+        // One family, its two slots holding programs of two typefaces. LibreOffice (24.2 and 26.8)
+        // draws both paragraphs from the regular program and reads the bold one for neither; Word
+        // 16 draws the bold one where no font on the machine answers the name. So the document
+        // says what each editor does. It still ships — the export writes the bytes it was given —
+        // which is why this is APPROXIMATED and not a refusal.
         FontFamilyDefinition mixed = FontFamilyDefinition.classpath(SHIPPED_MONO, LATO_REGULAR)
                 .boldResource(MONO_BOLD).wordFamily("MixedSlots").build();
         try (Shipped shipped = exportSetIn(List.of(mixed),
@@ -294,6 +295,15 @@ class DocxFontTableTest {
                                 .contains("the embedBold face of 'MixedSlots' is a face of "
                                           + "'IBM Plex Mono'")
                                 .contains("its embedRegular face is a face of 'Lato'");
+                        assertThat(note.detail())
+                                .as("each editor named with what it was measured to draw")
+                                .contains("LibreOffice (24.2 and 26.8) drew a program of another "
+                                          + "typeface for neither paragraph")
+                                .contains("Word 16 drew it where no font on the machine answered "
+                                          + "the name")
+                                .as("and Word not said to leave unread a program it was measured to draw")
+                                .doesNotContain("neither editor")
+                                .doesNotContain("an editor drew the name from the program");
                     });
         }
     }

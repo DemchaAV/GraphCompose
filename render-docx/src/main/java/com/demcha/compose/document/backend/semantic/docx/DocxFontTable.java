@@ -299,7 +299,8 @@ final class DocxFontTable {
      * {@code DocxFontFaces.addFace} gives up that one face and the family ships the rest under its
      * name. Here a face bound for a slot the holder left empty does not travel either — measured,
      * a family declaring only {@code embedBold} built from a different typeface, beside a holder
-     * declaring only {@code embedRegular}, had its bold program ignored by both editors. A free
+     * declaring only {@code embedRegular}, had its bold program ignored by both editors — Word's
+     * half of that unconfirmed since, as the measurement of a free slot below says. A free
      * slot is the only place where the second program could have been read at all: where the two
      * families are set in text in the same slot, a {@code w:font} has one child for it and an
      * editor has one program to draw from whatever the two are.</p>
@@ -320,17 +321,30 @@ final class DocxFontTable {
      * Mono one was used by neither — as two elements and as two children of one element alike, and
      * whichever of the two children was written first. With Lato regular and Lato bold, both
      * programs were read in either shape, each paragraph drawn from its own. That pair is the
-     * ordinary case of one family filling two slots, so the format is not the limit.</p>
+     * ordinary case of one family filling two slots, so the format is not the limit. Those were
+     * measured under {@code Lato}, which Word also has from Office's cloud font cache, so what they
+     * show of Word is its own Lato; under a name no font on the machine answers, Word 16 drew a bold
+     * program of another typeface written as the second child of one element, and the two-element
+     * shape was not measured again there.</p>
      *
-     * <p>So giving the family up whole, rather than only the slot it clashes on, costs nothing
-     * more except in one case: the given-up face is bound for a slot the holder left empty
-     * <em>and</em> is a face of the same typeface as the holder's program — a family declaring a
-     * bundled family's Word name and built from that same typeface's files. There it gives up a
-     * program both editors would have read. What the editors read the sameness off — the programs'
-     * own {@code name} table, or something else — was not measured. Which program sat in
-     * {@code embedRegular} was never swapped either, so for two elements "survived because its
-     * element came first" and "survived because it is the regular face" stay unseparated; within
-     * one element the two children's order was swapped and did not decide.</p>
+     * <p>In LibreOffice, then, giving the family up whole, rather than only the slot it clashes
+     * on, costs nothing more except in one case; for Word, which drew a second child of another
+     * typeface, what it costs was not measured. The one case, as the note on a family of two
+     * typefaces classes them: the given-up face is bound for a slot the holder left empty
+     * <em>and</em> is a face of the same typeface as the holder's program — a family declaring a bundled family's Word name and built from that same
+     * typeface's files. There it gives up a program LibreOffice 24.2 read for Lato beside Lato,
+     * whose bold program's family record names the holder's family; for a face whose family
+     * record names something else, as {@code Oswald-SemiBold}'s does, it is unmeasured, and Word's
+     * half was measured only under {@code Lato}, so it is unknown. LibreOffice 26.8 was since seen
+     * to read the family record ({@code name} id 1), on one program; what it compares the record
+     * with — the regular program's family or the declared name, which the probe gave the same
+     * string — and whether it reads the typographic one first, is not isolated. Word 16, under a
+     * name no font on the machine answers, read a program of another typeface whatever its names
+     * said.
+     * Which program sat in {@code embedRegular} was never swapped either, so for two elements
+     * "survived because its element came first" and "survived because it is the regular face"
+     * stay unseparated; within one element the two children's order was swapped and did not
+     * decide.</p>
      *
      * <p>Its runs still name it, so they are set in whatever that name resolves to where the
      * document is read, which is the holder's face — in both editors where the runs spell the

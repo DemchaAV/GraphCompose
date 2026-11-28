@@ -57,14 +57,24 @@ class DocxMarkdownTest {
     }
 
     @Test
-    void thePiecesTakeTheParsersFaceNotTheParagraphs() {
+    void thePiecesStartFromTheParagraphsFace() {
+        // The page starts every piece from the paragraph's face and adds its emphasis to it: in a
+        // bold paragraph an underscore inside a word stays bold text, and an emphasised word is
+        // bold italic.
         DocumentTextStyle bold = DocumentTextStyle.builder().size(10).decoration(DocumentTextDecoration.BOLD).build();
         assertThat(DocxMarkdown.read("file_name *x*", bold)).containsExactly(
-                piece("file_name ", DocumentTextDecoration.DEFAULT, 10),
-                piece("x", DocumentTextDecoration.ITALIC, 10));
+                piece("file_name ", DocumentTextDecoration.BOLD, 10),
+                piece("x", DocumentTextDecoration.BOLD_ITALIC, 10));
         // A list marker is the paragraph's, face and all.
         assertThat(DocxMarkdown.read("* *x*", bold)).containsExactly(
                 piece("* ", DocumentTextDecoration.BOLD, 10),
+                piece("x", DocumentTextDecoration.BOLD_ITALIC, 10));
+        // An underlined paragraph keeps its underline outside emphasis; the emphasised word takes
+        // the emphasis face alone, a piece carrying one decoration.
+        DocumentTextStyle underlined = DocumentTextStyle.builder().size(10)
+                .decoration(DocumentTextDecoration.UNDERLINE).build();
+        assertThat(DocxMarkdown.read("file_name *x*", underlined)).containsExactly(
+                piece("file_name ", DocumentTextDecoration.UNDERLINE, 10),
                 piece("x", DocumentTextDecoration.ITALIC, 10));
     }
 

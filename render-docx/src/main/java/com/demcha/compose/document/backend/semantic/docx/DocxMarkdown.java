@@ -28,20 +28,15 @@ import java.util.Objects;
  *
  * <p>The page reads the text line by line, each through {@link MarkDownParser}, a line opening
  * with {@code -}, {@code *} or {@code +} and a space keeping that marker and the space in the
- * paragraph's style ({@code ParagraphWrapping.tokenizeMarkdownLine}). The parser sets every piece
- * it reads in a face of its own — bold, italic, both or neither, whatever the paragraph's style
- * — and a heading's at a multiple of the size. The pieces are read here the same way
+ * paragraph's style ({@code ParagraphWrapping.tokenizeMarkdownLine}). The parser starts every
+ * piece it reads from the paragraph's face and adds the piece's emphasis to it — an underlined or
+ * struck-through paragraph's emphasised pieces taking the emphasis face alone — and sets a
+ * heading's bold at a multiple of the size. The pieces are read here the same way
  * ({@link #read}), and are the text the page sets only where its laid-out lines hold the same
  * letters in the same faces, families, colours, tracking and sizes ({@link #laidOutIn}): a session that
  * reads no markdown lays the marks out, and the pieces hold none.</p>
  */
 final class DocxMarkdown {
-
-    /**
-     * A style the parser is handed to read a line in: at a size of one, so the size it sets a
-     * piece in is the multiple of the paragraph's.
-     */
-    private static final TextStyle UNIT = new TextStyle(FontName.HELVETICA, 1, TextDecoration.DEFAULT, Color.BLACK);
 
     /** How far apart two sizes may be and still be the same, in points. */
     private static final double SIZE_CLEARANCE = 0.01;
@@ -190,7 +185,7 @@ final class DocxMarkdown {
                 rest = line.substring(first + 2);
             }
         }
-        for (TextDataBody body : parser.getBody(rest, UNIT)) {
+        for (TextDataBody body : parser.getBody(rest, unitIn(style.decoration()))) {
             add(into, body.text(), styled(style, body.textStyle()));
         }
     }
@@ -210,6 +205,15 @@ final class DocxMarkdown {
     /** A face the page names, as the document names it: the two share their names. */
     private static DocumentTextDecoration documentFace(TextDecoration decoration) {
         return decoration == null ? DocumentTextDecoration.DEFAULT : DocumentTextDecoration.valueOf(decoration.name());
+    }
+
+    /**
+     * The style the parser is handed to read a line in: at a size of one, so the size it sets a
+     * piece in is the multiple of the paragraph's, and in the paragraph's face, which is where the
+     * parser starts every piece from.
+     */
+    private static TextStyle unitIn(DocumentTextDecoration face) {
+        return new TextStyle(FontName.HELVETICA, 1, pageFace(face), Color.BLACK);
     }
 
     /** A face the document names, as the page names it. */

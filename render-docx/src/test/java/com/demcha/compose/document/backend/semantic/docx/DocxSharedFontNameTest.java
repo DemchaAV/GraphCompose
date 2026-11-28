@@ -157,7 +157,9 @@ class DocxSharedFontNameTest {
         // the same answer twice, and the shape is not what either editor goes by: a face of a
         // different typeface under the name was used by neither paragraph as a second element and
         // as a second child alike, in either order of the two children, while two faces of one
-        // typeface were both read in either shape. So what the export writes is pinned here
+        // typeface were both read in either shape. That was under Lato, which Word also has from
+        // Office's cloud font cache; under a name no font on the machine answers, Word 16 drew a
+        // second child of another typeface. So what the export writes is pinned here
         // rather than argued from the editors: each element declares the faces of its own family
         // and no others.
         //

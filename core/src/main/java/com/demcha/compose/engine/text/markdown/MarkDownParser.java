@@ -114,7 +114,7 @@ public class MarkDownParser {
 
                 // 4) Text nodes (your current logic)
                 new VisitHandler<>(Text.class, textNode -> {
-                    TextDecoration decoration = determineStyle(textNode);
+                    TextDecoration decoration = determineStyle(textNode, style.decoration());
                     TextStyle newTextStyle = new TextStyle(style.fontName(), style.size(), decoration, style.color(),
                             style.letterSpacing());
 
@@ -128,7 +128,21 @@ public class MarkDownParser {
         return resultList;
     }
 
-    private TextDecoration determineStyle(Node node) {
+    /**
+     * The face a piece of text is set in: the paragraph's own, with the emphasis around the piece
+     * added to it.
+     *
+     * <p>Text with no emphasis keeps the paragraph's face whatever it is, so a bold paragraph
+     * holding an underscore inside a word stays bold. Emphasis adds bold or italic to a face that
+     * is bold, italic, both or neither. An underlined or struck-through paragraph keeps its
+     * decoration on text outside emphasis, while emphasised text takes the emphasis face alone:
+     * a piece carries one decoration, and none of them is both underlined and bold.</p>
+     *
+     * @param node      the text node
+     * @param paragraph the paragraph's own face, {@code null} read as none
+     */
+    private TextDecoration determineStyle(Node node, TextDecoration paragraph) {
+        TextDecoration base = paragraph == null ? TextDecoration.DEFAULT : paragraph;
         boolean isBold = false;
         boolean isItalic = false;
 
@@ -141,6 +155,15 @@ public class MarkDownParser {
             parent = parent.getParent();
         }
 
+        if (!isBold && !isItalic) {
+            return base;
+        }
+        if (base == TextDecoration.BOLD || base == TextDecoration.BOLD_ITALIC) {
+            isBold = true;
+        }
+        if (base == TextDecoration.ITALIC || base == TextDecoration.BOLD_ITALIC) {
+            isItalic = true;
+        }
         if (isBold && isItalic)
             return TextDecoration.BOLD_ITALIC;
         if (isBold)

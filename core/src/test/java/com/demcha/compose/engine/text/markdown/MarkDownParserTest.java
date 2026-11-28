@@ -109,8 +109,9 @@ class MarkDownParserTest {
 
     @Test
     void anOrderedListLineKeepsTheParagraphsFace() {
-        // The parser reads "1. " as an ordered list item; what is left of the line is text in the
-        // paragraph's face, with nothing set in another face before it.
+        // The parser reads "1. " as an ordered list item and drops its number; the bullet its
+        // ListItem handler would add does not appear, so that handler is not reached here. What is
+        // left of the line is text in the paragraph's face, with nothing in another face before it.
         assertThat(faces("1. a_b", TextDecoration.BOLD))
                 .containsExactly(tuple("a_b", TextDecoration.BOLD));
     }

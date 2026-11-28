@@ -332,16 +332,18 @@ final class DocxFontTable {
      * typeface, what it costs was not measured. The one case: the given-up face is bound for a
      * slot the holder left empty <em>and</em> is a face of the same typeface as the holder's
      * program — a family declaring a bundled family's Word name and built from that same
-     * typeface's files. There it gives up a program LibreOffice would have read; Word's half of
-     * that was measured only under {@code Lato}, so it is unknown. What the editors read the
+     * typeface's files. There it gives up a program LibreOffice 24.2 read for Lato beside Lato,
+     * whose bold program's family record names the holder's family; for a face whose family
+     * record names something else, as {@code Oswald-SemiBold}'s does, it is unmeasured, and Word's
+     * half was measured only under {@code Lato}, so it is unknown. What the editors read the
      * sameness off was measured once since, in LibreOffice 26.8 and on one program: its family
      * record ({@code name} id 1), compared against the regular program's family or the declared
      * name — the probe gave both the same string, so it does not tell which. Word 16, under a name
      * no font on the machine answers, read a program of another typeface whatever its names said.
      * Which program sat in {@code embedRegular} was never swapped either, so for two elements
-     * "survived because its
-     * element came first" and "survived because it is the regular face" stay unseparated; within
-     * one element the two children's order was swapped and did not decide.</p>
+     * "survived because its element came first" and "survived because it is the regular face"
+     * stay unseparated; within one element the two children's order was swapped and did not
+     * decide.</p>
      *
      * <p>Its runs still name it, so they are set in whatever that name resolves to where the
      * document is read, which is the holder's face — in both editors where the runs spell the

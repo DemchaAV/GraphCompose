@@ -539,6 +539,11 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
   program states and what each editor was measured to do — said where the family ships a
   regular face and both programs name their typeface, which is what was measured, and said
   of every other slot and every pair of typefaces, since one pair and one slot were measured.
+  It reads the typeface the way the format means it, the typographic family first, and what
+  LibreOffice reads the sameness off is not isolated: where a face's family record differs
+  from its typographic one, as `Oswald-SemiBold`'s does, the note counts the two as one
+  typeface and says nothing, and whether LibreOffice draws such a face beside its family's
+  regular one is unmeasured.
   The document's bytes are unchanged, so what the note buys is knowing. Pair the slots of one
   typeface, or register the second typeface as a family of its own and set the text in it.
 - **Only what the face permits.** An OpenType face states its terms in `OS/2`, and the
@@ -578,14 +583,15 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
   costs nothing more except in one case; for Word, which drew a second child of another
   typeface, what it costs was not measured. The one case: the given-up face is bound for a
   slot the holder left empty **and** is a face of the same typeface as the holder's program.
-  There it gives up a program LibreOffice would have read; Word's half of that was measured
-  only under `Lato`, so it is unknown. What the editors read the sameness off was measured
-  once since, in LibreOffice 26.8 and on one program: its family record (`name` id 1),
+  There it gives up a program LibreOffice 24.2 read for Lato beside Lato, whose bold
+  program's family record names the holder's family; for a face whose family record names
+  something else, as `Oswald-SemiBold`'s does, it is unmeasured, and Word's half was
+  measured only under `Lato`, so it is unknown. What the editors read the sameness off was
+  measured once since, in LibreOffice 26.8 and on one program: its family record (`name` id 1),
   compared against the regular program's family or the declared name — the probe gave both
   the same string, so it does not tell which. Word 16, under a name no font on the machine
   answers, read a program of another typeface whatever its names said. Which program sat in
-  `w:embedRegular` was
-  never swapped either, so for two elements "survived because its element came first" and
+  `w:embedRegular` was never swapped either, so for two elements "survived because its element came first" and
   "survived because it is the regular face" stay unseparated; within one element the two
   children's order was swapped and did not decide.
 

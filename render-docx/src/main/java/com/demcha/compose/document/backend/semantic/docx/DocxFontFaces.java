@@ -179,12 +179,12 @@ final class DocxFontFaces {
      * and {@code Oswald} as its typographic one — read by its family record alone, that face would
      * be called a face of another typeface.</p>
      *
-     * <p>The note follows the typeface, which is not the same thing as what LibreOffice reads.
-     * LibreOffice 26.8 was seen keyed on the family record: it read a program of another typeface
-     * once that record was rewritten, and it did not draw {@code OrangeOps}' {@code Oswald-SemiBold}
-     * shipped under {@code Oswald} with its runs bold, setting them in a substitute. So where a
-     * face's family and typographic records differ, the note's silence is not a measurement that
-     * LibreOffice draws it.</p>
+     * <p>The note follows the typeface, and what LibreOffice reads the sameness off is not
+     * isolated: LibreOffice 26.8 read a program of another typeface once its family record was
+     * rewritten, to a string that was both the regular program's family and the declared name.
+     * So where a face's family record differs from its typographic one, as {@code Oswald-SemiBold}'s
+     * does, whether LibreOffice draws it beside the family's regular face is unmeasured, and the
+     * note's silence there says nothing about it.</p>
      *
      * <p>Said only where the family ships a regular face and both programs name their typeface:
      * what was measured is an editor drawing a family from the face it reads for the regular slot,
@@ -240,8 +240,8 @@ final class DocxFontFaces {
                     + "they are drawn in — while Word 16 drew it where no font on the machine "
                     + "answered the name. LibreOffice 26.8 read such a program once its family "
                     + "record (name id 1) named the regular program's family (in that probe also "
-                    + "the declared name); one slot was "
-                    + "measured, so this is said of every pair of typefaces a family holds");
+                    + "the declared name); one slot was measured, so this is said of every pair of "
+                    + "typefaces a family holds");
         }
     }
 

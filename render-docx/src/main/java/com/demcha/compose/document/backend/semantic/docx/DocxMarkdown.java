@@ -38,15 +38,6 @@ import java.util.Objects;
  */
 final class DocxMarkdown {
 
-    /**
-     * The style the parser is handed to read a line in: at a size of one, so the size it sets a
-     * piece in is the multiple of the paragraph's, and in the paragraph's face, which is where the
-     * parser starts every piece from.
-     */
-    private static TextStyle unitIn(DocumentTextDecoration face) {
-        return new TextStyle(FontName.HELVETICA, 1, pageFace(face), Color.BLACK);
-    }
-
     /** How far apart two sizes may be and still be the same, in points. */
     private static final double SIZE_CLEARANCE = 0.01;
 
@@ -214,6 +205,15 @@ final class DocxMarkdown {
     /** A face the page names, as the document names it: the two share their names. */
     private static DocumentTextDecoration documentFace(TextDecoration decoration) {
         return decoration == null ? DocumentTextDecoration.DEFAULT : DocumentTextDecoration.valueOf(decoration.name());
+    }
+
+    /**
+     * The style the parser is handed to read a line in: at a size of one, so the size it sets a
+     * piece in is the multiple of the paragraph's, and in the paragraph's face, which is where the
+     * parser starts every piece from.
+     */
+    private static TextStyle unitIn(DocumentTextDecoration face) {
+        return new TextStyle(FontName.HELVETICA, 1, pageFace(face), Color.BLACK);
     }
 
     /** A face the document names, as the page names it. */

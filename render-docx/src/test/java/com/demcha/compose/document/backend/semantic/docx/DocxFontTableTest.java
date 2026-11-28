@@ -297,8 +297,8 @@ class DocxFontTableTest {
                                 .contains("its embedRegular face is a face of 'Lato'");
                         assertThat(note.detail())
                                 .as("each editor named with what it was measured to draw")
-                                .contains("LibreOffice (24.2 and 26.8) drew this program for "
-                                          + "neither paragraph")
+                                .contains("LibreOffice (24.2 and 26.8) drew a program of another "
+                                          + "typeface for neither paragraph")
                                 .contains("Word 16 drew it where no font on the machine answered "
                                           + "the name")
                                 .as("and Word not said to leave unread a program it was measured to draw")

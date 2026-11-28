@@ -525,9 +525,9 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
     8.79pt short of where LibreOffice draws that program under a name of its own. In 26.8,
     under a name no font on the machine answers, Arsenal regular beside Volkhov bold, the
     bold paragraph was emboldened from the regular program: 310.96pt wide where the page sets
-    387.84pt. It read the bold program once the program's family record (`name` id 1) was
-    rewritten to the family name the regular program states — in that probe also the
-    declared name, so the two are not told apart — (387.54pt), and not when only its full name
+    387.84pt. It read the bold program (387.54pt) once the program's family record (`name`
+    id 1) was rewritten to the family name the regular program states — in that probe also
+    the declared name, so the two are not told apart — and not when only its full name
     (id 4) was.
   - **Word 16** draws it, where no font on the machine answers the name: on that Arsenal and
     Volkhov document the bold paragraph was 387.97pt wide, against the page's 387.84pt,
@@ -539,11 +539,12 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
   program states and what each editor was measured to do — said where the family ships a
   regular face and both programs name their typeface, which is what was measured, and said
   of every other slot and every pair of typefaces, since one pair and one slot were measured.
-  It reads the typeface the way the format means it, the typographic family first, and what
-  LibreOffice reads the sameness off is not isolated: where a face's family record differs
-  from its typographic one, as `Oswald-SemiBold`'s does, the note counts the two as one
-  typeface and says nothing, and whether LibreOffice draws such a face beside its family's
-  regular one is unmeasured.
+  It reads the typeface the way the format means it, the typographic family first.
+  LibreOffice 26.8 was seen to read the family record; what it compares the record with,
+  and whether it reads the typographic one first, is not isolated. So where a face's family
+  record differs from its typographic one, as `Oswald-SemiBold`'s does, the note counts that
+  face and its family's regular one as one typeface and says nothing, and whether
+  LibreOffice draws such a face beside its family's regular one is unmeasured.
   The document's bytes are unchanged, so what the note buys is knowing. Pair the slots of one
   typeface, or register the second typeface as a family of its own and set the text in it.
 - **Only what the face permits.** An OpenType face states its terms in `OS/2`, and the
@@ -581,19 +582,20 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
 
   In LibreOffice, then, giving the family up whole, rather than only the slot it clashes on,
   costs nothing more except in one case; for Word, which drew a second child of another
-  typeface, what it costs was not measured. The one case: the given-up face is bound for a
-  slot the holder left empty **and** is a face of the same typeface as the holder's program.
+  typeface, what it costs was not measured. The one case, as the note on a family of two
+  typefaces classes them: the given-up face is bound for a slot the holder left empty **and**
+  is a face of the same typeface as the holder's program.
   There it gives up a program LibreOffice 24.2 read for Lato beside Lato, whose bold
   program's family record names the holder's family; for a face whose family record names
   something else, as `Oswald-SemiBold`'s does, it is unmeasured, and Word's half was
-  measured only under `Lato`, so it is unknown. What the editors read the sameness off was
-  measured once since, in LibreOffice 26.8 and on one program: its family record (`name` id 1),
-  compared against the regular program's family or the declared name — the probe gave both
-  the same string, so it does not tell which. Word 16, under a name no font on the machine
-  answers, read a program of another typeface whatever its names said. Which program sat in
-  `w:embedRegular` was never swapped either, so for two elements "survived because its element came first" and
-  "survived because it is the regular face" stay unseparated; within one element the two
-  children's order was swapped and did not decide.
+  measured only under `Lato`, so it is unknown. LibreOffice 26.8 was since seen to read the
+  family record (`name` id 1), on one program; what it compares the record with — the
+  regular program's family or the declared name, which the probe gave the same string — and
+  whether it reads the typographic one first, is not isolated. Word 16, under a name no font
+  on the machine answers, read a program of another typeface whatever its names said. Which
+  program sat in `w:embedRegular` was never swapped either, so for two elements "survived
+  because its element came first" and "survived because it is the regular face" stay
+  unseparated; within one element the two children's order was swapped and did not decide.
 
   The given-up family's runs still carry its
   own name, so its text is set in whatever that name resolves to where the document is read —

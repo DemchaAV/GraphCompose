@@ -13,7 +13,8 @@ import java.util.Set;
 
 /**
  * The faces of one family a document ships: which of its four slots the text asks for, each
- * face's file read and checked against its terms, and the note on a face LibreOffice will not draw.
+ * face's file read and checked against its terms, and the note on a face of another typeface than
+ * the family's regular one.
  *
  * <p>What the font table writes them into, and which family keeps a name, is
  * {@link DocxFontTable}'s.</p>
@@ -145,8 +146,8 @@ final class DocxFontFaces {
     }
 
     /**
-     * Says which of a family's faces LibreOffice will not draw, because its program is of another
-     * typeface than the one the family's regular slot holds.
+     * Names a family's faces whose program is of another typeface than the one its regular slot
+     * holds: faces of that kind LibreOffice was measured not to draw.
      *
      * <p>A family's slots are filled one file at a time, so a caller can put a program of one
      * typeface in {@code embedRegular} and a program of another in {@code embedBold}. The export
@@ -179,10 +180,10 @@ final class DocxFontFaces {
      * and {@code Oswald} as its typographic one — read by its family record alone, that face would
      * be called a face of another typeface.</p>
      *
-     * <p>The note follows the typeface, and what LibreOffice reads the sameness off is not
-     * isolated: LibreOffice 26.8 read a program of another typeface once its family record was
-     * rewritten, to a string that was both the regular program's family and the declared name.
-     * So where a face's family record differs from its typographic one, as {@code Oswald-SemiBold}'s
+     * <p>The note follows the typeface. LibreOffice 26.8 was seen to read the family record: it read
+     * a program of another typeface once that record was rewritten, to a string that was both the
+     * regular program's family and the declared name. What it compares the record with, and
+     * whether it reads the typographic one first, is not isolated. So where a face's family record differs from its typographic one, as {@code Oswald-SemiBold}'s
      * does, whether LibreOffice draws it beside the family's regular face is unmeasured, and the
      * note's silence there says nothing about it.</p>
      *
@@ -228,13 +229,14 @@ final class DocxFontFaces {
             }
             LOG.warn("DocxSemanticBackend: the '{}' face of '{}' is a face of '{}' where its "
                      + "regular face is a face of '{}'; LibreOffice draws the runs that reach this "
-                     + "face from the regular program and leaves this one unread, while Word 16 draws "
-                     + "it where no font on the machine answers the name",
+                     + "face from the regular program and was measured to leave such a program "
+                     + "unread, while Word 16 draws it where no font on the machine answers the name",
                      face.element(), family.wordFamily(), own, drawn);
             report.add(DocxExportReport.Severity.APPROXIMATED, "embedded font", null,
                     "the " + face.element() + " face of '" + family.wordFamily() + "' is a face of '"
                     + own + "', where its embedRegular face is a face of '" + drawn + "'; measured "
-                    + "with a bold run: LibreOffice (24.2 and 26.8) drew this program for neither "
+                    + "with a bold run: LibreOffice (24.2 and 26.8) drew a program of another "
+                    + "typeface for neither "
                     + "paragraph and drew those runs from the regular program — where the line is "
                     + "this face's own, at the height it measured rather than the height of the face "
                     + "they are drawn in — while Word 16 drew it where no font on the machine "

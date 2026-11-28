@@ -154,15 +154,15 @@ follow semantic versioning; release dates are ISO 8601.
   - The note, its log line, the DOCX recipe and the backend-capability details now say this,
     editor by editor. Nothing else changes: the note fires on the same families, and the
     document's bytes are the same.
-  - The same measurement narrows two things the 2.5.1 text said. The case where giving up a
-    family that shares a name costs a readable program was said to cost one both editors
-    would read; that holds for LibreOffice 24.2 on Lato beside Lato, is unmeasured for a
-    face whose family record names another family than the holder's, and unknown for Word.
-    And what the editors read the sameness of two programs off was said to be unmeasured;
-    LibreOffice 26.8 has now been seen to read the family record (`name` id 1), against
-    the regular program's family or the declared name, which that probe does not tell
-    apart. The note compares typefaces, the typographic family first, so where a face's
-    family record differs from its typographic one its silence is not a measurement.
+  - The same measurement narrows two things the 2.5.1 text said. Giving up a family that
+    shares a name was said, in one case, to lose a program both editors would read; that
+    holds for LibreOffice 24.2 on Lato beside Lato, is unmeasured for a face whose family
+    record names another family than the holder's, and unknown for Word. And what the
+    editors read the sameness of two programs off was said to be unmeasured; LibreOffice
+    26.8 has now been seen to read the family record (`name` id 1), while what it compares
+    the record with, and whether it reads the typographic one first, is not isolated. The
+    note compares typefaces, the typographic family first, so where a face's family record
+    differs from its typographic one the note's silence is not a measurement.
 
 ### Documentation
 

@@ -576,12 +576,15 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
 
   In LibreOffice, then, giving the family up whole, rather than only the slot it clashes on,
   costs nothing more except in one case; for Word, which drew a second child of another
-  typeface, what it costs was not measured. The one case: the given-up face is bound for a slot the holder left empty **and** is
-  a face of the same typeface as the holder's program. There it gives up a program both
-  editors would have read. What the editors read the sameness off was measured once since,
-  in LibreOffice 26.8 and on one program: its family record (`name` id 1). Word 16, under a
-  name no font on the machine answers, read a program of another typeface whatever its names
-  said. Which program sat in `w:embedRegular` was
+  typeface, what it costs was not measured. The one case: the given-up face is bound for a
+  slot the holder left empty **and** is a face of the same typeface as the holder's program.
+  There it gives up a program LibreOffice would have read; Word's half of that was measured
+  only under `Lato`, so it is unknown. What the editors read the sameness off was measured
+  once since, in LibreOffice 26.8 and on one program: its family record (`name` id 1),
+  compared against the regular program's family or the declared name — the probe gave both
+  the same string, so it does not tell which. Word 16, under a name no font on the machine
+  answers, read a program of another typeface whatever its names said. Which program sat in
+  `w:embedRegular` was
   never swapped either, so for two elements "survived because its element came first" and
   "survived because it is the regular face" stay unseparated; within one element the two
   children's order was swapped and did not decide.
@@ -805,7 +808,7 @@ tree of items without `hangingIndent`, which the page lays out after its indent 
 and reads with them, as its own text after them. The marker stays where it was: Word draws a
 Word list's — regular, a bold list's too (measured in Word 16), where the parser sets the marker
 it reads with a tree's item in the list's face, so a bold list's bullet stands bold on the page
-and regular in Word — and a list of paragraphs
+and regular in Word, a difference the report does not name — and a list of paragraphs
 writes its marker and nesting indent as characters before the pieces, in the face the page sets
 them in. The font table ships the faces the page sets the pieces in. The report names a heading
 written taller than its item's line, which Word cuts on screen. An item is written as authored,

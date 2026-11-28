@@ -125,8 +125,9 @@ follow semantic versioning; release dates are ISO 8601.
     those levels' bullets regular whatever the list's face (measured in Word 16), so in DOCX such
     a bullet stands bold on the page and regular in Word; before, it was regular in both.
   - **This changes what the page has done since its markdown reading began in 1.x**, and what
-    2.5.0 documented as the page's behaviour, which the DOCX export wrote as such. A styled paragraph containing `_`, `*`
-    or a backtick now keeps its face on the page, and the PPTX and DOCX exports follow it.
+    2.5.0 documented as the page's behaviour, which the DOCX export wrote as such. A styled
+    paragraph containing `_`, `*` or a backtick now keeps its face on the page, and the PPTX
+    and DOCX exports follow it.
     Of the 105 documents of the DOCX fidelity corpus one changes, `TimelineMinimal`'s: its
     sidebar sets body text bold, and the project line ending `*(Open source)*` was the one
     sidebar line drawn regular. It is now bold like the lines beside it, `(Open source)` bold

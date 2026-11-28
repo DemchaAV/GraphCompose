@@ -39,11 +39,13 @@ import java.util.Objects;
 final class DocxMarkdown {
 
     /**
-     * A style the parser is handed to read a line in: at a size of one, so the size it sets a
-     * piece in is the multiple of the paragraph's. Each line is read in it with the paragraph's
-     * face in place of its own, which is where the parser starts every piece from.
+     * The style the parser is handed to read a line in: at a size of one, so the size it sets a
+     * piece in is the multiple of the paragraph's, and in the paragraph's face, which is where the
+     * parser starts every piece from.
      */
-    private static final TextStyle UNIT = new TextStyle(FontName.HELVETICA, 1, TextDecoration.DEFAULT, Color.BLACK);
+    private static TextStyle unitIn(DocumentTextDecoration face) {
+        return new TextStyle(FontName.HELVETICA, 1, pageFace(face), Color.BLACK);
+    }
 
     /** How far apart two sizes may be and still be the same, in points. */
     private static final double SIZE_CLEARANCE = 0.01;
@@ -192,8 +194,7 @@ final class DocxMarkdown {
                 rest = line.substring(first + 2);
             }
         }
-        TextStyle unit = new TextStyle(UNIT.fontName(), UNIT.size(), pageFace(style.decoration()), UNIT.color());
-        for (TextDataBody body : parser.getBody(rest, unit)) {
+        for (TextDataBody body : parser.getBody(rest, unitIn(style.decoration()))) {
             add(into, body.text(), styled(style, body.textStyle()));
         }
     }

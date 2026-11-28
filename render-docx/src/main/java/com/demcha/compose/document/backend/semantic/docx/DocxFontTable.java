@@ -329,14 +329,17 @@ final class DocxFontTable {
      *
      * <p>In LibreOffice, then, giving the family up whole, rather than only the slot it clashes
      * on, costs nothing more except in one case; for Word, which drew a second child of another
-     * typeface, what it costs was not measured. The one case: the given-up face is bound for a slot the holder left empty
-     * <em>and</em> is a face of the same typeface as the holder's program — a family declaring a
-     * bundled family's Word name and built from that same typeface's files. There it gives up a
-     * program both editors would have read. What the editors read the sameness off was measured
-     * once since, in LibreOffice 26.8 and on one program: its family record ({@code name} id 1).
-     * Word 16, under a name no font on the machine answers, read a program of another typeface
-     * whatever its names said. Which program sat in
-     * {@code embedRegular} was never swapped either, so for two elements "survived because its
+     * typeface, what it costs was not measured. The one case: the given-up face is bound for a
+     * slot the holder left empty <em>and</em> is a face of the same typeface as the holder's
+     * program — a family declaring a bundled family's Word name and built from that same
+     * typeface's files. There it gives up a program LibreOffice would have read; Word's half of
+     * that was measured only under {@code Lato}, so it is unknown. What the editors read the
+     * sameness off was measured once since, in LibreOffice 26.8 and on one program: its family
+     * record ({@code name} id 1), compared against the regular program's family or the declared
+     * name — the probe gave both the same string, so it does not tell which. Word 16, under a name
+     * no font on the machine answers, read a program of another typeface whatever its names said.
+     * Which program sat in {@code embedRegular} was never swapped either, so for two elements
+     * "survived because its
      * element came first" and "survived because it is the regular face" stay unseparated; within
      * one element the two children's order was swapped and did not decide.</p>
      *

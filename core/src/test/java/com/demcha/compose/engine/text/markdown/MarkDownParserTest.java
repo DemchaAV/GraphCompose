@@ -108,6 +108,14 @@ class MarkDownParserTest {
     }
 
     @Test
+    void anOrderedListLineKeepsTheParagraphsFace() {
+        // The parser reads "1. " as an ordered list item; what is left of the line is text in the
+        // paragraph's face, with nothing set in another face before it.
+        assertThat(faces("1. a_b", TextDecoration.BOLD))
+                .containsExactly(tuple("a_b", TextDecoration.BOLD));
+    }
+
+    @Test
     void aStyleWithNoFaceReadsAsTheDefaultOne() {
         assertThat(faces("a_b *c*", null))
                 .containsExactly(tuple("a_b ", TextDecoration.DEFAULT), tuple("c", TextDecoration.ITALIC));
